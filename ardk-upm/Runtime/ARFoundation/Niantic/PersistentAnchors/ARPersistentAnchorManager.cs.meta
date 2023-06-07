@@ -1,0 +1,12 @@
+fileFormatVersion: 2
+guid: 64177fd34c058443c9f43ae59563ce2e
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - _arPersistentAnchorTemplate: {fileID: 3771660788490516927, guid: 18139525c249347a1b3ccbc9754ec500, type: 3}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
