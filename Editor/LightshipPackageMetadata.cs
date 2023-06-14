@@ -32,19 +32,19 @@ namespace Niantic.Lightship.AR.Editor
             {
                 new LightshipLoaderMetadata()
                 {
-                    loaderName = "Lightship SDK",
+                    loaderName = "Niantic Lightship SDK",
                     loaderType = typeof(LightshipStandaloneLoader).FullName,
                     supportedBuildTargets = new List<BuildTargetGroup>() { BuildTargetGroup.Standalone, }
                 },
                 new LightshipLoaderMetadata()
                 {
-                    loaderName = "Lightship SDK",
+                    loaderName = "Niantic Lightship SDK",
                     loaderType = typeof(LightshipARCoreLoader).FullName,
                     supportedBuildTargets = new List<BuildTargetGroup>() { BuildTargetGroup.Android, }
                 },
                 new LightshipLoaderMetadata()
                 {
-                    loaderName = "Lightship SDK",
+                    loaderName = "Niantic Lightship SDK",
                     loaderType = typeof(LightshipARKitLoader).FullName,
                     supportedBuildTargets = new List<BuildTargetGroup>() { BuildTargetGroup.iOS, }
                 }

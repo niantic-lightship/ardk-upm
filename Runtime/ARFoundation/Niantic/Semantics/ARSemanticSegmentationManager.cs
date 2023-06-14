@@ -3,10 +3,10 @@
 using System;
 using System.Collections.Generic;
 using Niantic.Lightship.AR.Subsystems;
+using Niantic.Lightship.AR.Utilities;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
-using UnityEngine.Assertions;
 using UnityEngine.Rendering;
 using UnityEngine.XR.ARFoundation;
 using UnityEngine.XR.ARSubsystems;
@@ -14,15 +14,21 @@ using UnityEngine.XR.ARSubsystems;
 namespace Niantic.Lightship.AR.ARFoundation
 {
     /// <summary>
-    /// The manager for the semantic segmentation subsystem.
+    /// The <c>ARSemanticSegmentationManager</c> controls the <c>XRSemanticsSubsystem</c> and updates the semantics
+    /// textures on each Update loop. Textures and CPU buffers are available for confidence maps of individual semantic
+    /// segmentation channels and a bit array indicating which semantic channels have surpassed the chosen confidence
+    /// threshold per pixel. For cases where a semantic segmentation texture is overlaid on the screen, utilities are
+    /// provided to read semantic properties at a given point on the screen.
     /// </summary>
+    [PublicAPI]
     [DisallowMultipleComponent]
     [DefaultExecutionOrder(ARUpdateOrder.k_OcclusionManager)]
     public class ARSemanticSegmentationManager :
         SubsystemLifecycleManager<XRSemanticsSubsystem, XRSemanticsSubsystemDescriptor, XRSemanticsSubsystem.Provider>
     {
         /// <summary>
-        /// The semantic segmentation confidence texture infos.
+        /// A dictionary mapping semantic confidence textures (<c>ARTextureInfo</c>s) to their respective semantic
+        /// segmentation channel names.
         /// </summary>
         /// <value>
         /// The semantic segmentation confidence texture infos.
@@ -38,6 +44,10 @@ namespace Niantic.Lightship.AR.ARFoundation
         private ARTextureInfo _packedBitmaskTextureInfo;
 
         private List<string> _semanticChannelNames = new List<string>();
+
+        /// <summary>
+        /// The names of the semantic channels that the current model is able to detect.
+        /// </summary>
         public List<string> SemanticChannelNames
         {
             get { return _semanticChannelNames; }
@@ -67,12 +77,15 @@ namespace Niantic.Lightship.AR.ARFoundation
         /// </summary>
         public void Update()
         {
-            if (subsystem != null)
+            if (subsystem != null && subsystem.running)
             {
                 UpdateTexturesInfos();
             }
         }
 
+        /// <summary>
+        /// Clears the references to the packed and confidence semantic segmentation textures
+        /// </summary>
         private void ResetTextureInfos()
         {
             _packedBitmaskTextureInfo.Reset();
@@ -84,13 +97,18 @@ namespace Niantic.Lightship.AR.ARFoundation
         }
 
         /// <summary>
-        /// Read a semantic segmentation texture.
+        /// Read a semantic segmentation texture for the specified semantic class.
         /// </summary>
+        /// <param name="channelName">The semantic channel to acquire.</param>
+        /// <param name="samplerMatrix">A matrix to transform from viewport space to semantic texture space, assuming
+        /// that the device's screen is the viewport.</param>
         /// <value>
         /// The texture for the specified semantic channel, if any. Otherwise, <c>null</c>.
         /// </value>
-        public Texture2D GetSemanticChannelTexture(string channelName)
+        public Texture2D GetSemanticChannelTexture(string channelName, out Matrix4x4 samplerMatrix)
         {
+            samplerMatrix = Matrix4x4.identity;
+
             if (descriptor?.semanticSegmentationImageSupported == Supported.Supported
                 && _semanticChannelTextureInfos.ContainsKey(channelName))
             {
@@ -103,13 +121,16 @@ namespace Niantic.Lightship.AR.ARFoundation
                     return null;
                 }
 
+                samplerMatrix = semanticConfidenceTextureInfo.SamplerMatrix;
+
                 return semanticConfidenceTextureInfo.Texture as Texture2D;
             }
             return null;
         }
 
         /// <summary>
-        /// Attempt to get the latest semantic segmentation CPU buffer. This provides direct access to the raw pixel data.
+        /// Attempt to acquire the latest semantic segmentation CPU buffer for the specified semantic class. This
+        /// provides direct access to the raw pixel data.
         /// </summary>
         /// <remarks>
         /// The <c>LightshipCpuBuffer</c> must be disposed to avoid resource leaks.
@@ -126,7 +147,8 @@ namespace Niantic.Lightship.AR.ARFoundation
         /// Dispose a semantic segmentation CPU buffer.
         /// </summary>
         /// <remarks>
-        /// The <c>LightshipCpuBuffer</c> must have been successfully acquired with <c>TryAcquireSemanticChannelCPUBuffer</c>.
+        /// The <c>LightshipCpuBuffer</c> must have been successfully acquired with
+        /// <c>TryAcquireSemanticChannelCPUBuffer</c>.
         /// </remarks>
         /// <param name="cpuBuffer">The <c>LightshipCpuBuffer</c> to dispose.</param>
         public void DisposeSemanticChannelCPUBuffer(LightshipCpuBuffer cpuBuffer)
@@ -135,8 +157,12 @@ namespace Niantic.Lightship.AR.ARFoundation
         }
 
         /// <summary>
-        ///  Tries to acquire the latest packed semantic channels CPU image.
+        /// Tries to acquire the latest packed semantic channels CPU image. Each element of the buffer is a bit field
+        /// indicating which semantic channels have surpassed their respective detection confidence thresholds for that
+        /// pixel. (See <c>GetChannelIndex</c>)
         /// </summary>
+        /// <remarks>The utility <c>GetChannelNamesAt</c> can be used for reading semantic channel names at a viewport
+        /// location.</remarks>
         /// <param name="cpuBuffer">If this method returns `true`, an acquired <see cref="LightshipCpuBuffer"/>. The CPU buffer
         /// must be disposed by the caller.</param>
         /// <returns>True if the CPU image is acquired. Otherwise, false</returns>
@@ -158,9 +184,10 @@ namespace Niantic.Lightship.AR.ARFoundation
         }
 
         /// <summary>
-        /// Get the channel index of a specified semantic class.
+        /// Get the channel index of a specified semantic class. This corresponds to a bit position in the packed
+        /// semantics buffer, with index 0 being the most-significant bit.
         /// </summary>
-        /// <param name="channelName">Name of the semantic class.</param>
+        /// <param name="channelName">The name of the semantic class.</param>
         /// <returns>The index of the specified semantic class, or -1 if the channel does not exist.</returns>
         public int GetChannelIndex(string channelName)
         {
@@ -176,54 +203,57 @@ namespace Niantic.Lightship.AR.ARFoundation
         }
 
         /// <summary>
-        /// Returns the semantics of the specified pixel in a viewport.
+        /// Returns the semantics at the specified pixel in a viewport.
         /// </summary>
+        /// <remarks>It is assumed that the texture fills the screen, so the viewport is the screen.</remarks>
         /// <param name="viewportX">Horizontal coordinate in viewport space.</param>
         /// <param name="viewportY">Vertical coordinate in viewport space.</param>
-        /// <param name="viewportWidth">Width of the viewport containing the semantic texture.</param>
-        /// <param name="viewportHeight">Height of the viewport containing the semantic texture.</param>
         /// <returns>
         /// The result is a 32-bit packed unsigned integer where each bit is a binary indicator for a class.
         /// </returns>
-        public uint GetSemantics(int viewportX, int viewportY, int viewportWidth, int viewportHeight)
+        public uint GetSemantics(int viewportX, int viewportY)
         {
             if (!_packedBitmaskTextureInfo.Descriptor.valid || null == _packedBitmaskTextureInfo.Texture)
             {
                 return 0;
             }
 
-            Assert.IsTrue(viewportX >= 0 && viewportX < viewportWidth,
-                $"viewportX must be inside the bounds of the specified viewport width " +
-                $"({viewportWidth.ToString()} px) but instead is {viewportX.ToString()} px.");
+            // TODO(rbarnes): don't request new buffer each sample
+            TryAcquirePackedSemanticChannelsCPUBuffer(out var packedBuffer);
 
-            Assert.IsTrue(viewportY >= 0 && viewportY < viewportHeight,
-                $"viewportY must be inside the bounds of the specified viewport height " +
-                $"({viewportHeight.ToString()} px) but instead is {viewportY.ToString()} px.");
+            // TODO(rbarnes): remove once native impl is complete
+            var samplerMatrix = GenerateDisplayMatrix(packedBuffer.width, packedBuffer.height);
+            // sampler matrix = warp matrix * display matrix
+            //var samplerMatrix = subsystem.SamplerMatrix;
+
+            var viewportWidth = Screen.width;
+            var viewportHeight = Screen.height;
 
             // Get normalized coordinates
-            var x = viewportX + 0.5f;
-            var y = viewportY + 0.5f;
-            var uv = new Vector3(x / viewportWidth, y / viewportHeight, 1.0f);
-            var bufferWidth = _packedBitmaskTextureInfo.Descriptor.width;
-            var bufferHeight = _packedBitmaskTextureInfo.Descriptor.height;
+            var xMid = viewportX + 0.5f;
+            var yMid = viewportY + 0.5f;
+            var uv = new Vector4(xMid / viewportWidth, yMid / viewportHeight, 1.0f, 1.0f);
 
-            int textureX = (int) (uv[0] * (bufferWidth - 1));
-            // viewport coords origin is bottom-left
-            int textureY = ((bufferHeight - 1) - (int) (uv[1] * (bufferHeight - 1))) *
-                bufferWidth;
+            // Transform with warp and display matrices
+            var st = samplerMatrix * uv;
+            var sx = st.x / st.z;
+            var sy = st.y / st.z;
 
-            TryAcquirePackedSemanticChannelsCPUBuffer(out var packedBuffer);
+            var textureWidth = packedBuffer.dimensions.x;
+            var textureHeight = packedBuffer.dimensions.y;
+            var x = Mathf.Clamp(Mathf.RoundToInt(sx * textureWidth - 0.5f), 0, textureWidth - 1);
+            var y = Mathf.Clamp(Mathf.RoundToInt(sy * textureHeight - 0.5f), 0, textureHeight - 1);
             uint sample = 0;
 
             unsafe
             {
                 var bufferView = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<UInt32>((void*) packedBuffer.buffer,
-                    packedBuffer.dimensions.x * packedBuffer.dimensions.y, Allocator.None);
-                #if ENABLE_UNITY_COLLECTIONS_CHECKS
-                    NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref bufferView, AtomicSafetyHandle.GetTempMemoryHandle());
-                #endif
+                    textureWidth * textureHeight, Allocator.None);
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+                NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref bufferView, AtomicSafetyHandle.GetTempMemoryHandle());
+#endif
 
-                sample = bufferView[textureY + textureX];
+                sample = bufferView[x + textureWidth * y];
             }
 
             DisposePackedSemanticChannelsCPUBuffer(packedBuffer);
@@ -232,15 +262,13 @@ namespace Niantic.Lightship.AR.ARFoundation
         }
 
         /// <summary>
-        /// Returns an array of channel indices that are present for the specified pixel.
+        /// Returns an array of channel indices that are present at the specified pixel.
         /// </summary>
-        /// <remarks>This query allocates garbage.</remarks>
+        /// <remarks>It is assumed that the texture fills the screen, so the viewport is the screen.</remarks>
         /// <param name="viewportX">Horizontal coordinate in viewport space.</param>
         /// <param name="viewportY">Vertical coordinate in viewport space.</param>
-        /// <param name="viewportWidth">Width of the viewport containing the semantic texture.</param>
-        /// <param name="viewportHeight">Height of the viewport containing the semantic texture.</param>
         /// <returns>An array of channel indices present for the pixel.</returns>
-        public List<int> GetChannelIndicesAt(int viewportX, int viewportY, int viewportWidth, int viewportHeight)
+        public List<int> GetChannelIndicesAt(int viewportX, int viewportY)
         {
             var indices = new List<int>();
             if (_semanticChannelTextureInfos.Count == 0)
@@ -248,7 +276,7 @@ namespace Niantic.Lightship.AR.ARFoundation
                 return indices;
             }
 
-            uint sample = GetSemantics(viewportX, viewportY, viewportWidth, viewportHeight);
+            uint sample = GetSemantics(viewportX, viewportY);
 
             for (int idx = 0; idx < 32; idx++)
             {
@@ -265,15 +293,13 @@ namespace Niantic.Lightship.AR.ARFoundation
         }
 
         /// <summary>
-        /// Returns an array of channel names that are present for the specified pixel.
+        /// Returns an array of channel names that are present at the specified pixel.
         /// </summary>
-        /// <remarks>This query allocates garbage. It is assumed that the texture fills the viewport.</remarks>
+        /// <remarks>This query allocates garbage. It is assumed that the texture fills the screen.</remarks>
         /// <param name="viewportX">Horizontal coordinate in viewport space.</param>
         /// <param name="viewportY">Vertical coordinate in viewport space.</param>
-        /// <param name="viewportWidth">Width of the viewport containing the semantic texture.</param>
-        /// <param name="viewportHeight">Height of the viewport containing the semantic texture.</param>
         /// <returns>An array of channel names present for the pixel.</returns>
-        public List<string> GetChannelNamesAt(int viewportX, int viewportY, int viewportWidth, int viewportHeight)
+        public List<string> GetChannelNamesAt(int viewportX, int viewportY)
         {
             var names = new List<string>();
             if (_semanticChannelTextureInfos.Count == 0 || _semanticChannelNames.Count == 0)
@@ -281,7 +307,7 @@ namespace Niantic.Lightship.AR.ARFoundation
                 return names;
             }
 
-            var indices = GetChannelIndicesAt(viewportX, viewportY, viewportWidth, viewportHeight);
+            var indices = GetChannelIndicesAt(viewportX, viewportY);
 
             foreach (var idx in indices)
             {
@@ -298,22 +324,22 @@ namespace Niantic.Lightship.AR.ARFoundation
         }
 
         /// <summary>
-        /// Check if a pixel is of a certain semantics class.
+        /// Check if a semantic class is detected at the specified location in viewport space, based on the confidence
+        /// threshold set for this channel. (See <c>TrySetChannelConfidenceThresholds</c>)
         /// </summary>
+        /// <remarks>It is assumed that the texture fills the screen, so the viewport is the screen.</remarks>
         /// <param name="viewportX">Horizontal coordinate in viewport space.</param>
         /// <param name="viewportY">Vertical coordinate in viewport space.</param>
-        /// <param name="viewportWidth">Width of the viewport containing the semantic texture.</param>
-        /// <param name="viewportHeight">Height of the viewport containing the semantic texture.</param>
         /// <param name="channelName">Name of the semantic class to look for.</param>
-        /// <returns>True if the semantic channel exists at the given coordinates.</returns>
-        public bool DoesChannelExistAt(int viewportX, int viewportY, int viewportWidth, int viewportHeight, string channelName)
+        /// <returns>True if the semantic class exists at the given coordinates.</returns>
+        public bool DoesChannelExistAt(int viewportX, int viewportY, string channelName)
         {
             if (_semanticChannelTextureInfos.Count == 0)
             {
                 return false;
             }
 
-            var channelNamesList = GetChannelNamesAt(viewportX, viewportY, viewportWidth, viewportHeight);
+            var channelNamesList = GetChannelNamesAt(viewportX, viewportY);
             return channelNamesList.Contains(channelName);
         }
 
@@ -352,20 +378,36 @@ namespace Niantic.Lightship.AR.ARFoundation
                     continue;
                 }
 
+                var samplerMatrix = GenerateDisplayMatrix(textureDescriptor.width, textureDescriptor.height);
+
                 if (!_semanticChannelTextureInfos.ContainsKey(channel))
                 {
-                    _semanticChannelTextureInfos.Add(channel, new ARTextureInfo(textureDescriptor));
+                    _semanticChannelTextureInfos.Add(channel, new ARTextureInfo(textureDescriptor, samplerMatrix));
                 }
                 else
                 {
-                    _semanticChannelTextureInfos[channel] = ARTextureInfo.GetUpdatedTextureInfo(_semanticChannelTextureInfos[channel], textureDescriptor);
+                    _semanticChannelTextureInfos[channel] = ARTextureInfo.GetUpdatedTextureInfo(_semanticChannelTextureInfos[channel], textureDescriptor, samplerMatrix);
                 }
             }
 
             if (subsystem.TryGetPackedSemanticChannels(out var packedTextureDescriptor))
             {
-                _packedBitmaskTextureInfo = ARTextureInfo.GetUpdatedTextureInfo(_packedBitmaskTextureInfo, packedTextureDescriptor);
+                var samplerMatrix = GenerateDisplayMatrix(packedTextureDescriptor.width, packedTextureDescriptor.height);
+                _packedBitmaskTextureInfo = ARTextureInfo.GetUpdatedTextureInfo(_packedBitmaskTextureInfo, packedTextureDescriptor, samplerMatrix);
             }
+        }
+
+        // Temporary function until the native sampler matrix implementation is ready
+        private Matrix4x4 GenerateDisplayMatrix(int sourceWidth, int sourceHeight)
+        {
+            return _CameraMath.CalculateDisplayMatrix(
+                sourceWidth,
+                sourceHeight,
+                (int)Screen.width,
+                (int)Screen.height,
+                Screen.orientation,
+                layout: _CameraMath.MatrixLayout.RowMajor
+            ).transpose;
         }
     }
 }

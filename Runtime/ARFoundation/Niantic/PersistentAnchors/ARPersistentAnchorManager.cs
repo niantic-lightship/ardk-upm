@@ -2,27 +2,39 @@ using System;
 using System.Collections.Generic;
 using Niantic.Lightship.AR.Loader;
 using System.Linq;
+
+using Niantic.Lightship.AR.Utilities;
+
 using UnityEngine;
+#if !UNITY_EDITOR && UNITY_ANDROID
+using UnityEngine.Android;
+#endif
 using UnityEngine.XR.ARFoundation;
 using UnityEngine.XR.ARSubsystems;
 
 namespace Niantic.Lightship.AR.Subsystems
 {
     /// <summary>
-    /// Manages anchors.
+    /// Manages persistent anchors.
+    ///
+    /// Use this component to programmatically restore, remove, or query for persistent
+    /// anchors. Persistent anchors are persistent <c>Pose</c>s in the world that are generated
+    /// by processed scans, and will be in the same real world location in future sessions.
+    /// By placing virtual content relative to a Persistent Anchor, it can be restored to the same
+    /// real world location in a future session.
+    ///
+    /// This is a low level API to manage Persistent Anchors. For authoring virtual content in the
+    /// Unity Editor, use the ARLocationManager and ARLocations instead.
     /// </summary>
     /// <remarks>
-    /// <para>Use this component to programmatically add, remove, or query for
-    /// anchors. Anchors are <c>Pose</c>s in the world
-    /// which will be periodically updated by an AR device as its understanding
-    /// of the world changes.</para>
     /// <para>Subscribe to changes (added, updated, and removed) via the
-    /// <see cref="ARPersistentAnchorManager.anchorsChanged"/> event.</para>
+    /// <see cref="ARPersistentAnchorManager.arPersistentAnchorStateChanged"/> event.</para>
     /// </remarks>
     /// <seealso cref="ARTrackableManager{TSubsystem,TSubsystemDescriptor,TProvider,TSessionRelativeData,TTrackable}"/>
     [DefaultExecutionOrder(ARUpdateOrder.k_AnchorManager)]
     [DisallowMultipleComponent]
     [RequireComponent(typeof(Unity.XR.CoreUtils.XROrigin))]
+    [PublicAPI]
     public class ARPersistentAnchorManager : ARTrackableManager<
         XRPersistentAnchorSubsystem,
         XRPersistentAnchorSubsystemDescriptor,
@@ -35,11 +47,16 @@ namespace Niantic.Lightship.AR.Subsystems
 
         /// <summary>
         /// Called when the state of an anchor has changed
+        ///
+        /// Each invocation of this event contains a single Persistent Anchor that has had a state change
+        ///     this frame. Query the arg's arPersistentAnchor's TrackingState to determine its new
+        ///     TrackingState
         /// </summary>
         public event Action<ARPersistentAnchorStateChangedEventArgs> arPersistentAnchorStateChanged;
 
         /// <summary>
-        /// The singleton instance reference of the ARPersistentAnchorManager
+        /// The singleton instance reference of the ARPersistentAnchorManager.
+        /// For internal use.
         /// </summary>
         internal static ARPersistentAnchorManager Instance { get; private set; }
 
@@ -51,7 +68,6 @@ namespace Niantic.Lightship.AR.Subsystems
         /// <summary>
         /// The prefab to use when creating an ARPersistentAnchor.  If null, a new GameObject will be created.
         /// </summary>
-        /// <returns></returns>
         protected override GameObject GetPrefab() => _arPersistentAnchorTemplate;
 
         private IARPersistentAnchorManagerImplementation _arPersistentAnchorManagerImplementation;
@@ -69,6 +85,11 @@ namespace Niantic.Lightship.AR.Subsystems
             }
 
             InitializeARPersistentAnchorManagerImplementation();
+        }
+
+        protected virtual void Start()
+        {
+            RequestLocationPermission();
         }
 
         protected override void OnDestroy()
@@ -89,18 +110,23 @@ namespace Niantic.Lightship.AR.Subsystems
         protected override string gameObjectName => "Persistent Anchor";
 
         /// <summary>
-        /// Restores an anchor.  The anchor will be returned immediately, but will not be ready to use until its TrackingState is tracking.
+        /// Restores a Persistent Anchor from a Payload. The Anchor GameObject will be returned immediately,
+        /// and children can be added to it, but a proper position and rotation not be applied
+        /// until its TrackingState is Tracking.
         /// </summary>
         /// <param name="payload">The payload of the anchor to restore</param>
         /// <param name="arPersistentAnchor">The ARPersistentAnchor that was created from the payload</param>
-        /// <returns>Whether or not the anchor was successfully restored.</returns>
+        /// <returns>
+        /// <c>True</c> If the anchor was successfully added for tracking.
+        /// <c>False</c> The anchor cannot be added, it is either already added, or the payload is invalid
+        /// </returns>
         public bool TryTrackAnchor(ARPersistentAnchorPayload payload, out ARPersistentAnchor arPersistentAnchor)
         {
             return _arPersistentAnchorManagerImplementation.TryTrackAnchor(this, payload, out arPersistentAnchor);
         }
 
         /// <summary>
-        /// Destroys an anchor
+        /// Destroys an anchor and stop tracking it.
         /// </summary>
         /// <param name="arPersistentAnchor">The anchor to destroy</param>
         public void DestroyAnchor(ARPersistentAnchor arPersistentAnchor)
@@ -166,6 +192,8 @@ namespace Niantic.Lightship.AR.Subsystems
         {
             foreach (var removedAnchor in removedAnchors)
             {
+                removedAnchor.trackingStateOverride = TrackingState.None;
+                removedAnchor.trackingStateReasonOverride = TrackingStateReason.Removed;
                 _arPersistentAnchorStates.Remove(removedAnchor);
                 var arPersistentAnchorStateChangedEvent = new ARPersistentAnchorStateChangedEventArgs(removedAnchor);
                 arPersistentAnchorStateChanged?.Invoke(arPersistentAnchorStateChangedEvent);
@@ -185,6 +213,16 @@ namespace Niantic.Lightship.AR.Subsystems
             }
 #else
             _arPersistentAnchorManagerImplementation = new ARPersistentAnchorManagerImplementation(this);
+#endif
+        }
+
+        private void RequestLocationPermission()
+        {
+#if !UNITY_EDITOR && UNITY_ANDROID
+            if (!Permission.HasUserAuthorizedPermission(Permission.FineLocation))
+            {
+                Permission.RequestUserPermission(Permission.FineLocation);
+            }
 #endif
         }
     }

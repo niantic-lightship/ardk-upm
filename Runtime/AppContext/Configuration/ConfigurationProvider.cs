@@ -146,8 +146,8 @@ namespace Niantic.Lightship.AR.Configuration
                 FastDepthSemanticsEndpoint = "https://armodels.eng.nianticlabs.com/niantic_ca_v1.2_fast.bin",
                 SmoothDepthSemanticsEndpoint = "https://armodels.eng.nianticlabs.com/niantic_ca_v1.2_antiflicker.bin",
 
-                TelemetryEndpoint = "https://analytics-int.eng.nianticlabs.com", //"https://analytics.nianticlabs.com",
-                TelemetryApiKey = "5fca68ec-4013-4786-b72e-0ba89cd60f20", // "b7d03117-f80f-4039-8488-3466633f8639", // EXT-REPLACE
+                TelemetryEndpoint = "https://analytics.nianticlabs.com",
+                TelemetryApiKey = "b7d03117-f80f-4039-8488-3466633f8639", // EXT-REPLACE
             };
 
             return defaultArdkConfig;

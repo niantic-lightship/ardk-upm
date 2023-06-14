@@ -2,11 +2,16 @@
 
 using System;
 using System.Linq;
+using Niantic.Lightship.AR.Utilities;
 using UnityEngine;
 
 namespace Niantic.Lightship.AR
 {
-    /// An area where localization with VPS is possible.
+    /// <summary>
+    /// The CoverageArea struct represents a calculated area representing a cluster of localization targets within
+    /// a certain proximity of each other to help determine reliability of VPS tracking.
+    /// </summary>
+    [PublicAPI]
     [Serializable]
     public struct CoverageArea
     {

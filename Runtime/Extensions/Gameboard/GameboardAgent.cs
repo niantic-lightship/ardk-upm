@@ -3,16 +3,18 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Niantic.Lightship.AR.Utilities;
 using UnityEngine;
-using UnityEngine.Assertions;
 
 namespace Niantic.Lightship.AR.Extensions.Gameboard
 {
     /// <summary>
-    /// GameboardAgent example agent implementation you can create new versions of this to change how your creatures move over the gameboard
-    /// For example you may want to use physics/forces or add splines rather than straight lines
-    /// This is a most basic example that using linear interpolation and coroutines.
+    /// GameboardAgent is an example agent implementation that navigates a Gameboard based on logic programmed here.
+    /// You place this MonoBehaviour on a GameObject to have that GameObject navigate autonomously through your real environment.
+    /// You can create new versions of this to change how your creatures navigate the Gameboard.
+    /// For example you may want to use physics/forces or add splines rather than straight lines. This is a basic example that using linear interpolation and coroutines.
     /// </summary>
+    [PublicAPI]
     public class GameboardAgent : MonoBehaviour
     {
         [Header("Agent Settings")] [SerializeField]

@@ -1,5 +1,11 @@
+using Niantic.Lightship.AR.Utilities;
+
 namespace Niantic.Lightship.AR.Subsystems
 {
+    /// <summary>
+    /// Contains information about an ARPersistentAnchor that has changed state.
+    /// </summary>
+    [PublicAPI]
     public struct ARPersistentAnchorStateChangedEventArgs
     {
         /// <summary>

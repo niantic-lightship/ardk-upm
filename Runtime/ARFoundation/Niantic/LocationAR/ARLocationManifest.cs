@@ -4,12 +4,16 @@ using System.IO;
 using System.Linq;
 using Niantic.Lightship.AR.Editor.Utilities;
 using Niantic.Lightship.AR.RCA.Editor.Utilities;
-
+using Niantic.Lightship.AR.Utilities;
 using UnityEditor;
 using UnityEngine;
 
 namespace Niantic.Lightship.AR.Subsystems
 {
+    /// <summary>
+    /// Information associated with a scanned AR Location
+    /// </summary>
+    [PublicAPI]
     [Serializable]
     public sealed class ARLocationManifest : ScriptableObject
     {
@@ -28,12 +32,18 @@ namespace Niantic.Lightship.AR.Subsystems
         [SerializeField]
         private GameObject _mockAsset;
 
+        [SerializeField] [HideInInspector]
+        private string _localizationTargetId;
+
         private string _locationName;
 
         private Material[] _materials;
 
         private Mesh _mesh;
 
+        /// <summary>
+        /// The name of the location
+        /// </summary>
         public string LocationName
         {
             get
@@ -95,6 +105,22 @@ namespace Niantic.Lightship.AR.Subsystems
             }
         }
 
+        /// <summary>
+        /// The target ID of the localization
+        /// </summary>
+        public string LocalizationTargetId
+        {
+            get => _localizationTargetId;
+            set
+            {
+                _localizationTargetId = value;
+                EditorUtility.SetDirty(this);
+            }
+        }
+
+        /// <summary>
+        /// The latitude of the location
+        /// </summary>
         public float LocationLatitude
         {
             get => _locationLatitude;
@@ -105,6 +131,9 @@ namespace Niantic.Lightship.AR.Subsystems
             }
         }
 
+        /// <summary>
+        /// The longitude of the location
+        /// </summary>
         public float LocationLongitude
         {
             get => _locationLongitude;
@@ -135,6 +164,9 @@ namespace Niantic.Lightship.AR.Subsystems
             }
         }
 
+        /// <summary>
+        /// The mesh of the location
+        /// </summary>
         public Mesh Mesh
         {
             get
@@ -155,6 +187,9 @@ namespace Niantic.Lightship.AR.Subsystems
             }
         }
 
+        /// <summary>
+        /// The materials used to render the location's mesh
+        /// </summary>
         public Material[] Materials
         {
             get

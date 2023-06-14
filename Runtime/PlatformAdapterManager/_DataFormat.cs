@@ -34,8 +34,5 @@ namespace Niantic.Lightship.AR
 
         // Platform depth data
         kPlatform_depth = 9,
-
-        // Information from the client to post-process depth images
-        kOcclusion_context = 10,
     }
 }

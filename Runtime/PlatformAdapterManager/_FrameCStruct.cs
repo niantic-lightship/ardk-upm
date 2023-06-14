@@ -103,12 +103,6 @@ namespace Niantic.Lightship.AR.PlatformAdapterManager
 
         // Length of the platform depth buffer camera intrinsics
         public UInt32 PlatformDepthCameraIntrinsicsLength;
-
-        // Client context for post-processing depth
-        public IntPtr OcclusionContext;
-
-        // Length of the occlusion context
-        public UInt32 OcclusionContextDataLength;
     }
 
     // C struct for C# to send GPS data to C++.
@@ -159,19 +153,5 @@ namespace Niantic.Lightship.AR.PlatformAdapterManager
 
         // The heading in degrees relative to the geographic North Pole.
         public float TrueHeading;
-    }
-
-    // C struct for C# to send information data to C++ for post-processing depth (and semantics).
-    // Needs to match occlusion_context.h.
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct OcclusionContext
-    {
-        // The linear metric eye-depth from the camera to the main occludee.
-        // This is used to align the edges of the depth image with
-        // the content that's being actively occluded.
-        public float OccludeeEyeDepth;
-
-        // The aspect ratio of the full camera (background) image.
-        public float FullImageAspectRatio;
     }
 }

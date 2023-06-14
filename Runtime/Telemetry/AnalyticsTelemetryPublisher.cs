@@ -1,4 +1,5 @@
 using System;
+using Niantic.ARDK.AR.Protobuf;
 using Niantic.Lightship.AR.Protobuf;
 using Niantic.Platform.Analytics.Telemetry;
 using Niantic.Platform.Analytics.Telemetry.Logging;
@@ -34,15 +35,19 @@ namespace Telemetry
             Debug.Log("Successfully created the ardk publisher.");
         }
 
-        public void RecordEvent(ArdkNextTelemetryOmniProto telemetryEvent)
+        public void RecordEvent(ArdkNextTelemetryOmniProto telemetryEvent, ARClientEnvelope.Types.AgeLevel ageLevel)
         {
             try
             {
-                _ardkPublisher.RecordEvent(telemetryEvent);
+                if(ageLevel != ARClientEnvelope.Types.AgeLevel.Minor)
+                {
+                    _ardkPublisher.RecordEvent(telemetryEvent);
+                }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                Debug.LogWarning($"Posting telemetry failed with the following exception: {ex}");
+                // enable for debugging
+                // Debug.LogWarning($"Posting telemetry failed with the following exception: {ex}");
             }
         }
 

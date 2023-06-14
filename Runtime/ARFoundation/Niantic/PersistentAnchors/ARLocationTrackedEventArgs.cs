@@ -1,10 +1,11 @@
-using System;
+using Niantic.Lightship.AR.Utilities;
 
 namespace Niantic.Lightship.AR.Subsystems
 {
     /// <summary>
     /// Event arguments for the <see cref="ARLocationManager.locationTrackingStateChanged"/> event.
     /// </summary>
+    [PublicAPI]
     public struct ARLocationTrackedEventArgs
     {
         /// <summary>

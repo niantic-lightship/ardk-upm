@@ -5,6 +5,10 @@ namespace Niantic.Lightship.AR
 {
     public class AreaTargetsResult
     {
+        /// <summary>
+        /// The AreaTargetsResult class represents the response object returned after making a VPS coverage query from the
+        /// CoverageClientManager. The VPS Coverage information is captured as a collection of AreaTarget structs.
+        /// </summary>
         public AreaTargetsResult(
             LatLng queryLocation,
             int queryRadius,

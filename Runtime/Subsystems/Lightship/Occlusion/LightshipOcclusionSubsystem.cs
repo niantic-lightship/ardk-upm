@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using Niantic.Lightship.AR.ARFoundation;
 using Niantic.Lightship.AR.Loader;
 using Niantic.Lightship.AR.Utilities;
 using Unity.Collections;
+using Unity.XR.CoreUtils;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Scripting;
@@ -132,6 +134,9 @@ namespace Niantic.Lightship.AR
             private const int k_FramesInMemoryCount = 2;
             private BufferedTextureCache m_EnvironmentDepthTextures;
 
+            // The index of the frame where the depth buffer was last updated
+            private int m_FrameIndexOfLastUpdate = 0;
+
             private EnvironmentDepthMode m_requestedEnvironmentDepthMode;
 
             private LightshipSettings m_lightshipSettings;
@@ -152,6 +157,9 @@ namespace Niantic.Lightship.AR
                 m_requestedEnvironmentDepthMode = EnvironmentDepthMode.Fastest;
 
                 m_EnvironmentDepthTextures = new BufferedTextureCache(k_FramesInMemoryCount);
+
+                // Reset settings possibly inherited from a previous session
+                OcclusionContext.ResetOccludee();
             }
 
             void _ILightshipSettingsUser.SetLightshipSettings(LightshipSettings settings)
@@ -268,44 +276,37 @@ namespace Niantic.Lightship.AR
                 if (!running)
                     return false;
 
-                var resourceHandle = NativeApi.GetEnvironmentDepth(m_nativeProviderHandle, out IntPtr memoryBuffer,
-                    out int size, out int width, out int height, out TextureFormat format, out uint frameId);
-
-                if (resourceHandle != IntPtr.Zero)
+                var needsToUpdate = m_FrameIndexOfLastUpdate != Time.frameCount;
+                if (needsToUpdate)
                 {
-                    if (memoryBuffer != IntPtr.Zero)
+                    if (AcquireEnvironmentDepth(
+                            requestPostProcessing: true,
+                            out IntPtr resourceHandle,
+                            out IntPtr memoryBuffer,
+                            out int size,
+                            out int width,
+                            out int height,
+                            out TextureFormat format))
                     {
-                        m_EnvironmentDepthTextures.GetUpdatedTextureFromBuffer
-                        (
-                            memoryBuffer,
-                            size,
-                            width,
-                            height,
-                            format,
-                            frameId,
-                            out IntPtr nativeTexturePtr
-                        );
-
-                        int propertyNameID = s_TextureEnvironmentDepthPropertyId;
-                        xrTextureDescriptor =
-                            new XRTextureDescriptor
-                            (
-                                nativeTexturePtr,
-                                width,
-                                height,
-                                0,
-                                format,
-                                propertyNameID,
-                                0,
-                                TextureDimension.Tex2D
-                            );
+                        m_FrameIndexOfLastUpdate = Time.frameCount;
+                        m_EnvironmentDepthTextures.GetUpdatedTextureFromBuffer(memoryBuffer, size, width, height,
+                            format, (uint)m_FrameIndexOfLastUpdate, out _);
+                        NativeApi.DisposeResource(m_nativeProviderHandle, resourceHandle);
                     }
-
-                    NativeApi.DisposeResource(m_nativeProviderHandle, resourceHandle);
-                    return true;
                 }
 
-                return false;
+                var texture = m_EnvironmentDepthTextures.GetActiveTexture();
+                if (texture == null)
+                    return false;
+
+                var nativeTexture = m_EnvironmentDepthTextures.GetActiveTexturePtr();
+                if (nativeTexture == IntPtr.Zero)
+                    return false;
+
+                xrTextureDescriptor = new XRTextureDescriptor(
+                    nativeTexture, texture.width, texture.height, 0, texture.format,
+                    s_TextureEnvironmentDepthPropertyId, 0, TextureDimension.Tex2D);
+                return true;
             }
 
             /// <summary>
@@ -318,34 +319,40 @@ namespace Niantic.Lightship.AR
             /// </returns>
             public override bool TryAcquireEnvironmentDepthCpuImage(out XRCpuImage.Cinfo cinfo)
             {
-                var resourceHandle = NativeApi.GetEnvironmentDepth(m_nativeProviderHandle, out IntPtr memoryBuffer,
-                    out int size, out int width, out int height, out TextureFormat format, out uint frameId);
                 cinfo = default;
-                if (resourceHandle == IntPtr.Zero) return false;
-                bool cpuImageCreated = false;
-                if (memoryBuffer != IntPtr.Zero)
-                {
-                    var texture =
-                        m_EnvironmentDepthTextures.GetUpdatedTextureFromBuffer
-                        (
-                            memoryBuffer,
-                            size,
-                            width,
-                            height,
-                            format,
-                            frameId,
-                            out IntPtr nativeTexturePtr
-                        );
 
-                    int nativeHandle = nativeTexturePtr.ToInt32();
-                    ((LightshipCpuImageApi)environmentDepthCpuImageApi).AddManagedXRCpuImage(nativeHandle, texture);
-                    Vector2Int dimensions = new Vector2Int(width, height);
-                    cinfo = new XRCpuImage.Cinfo(nativeHandle, dimensions, 1, 0.0d, format.XRCpuImageFormat());
-                    cpuImageCreated = true;
+                var needsToUpdate = m_FrameIndexOfLastUpdate != Time.frameCount;
+                if (needsToUpdate)
+                {
+                    if (AcquireEnvironmentDepth(
+                            requestPostProcessing: true,
+                            out IntPtr resourceHandle,
+                            out IntPtr memoryBuffer,
+                            out int size,
+                            out int width,
+                            out int height,
+                            out TextureFormat format))
+                    {
+                        m_FrameIndexOfLastUpdate = Time.frameCount;
+                        m_EnvironmentDepthTextures.GetUpdatedTextureFromBuffer(memoryBuffer, size, width, height,
+                            format, (uint)m_FrameIndexOfLastUpdate, out _);
+                        NativeApi.DisposeResource(m_nativeProviderHandle, resourceHandle);
+                    }
                 }
 
-                NativeApi.DisposeResource(m_nativeProviderHandle, resourceHandle);
-                return cpuImageCreated;
+                var texture = m_EnvironmentDepthTextures.GetActiveTexture();
+                if (texture == null)
+                    return false;
+
+                var nativeTexture = m_EnvironmentDepthTextures.GetActiveTexturePtr();
+                if (nativeTexture == IntPtr.Zero)
+                    return false;
+
+                int nativeHandle = nativeTexture.ToInt32();
+                ((LightshipCpuImageApi)environmentDepthCpuImageApi).AddManagedXRCpuImage(nativeHandle, texture);
+                Vector2Int dimensions = new Vector2Int(texture.width, texture.height);
+                cinfo = new XRCpuImage.Cinfo(nativeHandle, dimensions, 1, 0.0d, texture.format.XRCpuImageFormat());
+                return true;
             }
 
             public override bool TryAcquireRawEnvironmentDepthCpuImage(out XRCpuImage.Cinfo cinfo)
@@ -356,6 +363,71 @@ namespace Niantic.Lightship.AR
             public override bool TryAcquireSmoothedEnvironmentDepthCpuImage(out XRCpuImage.Cinfo cinfo)
             {
                 return TryAcquireEnvironmentDepthCpuImage(out cinfo);
+            }
+
+            /// <summary>
+            /// Acquires the latest environment depth resource.
+            /// </summary>
+            /// <param name="requestPostProcessing">Whether to perform post-processing to align the image with
+            ///     the current camera pose. Requesting this feature does not guarantee it will actually occur.</param>
+            /// <param name="resourceHandle">Handle to the native resource.</param>
+            /// <param name="memoryBuffer">Handle to the data buffer.</param>
+            /// <param name="size">The size of the data buffer.</param>
+            /// <param name="width">The width if the image.</param>
+            /// <param name="height">The height of the image.</param>
+            /// <param name="format">The texture format that should be used to represent the image.</param>
+            /// <returns>Whether the resource has been acquired.</returns>
+            private bool AcquireEnvironmentDepth(bool requestPostProcessing, out IntPtr resourceHandle, out IntPtr memoryBuffer,
+                out int size, out int width, out int height, out TextureFormat format)
+            {
+                // Acquire the inference result
+                resourceHandle = NativeApi.GetEnvironmentDepth(m_nativeProviderHandle, out memoryBuffer,
+                    out size, out width, out height, out format, out _);
+
+                // Failed to acquire the native resource
+                if (resourceHandle == IntPtr.Zero)
+                    return false;
+
+                // Successfully acquired the native resource, but no post-processing was requested
+                if (!requestPostProcessing)
+                    return true;
+
+                // Only post-process the buffer if we have acquired the current pose
+                // Otherwise, Depth acquired, but not post-processed
+                if (!PoseProvider.TryAcquireCurrentPose(out var poseMatrix))
+                    return true;
+
+                // Convert the pose to native ARDK format
+                var pose = _Convert.Matrix4x4ToInternalArray(poseMatrix.FromUnityToArdk());
+
+                // Calculate the aligned image container
+                if (OcclusionContext.Shared.CameraImageAspectRatio.HasValue && !OcclusionContext.Shared.CameraImageAspectRatio.Value.IsUndefined())
+                {
+                    height = Mathf.FloorToInt(width / OcclusionContext.Shared.CameraImageAspectRatio.Value);
+                }
+                else
+                {
+                    Debug.Log("OcclusionContext.Shared.CameraImageAspectRatio is not set or invalid.");
+                    return false;
+                }
+
+
+                // Warp the original depth image to align it with the current pose
+                var processedResource = NativeApi.WarpDepth(
+                    m_nativeProviderHandle,
+                    resourceHandle,
+                    pose,
+                    width,
+                    height,
+                    OcclusionContext.Shared.OccludeeEyeDepth,
+                    out memoryBuffer,
+                    out size);
+
+                // Release the original buffer
+                NativeApi.DisposeResource(m_nativeProviderHandle, resourceHandle);
+                resourceHandle = processedResource;
+
+                return resourceHandle != IntPtr.Zero;
             }
 
             /// <summary>
@@ -392,18 +464,8 @@ namespace Niantic.Lightship.AR
             public override void GetMaterialKeywords(out List<string> enabledKeywords,
                 out List<string> disabledKeywords)
             {
-                if ((m_OcclusionPreferenceMode == OcclusionPreferenceMode.NoOcclusion) ||
-                    (m_requestedEnvironmentDepthMode == EnvironmentDepthMode.Disabled) ||
-                    !running)
-                {
-                    enabledKeywords = null;
-                    disabledKeywords = s_EnvironmentDepthEnabledMaterialKeywords;
-                }
-                else
-                {
-                    enabledKeywords = s_EnvironmentDepthEnabledMaterialKeywords;
-                    disabledKeywords = null;
-                }
+                enabledKeywords = s_EnvironmentDepthEnabledMaterialKeywords;
+                disabledKeywords = null;
             }
         }
 
@@ -441,6 +503,20 @@ namespace Niantic.Lightship.AR
                 out uint frameId
             );
 
+            [DllImport(_LightshipPlugin.Name,
+                EntryPoint = "Lightship_ARDK_Unity_OcclusionProvider_WarpDepth")]
+            public static extern IntPtr WarpDepth
+            (
+                IntPtr depthApiHandle,
+                IntPtr depthResourceHandle,
+                float[] poseMatrix,
+                int targetWidth,
+                int targetHeight,
+                float backProjectionPlane,
+                out IntPtr memoryBuffer,
+                out int size
+            );
+
             [DllImport(_LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_OcclusionProvider_ReleaseResource")]
             public static extern IntPtr DisposeResource(IntPtr depthApiHandle, IntPtr resourceHandle);
 
@@ -471,6 +547,12 @@ namespace Niantic.Lightship.AR
             }
 
             public static IntPtr GetEnvironmentDepth(IntPtr depthApiHandle, out IntPtr memoryBuffer, out int size, out int width, out int height, out TextureFormat format, out uint frameId)
+            {
+                throw new NotImplementedException();
+            }
+
+            public static IntPtr WarpDepth(IntPtr depthApiHandle, IntPtr depthResourceHandle, float[] poseMatrix,
+                int targetWidth, int targetHeight, float backProjectionPlane, out IntPtr memoryBuffer, out int size)
             {
                 throw new NotImplementedException();
             }

@@ -57,7 +57,7 @@ namespace ARFoundation.Niantic.Scanning
             _raycastColorTextureInfo.Reset();
         }
 
-        public void Update()
+        private void Update()
         {
             if (subsystem != null)
             {

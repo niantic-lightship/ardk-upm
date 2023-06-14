@@ -1,11 +1,15 @@
 // Copyright 2022 Niantic, Inc. All Rights Reserved.
 
 using System;
+using Niantic.Lightship.AR.Utilities;
 using UnityEngine;
 
 namespace Niantic.Lightship.AR
 {
-    /// A real world target for localization using VPS.
+    /// <summary>
+    /// The LocalizationTarget struct represents a real world point of interest that used for VPS tracking.
+    /// </summary>
+    [PublicAPI]
     [Serializable]
     public struct LocalizationTarget
     {

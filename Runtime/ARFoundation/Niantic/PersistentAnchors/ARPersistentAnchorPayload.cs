@@ -1,7 +1,12 @@
 using System;
+using Niantic.Lightship.AR.Utilities;
 
 namespace Niantic.Lightship.AR.Subsystems
 {
+    /// <summary>
+    /// The ARPersistentAnchorPayload is data used to save and restore persistent anchors.
+    /// </summary>
+    [PublicAPI]
     [Serializable]
     public class ARPersistentAnchorPayload
     {

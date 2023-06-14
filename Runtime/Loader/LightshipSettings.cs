@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Collections.Generic;
+using Niantic.Lightship.AR.Settings.User;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.XR.Management;
@@ -16,26 +17,13 @@ namespace Niantic.Lightship.AR.Loader
     /// while in EditMode.
     /// </note>
     [Serializable]
-    [XRConfigurationData("Lightship SDK", SettingsKey)]
+    [XRConfigurationData("Niantic Lightship SDK", SettingsKey)]
     public partial class LightshipSettings : ScriptableObject
     {
         private const string AssetsPath = "Assets";
         private const string AssetsRelativeSettingsPath = "XR/Settings/Lightship Settings.asset";
-        private const string AuthorizationHeaderKey = "Authorization";
-        private const string ClientIdHeaderKey = "x-ardk-clientid";
-        private const string UserIdHeaderKey = "x-ardk-userid";
-        private const string ApplicationIdKey = "x-ardk-application-id";
 
         public const string SettingsKey = "Niantic.Lightship.AR.LightshipSettings";
-
-        private string _userId;
-        private string _clientId;
-        private string _ardkAppInstanceId;
-        private string _applicationId;
-        private string _ardkVersion;
-        private string _manufacturer;
-        private string _deviceModel;
-        private string _platform;
 
         [SerializeField, Tooltip("This should match an API Key found in your Niantic Lightship developer account")]
         private string _apiKey = string.Empty;
@@ -68,7 +56,13 @@ namespace Niantic.Lightship.AR.Loader
         /// <summary>
         /// Layer used for the depth
         /// </summary>
+        public bool PreferLidarIfAvailable => false;
+
+        // Temporarily force set prefer LiDAR if available to be false until meshing and gameboard
+        // features work with arf platform depth
+        /*
         public bool PreferLidarIfAvailable => _preferLidarIfAvailable;
+        */
 
         [SerializeField, Tooltip("Frame rate at which to run depth inference")]
         private uint _lightshipDepthFrameRate = 20;
@@ -104,7 +98,6 @@ namespace Niantic.Lightship.AR.Loader
         /// </summary>
         public uint LightshipSemanticSegmentationFrameRate => _LightshipSemanticSegmentationFrameRate;
 
-
         [SerializeField,
          Tooltip("When enabled, use Niantic's scanning subsystem provider")]
         private bool _useLightshipScanning = true;
@@ -112,7 +105,12 @@ namespace Niantic.Lightship.AR.Loader
         /// <summary>
         /// Use Lightship provider for scanning
         /// </summary>
+        public bool UseLightshipScanning => false;
+
+        // Temporarily force set scanning enabled to be false until the feature is ready
+        /*
         public bool UseLightshipScanning => _useLightshipScanning;
+        */
 
 #if !UNITY_EDITOR
         /// <summary>
@@ -126,16 +124,6 @@ namespace Niantic.Lightship.AR.Loader
 #if !UNITY_EDITOR
             s_RuntimeInstance = this;
 #endif
-            // Currently some headers are set to empty strings until native
-            // logic implements fetching these native values
-            _userId = Guid.NewGuid().ToString();
-            _clientId = string.Empty;
-            _ardkAppInstanceId = string.Empty;
-            _applicationId = Application.identifier;
-            _ardkVersion = string.Empty;
-            _manufacturer = string.Empty;
-            _deviceModel = SystemInfo.operatingSystem;
-            _platform = string.Empty;
         }
 
         /// <summary>
@@ -156,8 +144,22 @@ namespace Niantic.Lightship.AR.Loader
             if (settings == null)
                 settings = CreateInstance<LightshipSettings>();
 #endif
+            ValidateApiKey(settings.ApiKey);
 
             return settings;
+        }
+
+        private static void ValidateApiKey(string apiKey)
+        {
+            if (string.IsNullOrWhiteSpace(apiKey))
+            {
+                Debug.LogWarning("Please provide an ApiKey that has been created for your account for a project at https://lightship.dev/account/projects/");
+            }
+
+            if (apiKey != null && apiKey.Length > 512)
+            {
+                throw new InvalidOperationException("Api Key Length is too large");
+            }
         }
 
 #if UNITY_EDITOR
@@ -222,36 +224,25 @@ namespace Niantic.Lightship.AR.Loader
             settings._runPlaybackManuallyEditor = runPlaybackManually;
             settings._runPlaybackManuallyDevice = runPlaybackManually;
             settings._preferLidarIfAvailable = preferLidarIfAvailable;
+
             return settings;
         }
 
-        internal ARCommonMetadataStruct GetCommonDataEnvelopeWithRequestIdAsStruct()
+        internal ARCommonMetadataStruct GetCommonDataEnvelopeWithRequestIdAsStruct(string requestId)
         {
             var metadata = new ARCommonMetadataStruct
             (
-                _applicationId,
-                _platform,
-                _manufacturer,
-                _deviceModel,
-                _userId,
-                _clientId,
-                _ardkVersion,
-                _ardkAppInstanceId,
-                $"{Guid.NewGuid().ToString("N").ToLower()}"
+                Metadata.ApplicationId,
+                Metadata.Platform,
+                Metadata.Manufacturer,
+                Metadata.DeviceModel,
+                Metadata.UserId,
+                Metadata.ClientId,
+                Metadata.Version,
+                Metadata.AppInstanceId,
+                requestId
             );
             return metadata;
-        }
-
-        internal Dictionary<string, string> GetApiGatewayHeaders()
-        {
-            var header = new Dictionary<string, string>
-            {
-                { AuthorizationHeaderKey, _apiKey },
-                { ClientIdHeaderKey, _clientId },
-                { UserIdHeaderKey, _userId },
-                { ApplicationIdKey, _applicationId }
-            };
-            return header;
         }
     }
 

@@ -3,7 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-
+using Niantic.Lightship.AR.Utilities;
 using UnityEngine;
 
 using Random = UnityEngine.Random;
@@ -11,10 +11,12 @@ using Random = UnityEngine.Random;
 namespace Niantic.Lightship.AR.Extensions.Gameboard
 {
   /// <summary>
-  /// Gameboard this class manages the the gameboard data structures.
-  /// It dynamically builds a 2d grid for running navigation algorithms on.
-  /// There are a number of functions to help you place and move object on the board.
+  /// This class manages the data structures associated with a <c>Gameboard</c>.
+  /// It dynamically builds a 2d grid on the meshes detected in the environment for running navigation algorithms on.
+  /// You are able to retrieve a number of properties of the <c>Gameboard</c> from it.
+  /// There are also a number of methods to help you place and move <c>GameboardAgent</c>s on the board.
   /// </summary>
+  [PublicAPI]
   public class Gameboard
   {
     private readonly ModelSettings _settings;
@@ -51,9 +53,12 @@ namespace Niantic.Lightship.AR.Extensions.Gameboard
       _model = null;
     }
 
-    /// Allocates a new Gameboard.
-    /// @param settings Settings to calibrate unoccupied area detection.
-    /// @param visualise Activate visualisation.
+    /// <summary>
+    /// Constructs a new Gameboard using the parameters given.
+    /// </summary>
+    /// <param name="settings">Settings to calibrate unoccupied area detection.</param>
+    /// <param name="visualise">Visualize the <c>Gameboard</c> in the scene.</param>
+    /// <returns>Returns the newly created <c>Gameboard</c>.</returns>
     public Gameboard(ModelSettings settings, bool visualise)
     {
       if (settings.TileSize <= 0)
@@ -73,6 +78,12 @@ namespace Niantic.Lightship.AR.Extensions.Gameboard
       _pathFinding = new PathFinding(_model);
     }
 
+    /// <summary>
+    /// Checks if a particular 3d position is on the Gameboard (within a certain threshold).
+    /// </summary>
+    /// <param name="position"> The 3d position to check for.</param>
+    /// <param name="delta"> The threshold distance from the Gameboard to check against.</param>
+    /// <returns> <c>true</c> if the position provided is within delta meters of the Gameboard grid plane.</returns>
     public bool IsOnGameboard(Vector3 position, float delta)
     {
       var tile = Utils.PositionToTile(position, _settings.TileSize);

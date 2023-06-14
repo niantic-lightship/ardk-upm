@@ -89,7 +89,7 @@ namespace Niantic.Lightship.AR
         /// <seealso cref="DisposeImage"/>
         public override bool NativeHandleValid(int nativeHandle)
         {
-            return _managedXrCpuImages.ContainsKey(nativeHandle);
+            return _managedXrCpuImages.ContainsKey(nativeHandle) && null != _managedXrCpuImages[nativeHandle];
         }
 
         /// <summary>

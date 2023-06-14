@@ -1,3 +1,4 @@
+using Niantic.Lightship.AR.Utilities;
 using UnityEngine;
 
 #if UNITY_EDITOR
@@ -6,6 +7,10 @@ using UnityEditor;
 
 namespace Niantic.Lightship.AR.Subsystems
 {
+    /// <summary>
+    /// The ARLocation is the digital twin of the physical location
+    /// </summary>
+    [PublicAPI]
     public class ARLocation : MonoBehaviour
     {
 #if UNITY_EDITOR

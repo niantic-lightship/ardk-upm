@@ -1,9 +1,11 @@
+// Copyright 2022 Niantic, Inc. All Rights Reserved.
+
 using System;
 using System.Collections;
 using System.Threading.Tasks;
 
 using Niantic.Lightship.AR.Subsystems;
-
+using Niantic.Lightship.AR.Utilities;
 using UnityEngine;
 #if !UNITY_EDITOR && UNITY_ANDROID
 using UnityEngine.Android;
@@ -11,6 +13,13 @@ using UnityEngine.Android;
 
 namespace Niantic.Lightship.AR
 {
+    /// <summary>
+    /// The CoverageClientManager component provides the ability to query VPS coverage area and localization target
+    /// information within a specified radius from either a device's current location or a specified location.
+    /// Additionally, private VPS-scans can also be provided to this manager to have them be included in the query
+    /// result for testing purposes (as private VPS-scans are not currently included in the query response).
+    /// </summary>
+    [PublicAPI]
     public class CoverageClientManager : MonoBehaviour
     {
         [SerializeField] [Tooltip("Radial distance from query location when querying coverage")] [Range(0,2000)]
@@ -25,16 +34,19 @@ namespace Niantic.Lightship.AR
         private bool _useCurrentLocation = true;
 
         [SerializeField] [HideInInspector]
-        public float _queryLatitude;
+        private float _queryLatitude;
 
         [SerializeField] [HideInInspector]
-        public float _queryLongitude;
+        private float _queryLongitude;
 
         [SerializeField] [HideInInspector]
         private LocalizationTarget[] _privateARLocalizationTargets;
 
         private CoverageClient _coverageClient;
 
+        /// <summary>
+        /// Whether or not to use current location in the query
+        /// </summary>
         public bool UseCurrentLocation
         {
             get => _useCurrentLocation;
@@ -44,6 +56,9 @@ namespace Niantic.Lightship.AR
             }
         }
 
+        /// <summary>
+        /// The radius of the query in meters
+        /// </summary>
         public int QueryRadius
         {
             get => _queryRadius;
@@ -53,6 +68,9 @@ namespace Niantic.Lightship.AR
             }
         }
 
+        /// <summary>
+        /// The latitude of the query
+        /// </summary>
         public float QueryLatitude
         {
             get => _queryLatitude;
@@ -62,6 +80,9 @@ namespace Niantic.Lightship.AR
             }
         }
 
+        /// <summary>
+        /// The longitude of the query
+        /// </summary>
         public float QueryLongitude
         {
             get => _queryLongitude;
@@ -71,6 +92,9 @@ namespace Niantic.Lightship.AR
             }
         }
 
+        /// <summary>
+        /// The localization targets for the private scans
+        /// </summary>
         public LocalizationTarget[] PrivateARLocalizationTargets
         {
             get => _privateARLocalizationTargets;
@@ -81,6 +105,9 @@ namespace Niantic.Lightship.AR
         }
 
 #if UNITY_EDITOR
+        /// <summary>
+        /// The location manifests for the private scans
+        /// </summary>
         public ARLocationManifest[] PrivateARLocations
         {
             get => _privateARLocations;
@@ -96,6 +123,10 @@ namespace Niantic.Lightship.AR
             _coverageClient = CoverageClientFactory.Create();
         }
 
+        /// <summary>
+        /// Queries for coverage
+        /// </summary>
+        /// <param name="onTryGetCoverage">Callback after query completes</param>
         public void TryGetCoverage(Action<AreaTargetsResult> onTryGetCoverage)
         {
 #if !UNITY_EDITOR && UNITY_ANDROID
@@ -157,16 +188,40 @@ namespace Niantic.Lightship.AR
             _coverageClient.TryGetCoverage(inputLocation, QueryRadius, onTryGetCoverage, _privateARLocalizationTargets);
         }
 
+        /// <summary>
+        /// Tries to get a hint image from the URL
+        /// </summary>
+        /// <param name="imageUrl">The URL used to get the hint image</param>
+        /// <returns>The texture with the hint image fetched from the URL</returns>
         public Task<Texture> TryGetImageFromUrl(string imageUrl) => _coverageClient.TryGetImageFromUrl(imageUrl);
 
+        /// <summary>
+        /// Tries to get a hint image from the URL
+        /// </summary>
+        /// <param name="imageUrl">The URL used to get the hint image</param>
+        /// <param name="onImageDownloaded">Callback after the hint image is downloaded</param>
         public void TryGetImageFromUrl(string imageUrl, Action<Texture> onImageDownloaded)
         {
             _coverageClient.TryGetImageFromUrl(imageUrl, onImageDownloaded);
         }
 
+        /// <summary>
+        /// Tries to get a hint image from the URL
+        /// </summary>
+        /// <param name="imageUrl">The URL used to get the hint image</param>
+        /// <param name="width">The requested width of the hint image</param>
+        /// <param name="height">The requested height of the hint image</param>
+        /// <returns>The texture with the hint image</returns>
         public Task<Texture> TryGetImageFromUrl(string imageUrl, int width, int height) =>
             _coverageClient.TryGetImageFromUrl(imageUrl, width, height);
 
+        /// <summary>
+        /// Tries to get a hint image from the URL
+        /// </summary>
+        /// <param name="imageUrl">The URL used to get the hint image</param>
+        /// <param name="width">The requested width of the hint image</param>
+        /// <param name="height">The requested height of the hint image</param>
+        /// <param name="onImageDownloaded">Callback when the hint image has been downloaded</param>
         public void TryGetImageFromUrl(string imageUrl, int width, int height, Action<Texture> onImageDownloaded)
         {
             _coverageClient.TryGetImageFromUrl(imageUrl, width, height, onImageDownloaded);

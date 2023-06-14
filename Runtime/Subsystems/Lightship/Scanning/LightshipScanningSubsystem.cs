@@ -109,7 +109,8 @@ namespace Niantic.Lightship.AR
                         _currentConfiguration.RaycasterVisualizationEnabled,
                         (int)_currentConfiguration.RaycasterVisualizationResolution.x,
                         (int)_currentConfiguration.RaycasterVisualizationResolution.y,
-                        _currentConfiguration.VoxelVisualizationEnabled);
+                        _currentConfiguration.VoxelVisualizationEnabled,
+                        _currentConfiguration.ScanBasePath);
                 }
             }
 

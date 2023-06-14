@@ -1,5 +1,6 @@
 // Copyright 2023 Niantic, Inc. All Rights Reserved.
 
+using System;
 using System.Runtime.InteropServices;
 using UnityEngine;
 
@@ -30,6 +31,7 @@ namespace Niantic.Lightship.AR.Subsystems
         private Vector2 _raycasterVisualizationResolution;
         private bool _voxelVisualizationEnabled;
         private float _maxScanningDistance;
+        private string _scanBasePath;
 
         public int Framerate
         {
@@ -96,6 +98,19 @@ namespace Niantic.Lightship.AR.Subsystems
             }
         }
 
+        public string ScanBasePath
+        {
+            get => _scanBasePath;
+            set
+            {
+                if (string.IsNullOrEmpty(value))
+                {
+                    throw new ArgumentException("Scan path cannot be null or empty.");
+                }
+                _scanBasePath = value;
+            }
+        }
+
         /// <summary>
         /// Default constructor for the XRScanningConfiguration.
         /// </summary>
@@ -106,6 +121,7 @@ namespace Niantic.Lightship.AR.Subsystems
             _raycasterVisualizationResolution = new Vector2(DEFAULT_RAYCASTER_VIS_WIDTH, DEFAULT_RAYCASTER_VIS_HEIGHT);
             _voxelVisualizationEnabled = DEFAULT_VOXEL_VIS_ENABLED;
             _maxScanningDistance = DEFAULT_MAX_SCANNING_DISTANCE;
+            _scanBasePath = Application.persistentDataPath;
         }
 
         /// <summary>
@@ -120,7 +136,8 @@ namespace Niantic.Lightship.AR.Subsystems
                 _raycasterVisualizationEnabled.Equals(other.RaycasterVisualizationEnabled) &&
                 _raycasterVisualizationResolution == other.RaycasterVisualizationResolution &&
                 _voxelVisualizationEnabled == other.VoxelVisualizationEnabled &&
-                _maxScanningDistance.Equals(other.MaxScanningDistance);
+                _maxScanningDistance.Equals(other.MaxScanningDistance) &&
+                string.Equals(_scanBasePath, other._scanBasePath);
         }
     }
 }

@@ -39,13 +39,14 @@ namespace Niantic.Lightship.AR.ScanningSubsystem
 
         public void Configure(IntPtr handle, int framerate, bool raycastVisualizationEnabled,
             int raycastVisualizationWidth, int raycastVisualizationHeight,
-            bool voxelVisualizationEnabled)
+            bool voxelVisualizationEnabled, string scanBasePath)
         {
             _currentConfiguration.Framerate = framerate;
             _currentConfiguration.RaycasterVisualizationEnabled = raycastVisualizationEnabled;
             _currentConfiguration.RaycasterVisualizationResolution =
                 new Vector2(raycastVisualizationWidth, raycastVisualizationHeight);
             _currentConfiguration.VoxelVisualizationEnabled = voxelVisualizationEnabled;
+            _currentConfiguration.ScanBasePath = scanBasePath;
         }
 
         public bool TryGetRaycastBuffer(IntPtr handle, out IntPtr memoryBuffer, out int size, out int width,

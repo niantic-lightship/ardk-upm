@@ -1,9 +1,7 @@
 using System;
-using System.Collections.Generic;
 using Niantic.Lightship.AR.PersistentAnchorSubsystem;
 using Niantic.Lightship.AR.Subsystems;
 using Unity.Collections;
-using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 using UnityEngine.Scripting;
 using UnityEngine.XR.ARSubsystems;
@@ -19,27 +17,6 @@ namespace Niantic.Lightship.AR
     {
         internal class LightshipProvider : Provider
         {
-            /// <summary>
-            /// The VPS error states
-            /// </summary>
-            public enum VpsError
-            {
-                Unknown,
-                None,
-                NetworkingConnection,
-                DevicePermissionNeeded,
-                NoApiKey,
-                BadApiKey,
-                UnsupportedGpsLocation,
-                AnchorTooFarFromGpsLocation,
-                AnchorPermissionDenied,
-                LocalizationTimeout,
-                RequestsLimitExceeded,
-                InvalidServerResponse,
-                InternalServer,
-                InternalClient
-            }
-
             private _IApi _api;
 
             /// <summary>
@@ -132,7 +109,6 @@ namespace Niantic.Lightship.AR
                         {
                             trackablesUpdatedArray[i] = CreateXRPersistentAnchor(updatedIntPtrNativeArray[i]);
                         }
-
                         for (int i = 0; i < removedCount; i++)
                         {
                             var xrPersistentAnchor = CreateXRPersistentAnchor(removedIntPtrNativeArray[i]);

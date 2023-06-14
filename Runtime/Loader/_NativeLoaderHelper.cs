@@ -125,11 +125,21 @@ namespace Niantic.Lightship.AR.Loader
             loader.DestroySubsystem<XRSemanticsSubsystem>();
             loader.DestroySubsystem<XRPersistentAnchorSubsystem>();
             loader.DestroySubsystem<XROcclusionSubsystem>();
-            loader.DestroySubsystem<XRInputSubsystem>();
             loader.DestroySubsystem<XRScanningSubsystem>();
             loader.DestroySubsystem<XRMeshSubsystem>();
 
             _inputProvider?.Dispose();
+
+            // Unity's native lifecycle handler for integrated subsystems does call Stop() before Shutdown() if
+            // the subsystem is running when the latter is called. However, for the XRInputSubsystem, this causes
+            // the below error to appear.
+            //      "A device disconnection with the id 0 has been reported but no device with that id was connected."
+            // Manually calling Stop() before Shutdown() eliminates the issue.
+            var input = loader.GetLoadedSubsystem<XRInputSubsystem>();
+            if (input != null && input.running)
+                input.Stop();
+
+            loader.DestroySubsystem<XRInputSubsystem>();
 
             LightshipUnityContext.Deinitialize();
 

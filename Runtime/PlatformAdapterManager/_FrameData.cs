@@ -40,9 +40,6 @@ namespace PlatformAdapterManager
         private Vector2Int _platformDepthResolution;
         private NativeArray<float> _platformDepthCameraIntrinsicsData;
 
-        // Occlusion context
-        private NativeArray<OcclusionContext> _occlusionContext;
-
         public UInt64 TimestampMs
         {
             set => frameCStruct.TimestampMs = value;
@@ -61,11 +58,6 @@ namespace PlatformAdapterManager
         public void SetCompassData(CompassData compass)
         {
             _compassData[0] = compass;
-        }
-
-        public void SetOcclusionContext(OcclusionContext context)
-        {
-            _occlusionContext[0] = context;
         }
 
         public Vector2Int Rgba256x144ImageResolution => _rgba256x144ImageResolution;
@@ -178,11 +170,6 @@ namespace PlatformAdapterManager
             set => frameCStruct.CompassDataLength = value;
         }
 
-        public UInt32 OcclusionContextDataLength
-        {
-            set => frameCStruct.OcclusionContextDataLength = value;
-        }
-
         public UInt32 CameraPoseLength
         {
             set => frameCStruct.CameraPoseLength = value;
@@ -218,7 +205,6 @@ namespace PlatformAdapterManager
 
             _gpsData.Dispose();
             _compassData.Dispose();
-            _occlusionContext.Dispose();
 
             if (_cpuJpegFullResImageData.IsCreated)
                 _cpuJpegFullResImageData.Dispose();
@@ -271,9 +257,6 @@ namespace PlatformAdapterManager
             _compassData = new NativeArray<CompassData>(1, Allocator.Persistent);
             frameCStruct.CompassDataLength = 0; // Length is assigned when data is ready
 
-            _occlusionContext = new NativeArray<OcclusionContext>(1, Allocator.Persistent);
-            frameCStruct.OcclusionContextDataLength = 0; // Length is assigned when data is ready
-
             // Depth buffer data will be reinitialized when getting the first platform depth image.
             frameCStruct.PlatformDepthDataLength = 0;
 
@@ -298,7 +281,6 @@ namespace PlatformAdapterManager
 
                 frameCStruct.GpsLocationData = (IntPtr)_gpsData.GetUnsafeReadOnlyPtr();
                 frameCStruct.CompassData = (IntPtr)_compassData.GetUnsafeReadOnlyPtr();
-                frameCStruct.OcclusionContext = (IntPtr)_occlusionContext.GetUnsafeReadOnlyPtr();
 
                 // We can't set the full resolution Jpeg data until getting the data.
                 // But we can do so for the camera intrinsics.

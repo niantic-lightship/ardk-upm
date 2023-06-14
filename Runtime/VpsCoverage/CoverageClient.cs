@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Niantic.Lightship.AR.Loader;
+using Niantic.Lightship.AR.Settings.User;
 using UnityEngine;
 
 namespace Niantic.Lightship.AR
@@ -35,8 +36,10 @@ namespace Niantic.Lightship.AR
                 queryRadius = 0;
             }
 
-            var metadata = _lightshipSettings.GetCommonDataEnvelopeWithRequestIdAsStruct();
-            var requestHeaders = _lightshipSettings.GetApiGatewayHeaders();
+            string requestId = Guid.NewGuid().ToString();
+            var metadata = _lightshipSettings.GetCommonDataEnvelopeWithRequestIdAsStruct(requestId);
+            var requestHeaders = Metadata.GetApiGatewayHeaders(requestId);
+            requestHeaders.Add("Authorization", _lightshipSettings.ApiKey);
 
             if (Input.location.status == LocationServiceStatus.Running)
             {
@@ -68,10 +71,10 @@ namespace Niantic.Lightship.AR
 
         private async Task<LocalizationTargetsResult> RequestLocalizationTargetsAsync(string[] targetIdentifiers)
         {
-            var metadata = _lightshipSettings.GetCommonDataEnvelopeWithRequestIdAsStruct();
-            var requestHeaders = _lightshipSettings.GetApiGatewayHeaders();
-
-            Debug.Log(JsonUtility.ToJson(metadata, true));
+            string requestId = Guid.NewGuid().ToString();
+            var metadata = _lightshipSettings.GetCommonDataEnvelopeWithRequestIdAsStruct(requestId);
+            var requestHeaders = Metadata.GetApiGatewayHeaders(requestId);
+            requestHeaders.Add("Authorization", _lightshipSettings.ApiKey);
 
             var request = new _LocalizationTargetsRequest(targetIdentifiers, metadata);
 

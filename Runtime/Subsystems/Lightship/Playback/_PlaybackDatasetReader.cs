@@ -78,9 +78,6 @@ namespace Niantic.Lightship.AR.Playback
 
         public double GetCurrentTimestampInSeconds() => CurrFrame?.TimestampInSeconds ?? 0;
 
-        // TODO: add logic to determine if dataset is Lidar or not
-        public bool GetIsLidarData() => true;
-
         public int CurrentFrameIndex => _currentFrameIndex;
 
         public _PlaybackDataset.FrameMetadata CurrFrame

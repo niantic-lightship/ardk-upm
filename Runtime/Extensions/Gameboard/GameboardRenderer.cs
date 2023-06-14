@@ -2,16 +2,17 @@
 
 using System.Collections.Generic;
 using System.Linq;
-
+using Niantic.Lightship.AR.Utilities;
 using UnityEngine;
 
 namespace Niantic.Lightship.AR.Extensions.Gameboard
 {
     /// <summary>
-    /// Gameboard Renderer is a helper monobehaviour which will draw the gameboard tiles
+    /// GameboardRenderer is a helper monobehaviour which will draw the gameboard tiles
     /// If you want to draw the gameboard in a custom way you can create a similar renderer
     /// e.g. stylize the board as water/snow/sand etc.
     /// </summary>
+    [PublicAPI]
     public class GameboardRenderer : MonoBehaviour
     {
         [SerializeField]

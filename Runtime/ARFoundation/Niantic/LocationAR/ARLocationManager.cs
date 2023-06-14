@@ -1,26 +1,35 @@
 using System;
+using Niantic.Lightship.AR.Utilities;
 using UnityEngine;
 using UnityEngine.XR.ARSubsystems;
 
 namespace Niantic.Lightship.AR.Subsystems
 {
+    /// <summary>
+    /// The ARLocationManager is used to track ARLocations.  ARLocations tie digital content to the physical world.
+    /// When you start tracking an ARLocation, and aim your phone's camera at the physical location,
+    /// the digital content that you child to the ARLocation will appear in the physical world.
+    /// </summary>
+    [PublicAPI]
     public class ARLocationManager : ARPersistentAnchorManager
     {
-        [Tooltip("Whether or not to auto-track the currently selected location")] [SerializeField]
-        private bool _autoTrack = true;
+        [Tooltip("Whether or not to auto-track the currently selected location.  Auto-tracked locations will be enabled, including their children, when the camera is aimed at the physical location.")]
+        [SerializeField]
+        private bool _autoTrack = false;
 
         /// <summary>
-        /// Called when the location tracking state has changed
+        /// Called when the location tracking state has changed.
         /// </summary>
         public event Action<ARLocationTrackedEventArgs> locationTrackingStateChanged;
 
         /// <summary>
-        /// Gets all of the ARLocations
+        /// Gets all of the ARLocations childed to the ARLocationManager.
         /// </summary>
         public ARLocation[] ARLocations => GetComponentsInChildren<ARLocation>(true);
 
         /// <summary>
-        /// Whether or not to automatically start tracking the selected ARLocation
+        /// Whether or not to automatically start tracking the selected ARLocation.
+        /// If true, the location that is currently enabled will be automatically tracked on Start.
         /// </summary>
         public bool AutoTrack => _autoTrack;
 
@@ -33,8 +42,9 @@ namespace Niantic.Lightship.AR.Subsystems
             arPersistentAnchorStateChanged += HandleARPersistentAnchorStateChanged;
         }
 
-        private void Start()
+        protected override void Start()
         {
+            base.Start();
             foreach (var arLocation in ARLocations)
             {
                 if (_autoTrack && arLocation.gameObject.activeSelf)
@@ -56,9 +66,10 @@ namespace Niantic.Lightship.AR.Subsystems
         }
 
         /// <summary>
-        /// Starts tracking a location
+        /// Starts tracking a location.  This will create digital content in the physical world.
+        /// Content authored as children of the ARLocation will be enabled once the ARLocation becomes tracked.
         /// </summary>
-        /// <param name="arLocation">The location to track</param>
+        /// <param name="arLocation">The location to track.</param>
         public void StartTracking(ARLocation arLocation)
         {
             if (_trackedARLocation)
@@ -81,7 +92,7 @@ namespace Niantic.Lightship.AR.Subsystems
         }
 
         /// <summary>
-        /// Stops tracking the currently tracked location
+        /// Stops tracking the currently tracked location.  This must be called before switching to a new location.
         /// </summary>
         public void StopTracking()
         {
@@ -91,6 +102,7 @@ namespace Niantic.Lightship.AR.Subsystems
                     gameObject);
                 return;
             }
+
             _trackedARLocation.gameObject.SetActive(false);
             _trackedARLocation.transform.SetParent(transform, false);
             DestroyAnchor(_trackedARPersistentAnchor);
@@ -109,6 +121,7 @@ namespace Niantic.Lightship.AR.Subsystems
                     {
                         _trackedARLocation.gameObject.SetActive(true);
                     }
+
                     var args = new ARLocationTrackedEventArgs(_trackedARLocation, true);
                     locationTrackingStateChanged?.Invoke(args);
                 }

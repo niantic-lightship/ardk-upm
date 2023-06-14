@@ -1,16 +1,17 @@
 {
   "name": "com.nianticlabs.lightship",
-  "displayName": "Lightship AR Plugin",
-  "version": "3.0.0-232302",
+  "displayName": "Niantic Lightship AR Plugin",
+  "version": "3.0.0-232402181107",
   "unity": "2021.3",
-  "description": "Provides native Lightship SDK integration for use with Unity's multi-platform XR API.\nSupports the following features:\n-Visual Positioning System\n-Meshing\n-Depth\n-Occlusion\n\n* Lightship is a trademark of Niantic Labs Inc., registered in the U.S. and other countries and regions.",
+  "description": "Provides native Niantic Lightship SDK integration for use with Unity's multi-platform XR API.\n* Lightship is a trademark of Niantic Labs Inc., registered in the U.S. and other countries and regions.",
   "keywords": [
     "lightship",
     "ar",
     "vps",
     "xr",
     "reality",
-    "xreditorsubsystem"
+    "xreditorsubsystem",
+    "niantic"
   ],
   "dependencies": {
     "com.unity.editorcoroutines": "1.0.0",

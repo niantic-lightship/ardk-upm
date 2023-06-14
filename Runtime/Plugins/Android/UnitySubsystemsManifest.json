@@ -1,0 +1,15 @@
+{
+        "name": "Niantic Lightship",
+        "version": "3.0.0-232402181107",
+        "libraryName": "ARDK",
+        "inputs": [
+                {
+                        "id": "LightshipInput"
+                }
+        ],
+        "meshings": [
+                {
+                        "id": "LightshipMeshing"
+                }
+        ]
+}
