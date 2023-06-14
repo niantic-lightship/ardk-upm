@@ -1,13 +1,15 @@
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using AOT;
 using Google.Protobuf;
+using Niantic.ARDK.AR.Protobuf;
 using Niantic.Lightship.AR.Protobuf;
-using Niantic.Lightship.AR.Utilities.User;
+using Niantic.Lightship.AR.Settings.User;
 using UnityEngine;
 
 namespace Telemetry
@@ -16,21 +18,25 @@ namespace Telemetry
     {
         private readonly ITelemetryPublisher _telemetryPublisher;
         private readonly CancellationTokenSource _cancellationTokenSource;
+        private readonly string _apiKey;
 
-        private static readonly ConcurrentQueue<ArdkNextTelemetryOmniProto> s_messagesToBeSent;
+        private static readonly
+            ConcurrentQueue<KeyValuePair<ArdkNextTelemetryOmniProto, ARClientEnvelope.Types.AgeLevel>>
+            s_messagesToBeSent;
         private static readonly MessageParser<ArdkNextTelemetryOmniProto> s_protoMessageParser;
 
         private static readonly TimeSpan s_publishLoopDelay = TimeSpan.FromSeconds(1);
 
         static TelemetryService()
         {
-            s_messagesToBeSent = new ConcurrentQueue<ArdkNextTelemetryOmniProto>();
+            s_messagesToBeSent = new ConcurrentQueue<KeyValuePair<ArdkNextTelemetryOmniProto, ARClientEnvelope.Types.AgeLevel>>();
             s_protoMessageParser = new MessageParser<ArdkNextTelemetryOmniProto>(() => new ArdkNextTelemetryOmniProto());
         }
 
-        public TelemetryService(ITelemetryPublisher telemetryPublisher)
+        public TelemetryService(ITelemetryPublisher telemetryPublisher, string apiKey)
         {
             _telemetryPublisher = telemetryPublisher;
+            _apiKey = apiKey;
 
             _cancellationTokenSource = new CancellationTokenSource();
             Task.Run(async () => { await TimedPublish(s_publishLoopDelay); });
@@ -47,7 +53,9 @@ namespace Telemetry
                 ardkNextTelemetryOmniProto.TimestampMs = GetCurrentUtcTimestamp();
 
             ardkNextTelemetryOmniProto.ArCommonMetadata = Metadata.GetArCommonMetadata(requestId);
-            s_messagesToBeSent.Enqueue(ardkNextTelemetryOmniProto);
+            s_messagesToBeSent.Enqueue(
+                new KeyValuePair<ArdkNextTelemetryOmniProto, ARClientEnvelope.Types.AgeLevel>(
+                    ardkNextTelemetryOmniProto, Metadata.AgeLevel));
         }
 
         // Has to be internal since we provide it for nar system initialization in StartupSystems
@@ -85,7 +93,9 @@ namespace Telemetry
 
                 omniProtoObject.ArCommonMetadata = Metadata.GetArCommonMetadata(requestIdString);
 
-                s_messagesToBeSent.Enqueue(omniProtoObject);
+                s_messagesToBeSent.Enqueue(
+                    new KeyValuePair<ArdkNextTelemetryOmniProto, ARClientEnvelope.Types.AgeLevel>(omniProtoObject,
+                        Metadata.AgeLevel));
             }
             catch (Exception e)
             {
@@ -105,7 +115,8 @@ namespace Telemetry
                     {
                         if (s_messagesToBeSent.TryDequeue(out var eventToPublish))
                         {
-                            _telemetryPublisher.RecordEvent(eventToPublish);
+                            eventToPublish.Key.DeveloperKey = _apiKey;
+                            _telemetryPublisher.RecordEvent(eventToPublish.Key, eventToPublish.Value);
                         }
                     }
 
@@ -113,7 +124,8 @@ namespace Telemetry
                 }
                 catch (Exception e)
                 {
-                    Debug.LogWarning($"Encountered exception: {e} while running the timed telemetry loop");
+                    // for local debugging only.
+                    //Debug.Log($"Encountered exception: {e} while running the timed telemetry loop");
                 }
             }
         }
@@ -129,7 +141,8 @@ namespace Telemetry
             _cancellationTokenSource?.Dispose();
             if (!s_messagesToBeSent.IsEmpty)
             {
-                Debug.LogWarning($"Events to be dropped: {s_messagesToBeSent.Count}");
+                // for local debugging only.
+                // Debug.LogWarning($"Events to be dropped: {s_messagesToBeSent.Count}");
             }
         }
     }

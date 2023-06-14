@@ -20,8 +20,11 @@ namespace Niantic.Lightship.AR.Editor
         private struct LocationData
         {
             public string NodeIdentifier;
+            public string DefaultAnchorPayload;
             public string AnchorPayload;
             public string LocalizationTargetName;
+            public string LocalizationTargetID;
+            public EdgeRepresentation LocalToSpace;
         }
 
         [Serializable]
@@ -253,8 +256,8 @@ namespace Niantic.Lightship.AR.Editor
                     {
                         GeneratedMesh = mesh,
                         NodeIdentifier = locationData.NodeIdentifier,
-                        RotationToTarget = Quaternion.identity,
-                        TranslationToTarget = Vector3.zero,
+                        RotationToTarget = RotationFromEdge(locationData.LocalToSpace),
+                        TranslationToTarget = TranslationFromEdge(locationData.LocalToSpace),
                         Texture = tex
                     };
 
@@ -262,7 +265,7 @@ namespace Niantic.Lightship.AR.Editor
                     meshData.Insert(0, initialMeshData);
 
                     return !(meshData.Count == 0 ||
-                        string.IsNullOrEmpty(locationData.AnchorPayload));
+                        string.IsNullOrEmpty(locationData.DefaultAnchorPayload));
                 }
             }
         }
@@ -285,36 +288,19 @@ namespace Niantic.Lightship.AR.Editor
                     var edgeEntries = validEntries.Where
                         (e => Path.GetExtension(e.Name).Equals(".json"));
 
-                    var edgeData = ParseEdgeData(edgeEntries.First());
+                    var edgeData = ParseLocationData(edgeEntries.First());
                     var texture = ImportTexture(textureEntries.First());
 
                     var mesh = meshEntries.First();
                     var strippedName = mesh.Name.Split('.')[0];
                     var imported = ImportMesh(mesh, $"ARTempMesh{strippedName}.fbx");
-                    var transform = edgeData.sourceToDestination;
-                    // var gotTransform = GetTransformToDefault(strippedName, graphData, out var transform);
-
-                    var translation = new Vector3
-                    (
-                        transform.translation.x,
-                        transform.translation.y,
-                        transform.translation.z
-                    );
-
-                    var rotation = new Quaternion
-                    (
-                        transform.rotation.x,
-                        transform.rotation.y,
-                        transform.rotation.z,
-                        transform.rotation.w
-                    );
 
                     var meshData = new MeshData()
                     {
                         GeneratedMesh = imported,
                         NodeIdentifier = strippedName,
-                        TranslationToTarget = translation,
-                        RotationToTarget = rotation,
+                        TranslationToTarget = TranslationFromEdge(edgeData.LocalToSpace),
+                        RotationToTarget = RotationFromEdge(edgeData.LocalToSpace),
                         Texture = texture
                     };
 
@@ -323,6 +309,58 @@ namespace Niantic.Lightship.AR.Editor
             }
 
             return ret;
+        }
+
+        private static Vector3 TranslationFromEdge(EdgeRepresentation edgeData)
+        {
+            var transform = edgeData.sourceToDestination;
+
+            var translation = new Vector3
+            (
+                transform.translation.x,
+                transform.translation.y,
+                transform.translation.z
+            );
+
+            return translation;
+        }
+
+        private static Quaternion RotationFromEdge(EdgeRepresentation edgeData)
+        {
+            var transform = edgeData.sourceToDestination;
+
+            var isRotationEmpty = IsFloatZero(transform.rotation.x) &&
+                IsFloatZero(transform.rotation.y) &&
+                IsFloatZero(transform.rotation.z) &&
+                IsFloatZero(transform.rotation.w);
+
+            Quaternion rotation;
+            if (isRotationEmpty)
+            {
+                rotation = Quaternion.identity;
+            }
+            else
+            {
+                rotation = new Quaternion
+                (
+                    transform.rotation.x,
+                    transform.rotation.y,
+                    transform.rotation.z,
+                    transform.rotation.w
+                );
+            }
+            return rotation;
+        }
+
+        private const float _ToleranceForZero = 0.0001f;
+        private static bool IsFloatZero(float x)
+        {
+            if (Math.Abs(x) < _ToleranceForZero)
+            {
+                return true;
+            }
+
+            return false;
         }
 
         // Generates a mesh
@@ -370,20 +408,6 @@ namespace Niantic.Lightship.AR.Editor
             return newMesh;
         }
 
-        private static EdgeRepresentation ParseEdgeData(ZipArchiveEntry entry)
-        {
-            using (var stream = entry.Open())
-            {
-                using (var reader = new StreamReader(stream))
-                {
-                    var edgeFileText = reader.ReadToEnd();
-                    var edgeData = JsonUtility.FromJson<EdgeRepresentation>(edgeFileText);
-
-                    return edgeData;
-                }
-            }
-        }
-
         private static LocationData ParseLocationData(ZipArchiveEntry entry)
         {
             using (var stream = entry.Open())
@@ -392,6 +416,14 @@ namespace Niantic.Lightship.AR.Editor
                 {
                     var anchorFileText = reader.ReadToEnd();
                     var locationData = JsonUtility.FromJson<LocationData>(anchorFileText);
+
+                    // For backwards compatibility, if there is no DefaultAnchorPayload but an AnchorPayload,
+                    //  copy over the data
+                    if (string.IsNullOrEmpty(locationData.DefaultAnchorPayload) &&
+                        !string.IsNullOrEmpty(locationData.AnchorPayload))
+                    {
+                        locationData.DefaultAnchorPayload = locationData.AnchorPayload;
+                    }
 
                     return locationData;
                 }
@@ -462,7 +494,8 @@ namespace Niantic.Lightship.AR.Editor
         {
             var manifest = ScriptableObject.CreateInstance<ARLocationManifest>();
             manifest.NodeIdentifier = locationData.NodeIdentifier;
-            manifest.MeshOriginAnchorPayload = locationData.AnchorPayload;
+            manifest.MeshOriginAnchorPayload = locationData.DefaultAnchorPayload;
+            manifest.LocalizationTargetId = locationData.LocalizationTargetID;
             manifest.LocationName = Path.GetFileNameWithoutExtension(assetPath);
 
             AssetDatabase.CreateAsset(manifest, assetPath);

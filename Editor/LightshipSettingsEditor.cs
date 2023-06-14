@@ -69,8 +69,12 @@ namespace Niantic.Lightship.AR.Editor
                 if (_useLightshipDepthProperty.boolValue)
                 {
                     EditorGUILayout.IntSlider(_lightshipDepthFrameRateProperty, 1, 90, new GUIContent("Framerate"));
+                    // Temporarily disable the ability to prefer using LiDAR if available until meshing and gameboard
+                    // features work with arf platform depth
+                    /*
                     EditorGUILayout.PropertyField(_preferLidarIfAvailableProperty,
                         new GUIContent("Prefer LiDAR if Available"));
+                    */
                 }
                 EditorGUI.indentLevel--;
 
@@ -95,10 +99,16 @@ namespace Niantic.Lightship.AR.Editor
                 // Put Semantic Segmentation sub-settings here
                 EditorGUI.indentLevel--;
 
+                // Temporarily disable the ability to enable scanning subsystem until it is ready
+                /*
                 EditorGUILayout.Space(10);
                 EditorGUILayout.LabelField("Scanning", EditorStyles.boldLabel);
                 // TODO(sxian): Enable scanning by default after the implementation is landed.
-                EditorGUILayout.PropertyField(_useLightshipScanningProperty);
+                EditorGUILayout.PropertyField(_useLightshipScanningProperty, new GUIContent("Enabled"));
+                EditorGUI.indentLevel++;
+                // Put Scanning sub-settings here
+                EditorGUI.indentLevel--;
+                */
 
                 EditorGUILayout.Space(10);
                 EditorGUILayout.LabelField("Playback", EditorStyles.boldLabel);
@@ -120,16 +130,15 @@ namespace Niantic.Lightship.AR.Editor
 
         private void DrawEditorPlaybackGui()
         {
-            EditorGUI.indentLevel++;
-
             if (_platformSelected == 0)
             {
-
                 EditorGUILayout.PropertyField(_usePlaybackOnEditorProperty, new GUIContent("Enabled"));
                 if (_usePlaybackOnEditorProperty.boolValue)
                 {
+                    EditorGUI.indentLevel++;
                     DrawDatasetPathGUI();
                     EditorGUILayout.PropertyField(_runPlaybackManuallyEditorProperty, new GUIContent("Run Manually"));
+                    EditorGUI.indentLevel--;
                 }
             }
             else
@@ -137,11 +146,12 @@ namespace Niantic.Lightship.AR.Editor
                 EditorGUILayout.PropertyField(_usePlaybackOnDeviceProperty, new GUIContent("Enabled"));
                 if (_usePlaybackOnDeviceProperty.boolValue)
                 {
+                    EditorGUI.indentLevel++;
                     DrawDatasetPathGUI();
                     EditorGUILayout.PropertyField(_runPlaybackManuallyDeviceProperty, new GUIContent("Run Manually"));
+                    EditorGUI.indentLevel--;
                 }
             }
-            EditorGUI.indentLevel--;
         }
 
         private const char FindIcon = '\u25c9';

@@ -56,13 +56,19 @@ namespace Niantic.Lightship.AR
 
         internal static async Task<Texture> DownloadImageAsync(string imageUrl)
         {
+            if (string.IsNullOrEmpty(imageUrl))
+            {
+                return null;
+            }
+
             UnityWebRequest webRequest = UnityWebRequestTexture.GetTexture(imageUrl);
             webRequest.downloadHandler = new DownloadHandlerTexture();
+
             await webRequest.SendWebRequest();
 
             if (webRequest.result != UnityWebRequest.Result.Success)
             {
-                Debug.LogError("Image download failed: " + webRequest.error + "\nURL: " + imageUrl);
+                Debug.LogWarning("Image download failed: " + webRequest.error + "\nURL: " + imageUrl);
                 return null;
             }
 

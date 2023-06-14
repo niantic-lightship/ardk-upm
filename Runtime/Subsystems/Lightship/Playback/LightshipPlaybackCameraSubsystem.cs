@@ -181,7 +181,7 @@ namespace Niantic.Lightship.AR.Playback
                         IntPtr.Zero,
                         m_DatasetReader.GetImageResolution(),
                         m_DatasetReader.GetFramerate(),
-                        m_DatasetReader.GetIsLidarData() ? Supported.Supported : Supported.Unsupported
+                        m_DatasetReader.GetIsLidarAvailable() ? Supported.Supported : Supported.Unsupported
                     );
 
                 var na = new NativeArray<XRCameraConfiguration>(1, allocator);

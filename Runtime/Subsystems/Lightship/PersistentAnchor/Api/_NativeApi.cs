@@ -75,9 +75,10 @@ namespace Niantic.Lightship.AR.PersistentAnchorSubsystem
 
         public bool TryRemoveAnchor(IntPtr persistentAnchorApiHandle, TrackableId anchorId)
         {
+            // Return false instead of exception due to shutdown OnDestroy from ARPersistentAnchors
             if (persistentAnchorApiHandle == IntPtr.Zero)
             {
-                throw new ArgumentException("Tried to call TryRemoveAnchor with IntPtr.Zero");
+                return false;
             }
 
             return Native.TryRemoveAnchor(persistentAnchorApiHandle, ref anchorId);

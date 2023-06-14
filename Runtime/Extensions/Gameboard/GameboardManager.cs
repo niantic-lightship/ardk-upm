@@ -1,13 +1,16 @@
 using System.Collections;
 using System.Collections.Generic;
+using Niantic.Lightship.AR.Utilities;
 using UnityEngine;
 
 namespace Niantic.Lightship.AR.Extensions.Gameboard
 {
     /// <summary>
-    /// GameboardManager this monobehaviour will create a gameboard and manage updating it.
-    /// You can pass this to any classes that may need the gameboard e.g. your agents that handle moving across the board
+    /// <c>GameboardManager</c> is a <c>MonoBehaviour</c> that will create a <c>Gameboard</c> configured according to your settings and manage how it gets updated.
+    /// You can add this component to a <c>GameObject</c> in your scene to use the <c>Gameboard</c> features.
+    /// You can pass this to any <c>GameObject</c> s that may need the <c>Gameboard</c> e.g. your agents that handle moving across the board.
     /// </summary>
+    [PublicAPI]
     public class GameboardManager : MonoBehaviour
     {
         [Header("Camera")] [SerializeField] [Tooltip("The scene camera used to render AR content.")]
@@ -41,18 +44,21 @@ namespace Niantic.Lightship.AR.Extensions.Gameboard
         private LayerMask _layerMask = ~0;
 
         [Header("Debug")] [SerializeField] public bool _visualise = true;
-        
+
         //manager owns these
         private Gameboard _gameboard;
         private ModelSettings _settings;
-        
+
         private float _lastScan;
 
+        /// <summary>
+        /// A reference to the <c>Gameboard</c> that is being managed by this GameboardManager
+        /// </summary>
         public Gameboard gameboard
         {
             get { return _gameboard; }
         }
-        
+
         void Start()
         {
             //create my gameboard

@@ -1,6 +1,7 @@
 // Copyright 2023 Niantic Labs. All rights reserved.
 
 using System;
+using Niantic.Lightship.AR.ARFoundation;
 
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
@@ -96,6 +97,7 @@ namespace Niantic.Lightship.AR.PlatformAdapterManager
             );
 
             _MonoBehaviourEventDispatcher.Updating += SendUpdatedFrameData;
+            Application.onBeforeRender += OnBeforeRender;
         }
 
         ~_PlatformAdapterManager()
@@ -224,18 +226,25 @@ namespace Niantic.Lightship.AR.PlatformAdapterManager
             }
         }
 
-        private void SetOcclusionContext()
+        private void SetCameraPose()
         {
-            var success = _platformDataAcquirer.TryGetImageResolution(out var resolution);
-            var aspect = success ? resolution.width / (float)resolution.height : 1920.0f / 1440.0f;
-            var context = new OcclusionContext
+            if (_platformDataAcquirer.TryGetCameraPose(out Matrix4x4 cameraToLocal))
             {
-                OccludeeEyeDepth = ARFoundation.OcclusionContext.Shared.OccludeeEyeDepth,
-                FullImageAspectRatio = aspect
-            };
+                _currentFrameData.SetPoseData(cameraToLocal.FromUnityToArdk().ToColumnMajorArray());
+                _currentFrameData.CameraPoseLength = _DataFormatConstants.FLAT_MATRIX4x4_LENGTH;
+            }
+            else
+            {
+                _currentFrameData.CameraPoseLength = 0;
+            }
+        }
 
-            _currentFrameData.SetOcclusionContext(context);
-            _currentFrameData.OcclusionContextDataLength = (UInt32)UnsafeUtility.SizeOf<OcclusionContext>();
+        private void SetImageAspectRatio()
+        {
+            if (_platformDataAcquirer.TryGetImageResolution(out var resolution))
+            {
+                OcclusionContext.Shared.CameraImageAspectRatio = resolution.width / (float)resolution.height;
+            }
         }
 
         private void SendUpdatedFrameData()
@@ -286,9 +295,6 @@ namespace Niantic.Lightship.AR.PlatformAdapterManager
                         SetCompass();
                         break;
 
-                    case _DataFormat.kOcclusion_context:
-                        SetOcclusionContext();
-                        break;
 
                     case _DataFormat.kJpeg_full_res_Uint8:
                         _texturesSetter.SetJpegFullResImage();
@@ -308,6 +314,7 @@ namespace Niantic.Lightship.AR.PlatformAdapterManager
             _ctrace.TraceEventAsyncStep0("SAL", cTraceName, CTRACE_PAM_ID, "SetCommonData");
 
             SetCameraPose();
+            SetImageAspectRatio();
 
             _currentFrameData.TimestampMs = (ulong)_texturesSetter.GetCurrentTimestampMs();
 
@@ -331,17 +338,9 @@ namespace Niantic.Lightship.AR.PlatformAdapterManager
             SentData?.Invoke();
         }
 
-        private void SetCameraPose()
+        private void OnBeforeRender()
         {
-            if (_platformDataAcquirer.TryGetCameraPose(out Matrix4x4 cameraToLocal))
-            {
-                _currentFrameData.SetPoseData(cameraToLocal.FromUnityToArdk().ToColumnMajorArray());
-                _currentFrameData.CameraPoseLength = _DataFormatConstants.FLAT_MATRIX4x4_LENGTH;
-            }
-            else
-            {
-                _currentFrameData.CameraPoseLength = 0;
-            }
+            _ctrace.TraceEventInstance0("Rendering", "FrameUpdate");
         }
     }
 }

@@ -1,23 +1,27 @@
 using System;
+using Niantic.Lightship.AR.Utilities;
 using UnityEngine;
 using UnityEngine.XR.ARFoundation;
+using UnityEngine.XR.ARSubsystems;
 
 namespace Niantic.Lightship.AR.Subsystems
 {
     /// <summary>
-    /// Represents an Anchor tracked by an XR device.
+    /// Represents a Persistent Anchor tracked by an XR device.
     /// </summary>
     /// <remarks>
-    /// An anchor is a pose in the physical environment that is tracked by an XR device.
-    /// As the device refines its understanding of the environment, anchors will be
-    /// updated, helping you to keep virtual content connected to a real-world position and orientation.
+    /// Persistent anchors are persistent <c>Pose</c>s in the world that are generated
+    /// by processed scans, and will be in the same real world location in future sessions.
+    /// By placing virtual content relative to a Persistent Anchor, it can be restored to the same
+    /// real world location in a future session.
     /// </remarks>
+    [PublicAPI]
     [DefaultExecutionOrder(ARUpdateOrder.k_Anchor)]
     [DisallowMultipleComponent]
     public sealed class ARPersistentAnchor : ARTrackable<XRPersistentAnchor, ARPersistentAnchor>
     {
         /// <summary>
-        /// Get the native pointer associated with this <see cref="ARAnchor"/>.
+        /// Get the native pointer associated with this <see cref="ARPersistentAnchor"/>.
         /// </summary>
         /// <remarks>
         /// The data pointed to by this pointer is implementation defined. While its
@@ -27,9 +31,20 @@ namespace Niantic.Lightship.AR.Subsystems
         public IntPtr nativePtr => sessionRelativeData.nativePtr;
 
         /// <summary>
-        /// The reason for the anchor's current tracking state
+        /// The Persistent Anchor's current tracking state.
+        /// A Persistent Anchor should only be used to display virtual content if its tracking state
+        ///     is Tracking or Limited. Otherwise, the pose of the Persistent Anchor is not guaranteed
+        ///     to be in the correct real world location
         /// </summary>
-        public TrackingStateReason trackingStateReason => sessionRelativeData.trackingStateReason;
+        public new TrackingState trackingState => trackingStateOverride ?? sessionRelativeData.trackingState;
+
+        /// <summary>
+        /// The reason for the Persistent Anchor's current tracking state
+        /// </summary>
+        public TrackingStateReason trackingStateReason => trackingStateReasonOverride ?? sessionRelativeData.trackingStateReason;
+
+        internal TrackingState? trackingStateOverride { get; set; }
+        internal TrackingStateReason? trackingStateReasonOverride { get; set; }
 
         internal bool _markedForDestruction = false;
 

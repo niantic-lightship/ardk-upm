@@ -6,7 +6,11 @@ using Unity.EditorCoroutines.Editor;
 using UnityEditor;
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
+
+#if UNITY_IOS
 using UnityEditor.iOS.Xcode;
+#endif
+
 using UnityEditor.Rendering;
 using UnityEditor.XR.ARSubsystems;
 using UnityEditor.XR.Management;
@@ -48,6 +52,7 @@ namespace Niantic.Lightship.AR.Editor
 
             private static void PostProcessIosBuild(string buildPath)
             {
+#if UNITY_IOS
                 Debug.Log($"Running {nameof(PostProcessIosBuild)}");
 
                 string projectPath = PBXProject.GetPBXProjectPath(buildPath);
@@ -66,6 +71,7 @@ namespace Niantic.Lightship.AR.Editor
                 }
 
                 project.WriteToFile(projectPath);
+#endif
             }
         }
 

@@ -7,7 +7,7 @@ namespace Niantic.Lightship.AR.Subsystems
     ///This is the mock location camera.  It is so the user can use WASD to navigate their scene as though they were moving around their phone.
     /// If applicable, the trackedposedriver is disabled to stop camera restrictions so this script can run
     /// This script was recyclced from ardk classic
-    public class MockCamera : MonoBehaviour
+    internal class MockCamera : MonoBehaviour
     {
         [Tooltip("The camera move speed")] [SerializeField]
         private float moveSpeed = 5.0f;

@@ -7,10 +7,16 @@ using UnityEngine.XR.ARSubsystems;
 
 namespace Niantic.Lightship.AR.ARFoundation
 {
+    /// <summary>
+    /// The provider for occlusion context
+    /// </summary>
     [RequireComponent(typeof(ARCameraManager))]
     [RequireComponent(typeof(AROcclusionManager))]
-    public class OcclusionContextProvider : MonoBehaviour
+    internal class OcclusionContextProvider : MonoBehaviour
     {
+        /// <summary>
+        /// The types of adaption modes for the occlusion context
+        /// </summary>
         public enum AdaptionMode
         {
             /// Take a few samples of the full buffer to
@@ -26,6 +32,9 @@ namespace Niantic.Lightship.AR.ARFoundation
         [SerializeField]
         private AdaptionMode _mode = AdaptionMode.SampleFullScreen;
 
+        /// <summary>
+        /// The adaption mode for the occlusion context
+        /// </summary>
         public AdaptionMode Mode
         {
             get => _mode;
@@ -86,6 +95,8 @@ namespace Niantic.Lightship.AR.ARFoundation
             if (!_cameraSubsystem.TryGetLatestFrame(cameraParams, out var frame) ||
                 !_occlusionSubsystem.TryAcquireEnvironmentDepthCpuImage(out var depthBuffer))
                 return;
+
+            Debug.Assert(depthBuffer.valid);
 
             // Acquire sample bounds
             var region = _mode == AdaptionMode.TrackOccludee && _occludee != null

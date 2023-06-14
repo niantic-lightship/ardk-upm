@@ -2,17 +2,26 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Niantic.Lightship.AR.Extensions.Gameboard;
+using Niantic.Lightship.AR.Utilities;
 using UnityEngine;
 
 namespace Niantic.Lightship.AR.Extensions.Gameboard
 {
     /// <summary>
-    /// GameboardAgentPathRenderer is a debug render to show you the path your agent in moving along
-    /// you add it to an agent and it will draw their current path.
+    /// GameboardAgentPathRenderer is a debug renderer to show you the path a <c>GameboardAgent</c> is moving along
+    /// while  navigating the environment. You add it to the <c>GameBoardAgent</c> <c>GameObject</c> in your scene
+    /// and it will draw that agent's current path.
     /// </summary>
+    [PublicAPI]
     public class GameboardAgentPathRenderer : MonoBehaviour
     {
+        /// <summary>
+        /// The <c>GameboardAgent</c> that you want to render the path for.
+        /// </summary>
         public GameboardAgent _agent;
+        /// <summary>
+        /// The <c>Material</c> used to render the path. This <c>Material</c> will be applied on a <c>LineRenderer</c>.
+        /// </summary>
         public Material _material;
         private LineRenderer _lineRenderer;
         private List<Vector3> _points = new List<Vector3>();

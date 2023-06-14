@@ -47,12 +47,26 @@ namespace Niantic.Lightship.AR.ARFoundation
         private Texture _texture;
 
         /// <summary>
+        /// The sampler matrix for the texture. This is a combination of the display transform and the warp based on
+        /// the pose of the device at the time of the most recent update to the texture.
+        /// </summary>
+        /// <value>
+        /// The sampler matrix for the texture.
+        /// </value>
+        public Matrix4x4 SamplerMatrix
+        {
+            get { return _samplerMatrix; }
+        }
+        private Matrix4x4 _samplerMatrix;
+
+        /// <summary>
         /// Constructs the texture info with the given descriptor and material.
         /// </summary>
         /// <param name="descriptor">The texture descriptor wrapping a native texture object.</param>
-        public ARTextureInfo(XRTextureDescriptor descriptor)
+        public ARTextureInfo(XRTextureDescriptor descriptor, Matrix4x4 samplerMatrix)
         {
             _descriptor = descriptor;
+            _samplerMatrix = samplerMatrix;
             _texture = CreateTexture(_descriptor);
         }
 
@@ -82,10 +96,14 @@ namespace Niantic.Lightship.AR.ARFoundation
         /// </summary>
         /// <param name="textureInfo">The texture info to update.</param>
         /// <param name="descriptor">The texture descriptor wrapping a native texture object.</param>
+        /// <param name="samplerMatrix">
+        /// The sampler matrix for the texture. This is a combination of the display transform and the warp based on the
+        /// pose of the device at the time of the most recent update to the texture.
+        /// </param>
         /// <returns>
         /// The updated texture information.
         /// </returns>
-        public static ARTextureInfo GetUpdatedTextureInfo(ARTextureInfo textureInfo, XRTextureDescriptor descriptor)
+        public static ARTextureInfo GetUpdatedTextureInfo(ARTextureInfo textureInfo, XRTextureDescriptor descriptor, Matrix4x4 samplerMatrix = default)
         {
             // If the current and given descriptors are equal, exit early from this method.
             if (textureInfo._descriptor.Equals(descriptor))
@@ -110,6 +128,7 @@ namespace Niantic.Lightship.AR.ARFoundation
             {
                 // Update the current descriptor with the given descriptor.
                 textureInfo._descriptor = descriptor;
+                textureInfo._samplerMatrix = samplerMatrix;
 
                 // Update the current texture with the native texture object.
                 switch(descriptor.dimension)
@@ -132,6 +151,7 @@ namespace Niantic.Lightship.AR.ARFoundation
             {
                 // Update the current descriptor with the given descriptor.
                 textureInfo._descriptor = descriptor;
+                textureInfo._samplerMatrix = samplerMatrix;
 
                 // Replace the current texture with a newly created texture, and update the material.
                 textureInfo.DestroyTexture();

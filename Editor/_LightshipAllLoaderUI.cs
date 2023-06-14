@@ -11,7 +11,7 @@ namespace Niantic.Lightship.AR.Editor
     {
         struct Content
         {
-            public static readonly GUIContent k_LoaderName = new GUIContent("Lightship SDK");
+            public static readonly GUIContent k_LoaderName = new GUIContent("Niantic Lightship SDK");
         }
 
         public void SetRenderedLineHeight(float height)

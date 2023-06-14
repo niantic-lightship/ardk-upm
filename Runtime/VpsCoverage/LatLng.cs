@@ -1,13 +1,16 @@
 // Copyright 2022 Niantic, Inc. All Rights Reserved.
 
 using System;
+using Niantic.Lightship.AR.Utilities;
 using UnityEngine;
 
 namespace Niantic.Lightship.AR
 {
     /// <summary>
-    ///     Latitude and Longitude, location on a globe
+    /// The LatLng struct represents a Latitude and Longitude pair and provides functionality for comparing LatLng
+    /// instances with each other.
     /// </summary>
+    [PublicAPI]
     [Serializable]
     public struct LatLng : IEquatable<LatLng>
     {

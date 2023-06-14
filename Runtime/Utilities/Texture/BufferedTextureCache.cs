@@ -54,7 +54,7 @@ namespace Niantic.Lightship.AR.Utilities
             for (int i = 0; i < _numBuffers; i++)
             {
                 var tex = new Texture2D(width, height, format, false, linear);
-                tex.Apply(false, true);
+                tex.Apply(false);
 
                 _textureBuffer[i] = tex;
                 _stagingTextureBuffer[i] = new Texture2D(width, height, format, false, linear);
@@ -62,6 +62,16 @@ namespace Niantic.Lightship.AR.Utilities
             }
 
             _texturesInitialized = true;
+        }
+
+        public Texture2D GetActiveTexture()
+        {
+            return !_texturesInitialized && _indexInitialized ? null : _textureBuffer[_activeTexture];
+        }
+
+        public IntPtr GetActiveTexturePtr()
+        {
+            return !_texturesInitialized && _indexInitialized ? IntPtr.Zero : _nativeTexturePtrBuffer[_activeTexture];
         }
 
         public Texture2D GetUpdatedTextureFromBuffer

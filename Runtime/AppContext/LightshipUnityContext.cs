@@ -7,7 +7,7 @@ using Niantic.Lightship.AR.Loader;
 using UnityEngine;
 using Niantic.Lightship.AR.PlatformAdapterManager;
 using Niantic.Lightship.AR.Utilities.CTrace;
-using Niantic.Lightship.AR.Utilities.User;
+using Niantic.Lightship.AR.Settings.User;
 using Telemetry;
 
 namespace Niantic.Lightship.AR
@@ -31,26 +31,14 @@ namespace Niantic.Lightship.AR
         // Event triggered right before the context is destroyed. Used by internal code its lifecycle is not managed
         // by native UnityContext
         internal static event Action OnDeinitialized;
+        internal static event Action OnUnityContextHandleInitialized;
 
-        internal static void Initialize(LightshipSettings settings, bool isDeviceLidarSupported)
+
+        internal static void Initialize(LightshipSettings settings, bool isDeviceLidarSupported, bool isTest = false)
         {
 #if NIANTIC_LIGHTSHIP_AR_LOADER_ENABLED
             var configFilePath = Path.Combine(Application.streamingAssetsPath, ConfigFileName);
             var configurationProvider = new ConfigurationProvider(configFilePath);
-
-            AnalyticsTelemetryPublisher telemetryPublisher = new AnalyticsTelemetryPublisher(
-                endpoint: configurationProvider.TelemetryEndpoint,
-                directoryPath: Path.Combine(Application.persistentDataPath, "temp"),
-                key: configurationProvider.TelemetryApiKey,
-                registerLogger:false);
-
-            s_telemetryService = new TelemetryService(telemetryPublisher);
-
-            if (UnityContextHandle != IntPtr.Zero)
-            {
-                Debug.LogWarning($"Cannot initialize {nameof(LightshipUnityContext)} as it is already initialized");
-                return;
-            }
 
             var overrideApiKey = configurationProvider.ApiKey;
             var apiKeyToBeUsed = settings.ApiKey;
@@ -59,6 +47,25 @@ namespace Niantic.Lightship.AR
                 Debug.LogWarning($"Overriding Api Key. Old value: {apiKeyToBeUsed}; new value: {overrideApiKey}");
                 apiKeyToBeUsed = overrideApiKey;
             }
+
+            if (!isTest)
+            {
+                // Cannot use Application.persistentDataPath in testing
+                AnalyticsTelemetryPublisher telemetryPublisher = new AnalyticsTelemetryPublisher(
+                    endpoint: configurationProvider.TelemetryEndpoint,
+                    directoryPath: Path.Combine(Application.persistentDataPath, "telemetry"),
+                    key: configurationProvider.TelemetryApiKey,
+                    registerLogger: false);
+
+                s_telemetryService = new TelemetryService(telemetryPublisher, apiKeyToBeUsed);
+            }
+
+            if (UnityContextHandle != IntPtr.Zero)
+            {
+                Debug.LogWarning($"Cannot initialize {nameof(LightshipUnityContext)} as it is already initialized");
+                return;
+            }
+
 
             Debug.Log($"Initializing {nameof(LightshipUnityContext)}");
             s_environmentConfig = new _EnvironmentConfig
@@ -86,6 +93,7 @@ namespace Niantic.Lightship.AR
                 DeviceLidarSupported = isDeviceLidarSupported,
             };
             UnityContextHandle = NativeApi.Lightship_ARDK_Unity_Context_Create(false, ref deviceInfo, ref s_environmentConfig);
+            OnUnityContextHandleInitialized?.Invoke();
 
             var modelPath = Path.Combine(Application.streamingAssetsPath, "full_model.bin");
             Debug.Log("Model path: " + modelPath);

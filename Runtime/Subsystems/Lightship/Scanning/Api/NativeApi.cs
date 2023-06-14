@@ -33,9 +33,10 @@ namespace Niantic.Lightship.AR.ScanningSubsystem
 
         public void Configure(IntPtr handle, int framerate, bool raycastVisualizationEnabled,
             int raycastVisualizationWidth, int raycastVisualizationHeight,
-            bool voxelVisualizationEnabled)
+            bool voxelVisualizationEnabled, string scanBasePath)
         {
-            // No need to implement the Configure function for the mocking.
+            Native.Configure(handle, framerate, raycastVisualizationEnabled, raycastVisualizationWidth,
+                raycastVisualizationHeight, scanBasePath, scanBasePath.Length);
         }
 
         public bool TryGetRaycastBuffer(IntPtr handle, out IntPtr memoryBuffer, out int size, out int width,
@@ -73,6 +74,14 @@ namespace Niantic.Lightship.AR.ScanningSubsystem
 
             [DllImport(_LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_Scanner_ReleaseResource")]
             public static extern void ReleaseResource(IntPtr handle, IntPtr resource_handle);
+
+            [DllImport(_LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_Scanner_Configure")]
+            public static extern void Configure(IntPtr handle, int framerate,
+                bool enableRaycastVisualization,
+                int raycastWidth,
+                int raycastHeight,
+                string path,
+                int pathLength);
         }
     }
 }
