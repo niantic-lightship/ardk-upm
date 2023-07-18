@@ -1,0 +1,2138 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Niantic.Platform.Analytics.NATelemetry</name>
+    </assembly>
+    <members>
+        <member name="T:Niantic.Platform.Analytics.Telemetry.ClientTelemetryMetricReflection">
+            <summary>Holder for reflection information generated from client_telemetry_metric.proto</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.ClientTelemetryMetricReflection.Descriptor">
+            <summary>File descriptor for client_telemetry_metric.proto</summary>
+        </member>
+        <member name="T:Niantic.Platform.Analytics.Telemetry.Datapoint">
+            <summary>
+             Platform defined metric metadata
+             The following would be byte encoded by the client telemetry collection library
+             and would be placed within ClientTelemetryRecordProto.content
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.Datapoint.LongFieldNumber">
+            <summary>Field number for the "long" field.</summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.Datapoint.DoubleFieldNumber">
+            <summary>Field number for the "double" field.</summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.Datapoint.BooleanFieldNumber">
+            <summary>Field number for the "boolean" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.Datapoint.Boolean">
+            <summary>
+             DistributionMetrics distribution_metrics = 4;
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.Datapoint.KindFieldNumber">
+            <summary>Field number for the "kind" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.Datapoint.Kind">
+            <summary>
+             Additional metadata to specify what kind this specific metric is of
+            </summary>
+        </member>
+        <member name="T:Niantic.Platform.Analytics.Telemetry.Datapoint.ValueOneofCase">
+            <summary>Enum of possible cases for the "value" oneof.</summary>
+        </member>
+        <member name="T:Niantic.Platform.Analytics.Telemetry.Datapoint.Types">
+            <summary>Container for nested types declared in the Datapoint message type.</summary>
+        </member>
+        <member name="T:Niantic.Platform.Analytics.Telemetry.ClientTelemetryPlatformReflection">
+            <summary>Holder for reflection information generated from client_telemetry_platform.proto</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.ClientTelemetryPlatformReflection.Descriptor">
+            <summary>File descriptor for client_telemetry_platform.proto</summary>
+        </member>
+        <member name="T:Niantic.Platform.Analytics.Telemetry.ClientTelemetryBatchProto">
+            <summary>
+             Main envelope for sending telemetry
+             The client telemetry collection library is responsible for batching
+             the events and metrics up
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ClientTelemetryBatchProto.TelemetryScopeIdFieldNumber">
+            <summary>Field number for the "telemetry_scope_id" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.ClientTelemetryBatchProto.TelemetryScopeId">
+            <summary>
+             The isolation unit for telemetry
+             Example members of the enum include ditto or other platform libraries
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ClientTelemetryBatchProto.EventsFieldNumber">
+            <summary>Field number for the "events" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.ClientTelemetryBatchProto.Events">
+            <summary>
+             The actual record of the client telemetry
+             A record can be of type event or metric
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ClientTelemetryBatchProto.MetricsFieldNumber">
+            <summary>Field number for the "metrics" field.</summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ClientTelemetryBatchProto.ApiVersionFieldNumber">
+            <summary>Field number for the "api_version" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.ClientTelemetryBatchProto.ApiVersion">
+            <summary>
+             Version of the clientTelemetryAction API
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ClientTelemetryBatchProto.MessageVersionFieldNumber">
+            <summary>Field number for the "message_version" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.ClientTelemetryBatchProto.MessageVersion">
+            <summary>
+             This batch's client telemetry version
+             This dictates which client version this batch of client telemetry is of
+            </summary>
+        </member>
+        <member name="T:Niantic.Platform.Analytics.Telemetry.ClientTelemetryBatchProto.Types">
+            <summary>Container for nested types declared in the ClientTelemetryBatchProto message type.</summary>
+        </member>
+        <member name="T:Niantic.Platform.Analytics.Telemetry.ClientTelemetryBatchProto.Types.TelemetryScopeId">
+            <summary>
+             Isolation unit for different telemetry
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ClientTelemetryBatchProto.Types.TelemetryScopeId.Core">
+            <summary>
+             was Ditto = 1;
+            </summary>
+        </member>
+        <member name="T:Niantic.Platform.Analytics.Telemetry.ClientTelemetryRecordProto">
+            <summary>
+             This houses the actual record of client telemetry
+             Record can be of type metric or event
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ClientTelemetryRecordProto.RecordIdFieldNumber">
+            <summary>Field number for the "record_id" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.ClientTelemetryRecordProto.RecordId">
+            <summary>
+             ULID generated by the client, uniquely identifies event across retries
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ClientTelemetryRecordProto.EncodedMessageFieldNumber">
+            <summary>Field number for the "encoded_message" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.ClientTelemetryRecordProto.EncodedMessage">
+            <summary>
+             Byte representation of the event of metric
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ClientTelemetryRecordProto.ClientTimestampMsFieldNumber">
+            <summary>Field number for the "client_timestamp_ms" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.ClientTelemetryRecordProto.ClientTimestampMs">
+            <summary>
+             Epoch in ms from the client perspective (when the log event method was called)
+             TODO: deprecate this, can be extracted from record_id ulid
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ClientTelemetryRecordProto.MetricIdFieldNumber">
+            <summary>Field number for the "metric_id" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.ClientTelemetryRecordProto.MetricId">
+            <summary>
+             offset in @ClientTelemetryMetricIds enum
+             only set for metrics
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ClientTelemetryRecordProto.EventNameFieldNumber">
+            <summary>Field number for the "event_name" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.ClientTelemetryRecordProto.EventName">
+            <summary>
+             The simple name of the proto that encoded_message should be decoded into
+             This should be the name of the proto only (i.e. no preceding path)
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ClientTelemetryRecordProto.CommonFiltersFieldNumber">
+            <summary>Field number for the "common_filters" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.ClientTelemetryRecordProto.CommonFilters">
+            <summary>
+             Holds common information that all client telemetry provide.
+            </summary>
+        </member>
+        <member name="T:Niantic.Platform.Analytics.Telemetry.ClientTelemetryResponseProto">
+            <summary>
+             Response Proto
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ClientTelemetryResponseProto.StatusFieldNumber">
+            <summary>Field number for the "status" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.ClientTelemetryResponseProto.Status">
+            <summary>
+             Indicates whether the operation was successful.
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ClientTelemetryResponseProto.RowsWrittenFieldNumber">
+            <summary>Field number for the "rows_written" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.ClientTelemetryResponseProto.RowsWritten">
+            <summary>
+             Reports the number of client telemetry rows written
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ClientTelemetryResponseProto.NonretryableFailuresFieldNumber">
+            <summary>Field number for the "nonretryable_failures" field.</summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ClientTelemetryResponseProto.RetryableFailuresFieldNumber">
+            <summary>Field number for the "retryable_failures" field.</summary>
+        </member>
+        <member name="T:Niantic.Platform.Analytics.Telemetry.ClientTelemetryResponseProto.Types">
+            <summary>Container for nested types declared in the ClientTelemetryResponseProto message type.</summary>
+        </member>
+        <member name="T:Niantic.Platform.Analytics.Telemetry.ClientTelemetryRecordResult">
+            <summary>
+             Result of attempting to store an individual telemetry record
+             from a telemetry collect. Not generally surfaced to the client.
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ClientTelemetryRecordResult.RecordIdFieldNumber">
+            <summary>Field number for the "record_id" field.</summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ClientTelemetryRecordResult.StatusFieldNumber">
+            <summary>Field number for the "status" field.</summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ClientTelemetryRecordResult.TelemetryTypeNameFieldNumber">
+            <summary>Field number for the "telemetry_type_name" field.</summary>
+        </member>
+        <member name="T:Niantic.Platform.Analytics.Telemetry.ClientTelemetryRecordResult.Types">
+            <summary>Container for nested types declared in the ClientTelemetryRecordResult message type.</summary>
+        </member>
+        <member name="T:Niantic.Platform.Analytics.Telemetry.ServerRecordMetadata">
+            <summary>
+             Holds data that will be autofilled / replaced by the server
+             Only properties that lives in the server and is common across multiple games
+                should be specified here.
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ServerRecordMetadata.UserIdFieldNumber">
+            <summary>Field number for the "user_id" field.</summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ServerRecordMetadata.TelemetryNameFieldNumber">
+            <summary>Field number for the "telemetry_name" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.ServerRecordMetadata.TelemetryName">
+            <summary>
+             Translated identifier of the record. This would hold the translated
+             string of the metric_id or the oneof name
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ServerRecordMetadata.SessionIdFieldNumber">
+            <summary>Field number for the "session_id" field.</summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ServerRecordMetadata.ExperimentIdsFieldNumber">
+            <summary>Field number for the "experiment_ids" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.ServerRecordMetadata.ExperimentIds">
+            <summary>
+             Game server side gameExperimentId
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ServerRecordMetadata.RequestIdFieldNumber">
+            <summary>Field number for the "request_id" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.ServerRecordMetadata.RequestId">
+            <summary>
+             ULID generated by server, uniquely identifies the telemetry logging request
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ServerRecordMetadata.ServerTimestampMsFieldNumber">
+            <summary>Field number for the "server_timestamp_ms" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.ServerRecordMetadata.ServerTimestampMs">
+            <summary>
+             Epoch in ms from the server perspective (when the request was successfully processed)
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ServerRecordMetadata.AnalyticsExperimentIdsFieldNumber">
+            <summary>Field number for the "analytics_experiment_ids" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.ServerRecordMetadata.AnalyticsExperimentIds">
+            <summary>
+             Annalytics side experimentId
+             Using string since SegmentationToExperimentProto segmentation_id is a string (experiment.proto)
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ServerRecordMetadata.ClientRequestIdFieldNumber">
+            <summary>Field number for the "client_request_id" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.ServerRecordMetadata.ClientRequestId">
+            <summary>
+             ULID generated by client
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ServerRecordMetadata.UserPopulationGroupIdsFieldNumber">
+            <summary>Field number for the "user_population_group_ids" field.</summary>
+        </member>
+        <member name="T:Niantic.Platform.Analytics.Telemetry.ClientTelemetryCommonFilterProto">
+            <summary>
+             THIS HAS TO BE KEPT IN SYNC WITH PlatformCommonFilterProto
+             Holds data that should be collected by all client telemetry.
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ClientTelemetryCommonFilterProto.ApplicationIdentifierFieldNumber">
+            <summary>Field number for the "application_identifier" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.ClientTelemetryCommonFilterProto.ApplicationIdentifier">
+            <summary>
+             The package name or bundle identifier
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ClientTelemetryCommonFilterProto.OperatingSystemNameFieldNumber">
+            <summary>Field number for the "operating_system_name" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.ClientTelemetryCommonFilterProto.OperatingSystemName">
+            <summary>
+             The friendly name of the OS.
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ClientTelemetryCommonFilterProto.DeviceModelFieldNumber">
+            <summary>Field number for the "device_model" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.ClientTelemetryCommonFilterProto.DeviceModel">
+            <summary>
+             The friendly device model name. e.g. iPhone, iPad etc...
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ClientTelemetryCommonFilterProto.LocaleCountryCodeFieldNumber">
+            <summary>Field number for the "locale_country_code" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.ClientTelemetryCommonFilterProto.LocaleCountryCode">
+            <summary>
+             ISO 3166 Two letter region code.
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ClientTelemetryCommonFilterProto.LocaleLanguageCodeFieldNumber">
+            <summary>Field number for the "locale_language_code" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.ClientTelemetryCommonFilterProto.LocaleLanguageCode">
+            <summary>
+             ISO 639 Two letter language code.
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ClientTelemetryCommonFilterProto.SamplingProbabilityFieldNumber">
+            <summary>Field number for the "sampling_probability" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.ClientTelemetryCommonFilterProto.SamplingProbability">
+            <summary>
+             The probability that the client telemetry will be sampled from 0-1.
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ClientTelemetryCommonFilterProto.QualityLevelFieldNumber">
+            <summary>Field number for the "quality_level" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.ClientTelemetryCommonFilterProto.QualityLevel">
+            <summary>
+             The rendering quality level (see Unity QualitySettings)
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ClientTelemetryCommonFilterProto.NetworkConnectivityTypeFieldNumber">
+            <summary>Field number for the "network_connectivity_type" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.ClientTelemetryCommonFilterProto.NetworkConnectivityType">
+            <summary>
+             The type of network the user is connected with (5G, 4G, wifi, etc)
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ClientTelemetryCommonFilterProto.GameContextFieldNumber">
+            <summary>Field number for the "game_context" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.ClientTelemetryCommonFilterProto.GameContext">
+            <summary>
+             A descriptor for the current state of the game
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ClientTelemetryCommonFilterProto.LanguageCodeFieldNumber">
+            <summary>Field number for the "language_code" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.ClientTelemetryCommonFilterProto.LanguageCode">
+            <summary>
+             ISO 639 Two letter language code.
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ClientTelemetryCommonFilterProto.TimezoneFieldNumber">
+            <summary>Field number for the "timezone" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.ClientTelemetryCommonFilterProto.Timezone">
+            <summary>
+             IANA time zone database name e.g. Asia/Tokyo, America/New_York
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ClientTelemetryCommonFilterProto.IpCountryCodeFieldNumber">
+            <summary>Field number for the "ip_country_code" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.ClientTelemetryCommonFilterProto.IpCountryCode">
+            <summary>
+             IP related to the device - TODO: pending legal review
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ClientTelemetryCommonFilterProto.GraphicsDeviceVendorFieldNumber">
+            <summary>Field number for the "graphics_device_vendor" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.ClientTelemetryCommonFilterProto.GraphicsDeviceVendor">
+            <summary>
+             e.g. “iPhone10,4” / “samsung SM-G950F”
+             string device_type = 15;
+             e.g. “iOS 14.4.2” /
+              “Android OS 9 / API-28 (PPR1.180610.011/G950FXXUCDUD1)”
+             string device_os = 16;
+             e.g. “Apple” / “ARM”
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ClientTelemetryCommonFilterProto.GraphicsDeviceNameFieldNumber">
+            <summary>Field number for the "graphics_device_name" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.ClientTelemetryCommonFilterProto.GraphicsDeviceName">
+            <summary>
+             e.g. “Apple A11 GPU” / “Mali-G71”
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ClientTelemetryCommonFilterProto.GraphicsDeviceTypeFieldNumber">
+            <summary>Field number for the "graphics_device_type" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.ClientTelemetryCommonFilterProto.GraphicsDeviceType">
+            <summary>
+             e.g. “Metal” / “OpenGLES3”
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ClientTelemetryCommonFilterProto.GraphicsShaderLevelFieldNumber">
+            <summary>Field number for the "graphics_shader_level" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.ClientTelemetryCommonFilterProto.GraphicsShaderLevel">
+            <summary>
+             e.g. “5.0” / “5.0”
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.MetricRecord.ServerDataFieldNumber">
+            <summary>Field number for the "server_data" field.</summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.MetricRecord.DatapointFieldNumber">
+            <summary>Field number for the "datapoint" field.</summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.MetricRecord.CommonFiltersFieldNumber">
+            <summary>Field number for the "common_filters" field.</summary>
+        </member>
+        <member name="T:Niantic.Platform.Analytics.Telemetry.PlaceholderMessage">
+            <summary>
+             This can be removed entirely once we have some other sub-messages in the
+             omniprotos.
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.PlaceholderMessage.PlaceholderFieldNumber">
+            <summary>Field number for the "placeholder" field.</summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.PlatformPreAgeGateTrackingOmniproto.AgeGateStartupFieldNumber">
+            <summary>Field number for the "age_gate_startup" field.</summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.PlatformPreAgeGateTrackingOmniproto.AgeGateResultFieldNumber">
+            <summary>Field number for the "age_gate_result" field.</summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.PlatformPreAgeGateTrackingOmniproto.PreAgeGateMetadataFieldNumber">
+            <summary>Field number for the "pre_age_gate_metadata" field.</summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.PlatformPreAgeGateTrackingOmniproto.CommonFiltersFieldNumber">
+            <summary>Field number for the "common_filters" field.</summary>
+        </member>
+        <member name="T:Niantic.Platform.Analytics.Telemetry.PlatformPreAgeGateTrackingOmniproto.PlatformPreAgeGateEventOneofCase">
+            <summary>Enum of possible cases for the "platform_pre_age_gate_event" oneof.</summary>
+        </member>
+        <member name="T:Niantic.Platform.Analytics.Telemetry.PreAgeGateMetadata">
+            <summary>
+             expected to be included in each game's PreAgeGateTrackingOmniproto as:
+               PreAgeGateMetadata pre_age_gate_metadata = 1000;
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.PreAgeGateMetadata.TimestampMsFieldNumber">
+            <summary>Field number for the "timestamp_ms" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.PreAgeGateMetadata.TimestampMs">
+            <summary>
+             set by the prelogin telemetry server
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.PreAgeGateMetadata.ClientTimestampMsFieldNumber">
+            <summary>Field number for the "client_timestamp_ms" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.PreAgeGateMetadata.ClientTimestampMs">
+            <summary>
+             set by the client
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.PreAgeGateMetadata.ExperimentIdsFieldNumber">
+            <summary>Field number for the "experiment_ids" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.PreAgeGateMetadata.ExperimentIds">
+            <summary>
+             List of experiment ids that are being applied, though given that the user is not logged
+             in and DownloadGmTemplatesAction can't happen it seems unlikely that there would be any
+             traditional experiment_ids here.
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.PreAgeGateMetadata.PreLoginUserIdFieldNumber">
+            <summary>Field number for the "pre_login_user_id" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.PreAgeGateMetadata.PreLoginUserId">
+            <summary>
+             unique identifier for this pre login user assigned by the client.
+             ideally, stays constants if the player goes through the prelogin flow
+             multiple times so this behaviour can be detected.
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.PreAgeGateMetadata.MinorFieldNumber">
+            <summary>Field number for the "minor" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.PreAgeGateMetadata.Minor">
+            <summary>
+             user has been determined to be under age
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.PreAgeGateMetadata.NumStartsFieldNumber">
+            <summary>Field number for the "num_starts" field.</summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.PreAgeGateMetadata.ClientEnvironmentFieldNumber">
+            <summary>Field number for the "client_environment" field.</summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.PreAgeGateMetadata.StartupMeasurementFieldNumber">
+            <summary>Field number for the "startup_measurement" field.</summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.PlatformPreLoginTrackingOmniproto.LoginStartupFieldNumber">
+            <summary>Field number for the "login_startup" field.</summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.PlatformPreLoginTrackingOmniproto.LoginNewPlayerFieldNumber">
+            <summary>Field number for the "login_new_player" field.</summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.PlatformPreLoginTrackingOmniproto.LoginReturningPlayerFieldNumber">
+            <summary>Field number for the "login_returning_player" field.</summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.PlatformPreLoginTrackingOmniproto.LoginNewPlayerCreateAccountFieldNumber">
+            <summary>Field number for the "login_new_player_create_account" field.</summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.PlatformPreLoginTrackingOmniproto.LoginReturningPlayerSignInFieldNumber">
+            <summary>Field number for the "login_returning_player_sign_in" field.</summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.PlatformPreLoginTrackingOmniproto.PreLoginMetadataFieldNumber">
+            <summary>Field number for the "pre_login_metadata" field.</summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.PlatformPreLoginTrackingOmniproto.CommonFiltersFieldNumber">
+            <summary>Field number for the "common_filters" field.</summary>
+        </member>
+        <member name="T:Niantic.Platform.Analytics.Telemetry.PlatformPreLoginTrackingOmniproto.PlatformPreLoginEventOneofCase">
+            <summary>Enum of possible cases for the "platform_pre_login_event" oneof.</summary>
+        </member>
+        <member name="T:Niantic.Platform.Analytics.Telemetry.PreLoginMetadata">
+            <summary>
+             expected to be included in each game's PreLoginTrackingOmniproto as:
+               PreLoginMetadata pre_login_metadata = 1001;
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.PreLoginMetadata.UserIdFieldNumber">
+            <summary>Field number for the "user_id" field.</summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.PreLoginMetadata.TimestampMsFieldNumber">
+            <summary>Field number for the "timestamp_ms" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.PreLoginMetadata.TimestampMs">
+            <summary>
+             set by the prelogin telemetry server
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.PreLoginMetadata.ClientTimestampMsFieldNumber">
+            <summary>Field number for the "client_timestamp_ms" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.PreLoginMetadata.ClientTimestampMs">
+            <summary>
+             set by the client
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.PreLoginMetadata.ExperimentIdsFieldNumber">
+            <summary>Field number for the "experiment_ids" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.PreLoginMetadata.ExperimentIds">
+            <summary>
+             List of experiment ids that are being applied, though given that the user is not logged
+             in and DownloadGmTemplatesAction can't happen it seems unlikely that there would be any
+             traditional experiment_ids here.
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.PreLoginMetadata.PreLoginUserIdFieldNumber">
+            <summary>Field number for the "pre_login_user_id" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.PreLoginMetadata.PreLoginUserId">
+            <summary>
+             unique identifier for this pre login user assigned by the client.
+             ideally, stays constants if the player goes through the prelogin flow
+             multiple times so this behaviour can be detected.
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.PreLoginMetadata.NumStartsFieldNumber">
+            <summary>Field number for the "num_starts" field.</summary>
+        </member>
+        <member name="T:Niantic.Platform.Analytics.Telemetry.ClientEnvironmentProto">
+            <summary>
+             Deprecated
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ClientEnvironmentProto.LanguageCodeFieldNumber">
+            <summary>Field number for the "language_code" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.ClientEnvironmentProto.LanguageCode">
+            <summary>
+             ISO 639 Two letter language code.
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ClientEnvironmentProto.TimezoneFieldNumber">
+            <summary>Field number for the "timezone" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.ClientEnvironmentProto.Timezone">
+            <summary>
+             IANA time zone database name e.g. Asia/Tokyo, America/New_York
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ClientEnvironmentProto.DeviceCountryCodeFieldNumber">
+            <summary>Field number for the "device_country_code" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.ClientEnvironmentProto.DeviceCountryCode">
+            <summary>
+             ISO 3166 Two letter region code
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ClientEnvironmentProto.IpCountryCodeFieldNumber">
+            <summary>Field number for the "ip_country_code" field.</summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ClientEnvironmentProto.ClientVersionFieldNumber">
+            <summary>Field number for the "client_version" field.</summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ClientEnvironmentProto.DeviceTypeFieldNumber">
+            <summary>Field number for the "device_type" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.ClientEnvironmentProto.DeviceType">
+            <summary>
+             e.g. “iPhone10,4” / “samsung SM-G950F”
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ClientEnvironmentProto.DeviceOsFieldNumber">
+            <summary>Field number for the "device_os" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.ClientEnvironmentProto.DeviceOs">
+            <summary>
+             e.g. “iOS 14.4.2” /
+              “Android OS 9 / API-28 (PPR1.180610.011/G950FXXUCDUD1)”
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ClientEnvironmentProto.GraphicsDeviceVendorFieldNumber">
+            <summary>Field number for the "graphics_device_vendor" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.ClientEnvironmentProto.GraphicsDeviceVendor">
+            <summary>
+             e.g. “Apple” / “ARM”
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ClientEnvironmentProto.GraphicsDeviceNameFieldNumber">
+            <summary>Field number for the "graphics_device_name" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.ClientEnvironmentProto.GraphicsDeviceName">
+            <summary>
+             e.g. “Apple A11 GPU” / “Mali-G71”
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ClientEnvironmentProto.GraphicsDeviceTypeFieldNumber">
+            <summary>Field number for the "graphics_device_type" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.ClientEnvironmentProto.GraphicsDeviceType">
+            <summary>
+             e.g. “Metal” / “OpenGLES3”
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ClientEnvironmentProto.GraphicsShaderLevelFieldNumber">
+            <summary>Field number for the "graphics_shader_level" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.ClientEnvironmentProto.GraphicsShaderLevel">
+            <summary>
+             e.g. “5.0” / “5.0”
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.StartupMeasurementProto.NumStartsFieldNumber">
+            <summary>Field number for the "num_starts" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.StartupMeasurementProto.NumStarts">
+            <summary>
+             The number of game starts (including this one)
+             without having gotten through login
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.StartupMeasurementProto.LoadToTosLoginDurationMsFieldNumber">
+            <summary>Field number for the "load_to_tos_login_duration_ms" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.StartupMeasurementProto.LoadToTosLoginDurationMs">
+            <summary>
+             Some standardized login durations
+             tos - terms of service
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.StartupMeasurementProto.LoadToMapDurationMsFieldNumber">
+            <summary>Field number for the "load_to_map_duration_ms" field.</summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.StartupMeasurementProto.LoadDurationsFieldNumber">
+            <summary>Field number for the "load_durations" field.</summary>
+        </member>
+        <member name="T:Niantic.Platform.Analytics.Telemetry.StartupMeasurementProto.Types">
+            <summary>Container for nested types declared in the StartupMeasurementProto message type.</summary>
+        </member>
+        <member name="T:Niantic.Platform.Analytics.Telemetry.StartupMeasurementProto.Types.ComponentLoadDurations">
+            <summary>
+             Free form mechanism to store load durations of client side
+             game components.
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.StartupMeasurementProto.Types.ComponentLoadDurations.ComponentNameFieldNumber">
+            <summary>Field number for the "component_name" field.</summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.StartupMeasurementProto.Types.ComponentLoadDurations.LoadDurationMsFieldNumber">
+            <summary>Field number for the "load_duration_ms" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.StartupMeasurementProto.Types.ComponentLoadDurations.LoadDurationMs">
+            <summary>
+             this is expected to be the millis it took to load the component
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.StartupMeasurementProto.Types.ComponentLoadDurations.AbsoluteDurationMsFieldNumber">
+            <summary>Field number for the "absolute_duration_ms" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.StartupMeasurementProto.Types.ComponentLoadDurations.AbsoluteDurationMs">
+            <summary>
+             this is expected to be the millis it took from the start of the
+             game to when the component completed loading.
+            </summary>
+        </member>
+        <member name="T:Niantic.Platform.Analytics.Telemetry.ClientTelemetrySettingsReflection">
+            <summary>Holder for reflection information generated from client_telemetry_settings.proto</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.ClientTelemetrySettingsReflection.Descriptor">
+            <summary>File descriptor for client_telemetry_settings.proto</summary>
+        </member>
+        <member name="T:Niantic.Platform.Analytics.Telemetry.ClientTelemetryClientSettingsProto">
+            <summary>
+             Settings object for the client telemetry's client settings
+             The client would periodically call the GetClientTelemetrySettingsAction
+             and the action would return this proto
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ClientTelemetryClientSettingsProto.IsUploadEnabledFieldNumber">
+            <summary>Field number for the "IsUploadEnabled" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.ClientTelemetryClientSettingsProto.IsUploadEnabled">
+            <summary>
+             If false, Events and Metrics are queued on the client
+             (up to MaxQueueSize) but not uploaded.
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ClientTelemetryClientSettingsProto.MaxUploadSizeInBytesFieldNumber">
+            <summary>Field number for the "MaxUploadSizeInBytes" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.ClientTelemetryClientSettingsProto.MaxUploadSizeInBytes">
+            <summary>
+             The maximum size (in bytes) of the envelope's proto buffer.
+             Events and metrics can be added to an envelope until this
+             limit is reached, at which point the envelope is uploaded.
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ClientTelemetryClientSettingsProto.UpdateIntervalInSecFieldNumber">
+            <summary>Field number for the "UpdateIntervalInSec" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.ClientTelemetryClientSettingsProto.UpdateIntervalInSec">
+            <summary>
+             The maximum amount of time (in seconds) to allow an
+             Event or Metric to be queued on the client before being
+             uploaded to the server, regardless of whether or not that
+             Event or Metric's envelope is full.
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ClientTelemetryClientSettingsProto.SettingsUpdateIntervalInSecFieldNumber">
+            <summary>Field number for the "SettingsUpdateIntervalInSec" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.ClientTelemetryClientSettingsProto.SettingsUpdateIntervalInSec">
+            <summary>
+             The interval at which these telemetry settings are pulled
+             down from the server and refreshed on the client.
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ClientTelemetryClientSettingsProto.MaxEnvelopeQueueSizeFieldNumber">
+            <summary>Field number for the "MaxEnvelopeQueueSize" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.ClientTelemetryClientSettingsProto.MaxEnvelopeQueueSize">
+            <summary>
+             The maximum number of Envelopes to queue. If the queue
+             exceeds this size, Events and Metrics are dequeued from oldest
+             to newest and dequeued Events and Metrics are dropped.
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ClientTelemetryClientSettingsProto.SamplingProbabilityFieldNumber">
+            <summary>Field number for the "SamplingProbability" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.ClientTelemetryClientSettingsProto.SamplingProbability">
+            <summary>
+             The probability that we are collecting from this particular client
+             session.
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ClientTelemetryClientSettingsProto.UsePlayerBasedSamplingFieldNumber">
+            <summary>Field number for the "UsePlayerBasedSampling" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.ClientTelemetryClientSettingsProto.UsePlayerBasedSampling">
+            <summary>
+             Boolean to toggle whether sampling should be based on player
+             Instructs the client to sample client telemetry based on players instead
+             If UsePlayerBasedSampling is false, the client would randomly pick a number and check against
+             this probability and decide whether client telemetry is collected
+             from that particular session.
+             If UsePlayerBasedSampling is true, the client would compare the PlayerHash to
+             SamplingProbability instead.
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ClientTelemetryClientSettingsProto.PlayerHashFieldNumber">
+            <summary>Field number for the "PlayerHash" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.ClientTelemetryClientSettingsProto.PlayerHash">
+            <summary>
+             Sends a hash value that is between 0 to 1.0 down to the client that is based
+             on the player's playerId and today's date
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ClientTelemetryClientSettingsProto.PlayerExternalOmniIdFieldNumber">
+            <summary>Field number for the "PlayerExternalOmniId" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.ClientTelemetryClientSettingsProto.PlayerExternalOmniId">
+            <summary>
+             The player's hashed playerId that is used to uniquely identify the player
+             in our omni-channel platform.
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ClientTelemetryClientSettingsProto.DisableOmniSendingFieldNumber">
+            <summary>Field number for the "DisableOmniSending" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.ClientTelemetryClientSettingsProto.DisableOmniSending">
+            <summary>
+             Boolean to toggle whether we disable sending data through omni-channel
+             Default value is false(send data)
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ClientTelemetryClientSettingsProto.SpecialSamplingProbabilityMapFieldNumber">
+            <summary>Field number for the "specialSamplingProbabilityMap" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.ClientTelemetryClientSettingsProto.SpecialSamplingProbabilityMap">
+            <summary>
+             There are special requirements around specific events needing to override the
+             default sampling behavior. These use cases include sponsorship events, which
+             are low in volume but is crucial to report it to our sponsorship partners
+             In here, games can define special events (identified by the fully qualified
+             event name) and their corresponding sampling probability.
+             Example:
+             specialSamplingProbabilityMap = { { "SpinPokestopTelemetry", 0.7 },
+                                               { "MapEventsTelemetry",    0.8 }  }
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ClientTelemetryClientSettingsProto.PlayerExternalUaIdFieldNumber">
+            <summary>Field number for the "PlayerExternalUaId" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.ClientTelemetryClientSettingsProto.PlayerExternalUaId">
+            <summary>
+             The player's encrypted playerId that is used to uniquely identify the player
+             in our user acquisition platform.
+             Note that to ensure that 3rd party platforms are not polluted, this id will be
+             different from PlayerExternalOmniId
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ClientTelemetryClientSettingsProto.PlayerExternalInAppSurveyIdFieldNumber">
+            <summary>Field number for the "PlayerExternalInAppSurveyId" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.ClientTelemetryClientSettingsProto.PlayerExternalInAppSurveyId">
+            <summary>
+             The player's encrypted playerId that is used to uniquely identify the player
+             in our in app survey platform.
+             Note that to ensure that 3rd party platforms are not polluted, this id will be
+             different from PlayerExternalOmniId or PlayerExternalUaId.
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ClientTelemetryClientSettingsProto.PlayerExternalArdkIdFieldNumber">
+            <summary>Field number for the "PlayerExternalArdkId" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.ClientTelemetryClientSettingsProto.PlayerExternalArdkId">
+            <summary>
+             The player's encrypted playerId that is used to uniquely identify the player
+             in ARDK.
+             Note that to ensure that 3rd party platforms are not polluted, this id will be
+             different from PlayerExternalOmniId or PlayerExternalUaId.
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ClientTelemetryClientSettingsProto.EnableExperimentalFeaturesFieldNumber">
+            <summary>Field number for the "EnableExperimentalFeatures" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.ClientTelemetryClientSettingsProto.EnableExperimentalFeatures">
+             <summary>
+              Experimental features flag
+              Some of the performance or feature optimization would be hidden behind this flag
+              (and the default would be false). Will use this to experiment with non-large features
+              but with a lack of large scale client based load testing framework and structure,
+              some of the insidious issues are hard to catch.
+              the first example of using this flag would be something like this:
+              --- a/src/Telemetry/TelemetryUploader.cs
+              +++ b/src/Telemetry/TelemetryUploader.cs
+              @@ -243,6 +243,10 @@ namespace Niantic.Platform.Analytics.Telemetry {
+                           break;
+                         default:
+                           _logger.Error("OnRpcComplete", "Rpc upload error status: {0}", response.RpcStatus);
+              +            if (ClientTelemetrySettingsDownloader.EnableExperimentalFeatures) {
+              +              FlushToDiskInNewThread(telemetryToFlush);
+              +            }
+              +
+                           return;
+                       }
+                     };
+
+              catching the error case and flushing to disk. there are some risks that this would cause more telemetry to be flushed and wanted to put this behind a feature flag.
+              if this goes well, would remove the if block and make the changes to the plugin and would be platform-wide improvements.
+             </summary>
+        </member>
+        <member name="T:Niantic.Platform.Analytics.Telemetry.ClientTelemetrySettingsRequestProto">
+            <summary>
+             Placeholder object for requesting settings
+            </summary>
+        </member>
+        <member name="T:Niantic.Platform.Analytics.Telemetry.ClientTelemetryV2Reflection">
+            <summary>Holder for reflection information generated from client_telemetry_v2.proto</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.ClientTelemetryV2Reflection.Descriptor">
+            <summary>File descriptor for client_telemetry_v2.proto</summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.TelemetryRequestMetadata.UserIdFieldNumber">
+            <summary>Field number for the "user_id" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.TelemetryRequestMetadata.UserId">
+            <summary>
+             If present
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.TelemetryRequestMetadata.IsMinorFieldNumber">
+            <summary>Field number for the "is_minor" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.TelemetryRequestMetadata.IsMinor">
+            <summary>
+             for prelogin only
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.TelemetryRequestMetadata.EnvIdFieldNumber">
+            <summary>Field number for the "env_id" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.TelemetryRequestMetadata.EnvId">
+            <summary>
+             this will be determined based off the api key and set by the authenticator
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ClientTelemetryV2Request.TelemetryRequestMetadataFieldNumber">
+            <summary>Field number for the "telemetry_request_metadata" field.</summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.ClientTelemetryV2Request.BatchProtoFieldNumber">
+            <summary>Field number for the "batch_proto" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.ClientTelemetryV2Request.BatchProto">
+            <summary>
+             Since we're using a batch proto, this does not need to be repeated
+            </summary>
+        </member>
+        <member name="T:Niantic.Platform.Analytics.Telemetry.CommonTelemetryPreloginReflection">
+            <summary>Holder for reflection information generated from common_telemetry_prelogin.proto</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.CommonTelemetryPreloginReflection.Descriptor">
+            <summary>File descriptor for common_telemetry_prelogin.proto</summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.AgeGateStartup.MethodNameFieldNumber">
+            <summary>Field number for the "method_name" field.</summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.AgeGateResult.MethodNameFieldNumber">
+            <summary>Field number for the "method_name" field.</summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.LoginStartup.MethodNameFieldNumber">
+            <summary>Field number for the "method_name" field.</summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.LoginNewPlayer.MethodNameFieldNumber">
+            <summary>Field number for the "method_name" field.</summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.LoginReturningPlayer.MethodNameFieldNumber">
+            <summary>Field number for the "method_name" field.</summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.LoginNewPlayerCreateAccount.MethodNameFieldNumber">
+            <summary>Field number for the "method_name" field.</summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.LoginReturningPlayerSignIn.MethodNameFieldNumber">
+            <summary>Field number for the "method_name" field.</summary>
+        </member>
+        <member name="T:Niantic.Platform.Analytics.Telemetry.AnalyticsTelemetryBaseEnvelopeReflection">
+            <summary>Holder for reflection information generated from analytics_telemetry_base_envelope.proto</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.AnalyticsTelemetryBaseEnvelopeReflection.Descriptor">
+            <summary>File descriptor for analytics_telemetry_base_envelope.proto</summary>
+        </member>
+        <member name="T:Niantic.Platform.Analytics.Telemetry.TelemetryRequestProto">
+            <summary>
+             The main telemetry common envelope proto should stay constant as much as possible
+             The flexibility to deal with the versions lie in the other protos
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.TelemetryRequestProto.ApiVersionFieldNumber">
+            <summary>Field number for the "api_version" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.TelemetryRequestProto.ApiVersion">
+            <summary>
+             Use this version key to route it to various API versions if needed
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.TelemetryRequestProto.MessageVersionFieldNumber">
+            <summary>Field number for the "message_version" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.TelemetryRequestProto.MessageVersion">
+            <summary>
+             Use this to state which version this envelope is part of
+             This allows flexibility into the schema and we are able to use this to
+             iterate on the schema if necessary
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.TelemetryRequestProto.TelemetryBatchFieldNumber">
+            <summary>Field number for the "telemetry_batch" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.TelemetryRequestProto.TelemetryBatch">
+            <summary>
+             Actual content of the envelope - depending on which version
+             specified in message_version, the ANFE should use deserialize them accordingly
+            </summary>
+        </member>
+        <member name="T:Niantic.Platform.Analytics.Telemetry.TelemetryResponseProto">
+            <summary>
+             Non-retryable errors for errors that can only be caught by the Recorder level,
+             will not be returned here. So Recorder will write them into GCS.
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.TelemetryResponseProto.StatusFieldNumber">
+            <summary>Field number for the "status" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.TelemetryResponseProto.Status">
+            <summary>
+             Indicates whether the operation was successful.
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.TelemetryResponseProto.RowsWrittenFieldNumber">
+            <summary>Field number for the "rows_written" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.TelemetryResponseProto.RowsWritten">
+            <summary>
+             Reports the number of telemetry rows written
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.TelemetryResponseProto.FailureDetailFieldNumber">
+            <summary>Field number for the "failure_detail" field.</summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.TelemetryResponseProto.RetryableFailuresFieldNumber">
+            <summary>Field number for the "retryable_failures" field.</summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.TelemetryResponseProto.NonRetryableFailuresFieldNumber">
+            <summary>Field number for the "non_retryable_failures" field.</summary>
+        </member>
+        <member name="T:Niantic.Platform.Analytics.Telemetry.TelemetryResponseProto.Types">
+            <summary>Container for nested types declared in the TelemetryResponseProto message type.</summary>
+        </member>
+        <member name="T:Niantic.Platform.Analytics.Telemetry.TelemetryRecordResult">
+            <summary>
+             Result of attempting to store an individual telemetry record
+             from a telemetry collect. Not generally surfaced to the client.
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.TelemetryRecordResult.RecordIdFieldNumber">
+            <summary>Field number for the "record_id" field.</summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.TelemetryRecordResult.StatusFieldNumber">
+            <summary>Field number for the "status" field.</summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.TelemetryRecordResult.TelemetryTypeNameFieldNumber">
+            <summary>Field number for the "telemetry_type_name" field.</summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.TelemetryRecordResult.FailureDetailFieldNumber">
+            <summary>Field number for the "failure_detail" field.</summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.TelemetryRecordResult.RetryAfterMsFieldNumber">
+            <summary>Field number for the "retry_after_ms" field.</summary>
+        </member>
+        <member name="T:Niantic.Platform.Analytics.Telemetry.TelemetryRecordResult.Types">
+            <summary>Container for nested types declared in the TelemetryRecordResult message type.</summary>
+        </member>
+        <member name="T:Niantic.Platform.Analytics.Telemetry.V1.AnalyticsTelemetryV1EnvelopeReflection">
+            <summary>Holder for reflection information generated from analytics_telemetry_v1_envelope.proto</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.V1.AnalyticsTelemetryV1EnvelopeReflection.Descriptor">
+            <summary>File descriptor for analytics_telemetry_v1_envelope.proto</summary>
+        </member>
+        <member name="T:Niantic.Platform.Analytics.Telemetry.V1.TelemetryBatchProto">
+            <summary>
+             This is being byte serialized into telemetry_batch in the main
+             TelemetryEnvelopeProto in `analytics_telemetry_base_envelope.proto`
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.V1.TelemetryBatchProto.EnvironmentIdFieldNumber">
+            <summary>Field number for the "environment_id" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.V1.TelemetryBatchProto.EnvironmentId">
+            <summary>
+             The actual records of telemetry
+             A record can be of type event or metric
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.V1.TelemetryBatchProto.EventsFieldNumber">
+            <summary>Field number for the "events" field.</summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.V1.TelemetryBatchProto.MetricsFieldNumber">
+            <summary>Field number for the "metrics" field.</summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.V1.TelemetryBatchProto.AttributesFieldNumber">
+            <summary>Field number for the "attributes" field.</summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.V1.TelemetryBatchProto.GeoanalyticsEventsFieldNumber">
+            <summary>Field number for the "geoanalytics_events" field.</summary>
+        </member>
+        <member name="T:Niantic.Platform.Analytics.Telemetry.V1.TelemetryEventRecordProto">
+            <summary>
+             This houses the actual telemetry event
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.V1.TelemetryEventRecordProto.CommonFieldNumber">
+            <summary>Field number for the "common" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.V1.TelemetryEventRecordProto.Common">
+            <summary>
+             Common metadata that are collected in each event
+             to help decide routing and or special handling policies
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.V1.TelemetryEventRecordProto.EventNameFieldNumber">
+            <summary>Field number for the "event_name" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.V1.TelemetryEventRecordProto.EventName">
+            <summary>
+             Unique identifier of the event
+             This field houses the outer telemetry, for example "PlatformTrackingOmniProto"
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.V1.TelemetryEventRecordProto.EncodedMessageFieldNumber">
+            <summary>Field number for the "encoded_message" field.</summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.V1.TelemetryEventRecordProto.FacetDetailNameFieldNumber">
+            <summary>Field number for the "facet_detail_name" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.V1.TelemetryEventRecordProto.FacetDetailName">
+            <summary>
+             The facet detail name is also sent to the ANFEs so that we can effectively filter out on an
+             event by event basis
+             This is up to the AnalyticsTrackingRecordHandler to fill in.
+            </summary>
+        </member>
+        <member name="T:Niantic.Platform.Analytics.Telemetry.V1.TelemetryMetricRecordProto">
+            <summary>
+             This houses the actual telemetry metric
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.V1.TelemetryMetricRecordProto.CommonFieldNumber">
+            <summary>Field number for the "common" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.V1.TelemetryMetricRecordProto.Common">
+            <summary>
+             Common metadata that are collected in each event
+             to help decide routing and or special handling policies
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.V1.TelemetryMetricRecordProto.MetricIdFieldNumber">
+            <summary>Field number for the "metric_id" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.V1.TelemetryMetricRecordProto.MetricId">
+            <summary>
+             Unique identifier of the metric
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.V1.TelemetryMetricRecordProto.LongFieldNumber">
+            <summary>Field number for the "long" field.</summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.V1.TelemetryMetricRecordProto.DoubleFieldNumber">
+            <summary>Field number for the "double" field.</summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.V1.TelemetryMetricRecordProto.BooleanFieldNumber">
+            <summary>Field number for the "boolean" field.</summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.V1.TelemetryMetricRecordProto.KindFieldNumber">
+            <summary>Field number for the "kind" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.V1.TelemetryMetricRecordProto.Kind">
+            <summary>
+             Additional metadata to specify what kind this specific metric is of
+            </summary>
+        </member>
+        <member name="T:Niantic.Platform.Analytics.Telemetry.V1.TelemetryMetricRecordProto.ValueOneofCase">
+            <summary>Enum of possible cases for the "value" oneof.</summary>
+        </member>
+        <member name="T:Niantic.Platform.Analytics.Telemetry.V1.TelemetryMetricRecordProto.Types">
+            <summary>Container for nested types declared in the TelemetryMetricRecordProto message type.</summary>
+        </member>
+        <member name="T:Niantic.Platform.Analytics.Telemetry.V1.TelemetryAttributeRecordProto">
+            <summary>
+             Describes the new value of a single game attribute such as a player badge or a players level.
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.V1.TelemetryAttributeRecordProto.CommonFieldNumber">
+            <summary>Field number for the "common" field.</summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.V1.TelemetryAttributeRecordProto.AttributeFieldNumber">
+            <summary>Field number for the "attribute" field.</summary>
+        </member>
+        <member name="T:Niantic.Platform.Analytics.Telemetry.V1.TelemetryAttribute">
+            <summary>
+             A container for a key/value pair that reflects a certain datum within a game/player state entity.
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.V1.TelemetryAttribute.FieldFieldNumber">
+            <summary>Field number for the "field" field.</summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.V1.TelemetryAttribute.ValueFieldNumber">
+            <summary>Field number for the "value" field.</summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.V1.TelemetryAttribute.TimestampFieldNumber">
+            <summary>Field number for the "timestamp" field.</summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.V1.TelemetryAttribute.LabelsFieldNumber">
+            <summary>Field number for the "labels" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.V1.TelemetryAttribute.Labels">
+            <summary>
+             Labels that we can use to organize and aggregate attributes with.  e.g. experiment_ids of the player
+            </summary>
+        </member>
+        <member name="T:Niantic.Platform.Analytics.Telemetry.V1.TelemetryAttribute.Types">
+            <summary>Container for nested types declared in the TelemetryAttribute message type.</summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.V1.TelemetryAttribute.Types.Label.FieldFieldNumber">
+            <summary>Field number for the "field" field.</summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.V1.TelemetryAttribute.Types.Label.ValuesFieldNumber">
+            <summary>Field number for the "values" field.</summary>
+        </member>
+        <member name="T:Niantic.Platform.Analytics.Telemetry.V1.TelemetryField">
+            <summary>
+             An identifier for a row of player data that will be used
+             for segmentation by the Analytics service.
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.V1.TelemetryField.EntityNameFieldNumber">
+            <summary>Field number for the "entity_name" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.V1.TelemetryField.EntityName">
+            <summary>
+             The entity name is the name of the outermost container for this data (ex.
+             "PlayerProto").
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.V1.TelemetryField.FieldPathFieldNumber">
+            <summary>Field number for the "field_path" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.V1.TelemetryField.FieldPath">
+            <summary>
+             The field path is a unique identifier for a particular attribute within an entity. It should
+             be human readable and informative since segmentation authors will use this string to find
+             attributes to segment on.
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.V1.TelemetryField.KeysFieldNumber">
+            <summary>Field number for the "keys" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.V1.TelemetryField.Keys">
+            <summary>
+             The keys uniquely identify a particular instance of the attribute. For many
+             segment-able attributes, there will be multiple instances of the same field
+             path for a particular player. For example an owned pokemon's level field,
+             will have as many instances as the number of pokemon that player owns. The
+             keys are the unique identifiers among all those potential instances (in this
+             case the ID of the pokemon). Multiple keys are supported for more complex
+             data structures.
+            </summary>
+        </member>
+        <member name="T:Niantic.Platform.Analytics.Telemetry.V1.TelemetryKey">
+            <summary>
+             A key is used to disambiguate between multiple unique instances of a particular attribute.
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.V1.TelemetryKey.KeyNameFieldNumber">
+            <summary>Field number for the "key_name" field.</summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.V1.TelemetryKey.ValueFieldNumber">
+            <summary>Field number for the "value" field.</summary>
+        </member>
+        <member name="T:Niantic.Platform.Analytics.Telemetry.V1.TelemetryValue">
+            <summary>
+             A multi-type value.
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.V1.TelemetryValue.IntValueFieldNumber">
+            <summary>Field number for the "int_value" field.</summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.V1.TelemetryValue.DoubleValueFieldNumber">
+            <summary>Field number for the "double_value" field.</summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.V1.TelemetryValue.StringValueFieldNumber">
+            <summary>Field number for the "string_value" field.</summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.V1.TelemetryValue.BoolValueFieldNumber">
+            <summary>Field number for the "bool_value" field.</summary>
+        </member>
+        <member name="T:Niantic.Platform.Analytics.Telemetry.V1.TelemetryValue.ValueOneofCase">
+            <summary>Enum of possible cases for the "value" oneof.</summary>
+        </member>
+        <member name="T:Niantic.Platform.Analytics.Telemetry.V1.TelemetryMetadataProto">
+            <summary>
+             Holds data that will be autofilled / replaced by the server
+             Only properties that lives in the server and is common across multiple games
+                should be specified here.
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.V1.TelemetryMetadataProto.UserIdFieldNumber">
+            <summary>Field number for the "user_id" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.V1.TelemetryMetadataProto.UserId">
+            <summary>
+             This is the unobfuscated player id and each recorder in the analytics platform
+             would be responsible for handling this
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.V1.TelemetryMetadataProto.SessionIdFieldNumber">
+            <summary>Field number for the "session_id" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.V1.TelemetryMetadataProto.SessionId">
+            <summary>
+             Session id as generated from the PLFEs
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.V1.TelemetryMetadataProto.ExperimentIdsFieldNumber">
+            <summary>Field number for the "experiment_ids" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.V1.TelemetryMetadataProto.ExperimentIds">
+            <summary>
+             Experiment Ids as generated from the PLFEs
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.V1.TelemetryMetadataProto.RecordIdFieldNumber">
+            <summary>Field number for the "record_id" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.V1.TelemetryMetadataProto.RecordId">
+            <summary>
+             ULID generated when the telemetry is generated in the PLFEs
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.V1.TelemetryMetadataProto.TelemetryScopeIdFieldNumber">
+            <summary>Field number for the "telemetry_scope_id" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.V1.TelemetryMetadataProto.TelemetryScopeId">
+            <summary>
+             Isolation unit for different telemetry
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.V1.TelemetryMetadataProto.IsQueryableFieldNumber">
+            <summary>Field number for the "is_queryable" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.V1.TelemetryMetadataProto.IsQueryable">
+            <summary>
+             Whether the telemetry should be saved to QueryableDatastore.  For backward compatible purpose.
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.V1.TelemetryMetadataProto.KeyvalueColumnFieldNumber">
+            <summary>Field number for the "keyvalue_column" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.V1.TelemetryMetadataProto.KeyvalueColumn">
+            <summary>
+             The column at which the telemetry should be stored in KeyValueDatastore.  For backward compatible purpose.
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.V1.TelemetryMetadataProto.ProcessingAttemptsCountFieldNumber">
+            <summary>Field number for the "processing_attempts_count" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.V1.TelemetryMetadataProto.ProcessingAttemptsCount">
+            <summary>
+             number of attempts to process this message that already happened
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.V1.TelemetryMetadataProto.PubSubMessageIdFieldNumber">
+            <summary>Field number for the "pub_sub_message_id" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.V1.TelemetryMetadataProto.PubSubMessageId">
+            <summary>
+             Special recorder only field that is passed downstream when requested (currently for attribute
+             batching).
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.V1.TelemetryMetadataProto.PopulationGroupIdsFieldNumber">
+            <summary>Field number for the "population_group_ids" field.</summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.V1.TelemetryMetadataProto.PopulationGroupIds">
+            <summary>
+             The population groups that the player is in at the time of the event.
+             Populated by analytics instead of sent from plfe.
+            </summary>
+        </member>
+        <member name="T:Niantic.Platform.Analytics.Telemetry.V1.TelemetryMetadataProto.Types">
+            <summary>Container for nested types declared in the TelemetryMetadataProto message type.</summary>
+        </member>
+        <member name="M:Niantic.Platform.Analytics.Telemetry.ITelemetryRecorder.RecordEvent``1(``0)">
+            <summary>
+            Record the details of a single event, including a value that will be associated with it.
+            </summary>
+            <typeparam name="T">The type of the object passed in as the event's
+            value. This type must be a generated Protobuf message.</typeparam>
+            <param name="eventType">This event's unique identifier</param>
+            <param name="value">The value associated with this event</param>
+        </member>
+        <member name="M:Niantic.Platform.Analytics.Telemetry.ITelemetryRecorder.Flush">
+            <summary>
+            Flush any queued events and upload them immediately.
+            </summary>
+        </member>
+        <member name="T:Niantic.Platform.Analytics.Telemetry.Logging.ILogHandler">
+            <summary>
+            Interface for getting fine grained logging out of client telemetry library
+            </summary>
+        </member>
+        <member name="T:Niantic.Platform.Analytics.Telemetry.Logging.InternalLogHandler">
+            <summary>
+            This is a wrapper so that internal components don't have to complete expensive
+            string operations if their logging is disabled.
+            This class is specifically for this project's internal classes to call.
+            </summary>
+        </member>
+        <member name="M:Niantic.Platform.Analytics.Telemetry.Logging.InternalLogHandler.AreLogOptionsEnabled">
+            <summary>
+            Checks whether or not this logger's LogOptions are enabled.
+            </summary>
+            <returns>Whether or not log options are enabled.</returns>
+        </member>
+        <member name="T:Niantic.Platform.Analytics.Telemetry.ARDKTelemetryService`1">
+            <summary>
+            The ARDK Telemetry service with approved events
+            </summary>
+            <typeparam name="TApprovedEvents"></typeparam>
+        </member>
+        <member name="T:Niantic.Platform.Analytics.Telemetry.ARDKTelemetryService`1.Builder">
+            <summary>
+            Builder class for constructing PreLoginTelemetryService.
+            </summary>
+        </member>
+        <member name="M:Niantic.Platform.Analytics.Telemetry.ARDKTelemetryService`1.Builder.#ctor(System.String,System.String,System.String)">
+            <summary>
+            Constructs a builder for an ARDK client telemetry service that communicates via endpoint
+            </summary>
+            <param name="rpcEndpointUrl">the endpoint to Analytics</param>
+            <param name="directory">The private temporary directory where prelogin will be stored on device. Create and pass in a name,
+            a good example is client-ardk-telemetry</param>
+            <param name="key">the API key for the endpoint</param>
+        </member>
+        <member name="M:Niantic.Platform.Analytics.Telemetry.ARDKTelemetryService`1.Builder.#ctor(Niantic.Platform.Analytics.Telemetry.ARDKTelemetryService{`0}.AnalyticsEnvironment,System.String,System.String)">
+            <summary>
+            Constructs a builder for an ARDK client telemetry service that communicates via endpoint
+            </summary>
+            <param name="environment">The analytics environment you're aiming to target</param>
+            <param name="directory">The private temporary directory where prelogin will be stored on device. Create and pass in a name,
+            a good example is client-ardk-telemetry</param>
+            <param name="key">the API key for the endpoint</param>
+        </member>
+        <!-- Badly formed XML comment ignored for member "M:Niantic.Platform.Analytics.Telemetry.ARDKTelemetryService`1.Builder.SetCommonFilters(System.String,System.String,System.String,System.String,System.String,System.String,System.String,System.String,System.String,System.String,System.String)" -->
+        <member name="M:Niantic.Platform.Analytics.Telemetry.ARDKTelemetryService`1.Builder.SetDebugOptions(Niantic.Platform.Analytics.Telemetry.StartupDebugOptions)">
+            <summary>
+            Adds debug options to ClientTelemetryService.
+            </summary>
+            <param name="debugOptions">
+            Initial options that can be passed into ClientTelemetry for debugging purposes.
+            </param>
+            <returns>This builder.</returns>
+        </member>
+        <member name="M:Niantic.Platform.Analytics.Telemetry.ARDKTelemetryService`1.Builder.Build">
+            <summary>
+            Builds a ClientTelemetryService with the provided options.
+            </summary>
+            <returns>The built ClientTelemetryService</returns>
+        </member>
+        <member name="T:Niantic.Platform.Analytics.Telemetry.PlatformInformation">
+            <summary>
+            Contains information about the user's current device.
+            </summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.PlatformInformation.ApplicationIdentifier">
+            <summary>
+            The package name or bundle identifier.
+            </summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.PlatformInformation.OperatingSystemName">
+            <summary>
+            The friendly name of the OS.
+            </summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.PlatformInformation.DeviceModel">
+            <summary>
+            The friendly device model name. e.g. iPhone, iPad etc...
+            </summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.PlatformInformation.LocaleCountryCode">
+            <summary>
+            The two-letter code defined in ISO 3166 for the country/region.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.PlatformInformation.LocaleLanguageCode">
+            <summary>
+            The ISO 639 two-letter code for the language.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.PlatformInformation.QualityLevel">
+            <summary>
+            The name of the rendering quality level (see Unity QualitySettings.names[])
+            </summary>
+        </member>
+        <member name="T:Niantic.Platform.Analytics.Telemetry.IPreLoginRpcManager">
+            <summary>
+            An RpcManager interface for sending client telemetry protos via endpoint
+            </summary>
+        </member>
+        <member name="M:Niantic.Platform.Analytics.Telemetry.IPreLoginRpcManager.SendAsync``1(Google.Protobuf.IMessage,System.Threading.CancellationToken)">
+            <summary>
+            Send a proto asynchronously
+            </summary>
+            <param name="requestProto">the request proto to send</param>
+            <param name="cancelToken">the cancel token</param>
+            <typeparam name="TResponse">the proto response</typeparam>
+            <returns></returns>
+        </member>
+        <member name="M:Niantic.Platform.Analytics.Telemetry.IPreLoginRpcManager.Get(System.Threading.CancellationToken)">
+            <summary>
+            Retrieves the settings
+            </summary>
+            <param name="cancelToken">the cancel token</param>
+            <returns></returns>
+        </member>
+        <member name="T:Niantic.Platform.Analytics.Telemetry.PreLoginRpcManager">
+            <summary>
+            An RpcManager for sending client-telemetry via endpoint
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.PreLoginRpcManager.DEFAULT_RETRY_COUNT">
+            <summary>
+            Default retry count for calls
+            </summary>
+        </member>
+        <member name="F:Niantic.Platform.Analytics.Telemetry.PreLoginRpcManager.DEFAULT_RETRY_DELAY_MS">
+            <summary>
+            Default retry delay between send attempts
+            </summary>
+        </member>
+        <member name="M:Niantic.Platform.Analytics.Telemetry.PreLoginRpcManager.#ctor(System.String,System.Action{System.Action},System.String,System.Int32,System.Int32)">
+            <summary>
+            Constructor of <see cref="T:Niantic.Platform.Analytics.Telemetry.PreLoginRpcManager"/>.
+            </summary>
+            <param name="rpcEndpointUrl">Domain endpoint url</param>
+            <param name="runOnMainThreadFunc">Callback function to execute the process in the main thread</param>
+            <param name="key">the API key for the endpoint</param>
+            <param name="retryCount">Retry count</param>
+            <param name="retryDelayMs">Retry interval</param>
+        </member>
+        <member name="M:Niantic.Platform.Analytics.Telemetry.PreLoginRpcManager.ExecRequestAsync(System.Byte[],System.Threading.CancellationToken)">
+            <summary>
+            Executes an upload of a proto
+            </summary>
+            <param name="body">the bytes of the proto</param>
+            <param name="cancelToken">the cancellation token</param>
+            <returns>completion task</returns>
+        </member>
+        <member name="M:Niantic.Platform.Analytics.Telemetry.PreLoginRpcManager.Get(System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:Niantic.Platform.Analytics.Telemetry.PreLoginRpcManager.SendAsync``1(Google.Protobuf.IMessage,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="T:Niantic.Platform.Analytics.Telemetry.IPreLoginTelemetryStorage">
+            <summary>
+            Interface for storing telemetry data in storage prior to sending.
+            </summary>
+        </member>
+        <member name="M:Niantic.Platform.Analytics.Telemetry.IPreLoginTelemetryStorage.WriteToDisk(Google.Protobuf.IMessage,System.String)">
+            <summary>
+            Save a client telemetry into a file.
+            </summary>
+            <param name="telemetryToWrite"></param>
+            <param name="filePrefix">The prefix of the file names.</param>
+            <returns>Returns the name of the saved file. In case of error, returns null.</returns>
+        </member>
+        <member name="M:Niantic.Platform.Analytics.Telemetry.IPreLoginTelemetryStorage.Delete(System.String)">
+            <summary>
+            Delete a saved client telemetry file.
+            </summary>
+            <param name="fileName">File name to delete.</param>
+            <returns>Return true if successful.</returns>
+        </member>
+        <member name="M:Niantic.Platform.Analytics.Telemetry.IPreLoginTelemetryStorage.PopTelemetryFromDisk``1(System.String)">
+            <summary>
+            Load all saved telemetries and remove them from storage.
+            </summary>
+            <param name="filePrefix">The prefix of the file names.</param>
+            <returns>Returns the list of loaded telemetries.</returns>
+        </member>
+        <member name="T:Niantic.Platform.Analytics.Telemetry.PreLoginTelemetryStorage">
+            <summary>
+            Stores telemetry data prior to sending
+            </summary>
+        </member>
+        <member name="M:Niantic.Platform.Analytics.Telemetry.PreLoginTelemetryStorage.#ctor(System.String)">
+            <summary>
+            Creates a Storage class
+            </summary>
+            <param name="directoryPath">the directory on disk</param>
+        </member>
+        <member name="M:Niantic.Platform.Analytics.Telemetry.PreLoginTelemetryStorage.WriteToDisk(Google.Protobuf.IMessage,System.String)">
+            <summary>
+            Writes protos to disk to a specific file location
+            </summary>
+            <param name="telemetryToFlush">Telemetry proto to write</param>
+            <param name="filePrefix">storage file location</param>
+            <returns></returns>
+        </member>
+        <member name="M:Niantic.Platform.Analytics.Telemetry.PreLoginTelemetryStorage.PopTelemetryFromDisk``1(System.String)">
+            <summary>
+            Pops telemetry from disk for sending
+            </summary>
+            <param name="filePrefix">file prefix for telemetry</param>
+            <typeparam name="T">Abstract proto type</typeparam>
+            <returns>Enumerable list of protos</returns>
+        </member>
+        <member name="M:Niantic.Platform.Analytics.Telemetry.PreLoginTelemetryStorage.Delete(System.String)">
+            <summary>
+            Deletes a file
+            </summary>
+            <param name="name">name of file</param>
+            <returns>true if successfully removed, false otherwise</returns>
+        </member>
+        <member name="M:Niantic.Platform.Analytics.Telemetry.PreLoginTelemetryStorage.GetDirectoryName">
+            <summary>
+            This is mostly used for testing to retrieve the directory that is made
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="T:Niantic.Platform.Analytics.Telemetry.PreLoginTelemetryRecorder`1">
+            <summary>
+            The recorder class is responsible for recording proto events
+            </summary>
+            <typeparam name="T">Type to record</typeparam>
+        </member>
+        <member name="M:Niantic.Platform.Analytics.Telemetry.PreLoginTelemetryRecorder`1.#ctor(Niantic.Platform.Analytics.Telemetry.IPreLoginRpcManager,Niantic.Platform.Analytics.Telemetry.IPreLoginTelemetryStorage,Niantic.Platform.Analytics.Telemetry.V1.TelemetryMetadataProto.Types.TelemetryScopeId)">
+            <summary>
+            Constructor for PreLoginTelemetryRecorder. Starts an upload of any pending events on init
+            </summary>
+            <param name="rpcManager">the rpc manager</param>
+            <param name="telemetryStorage">the telemetry storage</param>
+            <param name="scopeId">the scope id of this telemetry</param>
+        </member>
+        <member name="M:Niantic.Platform.Analytics.Telemetry.PreLoginTelemetryRecorder`1.RecordEvent``1(``0)">
+            <summary>
+            Records a proto event by adding to the pending events and scheduling a flush
+            </summary>
+            <param name="omniproto">the proto to send</param>
+        </member>
+        <member name="M:Niantic.Platform.Analytics.Telemetry.PreLoginTelemetryRecorder`1.Flush">
+            <summary>
+            Schedules an immediate batch request flush of telemetry
+            </summary>
+        </member>
+        <member name="M:Niantic.Platform.Analytics.Telemetry.PreLoginTelemetryRecorder`1.UploadAllTelemetries">
+             <summary>
+             Attempts to send telemetry that has not yet been sent.
+
+             NOTE: This method may be blocked due to disk access.
+             Also, if there is a crash within this function, the events before they are sent may be lost.
+             </summary>
+        </member>
+        <member name="M:Niantic.Platform.Analytics.Telemetry.PreLoginTelemetryRecorder`1.UploadTelemetryAsync(Niantic.Platform.Analytics.Telemetry.V1.TelemetryBatchProto)">
+            <summary>
+            Saves a TelemetryBatchProto request to disk and attempts to send batch proto to endpoint
+            </summary>
+        </member>
+        <member name="T:Niantic.Platform.Analytics.Telemetry.PreLoginTelemetrySettingsDownloader">
+            <summary>
+            Downloads settings on a periodic basis. This downloader object will hold the
+            true settings and manage synchronization.
+            This functionality has been moved over from ClientTelemetrySettingsDownloader
+            </summary>
+        </member>
+        <member name="M:Niantic.Platform.Analytics.Telemetry.PreLoginTelemetrySettingsDownloader.Initialize(Niantic.Platform.Analytics.Telemetry.IPreLoginRpcManager,System.Collections.Generic.HashSet{System.String},System.Collections.Generic.HashSet{System.String},System.Boolean)">
+            <summary>
+            Initialize the SettingsDownloader with the provided parameters.
+            This will also:
+            * Reset the telemetry settings to default values.
+            * Create a new session value.
+            * Reset the settings update timer.
+            </summary>
+            <param name="rpcManager"></param>
+            <param name="forceFlushEventNames"></param>
+            <param name="initialIsUploadEnabled"></param>
+            <param name="forceSampleEventNames"></param>
+        </member>
+        <member name="M:Niantic.Platform.Analytics.Telemetry.PreLoginTelemetrySettingsDownloader.ResumeSettingsUpdateTimer(System.Boolean)">
+            <summary>
+            Make sure acquire the settings lock before calling this method to prevent race conditions.
+            </summary>
+        </member>
+        <member name="M:Niantic.Platform.Analytics.Telemetry.PreLoginTelemetrySettingsDownloader.StopSettingsUpdateTimer">
+            <summary>
+            Make sure acquire the settings lock before calling this method to prevent race conditions.
+            </summary>
+        </member>
+        <member name="M:Niantic.Platform.Analytics.Telemetry.PreLoginTelemetrySettingsDownloader.Stop">
+            <summary>
+            Stops the settings update timer. Bypasses the initialization check.
+            </summary>
+        </member>
+        <member name="M:Niantic.Platform.Analytics.Telemetry.PreLoginTelemetrySettingsDownloader.Test_ResetInitialization">
+            <summary>
+            For testing purposes only, resets the initialization boolean.
+            </summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.StartupDebugOptions.UploadOnInitialize">
+            <summary>
+            Enables telemetry uploading by default during ClientTelemetry's initialization phase.
+            This property will be superseded by the game server's settings once it is downloaded.
+            </summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.StartupDebugOptions.LogHandler">
+            <summary>
+            The log handler to register to LogService.
+            </summary>
+        </member>
+        <member name="P:Niantic.Platform.Analytics.Telemetry.StartupDebugOptions.LogOptions">
+            <summary>
+            Enables fine grain logging for the separate ClientTelemetry components.
+            This is set to LogOptions.Basic by default.
+            </summary>
+        </member>
+        <member name="M:Niantic.Platform.Analytics.Telemetry.TelemetryRecorderUtilities.CreateTelemetryRecordProto(Google.Protobuf.ByteString,System.Double)">
+            <summary>
+            Creates the telemetry record proto
+            </summary>
+            <param name="eventValueWrapper">the event value passed in</param>
+            <param name="samplingProbability">the sampling probability</param>
+            <returns>A ClientTelemetryRecordProto with populated fields</returns>
+        </member>
+        <member name="M:Niantic.Platform.Analytics.Telemetry.TelemetryRecorderUtilities.GetPreLoginUserId">
+            <summary>
+            Retrieves the prelogin user id from local cache or file storage
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:Niantic.Platform.Analytics.Telemetry.TelemetryRecorderUtilities.CreatePreLoginUserId">
+            <summary>
+            Creating the prelogin user id. If ID is null from file or cached retrieval, write it to file
+            </summary>
+            <returns>Prelogin user id</returns>
+        </member>
+        <member name="M:Niantic.Platform.Analytics.Telemetry.TelemetryRecorderUtilities.WritePreLoginUserId">
+            <summary>
+            Writing the prelogin user id to file
+            </summary>
+        </member>
+        <member name="T:Niantic.Platform.Analytics.Telemetry.TimeUtil">
+            <summary>
+            Utilities class for helper methods related to timestamps.
+            </summary>
+        </member>
+        <member name="M:Niantic.Platform.Analytics.Telemetry.TimeUtil.DateTimeToTimestamp(System.DateTime)">
+            <summary>
+            Converts a DateTime object to milliseconds relative to the Unix Epoch time.
+            </summary>
+            <param name="dateTime">A DateTime object.</param>
+            <returns>The time in milliseconds.</returns>
+        </member>
+        <member name="M:Niantic.Platform.Analytics.Telemetry.TimeUtil.NowMs">
+            <summary>
+            Returns the current System time in milliseconds. Subject to local time zone.
+            </summary>
+            <returns>The current time.</returns>
+        </member>
+        <member name="M:Niantic.Platform.Analytics.Telemetry.TimeUtil.UtcNowMs">
+            <summary>
+            Returns the current System UTC time in milliseconds.
+            </summary>
+            <returns>The current time.</returns>
+        </member>
+        <member name="T:NUlid.Rng.CSUlidRng">
+            <summary>
+            A cryptographically secure (but slow(er)) RNG for the random part of ulid's.
+            </summary>
+        </member>
+        <member name="M:NUlid.Rng.CSUlidRng.GetRandomBytes(System.Int32)">
+            <summary>
+            Creates and returns the specified number of random bytes.
+            </summary>
+            <param name="length">The desired number of random bytes.</param>
+            <returns>The specified number of random bytes.</returns>
+        </member>
+        <member name="M:NUlid.Rng.CSUlidRng.NUlid#Rng#IUlidRng#GetRandomBytes(System.Int32)">
+            <summary>
+            Creates and returns the specified number of random bytes.
+            </summary>
+            <param name="length">The desired number of random bytes.</param>
+            <returns>The specified number of random bytes.</returns>
+        </member>
+        <member name="T:NUlid.Rng.IUlidRng">
+            <summary>
+            Defines the interface for ulid Random Number Generators.
+            </summary>
+        </member>
+        <member name="M:NUlid.Rng.IUlidRng.GetRandomBytes(System.Int32)">
+            <summary>
+            Creates and returns the specified number of random bytes.
+            </summary>
+            <param name="length">The desired number of random bytes.</param>
+            <returns>The specified number of random bytes.</returns>
+        </member>
+        <member name="T:NUlid.Rng.SimpleUlidRng">
+            <summary>
+            A simple (but fast(er)) RNG for the random part of ulid's.
+            </summary>
+        </member>
+        <member name="M:NUlid.Rng.SimpleUlidRng.GetRandomBytes(System.Int32)">
+            <summary>
+            Creates and returns the specified number of random bytes.
+            </summary>
+            <param name="length">The desired number of random bytes.</param>
+            <returns>The specified number of random bytes.</returns>
+        </member>
+        <member name="M:NUlid.Rng.SimpleUlidRng.NUlid#Rng#IUlidRng#GetRandomBytes(System.Int32)">
+            <summary>
+            Creates and returns the specified number of random bytes.
+            </summary>
+            <param name="length">The desired number of random bytes.</param>
+            <returns>The specified number of random bytes.</returns>
+        </member>
+        <member name="T:NUlid.Ulid">
+            <summary>
+            Represents a <see cref="T:NUlid.Ulid"/> (Universally Unique Lexicographically Sortable Identifier), based/inspired on
+            <see href="https://github.com/alizain/ulid">alizain/ulid</see>.
+            </summary>
+        </member>
+        <member name="F:NUlid.Ulid.MinValue">
+            <summary>
+            Represents the smallest possible value of <see cref="T:NUlid.Ulid"/>. This field is read-only.
+            </summary>
+        </member>
+        <member name="F:NUlid.Ulid.MaxValue">
+            <summary>
+            Represents the largest possible value of <see cref="T:NUlid.Ulid"/>. This field is read-only.
+            </summary>
+        </member>
+        <member name="F:NUlid.Ulid.Empty">
+            <summary>
+            A read-only instance of the <see cref="T:NUlid.Ulid"/> structure whose value is all zeros.
+            </summary>
+        </member>
+        <member name="P:NUlid.Ulid.Time">
+            <summary>
+            Gets the "time part" of the <see cref="T:NUlid.Ulid"/>.
+            </summary>
+        </member>
+        <member name="P:NUlid.Ulid.Random">
+            <summary>
+            Gets the "random part" of the <see cref="T:NUlid.Ulid"/>.
+            </summary>
+        </member>
+        <member name="M:NUlid.Ulid.NewUlid">
+            <summary>
+            Creates and returns a new <see cref="T:NUlid.Ulid"/> based on the current (UTC) time and default
+            (<see cref="T:NUlid.Rng.CSUlidRng"/>) RNG.
+            </summary>
+            <returns>Returns a new <see cref="T:NUlid.Ulid"/>.</returns>
+        </member>
+        <member name="M:NUlid.Ulid.NewUlid(System.DateTimeOffset)">
+            <summary>
+            Creates and returns a new <see cref="T:NUlid.Ulid"/> based on the specified time and default
+            (<see cref="T:NUlid.Rng.CSUlidRng"/>) RNG.
+            </summary>
+            <param name="time">
+            The <see cref="T:System.DateTimeOffset"/> to use for the time-part of the <see cref="T:NUlid.Ulid"/>.
+            </param>
+            <returns>Returns a new <see cref="T:NUlid.Ulid"/>.</returns>
+        </member>
+        <member name="M:NUlid.Ulid.NewUlid(NUlid.Rng.IUlidRng)">
+            <summary>
+            Creates and returns a new <see cref="T:NUlid.Ulid"/> based on the current (UTC) time and using the specified RNG.
+            </summary>
+            <param name="rng">The <see cref="T:NUlid.Rng.IUlidRng"/> to use for random number generation.</param>
+            <returns>Returns a new <see cref="T:NUlid.Ulid"/>.</returns>
+        </member>
+        <member name="M:NUlid.Ulid.NewUlid(System.DateTimeOffset,NUlid.Rng.IUlidRng)">
+            <summary>
+            Creates and returns a new <see cref="T:NUlid.Ulid"/> based on the specified time and using the specified RNG.
+            </summary>
+            <param name="time">
+            The <see cref="T:System.DateTimeOffset"/> to use for the time-part of the <see cref="T:NUlid.Ulid"/>.
+            </param>
+            <param name="rng">The <see cref="T:NUlid.Rng.IUlidRng"/> to use for random number generation.</param>
+            <returns>Returns a new <see cref="T:NUlid.Ulid"/>.</returns>
+        </member>
+        <member name="M:NUlid.Ulid.#ctor(System.Byte[])">
+            <summary>
+            Initializes a new instance of the <see cref="T:NUlid.Ulid"/> structure by using the specified array of bytes.
+            </summary>
+            <param name="bytes">
+            A 16-element byte array containing values with which to initialize the <see cref="T:NUlid.Ulid"/>.
+            </param>
+            <exception cref="T:System.ArgumentException">bytes argument is anything but 16 bytes.</exception>
+        </member>
+        <member name="M:NUlid.Ulid.#ctor(System.Guid)">
+            <summary>
+            Initializes a new instance of the <see cref="T:NUlid.Ulid"/> structure by using the specified <see cref="T:System.Guid"/>
+            </summary>
+            <param name="guid">A <see cref="T:System.Guid"/> representing a <see cref="T:NUlid.Ulid"/>.</param>
+        </member>
+        <member name="M:NUlid.Ulid.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:NUlid.Ulid"/> structure by using the value represented by the
+            specified string.
+            </summary>
+            <param name="ulid">A string that contains a <see cref="T:NUlid.Ulid"/>.</param>
+        </member>
+        <member name="M:NUlid.Ulid.Parse(System.String)">
+            <summary>
+            Converts the string representation of a <see cref="T:NUlid.Ulid"/> equivalent.
+            </summary>
+            <param name="s">A string containing a <see cref="T:NUlid.Ulid"/> to convert.</param>
+            <returns>A <see cref="T:NUlid.Ulid"/> equivalent to the value contained in s.</returns>
+            <exception cref="T:System.ArgumentNullException">s is null or empty.</exception>
+            <exception cref="T:System.FormatException">s is not in the correct format.</exception>
+        </member>
+        <member name="M:NUlid.Ulid.TryParse(System.String,NUlid.Ulid@)">
+            <summary>
+            Converts the string representation of a <see cref="T:NUlid.Ulid"/> to an instance of a <see cref="T:NUlid.Ulid"/>. A return
+            value indicates whether the conversion succeeded.
+            </summary>
+            <param name="s">A string containing the value to convert.</param>
+            <param name="result">
+            When this method returns, contains a <see cref="T:NUlid.Ulid"/> equivalent of the <see cref="T:NUlid.Ulid"/> contained in
+            s, if the conversion succeeded, or <see cref="F:NUlid.Ulid.Empty"/> if the conversion failed. The conversion fails if
+            the s parameter is null or <see cref="F:System.String.Empty"/>, is not of the correct format, or represents
+            an invalid <see cref="T:NUlid.Ulid"/> otherwise. This parameter is passed uninitialized; any value originally
+            supplied in result will be overwritten.
+            </param>
+            <returns>true if s was converted successfully; otherwise, false.</returns>
+        </member>
+        <member name="M:NUlid.Ulid.ToString">
+            <summary>
+            Returns the <see cref="T:NUlid.Ulid"/> in string-representation.
+            </summary>
+            <returns>The <see cref="T:NUlid.Ulid"/> in string-representation.</returns>
+        </member>
+        <member name="M:NUlid.Ulid.ToByteArray">
+            <summary>
+            Returns a 16-element byte array that contains the value of this instance.
+            </summary>
+            <returns>A 16-element byte array.</returns>
+        </member>
+        <member name="M:NUlid.Ulid.ToGuid">
+            <summary>
+            Returns a <see cref="T:System.Guid"/> that represents the value of this instance.
+            </summary>
+            <returns>A <see cref="T:System.Guid"/> that represents the value of this instance.</returns>
+        </member>
+        <member name="M:NUlid.Ulid.Equals(NUlid.Ulid)">
+            <summary>
+            Returns a value indicating whether this instance and a specified <see cref="T:NUlid.Ulid"/> object represent the
+            same value.
+            </summary>
+            <param name="other">An <see cref="T:NUlid.Ulid"/> to compare to this instance.</param>
+            <returns>true if other is equal to this instance; otherwise, false.</returns>
+        </member>
+        <member name="M:NUlid.Ulid.Equals(System.Object)">
+            <summary>
+            Returns a value that indicates whether this instance is equal to a specified object.
+            </summary>
+            <param name="obj">The object to compare with this instance.</param>
+            <returns>
+            true if obj is a <see cref="T:NUlid.Ulid"/> that has the same value as this instance; otherwise, false.
+            </returns>
+        </member>
+        <member name="M:NUlid.Ulid.CompareTo(NUlid.Ulid)">
+            <summary>
+            Compares this instance to a specified <see cref="T:NUlid.Ulid"/> object and returns an indication of their relative
+            values.
+            </summary>
+            <param name="other">A <see cref="T:NUlid.Ulid"/> to compare to this instance.</param>
+            <returns>
+                <para>
+                A signed number indicating the relative values of this instance and other.
+                </para>
+                <list type="table">
+                    <listheader>
+                        <term>Return value</term>
+                        <term>Description</term>
+                    </listheader>
+                    <item>
+                        <term>A negative integer</term>
+                        <term>This instance is less than other.</term>
+                    </item>
+                    <item>
+                        <term>Zero</term>
+                        <term>This instance is equal to other.</term>
+                    </item>
+                    <item>
+                        <term>A positive integer</term>
+                        <term>This instance is greater than other.</term>
+                    </item>
+                </list>
+            </returns>
+        </member>
+        <member name="M:NUlid.Ulid.CompareTo(System.Object)">
+            <summary>
+            Compares this instance to a specified object and returns an indication of their relative values.
+            </summary>
+            <param name="obj">An object to compare, or null.</param>
+            <returns>
+                <para>
+                A signed number indicating the relative values of this instance and value.
+                </para>
+                <list type="table">
+                    <listheader>
+                        <term>Return value</term>
+                        <term>Description</term>
+                    </listheader>
+                    <item>
+                        <term>A negative integer</term>
+                        <term>This instance is less than other.</term>
+                    </item>
+                    <item>
+                        <term>Zero</term>
+                        <term>This instance is equal to other.</term>
+                    </item>
+                    <item>
+                        <term>A positive integer</term>
+                        <term>This instance is greater than other.</term>
+                    </item>
+                </list>
+            </returns>
+        </member>
+        <member name="M:NUlid.Ulid.op_Equality(NUlid.Ulid,NUlid.Ulid)">
+            <summary>
+            Indicates whether the values of two specified <see cref="T:NUlid.Ulid"/> objects are equal.
+            </summary>
+            <param name="x">The first object to compare.</param>
+            <param name="y">The second object to compare.</param>
+            <returns>true if x and y are equal; otherwise, false.</returns>
+        </member>
+        <member name="M:NUlid.Ulid.op_Inequality(NUlid.Ulid,NUlid.Ulid)">
+            <summary>
+            Indicates whether the values of two specified <see cref="T:NUlid.Ulid"/> objects are not equal.
+            </summary>
+            <param name="x">The first object to compare.</param>
+            <param name="y">The second object to compare.</param>
+            <returns>true if x and y are not equal; otherwise, false.</returns>
+        </member>
+        <member name="M:NUlid.Ulid.GetHashCode">
+            <summary>
+            Returns the hash code for this instance.
+            </summary>
+            <returns>The hash code for this instance.</returns>
+        </member>
+        <member name="M:NUlid.Ulid.GetObjectData(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+            Sets the <see cref="T:System.Runtime.Serialization.SerializationInfo"/> with information about the <see cref="T:NUlid.Ulid"/>.
+            </summary>
+            <param name="info">The <see cref="T:System.Runtime.Serialization.SerializationInfo"/> that holds the serialized object data about the <see cref="T:NUlid.Ulid"/>.</param>
+            <param name="context">The <see cref="T:System.Runtime.Serialization.StreamingContext"/> that contains contextual information about the source or destination.</param>
+            <exception cref="T:System.ArgumentNullException">The <paramref name="info"/> argument is null.</exception>
+        </member>
+        <member name="M:NUlid.Ulid.#ctor(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)">
+            <summary>
+            Initializes a new instance of the <see cref="T:NUlid.Ulid"/> structure with serialized data.
+            </summary>
+            <param name="info">The <see cref="T:System.Runtime.Serialization.SerializationInfo"/> that holds the serialized object data about the <see cref="T:NUlid.Ulid"/>.</param>
+            <param name="context">The <see cref="T:System.Runtime.Serialization.StreamingContext"/> that contains contextual information about the source or destination.</param>
+            <exception cref="T:System.ArgumentNullException">The <paramref name="info"/> argument is null.</exception>
+            <exception cref="T:System.Runtime.Serialization.SerializationException">The <see cref="T:NUlid.Ulid"/> could not be deserialized correctly.</exception>
+        </member>
+        <member name="M:NUlid.Ulid.ToString(System.String,System.IFormatProvider)">
+            <summary>
+            Returns the <see cref="T:NUlid.Ulid"/> in string-representation.
+            </summary>
+            <returns>The <see cref="T:NUlid.Ulid"/> in string-representation.</returns>
+            <remarks>Both the format and formatProvider are ignored since there is only 1 valid representation of a <see cref="T:NUlid.Ulid"/>.</remarks>
+        </member>
+        <member name="T:NUlid.UlidTypeConverter">
+            <summary>
+            Converts a <see cref="T:System.String"/> or <see cref="T:byte[]"/> type to a <see cref="T:NUlid.Ulid"/> type, and vice versa.
+            </summary>
+        </member>
+        <member name="M:NUlid.UlidTypeConverter.CanConvertFrom(System.ComponentModel.ITypeDescriptorContext,System.Type)">
+            <summary>
+            Returns whether this converter can convert an object of the given type to the type of this converter.
+            </summary>
+            <param name="context">An <see cref="T:System.ComponentModel.ITypeDescriptorContext"/> that provides a format context.</param>
+            <param name="sourceType">A <see cref="T:System.Type"/> that represents the type that you want to convert from.</param>
+            <returns>
+            true if sourceType is a <see cref="T:System.String"/> type or a <see cref="T:byte[]"/> type can be assigned from
+            sourceType; otherwise, false.
+            </returns>
+            <exception cref="T:System.ArgumentNullException">The sourceType parameter is null.</exception>
+        </member>
+        <member name="M:NUlid.UlidTypeConverter.CanConvertTo(System.ComponentModel.ITypeDescriptorContext,System.Type)">
+            <summary>
+            Returns whether this converter can convert the object to the specified type, using the specified context.
+            </summary>
+            <param name="context"> An <see cref="T:System.ComponentModel.ITypeDescriptorContext"/> that provides a format context.</param>
+            <param name="destinationType">A <see cref="T:System.Type"/> that represents the type that you want to convert to.</param>
+            <returns>
+            true if destinationType is of type <see cref="T:System.ComponentModel.Design.Serialization.InstanceDescriptor"/>, <see cref="T:System.String"/>, or
+            <see cref="T:byte[]"/>; otherwise, false.
+            </returns>
+        </member>
+        <member name="M:NUlid.UlidTypeConverter.ConvertFrom(System.ComponentModel.ITypeDescriptorContext,System.Globalization.CultureInfo,System.Object)">
+            <summary>
+            Converts the given object to the type of this converter, using the specified context and culture information.
+            </summary>
+            <param name="context">An <see cref="T:System.ComponentModel.ITypeDescriptorContext"/> that provides a format context.</param>
+            <param name="culture">The <see cref="T:System.Globalization.CultureInfo"/> to use as the current culture.</param>
+            <param name="value">The <see cref="T:System.Object"/> to convert.</param>
+            <returns>An <see cref="T:System.Object"/> that represents the converted value.</returns>
+            <exception cref="T:System.NotSupportedException">The conversion cannot be performed.</exception>
+        </member>
+        <member name="M:NUlid.UlidTypeConverter.ConvertTo(System.ComponentModel.ITypeDescriptorContext,System.Globalization.CultureInfo,System.Object,System.Type)">
+            <summary>
+            Converts a given value object to the specified type, using the specified context and culture information.
+            </summary>
+            <param name="context">An <see cref="T:System.ComponentModel.ITypeDescriptorContext"/> that provides a format context.</param>
+            <param name="culture">A <see cref="T:System.Globalization.CultureInfo"/>. If <see langword="null"/> is passed, the current culture is assumed.</param>
+            <param name="value">The <see cref="T:System.Object"/> to convert.</param>
+            <param name="destinationType">The <see cref="T:System.Type"/> to convert the value parameter to.</param>
+            <returns>An <see cref="T:System.Object"/> that represents the converted value.</returns>
+            <exception cref="T:System.ArgumentNullException">The destinationType parameter is <see langword="null"/>.</exception>
+            <exception cref="T:System.NotSupportedException">The conversion cannot be performed.</exception>
+        </member>
+    </members>
+</doc>
