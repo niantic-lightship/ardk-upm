@@ -94,6 +94,7 @@ namespace Niantic.Lightship.AR.Subsystems
 
         protected override void OnDestroy()
         {
+            DestroyARPersistentAnchorManagerImplementation();
             var trackables = m_Trackables.Values.ToArray();
             foreach(var trackable in trackables)
             {
@@ -136,6 +137,12 @@ namespace Niantic.Lightship.AR.Subsystems
 
         internal new ARPersistentAnchor CreateTrackableImmediate(XRPersistentAnchor xrPersistentAnchor)
         {
+            var trackableId = xrPersistentAnchor.trackableId;
+            if (base.m_Trackables.TryGetValue(trackableId, out var trackable))
+            {
+                return trackable;
+            }
+
             return base.CreateTrackableImmediate(xrPersistentAnchor);
         }
 
@@ -214,6 +221,14 @@ namespace Niantic.Lightship.AR.Subsystems
 #else
             _arPersistentAnchorManagerImplementation = new ARPersistentAnchorManagerImplementation(this);
 #endif
+        }
+
+        private void DestroyARPersistentAnchorManagerImplementation()
+        {
+            if (_arPersistentAnchorManagerImplementation != null)
+            {
+                _arPersistentAnchorManagerImplementation.Dispose();
+            }
         }
 
         private void RequestLocationPermission()

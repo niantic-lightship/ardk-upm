@@ -1,7 +1,9 @@
 // Copyright 2023 Niantic, Inc. All Rights Reserved.
 
+using System;
 using System.IO;
 using Newtonsoft.Json;
+using Niantic.Lightship.Utilities;
 using UnityEngine;
 
 namespace Niantic.Lightship.AR.Loader
@@ -74,7 +76,6 @@ namespace Niantic.Lightship.AR.Loader
             
             public static ArdkConfiguration GetDefaultEnvironmentConfig()
             {
-                Debug.Log("Configuring system to target Prod");
                 ArdkConfiguration defaultArdkConfig = new ArdkConfiguration()
                 {
                     // Do NOT add api key for default values. But leave it as string.Empty. Not null. Else Unity will crash
@@ -101,31 +102,10 @@ namespace Niantic.Lightship.AR.Loader
 
             public static bool TryGetConfigurationFromJson(string fileWithPath, out ArdkConfiguration parsedConfig)
             {
-                // Android's apk is a jar file and hence has this wonky behaviour.
-                // please do NOT use #if UNITY_ANDROID.
-                // having all the code enabled at all times makes it easier to test and
-                // for identifying issues.
                 parsedConfig = null;
-                string result = string.Empty;
-                if (fileWithPath.Contains("://") || fileWithPath.Contains(":///"))
-                {
-                    // the constructor is async in Unity
-                    WWW www = new WWW(fileWithPath);
-                    // without this loop, we call things without them being ready.
-                    // it takes about 00:00:00.0003 to get the www object ready
-                    while (!www.isDone){}
+                bool hasData = FileUtilities.TryReadAllText(fileWithPath, out string result);
 
-                    result = www.text;
-                }
-                else
-                {
-                    if (File.Exists(fileWithPath))
-                    {
-                        result = File.ReadAllText(fileWithPath);
-                    }
-                }
-                
-                if(!string.IsNullOrWhiteSpace(result))
+                if(hasData && !string.IsNullOrWhiteSpace(result))
                 {
                     try
                     {

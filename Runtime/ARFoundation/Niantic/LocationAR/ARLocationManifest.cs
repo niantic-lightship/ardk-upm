@@ -16,6 +16,7 @@ namespace Niantic.Lightship.AR.Subsystems
     /// </summary>
     [PublicAPI]
     [Serializable]
+    [PreferBinarySerialization]
     public sealed class ARLocationManifest : ScriptableObject
     {
         [SerializeField] [HideInInspector]
@@ -77,7 +78,7 @@ namespace Niantic.Lightship.AR.Subsystems
 
                 var assetPath = AssetDatabase.GetAssetPath(this);
 
-                var manifests = _AssetDatabaseUtilities.FindAssets<ARLocationManifest>();
+                var manifests = AssetDatabaseUtilities.FindAssets<ARLocationManifest>();
                 if (manifests.Any(m => string.Equals(m.LocationName, value)))
                 {
                     Debug.LogWarning
@@ -239,7 +240,7 @@ namespace Niantic.Lightship.AR.Subsystems
         {
             // Create root
             var rootGo = new GameObject("Root");
-            rootGo.AddComponent<_TransformFixer>();
+            rootGo.AddComponent<TransformFixer>();
 
             // Create mesh and components
             var meshGo = new GameObject(LocationName + "(LocationMesh)");
@@ -255,12 +256,12 @@ namespace Niantic.Lightship.AR.Subsystems
             }
 
             meshGo.transform.SetParent(rootGo.transform, true);
-            meshGo.AddComponent<_TransformFixer>();
+            meshGo.AddComponent<TransformFixer>();
 
             // Save asset
             var manifestPath = AssetDatabase.GetAssetOrScenePath(this);
             var assetPath =
-                _ProjectBrowserUtilities.BuildAssetPath
+                ProjectBrowserUtilities.BuildAssetPath
                 (
                     LocationName + "(MockLocation).prefab",
                     Path.GetDirectoryName(manifestPath)

@@ -72,42 +72,64 @@ namespace Niantic.Lightship.AR
                 if (_nativeProviderHandle != IntPtr.Zero)
                 {
                     _api.Destruct(_nativeProviderHandle);
-                    _nativeProviderHandle = IntPtr.Zero;
                 }
 
                 _api = api;
+                _nativeProviderHandle = api.Construct(LightshipUnityContext.UnityContextHandle);
             }
 
             public override string GetScanId()
             {
+                if (!_nativeProviderHandle.IsValidHandle())
+                {
+                    return null;
+                }
+
                 bool hasResult = _api.TryGetRecordingInfo(_nativeProviderHandle, out string scanId, out RecordingStatus status);
                 return hasResult ? scanId : null;
             }
 
             public override void SaveCurrentScan()
             {
+                if (!_nativeProviderHandle.IsValidHandle())
+                {
+                    return;
+                }
+
                 if (_state != XRScanningState.Started)
                 {
                     Debug.LogError("Can only save from started state");
                     return;
                 }
+
                 _api.SaveCurrentScan(_nativeProviderHandle);
                 _state = XRScanningState.Saving;
             }
 
             public override void DiscardCurrentScan()
             {
+                if (!_nativeProviderHandle.IsValidHandle())
+                {
+                    return;
+                }
+
                 if (_state != XRScanningState.Started)
                 {
                     Debug.LogError("Can only discard from started state");
                     return;
                 }
+
                 _api.DiscardCurrentScan(_nativeProviderHandle);
                 _state = XRScanningState.Discarding;
             }
 
             public override void Start()
             {
+                if (!_nativeProviderHandle.IsValidHandle())
+                {
+                    return;
+                }
+
                 if (_state != XRScanningState.Ready && _state != XRScanningState.Stopped)
                 {
                     Debug.LogError($"Can't call Start when current state is {_state}");
@@ -120,12 +142,22 @@ namespace Niantic.Lightship.AR
 
             public override void Stop()
             {
+                if (!_nativeProviderHandle.IsValidHandle())
+                {
+                    return;
+                }
+
                 _api.Stop(_nativeProviderHandle);
                 _state = XRScanningState.Stopped;
             }
 
             public override void Destroy()
             {
+                if (!_nativeProviderHandle.IsValidHandle())
+                {
+                    return;
+                }
+
                 if (_state != XRScanningState.Ready || _state != XRScanningState.Stopped)
                 {
                     Stop();
@@ -133,11 +165,15 @@ namespace Niantic.Lightship.AR
 
                 _api.Destruct(_nativeProviderHandle);
                 _nativeProviderHandle = IntPtr.Zero;
-                _api = null;
             }
 
             public override XRScanningState GetState()
             {
+                if (!_nativeProviderHandle.IsValidHandle())
+                {
+                    return XRScanningState.Error;
+                }
+
                 if (_state == XRScanningState.Discarding || _state == XRScanningState.Saving)
                 {
                     // Check if these are done
@@ -167,6 +203,21 @@ namespace Niantic.Lightship.AR
                 get => _currentConfiguration;
                 set
                 {
+                    if (!_nativeProviderHandle.IsValidHandle())
+                    {
+                        return;
+                    }
+
+                    if (value.RaycasterVisualizationEnabled || value.VoxelVisualizationEnabled)
+                    {
+                        if (!value.UseEstimatedDepth)
+                        {
+                            Debug.LogError("Disabling depth estimation but " +
+                                "enabling visualization is not supported.");
+                            value.UseEstimatedDepth = true;
+                        }
+                    }
+
                     _currentConfiguration = value;
                     _api.Configure
                     (
@@ -176,7 +227,10 @@ namespace Niantic.Lightship.AR
                         (int)_currentConfiguration.RaycasterVisualizationResolution.x,
                         (int)_currentConfiguration.RaycasterVisualizationResolution.y,
                         _currentConfiguration.VoxelVisualizationEnabled,
-                        _currentConfiguration.ScanBasePath
+                        _currentConfiguration.ScanBasePath,
+                        _currentConfiguration.RawScanTargetId,
+                        _currentConfiguration.UseEstimatedDepth,
+                        _currentConfiguration.FullResolutionEnabled
                     );
                 }
             }
@@ -188,19 +242,35 @@ namespace Niantic.Lightship.AR
             /// <param name="raycastNormalBufferDescriptor"></param>
             /// <param name="raycastPositionAndConfidenceDescriptor"></param>
             /// <returns></returns>
-            public override bool TryGetRaycastBuffer(out XRTextureDescriptor raycastBufferDescriptor,
+            public override bool TryGetRaycastBuffer
+            (
+                out XRTextureDescriptor raycastBufferDescriptor,
                 out XRTextureDescriptor raycastNormalBufferDescriptor,
-                out XRTextureDescriptor raycastPositionAndConfidenceDescriptor)
+                out XRTextureDescriptor raycastPositionAndConfidenceDescriptor
+            )
             {
                 raycastBufferDescriptor = default;
                 raycastNormalBufferDescriptor = default;
                 raycastPositionAndConfidenceDescriptor = default;
-                if (_api == null)
+
+                if (!_nativeProviderHandle.IsValidHandle())
                 {
                     return false;
                 }
-                IntPtr resultPtr = _api.TryGetRaycastBuffer(_nativeProviderHandle, out var colorBuffer,out var normalBuffer, out var positionBuffer, out int colorSize, out int normalSize, out int positionSize,
-                    out int width, out int height);
+
+                IntPtr resultPtr = _api.TryGetRaycastBuffer
+                (
+                    _nativeProviderHandle,
+                    out var colorBuffer,
+                    out var normalBuffer,
+                    out var positionBuffer,
+                    out int colorSize,
+                    out int normalSize,
+                    out int positionSize,
+                    out int width,
+                    out int height
+                );
+
                 if (resultPtr == IntPtr.Zero ||
                     colorBuffer == IntPtr.Zero ||
                     normalBuffer == IntPtr.Zero ||
@@ -257,13 +327,12 @@ namespace Niantic.Lightship.AR
             public override bool TryGetVoxelBuffer(out XRScanningVoxelData voxelData)
             {
                 voxelData = default;
-                if (_api == null)
+                if (!_nativeProviderHandle.IsValidHandle())
                 {
                     return false;
                 }
 
-                IntPtr handlePtr = _api.TryGetVoxelBuffer(_nativeProviderHandle, out var positionBuffer,
-                    out var colorBuffer, out int pointCount);
+                IntPtr handlePtr = _api.TryGetVoxelBuffer(_nativeProviderHandle, out var positionBuffer, out var colorBuffer, out int pointCount);
                 if (handlePtr == IntPtr.Zero)
                 {
                     return false;
@@ -275,11 +344,21 @@ namespace Niantic.Lightship.AR
 
             public override void ComputeVoxels()
             {
+                if (!_nativeProviderHandle.IsValidHandle())
+                {
+                    return;
+                }
+
                 _api.ComputeVoxels(_nativeProviderHandle);
             }
 
             public override void DisposeVoxelBuffer(XRScanningVoxelData voxelData)
             {
+                if (!_nativeProviderHandle.IsValidHandle())
+                {
+                    return;
+                }
+
                 _api.ReleaseResource(_nativeProviderHandle, voxelData.nativeHandle);
             }
         }

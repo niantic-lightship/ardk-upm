@@ -13,7 +13,7 @@ using UnityEngine.XR.ARSubsystems;
 namespace Niantic.Lightship.AR.Playback
 {
     [Preserve]
-    public class LightshipPlaybackOcclusionSubsystem : XROcclusionSubsystem, _IPlaybackDatasetUser
+    public class LightshipPlaybackOcclusionSubsystem : XROcclusionSubsystem, IPlaybackDatasetUser
     {
         /// <summary>
         /// Register the Lightship Playback occlusion subsystem.
@@ -38,15 +38,15 @@ namespace Niantic.Lightship.AR.Playback
             XROcclusionSubsystem.Register(xrOcclusionSubsystemCinfo);
         }
 
-        void _IPlaybackDatasetUser.SetPlaybackDatasetReader(_PlaybackDatasetReader reader)
+        void IPlaybackDatasetUser.SetPlaybackDatasetReader(PlaybackDatasetReader reader)
         {
-            ((_IPlaybackDatasetUser)provider).SetPlaybackDatasetReader(reader);
+            ((IPlaybackDatasetUser)provider).SetPlaybackDatasetReader(reader);
         }
 
         /// <summary>
         /// The implementation provider class.
         /// </summary>
-        class LightshipPlaybackProvider : Provider, _IPlaybackDatasetUser
+        class LightshipPlaybackProvider : Provider, IPlaybackDatasetUser
         {
             /// <summary>
             /// The shader property name for the environment depth texture.
@@ -131,7 +131,7 @@ namespace Niantic.Lightship.AR.Playback
             /// </summary>
             private IntPtr m_nativeProviderHandle;
 
-            private _PlaybackDatasetReader m_DatasetReader;
+            private PlaybackDatasetReader m_DatasetReader;
 
             // This value will strongly affect memory usage.  It can also be set by the user in configuration.
             // The value represents the number of frames in memory before the user must make a copy of the data
@@ -167,7 +167,7 @@ namespace Niantic.Lightship.AR.Playback
                 m_DatasetReader = null;
             }
 
-            public void SetPlaybackDatasetReader(_PlaybackDatasetReader reader)
+            public void SetPlaybackDatasetReader(PlaybackDatasetReader reader)
             {
                 m_DatasetReader = reader;
 

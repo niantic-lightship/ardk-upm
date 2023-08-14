@@ -1,45 +1,72 @@
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Runtime.InteropServices;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using AOT;
 using Google.Protobuf;
 using Niantic.ARDK.AR.Protobuf;
 using Niantic.Lightship.AR.Protobuf;
 using Niantic.Lightship.AR.Settings.User;
+using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 
-namespace Telemetry
+namespace Niantic.Lightship.AR.Telemetry
 {
     internal class TelemetryService : IDisposable
     {
         private readonly ITelemetryPublisher _telemetryPublisher;
         private readonly CancellationTokenSource _cancellationTokenSource;
+        private readonly MessageParser<ArdkNextTelemetryOmniProto> _protoMessageParser;
         private readonly string _apiKey;
+        private readonly IntPtr _telemetryServiceHandle = IntPtr.Zero;
+        private static readonly ConcurrentQueue<ArdkNextTelemetryOmniProto> s_messagesToBeSent;
 
-        private static readonly
-            ConcurrentQueue<KeyValuePair<ArdkNextTelemetryOmniProto, ARClientEnvelope.Types.AgeLevel>>
-            s_messagesToBeSent;
-        private static readonly MessageParser<ArdkNextTelemetryOmniProto> s_protoMessageParser;
-
-        private static readonly TimeSpan s_publishLoopDelay = TimeSpan.FromSeconds(1);
+        private readonly TimeSpan _publishLoopDelay = TimeSpan.FromSeconds(1);
+        private readonly TimeSpan _nativePollingRate = TimeSpan.FromMilliseconds(500);
 
         static TelemetryService()
         {
-            s_messagesToBeSent = new ConcurrentQueue<KeyValuePair<ArdkNextTelemetryOmniProto, ARClientEnvelope.Types.AgeLevel>>();
-            s_protoMessageParser = new MessageParser<ArdkNextTelemetryOmniProto>(() => new ArdkNextTelemetryOmniProto());
+            s_messagesToBeSent = new ConcurrentQueue<ArdkNextTelemetryOmniProto>();
         }
 
-        public TelemetryService(ITelemetryPublisher telemetryPublisher, string apiKey)
+        public TelemetryService(IntPtr lightshipUnityContext, ITelemetryPublisher telemetryPublisher, string apiKey)
         {
+            _protoMessageParser = new MessageParser<ArdkNextTelemetryOmniProto>(() => new ArdkNextTelemetryOmniProto());
             _telemetryPublisher = telemetryPublisher;
             _apiKey = apiKey;
 
+            // Do not initialise native layer for Windows
+            if (lightshipUnityContext.IsValidHandle())
+            {
+                _telemetryServiceHandle =
+                    Lightship_ARDK_Unity_Telemetry_GetTelemetryServiceHandle(lightshipUnityContext);
+            }
+
             _cancellationTokenSource = new CancellationTokenSource();
-            Task.Run(async () => { await TimedPublish(s_publishLoopDelay); });
+            // TODO: Once the dependency trees are better, use the Map SDKs async lib
+            Task.Run(async () => await TimedPublish(_publishLoopDelay, _cancellationTokenSource.Token));
+            Task.Run(async () => await TimedNativePoller(_nativePollingRate, _cancellationTokenSource.Token));
+        }
+
+        private async Task TimedNativePoller(TimeSpan nativePollingRate, CancellationToken cancellationToken)
+        {
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                try
+                {
+                    EnqueueNativeEvents();
+
+                    // will throw exception on cancellation. But otherwise, it will delay process termination by native polling rate.
+                    await Task.Delay(nativePollingRate, cancellationToken);
+                }
+                catch (Exception)
+                {
+                    // fail silently for users
+                    // for local debugging only.
+                    // Debug.LogError($"Encountered exception: {e} while running the timed telemetry native poller");
+                }
+            }
         }
 
         public static void PublishEvent(ArdkNextTelemetryOmniProto ardkNextTelemetryOmniProto)
@@ -49,65 +76,126 @@ namespace Telemetry
 
         public static void PublishEvent(ArdkNextTelemetryOmniProto ardkNextTelemetryOmniProto, string requestId)
         {
+            if (Metadata.AgeLevel == ARClientEnvelope.Types.AgeLevel.Minor)
+            {
+                // dont log the event
+                return;
+            }
+
             if(ardkNextTelemetryOmniProto.TimestampMs == default)
+            {
                 ardkNextTelemetryOmniProto.TimestampMs = GetCurrentUtcTimestamp();
+            }
 
             ardkNextTelemetryOmniProto.ArCommonMetadata = Metadata.GetArCommonMetadata(requestId);
-            s_messagesToBeSent.Enqueue(
-                new KeyValuePair<ArdkNextTelemetryOmniProto, ARClientEnvelope.Types.AgeLevel>(
-                    ardkNextTelemetryOmniProto, Metadata.AgeLevel));
+            s_messagesToBeSent.Enqueue(ardkNextTelemetryOmniProto);
         }
 
-        // Has to be internal since we provide it for nar system initialization in StartupSystems
-        internal delegate void _ARDKTelemetry_Callback(
-            [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)] byte[] requestId, UInt32 requestIdLength,
-            [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 3)] byte[] serialisedProto, UInt32 length);
+        private void EnqueueNativeEvents()
+        {
+            if (_telemetryServiceHandle.IsValidHandle())
+            {
+                // not possible. But in the off chance this does happen, its better to fail gracefully and silently
+                return;
+            }
 
-        [MonoPInvokeCallback(typeof(_ARDKTelemetry_Callback))]
-        internal static void OnNativeRecordTelemetry(byte[] requestId, UInt32 requestIdLength, byte[] serialisedPayload,
-            UInt32 payloadLength)
+            try
+            {
+                IntPtr eventsAsByteArrayArrayPtr = Lightship_ARDK_Unity_Telemetry_GetPendingEventsAsArray(
+                    _telemetryServiceHandle,
+                    out IntPtr eventLengthsArrayPtr, out int eventCount);
+
+                if (!eventLengthsArrayPtr.IsValidHandle() || !eventsAsByteArrayArrayPtr.IsValidHandle())
+                {
+                    // not possible. But lets fail silently.
+                    return;
+                }
+
+                // no need to go through all this if you dont have events. Just clear out the resources and move on.
+                if (eventCount > 0)
+                {
+                    unsafe
+                    {
+                        NativeArray<int> eventLengths =
+                            NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<int>(
+                                eventLengthsArrayPtr.ToPointer(),
+                                eventCount, Allocator.None);
+
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+                        AtomicSafetyHandle atomicSafetyHandle = AtomicSafetyHandle.Create();
+                        NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref eventLengths, atomicSafetyHandle);
+#endif
+
+                        for (int i = 0; i < eventCount; i++)
+                        {
+                            int eventLength = eventLengths[i];
+                            IntPtr byteArrayPtr = Marshal.ReadIntPtr(eventsAsByteArrayArrayPtr, i * IntPtr.Size);
+                            NativeArray<byte> bytesArray =
+                                NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<byte>(
+                                    byteArrayPtr.ToPointer(),
+                                    eventLength, Allocator.None);
+
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+                            NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref bytesArray, atomicSafetyHandle);
+#endif
+
+                            if (TryParseEvent(bytesArray, out var omniProto))
+                            {
+                                // Add metadata fields here to avoid more things being transmitted between C++ and C#
+                                string userId = omniProto.ArCommonMetadata.UserId;
+
+                                omniProto.ArCommonMetadata =
+                                    Metadata.GetArCommonMetadata(omniProto.ArCommonMetadata.RequestId);
+                                omniProto.DeveloperKey = _apiKey;
+
+                                // userId can be changed by the time the event has made it from the C++ layer to the C# layer
+                                omniProto.ArCommonMetadata.UserId = userId;
+
+                                s_messagesToBeSent.Enqueue(omniProto);
+                            }
+
+                            bytesArray.Dispose();
+                        }
+
+                        eventLengths.Dispose();
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+                        AtomicSafetyHandle.Release(atomicSafetyHandle);
+#endif
+                    }
+                }
+
+                Lightship_ARDK_Unity_Telemetry_ReleasePendingEventsArray(eventsAsByteArrayArrayPtr, eventLengthsArrayPtr);
+            }
+            catch (Exception)
+            {
+                // fail silently for users
+                // for local debugging only.
+                // Debug.LogError($"Encountered exception: {e} while running the GetArray call");
+            }
+        }
+
+        private bool TryParseEvent(NativeArray<byte> serialisedPayload, out ArdkNextTelemetryOmniProto ardkNextTelemetryOmniProto)
         {
             try
             {
-                var omniProtoObject = s_protoMessageParser.ParseFrom(serialisedPayload);
-                if (omniProtoObject.TimestampMs == default)
-                {
-                    omniProtoObject.TimestampMs = GetCurrentUtcTimestamp();
-                }
-
-                var requestIdString = string.Empty;
-                try
-                {
-                    // GetString() can throw NullRef, Argument and Decoding exceptions. We cannot do anything about it.
-                    // so we log the exception and move on.
-                    if (requestIdLength > 0)
-                    {
-                        requestIdString = Encoding.UTF8.GetString(requestId);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Debug.LogWarningFormat("Getting requestId failed with {0}", ex);
-                    requestIdString = string.Empty;
-                }
-
-                omniProtoObject.ArCommonMetadata = Metadata.GetArCommonMetadata(requestIdString);
-
-                s_messagesToBeSent.Enqueue(
-                    new KeyValuePair<ArdkNextTelemetryOmniProto, ARClientEnvelope.Types.AgeLevel>(omniProtoObject,
-                        Metadata.AgeLevel));
+                ardkNextTelemetryOmniProto = _protoMessageParser.ParseFrom(serialisedPayload.ToArray());
+                return true;
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                // failing silently and not bothering the users
-                Debug.LogWarningFormat("Sending telemetry failed: {0}.", e);
+                // fail silently
+                // uncomment for debugging
+                // Debug.LogError($"Error while parsing event: {e}");
             }
+
+            ardkNextTelemetryOmniProto = null;
+            return false;
         }
 
-        private async Task TimedPublish(TimeSpan ts)
+        private async Task TimedPublish(TimeSpan ts, CancellationToken cancellationToken)
         {
             // in case the publish task dies for some reason, try again.
-            while (!_cancellationTokenSource.Token.IsCancellationRequested)
+            while (!cancellationToken.IsCancellationRequested)
             {
                 try
                 {
@@ -115,17 +203,19 @@ namespace Telemetry
                     {
                         if (s_messagesToBeSent.TryDequeue(out var eventToPublish))
                         {
-                            eventToPublish.Key.DeveloperKey = _apiKey;
-                            _telemetryPublisher.RecordEvent(eventToPublish.Key, eventToPublish.Value);
+                            eventToPublish.DeveloperKey = _apiKey;
+                            _telemetryPublisher.RecordEvent(eventToPublish);
                         }
                     }
 
-                    await Task.Delay(ts, _cancellationTokenSource.Token);
+                    // will throw exception on cancellation. But otherwise, it will delay process termination by polling time delay.
+                    await Task.Delay(ts, cancellationToken);
                 }
-                catch (Exception e)
+                catch (Exception)
                 {
+                    // fail silently
                     // for local debugging only.
-                    //Debug.Log($"Encountered exception: {e} while running the timed telemetry loop");
+                    // Debug.LogError($"Encountered exception: {e} while running the timed telemetry loop");
                 }
             }
         }
@@ -137,13 +227,35 @@ namespace Telemetry
 
         public void Dispose()
         {
+            // stop async tasks
             _cancellationTokenSource?.Cancel();
             _cancellationTokenSource?.Dispose();
+
+            // stop the native telemetry service
+            if (_telemetryServiceHandle != default)
+            {
+                Lightship_ARDK_Unity_Telemetry_ReleaseTelemetryServiceHandle(_telemetryServiceHandle);
+            }
+
             if (!s_messagesToBeSent.IsEmpty)
             {
                 // for local debugging only.
                 // Debug.LogWarning($"Events to be dropped: {s_messagesToBeSent.Count}");
             }
         }
+
+        // returns the service handle for the telemetry service
+        [DllImport(LightshipPlugin.Name)]
+        private static extern IntPtr Lightship_ARDK_Unity_Telemetry_GetTelemetryServiceHandle(IntPtr unityContextHandle);
+
+        // releases the telemetry service handle while disposing the service
+        [DllImport(LightshipPlugin.Name)]
+        private static extern void Lightship_ARDK_Unity_Telemetry_ReleaseTelemetryServiceHandle(IntPtr unityContextHandle);
+
+        [DllImport(LightshipPlugin.Name)]
+        private static extern IntPtr Lightship_ARDK_Unity_Telemetry_GetPendingEventsAsArray(IntPtr telemetryServiceHandle, out IntPtr array, out int arrayLength);
+
+        [DllImport(LightshipPlugin.Name)]
+        private static extern void Lightship_ARDK_Unity_Telemetry_ReleasePendingEventsArray(IntPtr eventsAsByteArrayArrayPtr, IntPtr lengthsArray);
     }
 }

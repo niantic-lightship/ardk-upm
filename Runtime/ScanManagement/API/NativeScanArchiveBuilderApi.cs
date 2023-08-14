@@ -104,32 +104,32 @@ namespace Niantic.Lightship.AR.Scanning
 
         private static class Native
         {
-            [DllImport(_LightshipPlugin.Name)]
+            [DllImport(LightshipPlugin.Name)]
             public static extern IntPtr Lightship_ARDK_Unity_Scanning_Archive_Builder_Create(
                 string scanPath, string scanId, string userDataStr);
 
-            [DllImport(_LightshipPlugin.Name)]
+            [DllImport(LightshipPlugin.Name)]
             public static extern void Lightship_ARDK_Unity_Scanning_Archive_Builder_Release(IntPtr handle);
 
-            [DllImport(_LightshipPlugin.Name)]
+            [DllImport(LightshipPlugin.Name)]
             public static extern bool Lightship_ARDK_Unity_Scanning_Archive_Builder_Has_More_Chunks(IntPtr handle);
 
-            [DllImport(_LightshipPlugin.Name)]
+            [DllImport(LightshipPlugin.Name)]
             public static extern bool Lightship_ARDK_Unity_Scanning_Archive_Builder_Is_Valid(IntPtr handle);
 
-            [DllImport(_LightshipPlugin.Name)]
+            [DllImport(LightshipPlugin.Name)]
             public static extern void Lightship_ARDK_Unity_Scanning_Archive_Builder_Get_Next_Chunk(IntPtr handle,
                 StringBuilder result, int stringMaxLength);
 
-            [DllImport(_LightshipPlugin.Name)]
+            [DllImport(LightshipPlugin.Name)]
             public static extern void Lightship_ARDK_Unity_Scanning_Archive_Builder_Get_Next_Chunk_Uuid(IntPtr handle,
                 StringBuilder result, int stringMaxLength);
 
-            [DllImport(_LightshipPlugin.Name)]
+            [DllImport(LightshipPlugin.Name)]
             public static extern void Lightship_ARDK_Unity_Scanning_Archive_Builder_Get_Scan_Poi_Id(
                 IntPtr handle, StringBuilder result, int stringMaxLength);
 
-            [DllImport(_LightshipPlugin.Name)]
+            [DllImport(LightshipPlugin.Name)]
             public static extern void Lightship_ARDK_Unity_Scanning_Archive_Builder_Cancel_Get_Next_Chunk(
                 IntPtr handle);
         }

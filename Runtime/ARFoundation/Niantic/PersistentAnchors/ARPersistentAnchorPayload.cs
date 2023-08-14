@@ -32,10 +32,10 @@ namespace Niantic.Lightship.AR.Subsystems
         public ARPersistentAnchorPayload(string data)
         {
             var bytes = new Span<byte>(new byte[data.Length]);
-            bool valid = Convert.TryFromBase64String(data, bytes, out int bytesWritten);
+            bool valid = System.Convert.TryFromBase64String(data, bytes, out int bytesWritten);
             if (valid)
             {
-                Data = Convert.FromBase64String(data);
+                Data = System.Convert.FromBase64String(data);
             }
             else
             {
@@ -51,7 +51,7 @@ namespace Niantic.Lightship.AR.Subsystems
         {
             if (Data != null)
             {
-                return Convert.ToBase64String(Data);
+                return System.Convert.ToBase64String(Data);
             }
             else
             {

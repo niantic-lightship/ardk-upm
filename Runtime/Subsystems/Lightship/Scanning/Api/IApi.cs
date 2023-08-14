@@ -14,13 +14,32 @@ namespace Niantic.Lightship.AR.ScanningSubsystem
 
         public void Stop(IntPtr handle);
 
-        public void Configure(IntPtr handle, int framerate, bool raycastVisualizationEnabled,
-            int raycastVisualizationWidth, int raycastVisualizationHeight,
-            bool voxelVisualizationEnabled, string scanBasePath);
+        public void Configure
+        (
+            IntPtr handle,
+            int framerate,
+            bool raycastVisualizationEnabled,
+            int raycastVisualizationWidth,
+            int raycastVisualizationHeight,
+            bool voxelVisualizationEnabled,
+            string scanBasePath,
+            string scanTargetId,
+            bool useEstimatedDepth,
+            bool fullResolutionEnabled
+        );
 
-        public IntPtr TryGetRaycastBuffer(IntPtr handle, out IntPtr colorBuffer, out IntPtr normalBuffer, out IntPtr positionBuffer,
-             out int colorSize, out int normalSize, out int positionSize, out int width,
-            out int height);
+        public IntPtr TryGetRaycastBuffer
+        (
+            IntPtr handle,
+            out IntPtr colorBuffer,
+            out IntPtr normalBuffer,
+            out IntPtr positionBuffer,
+            out int colorSize,
+            out int normalSize,
+            out int positionSize,
+            out int width,
+            out int height
+        );
 
         public void SaveCurrentScan(IntPtr handle);
 
@@ -33,6 +52,6 @@ namespace Niantic.Lightship.AR.ScanningSubsystem
 
         public void ComputeVoxels(IntPtr handle);
 
-        public void ReleaseResource(IntPtr hanlde, IntPtr resourceHandle);
+        public void ReleaseResource(IntPtr handle, IntPtr resourceHandle);
     }
 }

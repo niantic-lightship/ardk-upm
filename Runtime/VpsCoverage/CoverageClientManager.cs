@@ -118,7 +118,7 @@ namespace Niantic.Lightship.AR
         }
 #endif
 
-        private void Start()
+        private void Awake()
         {
             _coverageClient = CoverageClientFactory.Create();
         }

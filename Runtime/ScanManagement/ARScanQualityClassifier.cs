@@ -66,6 +66,9 @@ namespace Niantic.ARDK.AR.Scanning
                 return false;
             }
 
+            if (!_nativeHandle.IsValidHandle())
+                return false;
+
             return _api.SQCRun(_nativeHandle, framerate, scanPath);
         }
 
@@ -75,6 +78,9 @@ namespace Niantic.ARDK.AR.Scanning
         /// </summary>
         public void CancelCurrentRun()
         {
+            if (!_nativeHandle.IsValidHandle())
+                return;
+
             _api.SQCCancelCurrentRun(_nativeHandle);
         }
 
@@ -84,7 +90,13 @@ namespace Niantic.ARDK.AR.Scanning
         /// <returns> Whether or not a run of quality computer is ongoing. <returns>
         public bool Running
         {
-            get { return _api.SQCIsRunning(_nativeHandle); }
+            get
+            {
+                if (!_nativeHandle.IsValidHandle())
+                    return false;
+
+                return _api.SQCIsRunning(_nativeHandle);
+            }
         }
 
         /// <summary>
@@ -94,7 +106,13 @@ namespace Niantic.ARDK.AR.Scanning
         /// <returns>
         public float Progress
         {
-            get { return _api.SQCGetProgress(_nativeHandle); }
+            get
+            {
+                if (!_nativeHandle.IsValidHandle())
+                    return -1f;
+
+                return _api.SQCGetProgress(_nativeHandle);
+            }
         }
 
         /// <summary>
@@ -106,25 +124,30 @@ namespace Niantic.ARDK.AR.Scanning
         /// <returns>
         public ScanQualityResult GetResult(string scanPath)
         {
+            if (!_nativeHandle.IsValidHandle())
+                return null;
+
             var scanQualityResult = new ScanQualityResult();
             scanQualityResult.RejectionReasons = new List<ScanningSqcScores>();
             var scoresOutSize = 0;
             unsafe
             {
-                _api.SQCGetResult(_nativeHandle,
-                    scanPath, (IntPtr)_qualityScores.GetUnsafePtr(), out int size);
+                _api.SQCGetResult(_nativeHandle, scanPath, (IntPtr)_qualityScores.GetUnsafePtr(), out int size);
                 scoresOutSize = size;
             }
+
             if (scoresOutSize > Enum.GetValues(typeof(ScanQualityCategory)).Length)
             {
                 throw new ArgumentException("Native Size does not match ScanQualityCategory.Length");
             }
+
             for (int i = 0; i < scoresOutSize; i++)
             {
                 if (_qualityScores[i].Category == ScanQualityCategory.Overall)
                 {
                     scanQualityResult.ScanQualityScore = _qualityScores[i].Score;
-                } else
+                }
+                else
                 {
                     scanQualityResult.RejectionReasons.Add(_qualityScores[i]);
                 }

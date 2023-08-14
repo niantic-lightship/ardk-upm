@@ -11,7 +11,7 @@ namespace Niantic.Lightship.AR.Utilities
     [StructLayout(LayoutKind.Sequential, Pack = 8)]
     internal struct NativeStringStruct
     {
-        public IntPtr CharArray;
+        public IntPtr CharArrayIntPtr;
         public UInt32 ArrayLength;
     }
 }

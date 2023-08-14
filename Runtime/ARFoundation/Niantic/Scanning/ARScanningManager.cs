@@ -18,6 +18,34 @@ namespace Niantic.Lightship.AR.ARFoundation.Scanning
         [SerializeField]
         private string scanPathRelative;
 
+        [SerializeField]
+        public bool fullResolutionEnabled;
+        
+        /// <summary>
+        /// The scan target ID.
+        /// Must be set before scanning starts, to take effect.
+        /// </summary>
+        public string ScanTargetId;
+
+        /// <summary>
+        /// Enable raycast visualization for scanning. Required to access the raycast textures.
+        /// </summary>
+        [SerializeField]
+        private bool _enableRaycastVisualization;
+
+        /// <summary>
+        /// Enable voxel visualization for scanning. Required to compute voxels.
+        /// </summary>
+        [SerializeField]
+        private bool _enableVoxelVisualization;
+
+        /// <summary>
+        /// Use predicted depth data, if the device does not have native depth implementation.
+        /// Required if any visualization is enabled.
+        /// </summary>
+        [SerializeField]
+        private bool _useEstimatedDepth;
+
         /// <summary>
         /// The Raycast Color Buffer for Scan Visualization.
         /// </summary>
@@ -93,6 +121,11 @@ namespace Niantic.Lightship.AR.ARFoundation.Scanning
             ResetTextureInfos();
             var config = subsystem.CurrentConfiguration;
             config.ScanBasePath = Application.persistentDataPath + scanPathRelative;
+            config.ScanTargetId = ScanTargetId;
+            config.FullResolutionEnabled = fullResolutionEnabled;
+            config.RaycasterVisualizationEnabled = _enableRaycastVisualization;
+            config.VoxelVisualizationEnabled = _enableVoxelVisualization;
+            config.UseEstimatedDepth = _useEstimatedDepth;
             subsystem.CurrentConfiguration = config;
         }
 

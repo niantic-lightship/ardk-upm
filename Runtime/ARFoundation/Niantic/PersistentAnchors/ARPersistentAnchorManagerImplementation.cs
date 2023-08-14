@@ -74,5 +74,10 @@ namespace Niantic.Lightship.AR.Subsystems
                 Debug.LogError($"Failed to destroy anchor {trackableId}.", arPersistentAnchorManager.gameObject);
             }
         }
+
+        public void Dispose()
+        {
+            // Do nothing
+        }
     }
 }

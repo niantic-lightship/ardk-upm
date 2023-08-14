@@ -1,0 +1,85 @@
+fileFormatVersion: 2
+guid: 27fe56b2d874e7bd8e2ac2186c85f06c
+fileFormatVersion: 2
+PluginImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  iconMap: {}
+  executionOrder: {}
+  isPreloaded: 0
+  isOverridable: 0
+  platformData:
+  - first:
+      : Any
+    second:
+      enabled: 0
+      settings: {}
+  - first:
+      Android: Android
+    second:
+      enabled: 1
+      settings:
+        CPU: ARMv7
+  - first:
+      Editor: Editor
+    second:
+      enabled: 0
+      settings:
+        CPU: AnyCPU
+        DefaultValueInitialized: true
+        OS: AnyOS
+  - first:
+      Standalone: Linux
+    second:
+      enabled: 0
+      settings:
+        CPU: ARMv7
+  - first:
+      Standalone: Linux64
+    second:
+      enabled: 0
+      settings:
+        CPU: ARMv7
+  - first:
+      Standalone: LinuxUniversal
+    second:
+      enabled: 0
+      settings:
+        CPU: ARMv7
+  - first:
+      Standalone: OSXUniversal
+    second:
+      enabled: 0
+      settings:
+        CPU: AnyCPU
+  - first:
+      '': OSXIntel
+    second:
+      enabled: 0
+      settings: {}
+  - first:
+      '': OSXIntel64
+    second:
+      enabled: 0
+      settings: {}
+  - first:
+      Standalone: Win
+    second:
+      enabled: 0
+      settings:
+        CPU: ARMv7
+  - first:
+      Standalone: Win64
+    second:
+      enabled: 0
+      settings:
+        CPU: ARMv7
+  - first:
+      iPhone: iOS
+    second:
+      enabled: 0
+      settings:
+        CPU: AnyCPU
+        AddToEmbeddedBinaries: true
+        CompileFlags: null
+        FrameworkDependencies: Foundation;UIKit;Security;Metal

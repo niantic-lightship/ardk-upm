@@ -60,9 +60,9 @@ namespace Niantic.Lightship.AR.Utilities
             {
                 imagePlane = image.GetPlane(plane);
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                Debug.LogError("Could not retrieve image plane " + plane + " during sampling.");
+                Debug.LogError($"Could not retrieve image plane: {plane} during sampling.");
                 throw;
             }
 

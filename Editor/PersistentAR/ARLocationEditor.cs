@@ -8,11 +8,13 @@ using UnityEngine;
 internal class ARLocationEditor : Editor
 {
     private ARLocationManifest _previousARLocationManifest;
+    private bool _previousIncludeInBuildState;
 
     private void Awake()
     {
         var arLocation = (ARLocation)target;
         _previousARLocationManifest = arLocation.ARLocationManifest;
+        _previousIncludeInBuildState = arLocation.IncludeMeshInBuild;
     }
 
     public override void OnInspectorGUI()
@@ -48,13 +50,31 @@ internal class ARLocationEditor : Editor
             {
                 var bytes = new Span<byte>(new byte[payload.Length]);
                 bool valid = Convert.TryFromBase64String(payload, bytes, out int bytesWritten);
+                if (!valid)
+                {
+                    Debug.LogError("Not a valid ARPersistentAnchorPayload");
+                }
+
                 arLocation.Payload = valid ? new ARPersistentAnchorPayload(payload) : null;
+                EditorUtility.SetDirty(target);
             }
         }
     }
 
     private void UpdateARLocation(ARLocation arLocation)
     {
+        if (arLocation != null && _previousIncludeInBuildState != arLocation.IncludeMeshInBuild)
+        {
+            _previousIncludeInBuildState = arLocation.IncludeMeshInBuild;
+            if (arLocation.MeshContainer != null)
+            {
+                arLocation.MeshContainer.tag =
+                    arLocation.IncludeMeshInBuild ? "Untagged" : "EditorOnly";
+                
+                EditorUtility.SetDirty(target);
+            }
+        }
+
         if (_previousARLocationManifest != arLocation.ARLocationManifest)
         {
             arLocation.Payload = arLocation.ARLocationManifest

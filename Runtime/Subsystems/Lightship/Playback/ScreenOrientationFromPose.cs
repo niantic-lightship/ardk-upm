@@ -78,7 +78,9 @@ namespace Niantic.Lightship.AR.Subsystems.Lightship.Playback
                 case 3:
                     return ScreenOrientation.PortraitUpsideDown;
                 default:
+#pragma warning disable CS0618
                     return ScreenOrientation.Unknown;
+#pragma warning restore CS0618
             }
         }
     }

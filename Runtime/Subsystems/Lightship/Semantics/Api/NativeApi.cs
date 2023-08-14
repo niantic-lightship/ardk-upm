@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
-using Niantic.Lightship.AR.ARFoundation;
+using Niantic.Lightship.AR.ARFoundation.Occlusion;
 using Niantic.Lightship.AR.Utilities;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
@@ -22,7 +22,6 @@ namespace Niantic.Lightship.AR.SemanticsSubsystem
         private BufferedTextureCache _packedSemanticsBufferedTextureCache;
         private int _packedSemanticsPropertyNameID;
         private const int _kFramesInMemory = 2;
-
 
         private void CreateShaderPropertyEntry(string semanticChannelName)
         {
@@ -67,7 +66,7 @@ namespace Niantic.Lightship.AR.SemanticsSubsystem
         /// </returns>
         public bool TryPrepareSubsystem(IntPtr nativeProviderHandle)
         {
-            if (!GetChannelNames(nativeProviderHandle, out var semanticChannelNames))
+            if (!TryGetChannelNames(nativeProviderHandle, out var semanticChannelNames))
             {
                 return false;
             }
@@ -92,9 +91,9 @@ namespace Niantic.Lightship.AR.SemanticsSubsystem
         /// <param name="nativeProviderHandle"> The handle to the semantics native API. </param>
         /// <param name="framesPerSecond"> The frame rate to run the model at in frames per second. </param>
         /// <param name="numThresholds"> The number of elements in thresholds. This is expected to be the same as the
-        /// number of channels returned by <c>GetChannelNames</c>. </param>
+        /// number of channels returned by <c>TryGetChannelNames</c>. </param>
         /// <param name="thresholds"> An array of float values. Each index in the array corresponds to an index in the
-        /// array of semantic channels returned by <c>GetChannelNames</c>. A negative value will have no effect and will
+        /// array of semantic channels returned by <c>TryGetChannelNames</c>. A negative value will have no effect and will
         /// leave the threshold at the default or previously set value. A new threshold setting must be between 0 and
         /// 1, inclusive.</param>
         public void Configure(IntPtr nativeProviderHandle, UInt32 framesPerSecond, UInt32 numThresholds, IntPtr thresholds)
@@ -119,21 +118,41 @@ namespace Niantic.Lightship.AR.SemanticsSubsystem
         /// <c>true</c> if the semantic channel texture descriptor is available and is returned. Otherwise,
         /// <c>false</c>.
         /// </returns>
-        public bool TryGetSemanticChannel(IntPtr nativeProviderHandle, string channelName, XRCameraParams? cameraParams,
-            out XRTextureDescriptor semanticsChannelDescriptor, out Matrix4x4 samplerMatrix)
+        public bool TryGetSemanticChannel
+        (
+            IntPtr nativeProviderHandle,
+            string channelName,
+            XRCameraParams? cameraParams,
+            out XRTextureDescriptor semanticsChannelDescriptor,
+            out Matrix4x4 samplerMatrix
+        )
         {
             semanticsChannelDescriptor = default;
             samplerMatrix = Matrix4x4.identity;
 
             if (!_semanticsNameToIndexMap.ContainsKey(channelName))
+            {
                 return false;
+            }
 
             int semanticsIndex = _semanticsNameToIndexMap[channelName];
-            var resourceHandle = Native.GetSemanticsChannel(nativeProviderHandle, semanticsIndex,
-                out IntPtr memoryBuffer, out int size, out int width, out int height, out TextureFormat format,
-                out uint frameId);
+            var resourceHandle =
+                Native.GetSemanticsChannel
+                (
+                    nativeProviderHandle,
+                    semanticsIndex,
+                    out IntPtr memoryBuffer,
+                    out int size,
+                    out int width,
+                    out int height,
+                    out TextureFormat format,
+                    out uint frameId
+                );
+
             if (resourceHandle == IntPtr.Zero)
+            {
                 return false;
+            }
 
             if (memoryBuffer != IntPtr.Zero)
             {
@@ -155,23 +174,28 @@ namespace Niantic.Lightship.AR.SemanticsSubsystem
                     var viewport = cameraParams.Value;
                     if (PoseProvider.TryAcquireCurrentPose(out var currentPose))
                     {
-                        TryCalculateSamplerMatrix(
+                        TryCalculateSamplerMatrix
+                        (
                             nativeProviderHandle,
                             resourceHandle,
                             viewport,
                             currentPose,
                             OcclusionContext.Shared.OccludeeEyeDepth,
-                            out samplerMatrix);
+                            out samplerMatrix
+                        );
                     }
                     else
                     {
-                        samplerMatrix = _CameraMath.CalculateDisplayMatrix(
-                            width,
-                            height,
-                            (int)viewport.screenWidth,
-                            (int)viewport.screenHeight,
-                            viewport.screenOrientation,
-                            invertVertically: true);
+                        samplerMatrix =
+                            CameraMath.CalculateDisplayMatrix
+                            (
+                                width,
+                                height,
+                                (int)viewport.screenWidth,
+                                (int)viewport.screenHeight,
+                                viewport.screenOrientation,
+                                invertVertically: true
+                            );
                     }
                 }
 
@@ -209,8 +233,18 @@ namespace Niantic.Lightship.AR.SemanticsSubsystem
             }
 
             int index = _semanticsNameToIndexMap[channelName];
-            var resHandle = Native.GetSemanticsChannel(nativeProviderHandle, index, out var memoryBuffer, out var size, out var width,
-                out var height, out _, out _);
+            var resHandle =
+                Native.GetSemanticsChannel
+                (
+                    nativeProviderHandle,
+                    index,
+                    out var memoryBuffer,
+                    out var size,
+                    out var width,
+                    out var height,
+                    out _,
+                    out _
+                );
 
             if (resHandle == IntPtr.Zero)
             {
@@ -245,14 +279,29 @@ namespace Niantic.Lightship.AR.SemanticsSubsystem
         /// <c>true</c> if the packed semantics texture descriptor is available and is returned. Otherwise,
         /// <c>false</c>.
         /// </returns>
-        public bool TryGetPackedSemanticChannels(IntPtr nativeProviderHandle, XRCameraParams? cameraParams,
-            out XRTextureDescriptor packedSemanticsDescriptor, out Matrix4x4 samplerMatrix)
+        public bool TryGetPackedSemanticChannels
+        (
+            IntPtr nativeProviderHandle,
+            XRCameraParams? cameraParams,
+            out XRTextureDescriptor packedSemanticsDescriptor,
+            out Matrix4x4 samplerMatrix
+        )
         {
             packedSemanticsDescriptor = default;
             samplerMatrix = Matrix4x4.identity;
 
-            var resourceHandle = Native.GetPackedSemanticsChannels(nativeProviderHandle, out var memoryBuffer,
-                out var size, out var width, out var height, out var format, out var frameId);
+            var resourceHandle =
+                Native.GetPackedSemanticsChannels
+                (
+                    nativeProviderHandle,
+                    out var memoryBuffer,
+                    out var size,
+                    out var width,
+                    out var height,
+                    out var format,
+                    out var frameId
+                );
+
             if (resourceHandle == IntPtr.Zero)
                 return false;
 
@@ -275,23 +324,28 @@ namespace Niantic.Lightship.AR.SemanticsSubsystem
                     var viewport = cameraParams.Value;
                     if (PoseProvider.TryAcquireCurrentPose(out var currentPose))
                     {
-                        TryCalculateSamplerMatrix(
+                        TryCalculateSamplerMatrix
+                        (
                             nativeProviderHandle,
                             resourceHandle,
                             viewport,
                             currentPose,
                             OcclusionContext.Shared.OccludeeEyeDepth,
-                            out samplerMatrix);
+                            out samplerMatrix
+                        );
                     }
                     else
                     {
-                        samplerMatrix = _CameraMath.CalculateDisplayMatrix(
-                            width,
-                            height,
-                            (int)viewport.screenWidth,
-                            (int)viewport.screenHeight,
-                            viewport.screenOrientation,
-                            invertVertically: true);
+                        samplerMatrix =
+                            CameraMath.CalculateDisplayMatrix
+                            (
+                                width,
+                                height,
+                                (int)viewport.screenWidth,
+                                (int)viewport.screenHeight,
+                                viewport.screenOrientation,
+                                invertVertically: true
+                            );
                     }
                 }
 
@@ -320,13 +374,24 @@ namespace Niantic.Lightship.AR.SemanticsSubsystem
         /// <returns>Whether the CPU image was successfully acquired.</returns>
         public bool TryAcquirePackedSemanticChannelsCPUImage(IntPtr nativeProviderHandle, out LightshipCpuBuffer cpuBuffer)
         {
-            var resHandle = Native.GetPackedSemanticsChannels(nativeProviderHandle, out var memoryBuffer, out var size, out var width,
-                out var height, out var format, out var frameId);
+            var resHandle =
+                Native.GetPackedSemanticsChannels
+                (
+                    nativeProviderHandle,
+                    out var memoryBuffer,
+                    out var size,
+                    out var width,
+                    out var height,
+                    out var format,
+                    out var frameId
+                );
+
             if (resHandle == IntPtr.Zero)
             {
                 cpuBuffer = default;
                 return false;
             }
+
             var dimensions = new Vector2Int(width, height);
             cpuBuffer = new LightshipCpuBuffer(resHandle, memoryBuffer, dimensions, LightshipCpuBuffer.Format.BitMask32);
             return true;
@@ -345,13 +410,22 @@ namespace Niantic.Lightship.AR.SemanticsSubsystem
         /// the image should be projected onto (in meters).</param>
         /// <param name="result"></param>
         /// <returns>True, if the matrix could be calculated, otherwise false (in case the </returns>
-        public bool TryCalculateSamplerMatrix(IntPtr nativeProviderHandle, IntPtr resourceHandle,
-            XRCameraParams cameraParams, Matrix4x4 pose, float backProjectionPlane, out Matrix4x4 result)
+        public bool TryCalculateSamplerMatrix
+        (
+            IntPtr nativeProviderHandle,
+            IntPtr resourceHandle,
+            XRCameraParams cameraParams,
+            Matrix4x4 pose,
+            float backProjectionPlane,
+            out Matrix4x4 result
+        )
         {
             var outMatrix = new float[9];
-            var poseArray = _Convert.Matrix4x4ToInternalArray(pose.FromUnityToArdk());
+            var poseArray = MatrixConversionHelper.Matrix4x4ToInternalArray(pose.FromUnityToArdk());
 
-            if (Native.CalculateInterpolationMatrix(
+            var gotInterpolationMatrix =
+                Native.CalculateInterpolationMatrix
+                (
                     nativeProviderHandle,
                     resourceHandle,
                     (int)cameraParams.screenWidth,
@@ -359,13 +433,18 @@ namespace Niantic.Lightship.AR.SemanticsSubsystem
                     cameraParams.screenOrientation.FromUnityToArdk(),
                     poseArray,
                     backProjectionPlane,
-                    outMatrix))
+                    outMatrix
+                );
+
+            if (gotInterpolationMatrix)
             {
-                result = new Matrix4x4(
+                result = new Matrix4x4
+                (
                     new Vector4(outMatrix[0], outMatrix[1], outMatrix[2], 0),
                     new Vector4(outMatrix[3], outMatrix[4], outMatrix[5], 0),
                     new Vector4(outMatrix[6], outMatrix[7], outMatrix[8], 0),
-                    new Vector4(0, 0, 0, 1));
+                    new Vector4(0, 0, 0, 1)
+                );
 
                 return true;
             }
@@ -374,7 +453,7 @@ namespace Niantic.Lightship.AR.SemanticsSubsystem
             return false;
         }
 
-        public bool GetChannelNames(IntPtr nativeProviderHandle, out List<string> semanticChannelNames)
+        public bool TryGetChannelNames(IntPtr nativeProviderHandle, out List<string> semanticChannelNames)
         {
             var resourceHandle = Native.GetChannelNames(nativeProviderHandle, out var arrayPointer, out var arrayLength);
             if (IntPtr.Zero == resourceHandle || IntPtr.Zero == arrayPointer)
@@ -387,22 +466,27 @@ namespace Niantic.Lightship.AR.SemanticsSubsystem
 
             unsafe
             {
-                NativeArray<NativeStringStruct> nativeSemanticsArray =
-                    NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<NativeStringStruct>(arrayPointer.ToPointer(),
-                        arrayLength, Allocator.None);
+                var nativeSemanticsArray =
+                    NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<NativeStringStruct>
+                    (
+                        arrayPointer.ToPointer(),
+                        arrayLength,
+                        Allocator.None
+                    );
+
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
                 NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref nativeSemanticsArray, AtomicSafetyHandle.GetTempMemoryHandle());
 #endif
                 foreach (var nameStruct in nativeSemanticsArray)
                 {
-                    if (IntPtr.Zero == nameStruct.CharArray || nameStruct.ArrayLength <= 0)
+                    if (IntPtr.Zero == nameStruct.CharArrayIntPtr || nameStruct.ArrayLength <= 0)
                     {
                         Debug.LogError("Received invalid channel name data from semantics native layer");
                         semanticChannelNames = default;
                         return false;
                     }
 
-                    string name = Marshal.PtrToStringAnsi(nameStruct.CharArray, (int) nameStruct.ArrayLength);
+                    string name = Marshal.PtrToStringAnsi(nameStruct.CharArrayIntPtr, (int) nameStruct.ArrayLength);
                     semanticChannelNames.Add(name);
                 }
 
@@ -415,34 +499,63 @@ namespace Niantic.Lightship.AR.SemanticsSubsystem
 
         private static class Native
         {
-            [DllImport(_LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_SemanticsProvider_Construct")]
+            [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_SemanticsProvider_Construct")]
             public static extern IntPtr Construct(IntPtr unityContext);
 
-            [DllImport(_LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_SemanticsProvider_Start")]
+            [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_SemanticsProvider_Start")]
             public static extern void Start(IntPtr nativeProviderHandle);
 
-            [DllImport(_LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_SemanticsProvider_Stop")]
+            [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_SemanticsProvider_Stop")]
             public static extern void Stop(IntPtr nativeProviderHandle);
 
-            [DllImport(_LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_SemanticsProvider_Configure")]
+            [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_SemanticsProvider_Configure")]
             public static extern void Configure(IntPtr nativeProviderHandle, UInt32 framesPerSecond, UInt32 numThresholds, IntPtr thresholds);
 
-            [DllImport(_LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_SemanticsProvider_Destruct")]
+            [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_SemanticsProvider_Destruct")]
             public static extern void Destruct(IntPtr nativeProviderHandle);
 
-            [DllImport(_LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_SemanticsProvider_GetSemanticsChannel")]
-            public static extern IntPtr GetSemanticsChannel(IntPtr nativeProviderHandle, int channelId, out IntPtr memoryBuffer, out int size, out int width, out int height, out TextureFormat format, out uint frameId);
+            [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_SemanticsProvider_GetSemanticsChannel")]
+            public static extern IntPtr GetSemanticsChannel
+            (
+                IntPtr nativeProviderHandle,
+                int channelId,
+                out IntPtr memoryBuffer,
+                out int size,
+                out int width,
+                out int height,
+                out TextureFormat format,
+                out uint frameId
+            );
 
-            [DllImport(_LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_SemanticsProvider_GetPackedSemanticsChannel")]
-            public static extern IntPtr GetPackedSemanticsChannels(IntPtr nativeProviderHandle, out IntPtr memoryBuffer, out int size, out int width, out int height, out TextureFormat format, out uint frameId);
+            [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_SemanticsProvider_GetPackedSemanticsChannel")]
+            public static extern IntPtr GetPackedSemanticsChannels
+            (
+                IntPtr nativeProviderHandle,
+                out IntPtr memoryBuffer,
+                out int size,
+                out int width,
+                out int height,
+                out TextureFormat format,
+                out uint frameId
+            );
 
-            [DllImport(_LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_SemanticsProvider_CalculateSamplerMatrix")]
-            public static extern bool CalculateInterpolationMatrix(IntPtr nativeProviderHandle, IntPtr nativeResourceHandle, int viewportWidth, int viewportHeight, uint orientation, float[] poseMatrix, float backProjectionPlane, float[] outMatrix3X3);
+            [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_SemanticsProvider_CalculateSamplerMatrix")]
+            public static extern bool CalculateInterpolationMatrix
+            (
+                IntPtr nativeProviderHandle,
+                IntPtr nativeResourceHandle,
+                int viewportWidth,
+                int viewportHeight,
+                uint orientation,
+                float[] poseMatrix,
+                float backProjectionPlane,
+                float[] outMatrix3X3
+            );
 
-            [DllImport(_LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_SemanticsProvider_ReleaseResource")]
+            [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_SemanticsProvider_ReleaseResource")]
             public static extern IntPtr DisposeResource(IntPtr nativeProviderHandle, IntPtr resourceHandle);
 
-            [DllImport(_LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_SemanticsProvider_GetChannelNames")]
+            [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_SemanticsProvider_GetChannelNames")]
             public static extern IntPtr GetChannelNames(IntPtr nativeProviderHandle, out IntPtr channelStructs, out int numChannels);
         }
     }

@@ -12,7 +12,7 @@ using Object = UnityEngine.Object;
 namespace Niantic.Lightship.AR.Playback
 {
     [Preserve]
-    public class LightshipPlaybackCameraSubsystem : XRCameraSubsystem, _IPlaybackDatasetUser
+    public class LightshipPlaybackCameraSubsystem : XRCameraSubsystem, IPlaybackDatasetUser
     {
         private const string k_BeforeOpaquesBackgroundShaderName = "Unlit/LightshipPlaybackBackground";
         private const string k_LightshipImageConversionShaderName = "Unlit/LightshipImageConversion";
@@ -65,12 +65,12 @@ namespace Niantic.Lightship.AR.Playback
             Register(info);
         }
 
-        void _IPlaybackDatasetUser.SetPlaybackDatasetReader(_PlaybackDatasetReader reader)
+        void IPlaybackDatasetUser.SetPlaybackDatasetReader(PlaybackDatasetReader reader)
         {
-            ((_IPlaybackDatasetUser)provider).SetPlaybackDatasetReader(reader);
+            ((IPlaybackDatasetUser)provider).SetPlaybackDatasetReader(reader);
         }
 
-        private class LightshipPlaybackProvider : Provider, _IPlaybackDatasetUser
+        private class LightshipPlaybackProvider : Provider, IPlaybackDatasetUser
         {
             // TODO: Support URP
             private List<string> m_LegacyRPEnabledMaterialKeywords = new List<string>();
@@ -83,7 +83,7 @@ namespace Niantic.Lightship.AR.Playback
             private static readonly int k_TexturePropertyId = Shader.PropertyToID("_CameraTex");
             private Material m_CameraMaterial;
 
-            private _PlaybackDatasetReader m_DatasetReader;
+            private PlaybackDatasetReader m_DatasetReader;
 
             // This value will strongly affect memory usage.  It can also be set by the user in configuration.
             // The value represents the number of frames in memory before the user must make a copy of the data
@@ -163,7 +163,7 @@ namespace Niantic.Lightship.AR.Playback
                 m_CameraImageTextures.Dispose();
             }
 
-            public void SetPlaybackDatasetReader(_PlaybackDatasetReader reader)
+            public void SetPlaybackDatasetReader(PlaybackDatasetReader reader)
             {
                 m_DatasetReader = reader;
 
@@ -201,6 +201,7 @@ namespace Niantic.Lightship.AR.Playback
 
             public override bool TryGetFrame(XRCameraParams cameraParams, out XRCameraFrame cameraFrame)
             {
+                cameraParams.screenOrientation = GameViewUtils.GetGameViewAspectRatio(cameraParams);
                 var frame = m_DatasetReader.CurrFrame;
                 if (frame == null)
                 {
@@ -218,7 +219,7 @@ namespace Niantic.Lightship.AR.Playback
                 var resolution = m_DatasetReader.GetImageResolution();
 
                 var displayMatrix =
-                    _CameraMath.CalculateDisplayMatrix
+                    CameraMath.CalculateDisplayMatrix
                     (
                         resolution.x,
                         resolution.y,
@@ -227,15 +228,15 @@ namespace Niantic.Lightship.AR.Playback
                         frame.Orientation,
 #if UNITY_ANDROID
                         invertVertically: false,
-                        layout: _CameraMath.MatrixLayout.ColumnMajor,
+                        layout: CameraMath.MatrixLayout.ColumnMajor,
                         reverseRotation: true
 #else
                         invertVertically: true,
-                        layout:_CameraMath.MatrixLayout.RowMajor
+                        layout:CameraMath.MatrixLayout.RowMajor
 #endif
                     );
-
-                var projectionMatrix = _CameraMath.CalculateProjectionMatrix(frame.Intrinsics, cameraParams);
+                
+                var projectionMatrix = CameraMath.CalculateProjectionMatrix(frame.Intrinsics, cameraParams);
 
                 cameraFrame = new XRCameraFrame
                 (

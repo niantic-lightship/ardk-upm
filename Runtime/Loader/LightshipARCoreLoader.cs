@@ -6,7 +6,7 @@
 #define NIANTIC_LIGHTSHIP_ARCORE_LOADER_ENABLED
 #endif
 
-using Niantic.Lightship.AR.PlatformAdapterManager;
+using Niantic.Lightship.AR.PAM;
 using Niantic.Lightship.AR.Playback;
 using Niantic.Lightship.AR.Subsystems;
 using Niantic.Lightship.AR.Utilities;
@@ -20,7 +20,7 @@ namespace Niantic.Lightship.AR.Loader
     /// <summary>
     /// Manages the lifecycle of Lightship and ARCore subsystems.
     /// </summary>
-    public class LightshipARCoreLoader : ARCoreLoader, _ILightshipLoader
+    public class LightshipARCoreLoader : ARCoreLoader, ILightshipLoader
     {
         /// <summary>
         /// The `XROcclusionSubsystem` whose lifecycle is managed by this loader.
@@ -33,8 +33,8 @@ namespace Niantic.Lightship.AR.Loader
         public XRPersistentAnchorSubsystem LightshipPersistentAnchorSubsystem =>
             GetLoadedSubsystem<XRPersistentAnchorSubsystem>();
 
-        private _PlaybackLoaderHelper _playbackHelper;
-        private _NativeLoaderHelper _nativeHelper;
+        private PlaybackLoaderHelper _playbackHelper;
+        private NativeLoaderHelper _nativeHelper;
 
         /// <summary>
         /// Initializes the loader.
@@ -42,10 +42,10 @@ namespace Niantic.Lightship.AR.Loader
         /// <returns>`True` if the session subsystems were successfully created, otherwise `false`.</returns>
         public override bool Initialize()
         {
-            return ((_ILightshipLoader)this).InitializeWithSettings(LightshipSettings.Instance);
+            return ((ILightshipLoader)this).InitializeWithSettings(LightshipSettings.Instance);
         }
 
-        bool _ILightshipLoader.InitializeWithSettings(LightshipSettings settings, bool isTest)
+        bool ILightshipLoader.InitializeWithSettings(LightshipSettings settings, bool isTest)
         {
 #if NIANTIC_LIGHTSHIP_ARCORE_LOADER_ENABLED
             bool initializationSuccess;
@@ -54,7 +54,7 @@ namespace Niantic.Lightship.AR.Loader
             {
                 // Initialize Playback subsystems instead of initializing ARCore subsystems
                 // (for those features that aren't added/supplanted by Lightship),
-                _playbackHelper = new _PlaybackLoaderHelper();
+                _playbackHelper = new PlaybackLoaderHelper();
                 initializationSuccess = _playbackHelper.Initialize(this, settings);
             }
             else
@@ -72,7 +72,7 @@ namespace Niantic.Lightship.AR.Loader
             // Must initialize Lightship subsystems after ARCore's, because when there's overlap, the native helper will
             // (1) destroy ARCore's subsystems and then
             // (2) create Lightship's version of the subsystems
-            _nativeHelper = new _NativeLoaderHelper();
+            _nativeHelper = new NativeLoaderHelper();
 
             // Determine if device supports LiDAR only during the window where AFTER arf loader initializes but BEFORE
             // lightship loader initializes as non-playback relies on checking the existence of arf's meshing subsystem
@@ -84,7 +84,7 @@ namespace Niantic.Lightship.AR.Loader
 
             if (!settings.DevicePlaybackEnabled)
             {
-                _MonoBehaviourEventDispatcher.Updating.AddListener(SelectCameraConfiguration);
+                MonoBehaviourEventDispatcher.Updating.AddListener(SelectCameraConfiguration);
             }
 
             return initializationSuccess;
@@ -101,8 +101,8 @@ namespace Niantic.Lightship.AR.Loader
         // surfaced, meaning there's no visible hitch when the configuration is changed.
         private void SelectCameraConfiguration()
         {
-            const int minWidth = _DataFormatConstants.JPEG_720_540_IMG_WIDTH;
-            const int minHeight = _DataFormatConstants.JPEG_720_540_IMG_HEIGHT;
+            const int minWidth = DataFormatConstants.Jpeg_720_540_ImgWidth;
+            const int minHeight = DataFormatConstants.Jpeg_720_540_ImgHeight;
 
             var cameraSubsystem = GetLoadedSubsystem<XRCameraSubsystem>();
             if (!cameraSubsystem.running)
@@ -119,7 +119,7 @@ namespace Niantic.Lightship.AR.Loader
                 }
 
                 // Once we have the first frame with configurations, don't need to check on Update anymore
-                _MonoBehaviourEventDispatcher.Updating.RemoveListener(SelectCameraConfiguration);
+                MonoBehaviourEventDispatcher.Updating.RemoveListener(SelectCameraConfiguration);
 
                 // This clause is here because, in the case that dev has already set their own custom configuration,
                 // we don't want to silently override it. Pretty sure currentConfiguration will always be non-null
@@ -132,31 +132,19 @@ namespace Niantic.Lightship.AR.Loader
                     {
                         return;
                     }
-
-                    // Note: This log will print whether or not the current configuration was set by default or by
-                    // the dev. That's what we want, in order to notify the dev that this is happening in all cases.
-                    Debug.LogWarning
-                    (
-                        $"The current camera configuration resolution of {currResolution.x}x{currResolution.y} " +
-                        "does not meet the minimum resolution required by Lightship features. " +
-                        "A camera configuration with a higher resolution will be selected."
-                    );
                 }
 
                 XRCameraConfiguration selectedConfig = default;
-
                 foreach (var config in configurations)
                 {
-                    if (!MeetsResolutionMinimums(config.resolution, minWidth, minHeight))
-                    {
-                        continue;
-                    }
-
-                    // If no config has been selected yet OR the selected config resolution is larger than necessary,
-                    // then the current config becomes the selected config
-                    if (selectedConfig.resolution.x == 0 || selectedConfig.resolution.x > config.resolution.x)
+                    //Select the first configuration that meets the resolution minimum assuming
+                    //that the configuration will correspond with the default camera use by ARCore
+                    //TODO: Verify with Unity that this assumption hold true or
+                    //if they can provide us with better API
+                    if (MeetsResolutionMinimums(config.resolution, minWidth, minHeight))
                     {
                         selectedConfig = config;
+                        break;
                     }
                 }
 
@@ -219,7 +207,7 @@ namespace Niantic.Lightship.AR.Loader
 #endif
         }
 
-        _PlaybackDatasetReader _ILightshipLoader.PlaybackDatasetReader => _playbackHelper?.DatasetReader;
+        PlaybackDatasetReader ILightshipLoader.PlaybackDatasetReader => _playbackHelper?.DatasetReader;
     }
 }
 

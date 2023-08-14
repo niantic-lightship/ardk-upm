@@ -117,8 +117,7 @@ namespace Niantic.Lightship.AR.Subsystems
             return provider.TryRestoreAnchor(anchorPayload, out anchor);
         }
 
-        public bool TryLocalize(XRPersistentAnchorPayload anchorPayload,
-            out XRPersistentAnchor anchor)
+        public bool TryLocalize(XRPersistentAnchorPayload anchorPayload, out XRPersistentAnchor anchor)
         {
             return provider.TryLocalize(anchorPayload, out anchor);
         }

@@ -3,7 +3,6 @@
 using System;
 using System.Runtime.InteropServices;
 using System.Text;
-using UnityEngine;
 
 namespace Niantic.Lightship.AR.ScanningSubsystem
 {
@@ -11,7 +10,7 @@ namespace Niantic.Lightship.AR.ScanningSubsystem
     {
         public IntPtr Construct(IntPtr unityContext)
         {
-            return  Native.Create(unityContext);
+            return Native.Create(unityContext);
         }
 
         public void Destruct(IntPtr handle)
@@ -29,24 +28,68 @@ namespace Niantic.Lightship.AR.ScanningSubsystem
             Native.Stop(handle);
         }
 
-        public void Configure(IntPtr handle, int framerate, bool raycastVisualizationEnabled,
-            int raycastVisualizationWidth, int raycastVisualizationHeight,
-            bool voxelVisualizationEnabled, string scanBasePath)
+        public void Configure
+        (
+            IntPtr handle,
+            int framerate,
+            bool raycastVisualizationEnabled,
+            int raycastVisualizationWidth,
+            int raycastVisualizationHeight,
+            bool voxelVisualizationEnabled,
+            string scanBasePath,
+            string scanTargetId,
+            bool useEstimatedDepth,
+            bool fullResolutionEnabled
+        )
         {
-            Native.Configure(handle, framerate, raycastVisualizationEnabled, raycastVisualizationWidth,
-                raycastVisualizationHeight, scanBasePath, scanBasePath.Length);
+            Native.Configure
+            (
+                handle,
+                framerate,
+                raycastVisualizationEnabled,
+                raycastVisualizationWidth,
+                raycastVisualizationHeight,
+                scanBasePath,
+                scanBasePath.Length,
+                scanTargetId,
+                scanTargetId.Length,
+                useEstimatedDepth,
+                fullResolutionEnabled
+            );
         }
 
-        public IntPtr TryGetRaycastBuffer(IntPtr handle, out IntPtr colorBuffer, out IntPtr normalBuffer, out IntPtr positionBuffer,
-            out int colorSize, out int normalSize, out int positionSize, out int width, out int height)
+        public IntPtr TryGetRaycastBuffer
+        (
+            IntPtr handle,
+            out IntPtr colorBuffer,
+            out IntPtr normalBuffer,
+            out IntPtr positionBuffer,
+            out int colorSize,
+            out int normalSize,
+            out int positionSize,
+            out int width,
+            out int height
+        )
         {
             colorSize = 0;
             width = 0;
             height = 0;
             normalSize = 0;
             positionSize = 0;
-            return Native.TryGetRaycastBuffer(handle, out colorBuffer, out normalBuffer, out positionBuffer,
-                out colorSize, out normalSize, out positionSize, out width, out height);
+
+            return
+                Native.TryGetRaycastBuffer
+                (
+                    handle,
+                    out colorBuffer,
+                    out normalBuffer,
+                    out positionBuffer,
+                    out colorSize,
+                    out normalSize,
+                    out positionSize,
+                    out width,
+                    out height
+                );
         }
 
         public void SaveCurrentScan(IntPtr handle)
@@ -71,14 +114,19 @@ namespace Niantic.Lightship.AR.ScanningSubsystem
                 status = RecordingStatus.Unknown;
                 return false;
             }
+
             scanId = _scanIdBuffer.ToString();
             return true;
         }
 
-        public IntPtr TryGetVoxelBuffer(IntPtr handle, out IntPtr positionBuffer, out IntPtr colorBuffer,
-            out int pointCount)
+        public IntPtr TryGetVoxelBuffer
+        (
+            IntPtr handle,
+            out IntPtr positionBuffer,
+            out IntPtr colorBuffer,
+            out int pointCount
+        )
         {
-            pointCount = 0;
             return Native.TryGetVoxelBuffer(handle, out positionBuffer, out colorBuffer, out pointCount);
         }
 
@@ -94,49 +142,66 @@ namespace Niantic.Lightship.AR.ScanningSubsystem
 
         private static class Native
         {
-            [DllImport(_LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_Scanner_Create")]
+            [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_Scanner_Create")]
             public static extern IntPtr Create(IntPtr unityContext);
 
-            [DllImport(_LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_Scanner_Release")]
+            [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_Scanner_Release")]
             public static extern void Release(IntPtr handle);
 
-            [DllImport(_LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_Scanner_Start")]
+            [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_Scanner_Start")]
             public static extern void Start(IntPtr handle);
 
-            [DllImport(_LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_Scanner_Stop")]
+            [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_Scanner_Stop")]
             public static extern void Stop(IntPtr handle);
 
-            [DllImport(_LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_Scanner_Get_Raycast_Buffer")]
-            public static extern IntPtr TryGetRaycastBuffer(IntPtr handle,
-                out IntPtr colorBuffer, out IntPtr normalBuffer, out IntPtr positionBuffer,
-                out int colorSize, out int normalSize, out int positionSize, out int width, out int height);
+            [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_Scanner_Get_Raycast_Buffer")]
+            public static extern IntPtr TryGetRaycastBuffer
+            (
+                IntPtr handle,
+                out IntPtr colorBuffer,
+                out IntPtr normalBuffer,
+                out IntPtr positionBuffer,
+                out int colorSize,
+                out int normalSize,
+                out int positionSize,
+                out int width,
+                out int height
+            );
 
-            [DllImport(_LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_Scanner_Save_Current_Scan")]
+            [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_Scanner_Save_Current_Scan")]
             public static extern void SaveCurrentScan(IntPtr handle);
 
-            [DllImport(_LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_Scanner_Discard_Current_Scan")]
+            [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_Scanner_Discard_Current_Scan")]
             public static extern void DiscardCurrentScan(IntPtr handle);
 
-            [DllImport(_LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_Scanner_Get_Recording_Info")]
-            public static extern bool GetRecordingInfo(IntPtr handle, StringBuilder scanId, int maxScanIdLen, out RecordingStatus status);
+            [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_Scanner_Get_Recording_Info")]
+            public static extern bool GetRecordingInfo
+                (IntPtr handle, StringBuilder scanId, int maxScanIdLen, out RecordingStatus status);
 
-            [DllImport(_LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_Scanner_Release_Resource")]
+            [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_Scanner_Release_Resource")]
             public static extern void ReleaseResource(IntPtr handle, IntPtr resourceHandle);
 
-            [DllImport(_LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_Scanner_Compute_Voxels")]
+            [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_Scanner_Compute_Voxels")]
             public static extern void ComputeVoxels(IntPtr handle);
 
-            [DllImport(_LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_Scanner_Get_Voxel_Buffer")]
-            public static extern IntPtr TryGetVoxelBuffer(IntPtr handle,
-                out IntPtr positionBuffer, out IntPtr colorBuffer, out int pointCount);
+            [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_Scanner_Get_Voxel_Buffer")]
+            public static extern IntPtr TryGetVoxelBuffer
+                (IntPtr handle, out IntPtr positionBuffer, out IntPtr colorBuffer, out int pointCount);
 
-            [DllImport(_LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_Scanner_Configure")]
-            public static extern void Configure(IntPtr handle, int framerate,
+            [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_Scanner_Configure")]
+            public static extern void Configure
+            (
+                IntPtr handle,
+                int framerate,
                 bool enableRaycastVisualization,
                 int raycastWidth,
                 int raycastHeight,
-                string path,
-                int pathLength);
+                string scanBasePath,
+                int scanBasePathLength,
+                string scanTargetId,
+                int scanTargetIdLength,
+                bool useEstimatedDepth,
+                bool fullResolutionEnabled);
         }
     }
 }

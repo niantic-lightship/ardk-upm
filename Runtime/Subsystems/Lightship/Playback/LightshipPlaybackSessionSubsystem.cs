@@ -8,7 +8,7 @@ namespace Niantic.Lightship.AR.Playback
 {
     // Manages PlaybackDatasetReader
     [Preserve]
-    public class LightshipPlaybackSessionSubsystem : XRSessionSubsystem, _IPlaybackDatasetUser, _ILightshipSettingsUser
+    public class LightshipPlaybackSessionSubsystem : XRSessionSubsystem, IPlaybackDatasetUser, ILightshipSettingsUser
     {
         /// <summary>
         /// Register the Lightship playback session subsystem.
@@ -30,12 +30,12 @@ namespace Niantic.Lightship.AR.Playback
             XRSessionSubsystemDescriptor.RegisterDescriptor(info);
         }
 
-        void _IPlaybackDatasetUser.SetPlaybackDatasetReader(_PlaybackDatasetReader reader)
+        void IPlaybackDatasetUser.SetPlaybackDatasetReader(PlaybackDatasetReader reader)
         {
             ((LightshipPlaybackProvider)provider).datasetReader = reader;
         }
 
-        void _ILightshipSettingsUser.SetLightshipSettings(LightshipSettings settings)
+        void ILightshipSettingsUser.SetLightshipSettings(LightshipSettings settings)
         {
             ((LightshipPlaybackProvider)provider).lightshipSettings = settings;
         }
@@ -47,7 +47,7 @@ namespace Niantic.Lightship.AR.Playback
 
         private class LightshipPlaybackProvider : Provider
         {
-            public _PlaybackDatasetReader datasetReader;
+            public PlaybackDatasetReader datasetReader;
             public LightshipSettings lightshipSettings;
 
             private int m_initialApplicationFramerate;
@@ -85,16 +85,16 @@ namespace Niantic.Lightship.AR.Playback
             {
                 if ((!lightshipSettings.EditorPlaybackSettings.RunManually && Application.isEditor)
                     || (!lightshipSettings.DevicePlaybackSettings.RunManually && !Application.isEditor))
-                    _MonoBehaviourEventDispatcher.Updating.AddListener(MoveToNextFrame);
+                    MonoBehaviourEventDispatcher.Updating.AddListener(MoveToNextFrame);
                 else
-                    _MonoBehaviourEventDispatcher.Updating.AddListener(MoveToNextFrameIfKeyDown);
+                    MonoBehaviourEventDispatcher.Updating.AddListener(MoveToNextFrameIfKeyDown);
             }
 
             // pause
             public override void Stop()
             {
-                _MonoBehaviourEventDispatcher.Updating.RemoveListener(MoveToNextFrame);
-                _MonoBehaviourEventDispatcher.Updating.RemoveListener(MoveToNextFrameIfKeyDown);
+                MonoBehaviourEventDispatcher.Updating.RemoveListener(MoveToNextFrame);
+                MonoBehaviourEventDispatcher.Updating.RemoveListener(MoveToNextFrameIfKeyDown);
             }
 
             public override void Destroy()

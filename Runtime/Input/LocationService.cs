@@ -8,7 +8,7 @@ using UnityEngine.XR.ARFoundation;
 
 namespace Niantic.Lightship.AR
 {
-    public class LocationService : _IPlaybackDatasetUser, _ILightshipSettingsUser
+    public class LocationService : IPlaybackDatasetUser, ILightshipSettingsUser
     {
         /// <summary>
         ///   <para>Indicates whether the device allows access the application to access the location service.</para>
@@ -103,7 +103,7 @@ namespace Niantic.Lightship.AR
                 _provider.Start();
         }
 
-        void _IPlaybackDatasetUser.SetPlaybackDatasetReader(_PlaybackDatasetReader reader)
+        void IPlaybackDatasetUser.SetPlaybackDatasetReader(PlaybackDatasetReader reader)
         {
             var playbackProvider = GetOrCreateProvider() as PlaybackLocationServiceProvider;
             Assert.IsNotNull
@@ -115,7 +115,7 @@ namespace Niantic.Lightship.AR
             playbackProvider.SetPlaybackDatasetReader(reader);
         }
 
-        void _ILightshipSettingsUser.SetLightshipSettings(LightshipSettings settings)
+        void ILightshipSettingsUser.SetLightshipSettings(LightshipSettings settings)
         {
             _lightshipSettings = settings;
 
@@ -141,7 +141,7 @@ namespace Niantic.Lightship.AR
             void Stop();
         }
 
-        private class PlaybackLocationServiceProvider : ILocationServiceProvider, _IPlaybackDatasetUser
+        private class PlaybackLocationServiceProvider : ILocationServiceProvider, IPlaybackDatasetUser
         {
             public bool isEnabledByUser => _datasetReader.GetLocationServicesEnabled();
 
@@ -185,7 +185,7 @@ namespace Niantic.Lightship.AR
 
             private bool _started;
 
-            private _PlaybackDatasetReader _datasetReader;
+            private PlaybackDatasetReader _datasetReader;
 
             public void Start(float desiredAccuracyInMeters, float updateDistanceInMeters)
             {
@@ -223,7 +223,7 @@ namespace Niantic.Lightship.AR
                 _started = false;
             }
 
-            private UnityEngine.LocationInfo ConvertToUnity(Playback._PlaybackDataset.LocationInfo info)
+            private UnityEngine.LocationInfo ConvertToUnity(Playback.PlaybackDataset.LocationInfo info)
             {
                 if (info == null)
                     return default;
@@ -253,7 +253,7 @@ namespace Niantic.Lightship.AR
                 fi.SetValue(o, value);
             }
 
-            public void SetPlaybackDatasetReader(_PlaybackDatasetReader reader)
+            public void SetPlaybackDatasetReader(PlaybackDatasetReader reader)
             {
                 _datasetReader = reader;
             }

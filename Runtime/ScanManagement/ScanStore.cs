@@ -1,12 +1,14 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
+using Google.Protobuf;
+using Niantic.ARDK.AR.Protobuf;
 
 namespace Niantic.ARDK.AR.Scanning
 {
     public class ScanStore
     {
-        private string _scanPath;
+        private string _scanBasePath;
 
         /// <summary>
         /// Create a ScanStore given the base path for all your scans.
@@ -15,8 +17,7 @@ namespace Niantic.ARDK.AR.Scanning
         /// <param name="basePath"></param>
         public ScanStore(string basePath)
         {
-            // TODO(senchang): Move this logic to C++
-            _scanPath = Path.Combine(basePath, "scankit");
+            _scanBasePath = ScanPaths.GetBasePath(basePath);
         }
 
         /// <summary>
@@ -47,14 +48,17 @@ namespace Niantic.ARDK.AR.Scanning
         /// <returns>A List of scans that are currently on-disk</returns>
         public List<SavedScan> GetSavedScans()
         {
-            string[] scans = Directory.GetDirectories(_scanPath);
+            if (!Directory.Exists(_scanBasePath))
+            {
+                return new List<SavedScan>();
+            }
+            string[] scans = Directory.GetDirectories(_scanBasePath);
             List<SavedScan> result = new List<SavedScan>();
             foreach (var scanFolder in scans)
             {
                 // TODO(senchang): Correctly filter out scans that aren't valid.
                 result.Add(new SavedScan(scanFolder));
             }
-
             return result;
         }
 
@@ -68,6 +72,26 @@ namespace Niantic.ARDK.AR.Scanning
                 ScanPath = scanPath;
                 ScanId = new DirectoryInfo(scanPath).Name;
             }
+
+            //EXT-REMOVALSTART
+            public ScanMetadataProto GetScanMetadata()
+            {
+                using FileStream stream = File.OpenRead(ScanPaths.GetScanMetadataPath(ScanPath));
+                return ScanMetadataProto.Parser.ParseFrom(stream);
+            }
+
+            public void SetScanMetadata(ScanMetadataProto proto)
+            {
+                File.WriteAllBytes(ScanPaths.GetScanMetadataPath(ScanPath), proto.ToByteArray());
+            }
+
+            public FramesProto GetScanFrames()
+            {
+                using FileStream stream = File.OpenRead(ScanPaths.GetScanFramesPath(ScanPath));
+                return FramesProto.Parser.ParseFrom(stream);
+            }
+            //EXT-REMOVALEND
+
         }
     }
 }

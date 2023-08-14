@@ -37,7 +37,7 @@ namespace Niantic.Lightship.AR.SemanticsSubsystem
 
         public IntPtr Construct(IntPtr unityContext)
         {
-            throw new NotImplementedException();
+            return new IntPtr(100);
         }
 
         public void Start(IntPtr nativeProviderHandle) { _started = true; }
@@ -94,7 +94,7 @@ namespace Niantic.Lightship.AR.SemanticsSubsystem
                 if (cameraParams.HasValue)
                 {
                     var viewport = cameraParams.Value;
-                    samplerMatrix = _CameraMath.CalculateDisplayMatrix(_width, _height, (int)viewport.screenWidth,
+                    samplerMatrix = CameraMath.CalculateDisplayMatrix(_width, _height, (int)viewport.screenWidth,
                         (int)viewport.screenHeight, viewport.screenOrientation, true);
                 }
 
@@ -170,7 +170,7 @@ namespace Niantic.Lightship.AR.SemanticsSubsystem
                 if (cameraParams.HasValue)
                 {
                     var viewport = cameraParams.Value;
-                    samplerMatrix = _CameraMath.CalculateDisplayMatrix(_width, _height, (int)viewport.screenWidth,
+                    samplerMatrix = CameraMath.CalculateDisplayMatrix(_width, _height, (int)viewport.screenWidth,
                         (int)viewport.screenHeight, viewport.screenOrientation, true);
                 }
 
@@ -218,7 +218,7 @@ namespace Niantic.Lightship.AR.SemanticsSubsystem
             return true;
         }
 
-        public bool GetChannelNames(IntPtr nativeProviderHandle, out List<string> semanticChannelNames)
+        public bool TryGetChannelNames(IntPtr nativeProviderHandle, out List<string> semanticChannelNames)
         {
             if (!_started)
             {
@@ -266,7 +266,7 @@ namespace Niantic.Lightship.AR.SemanticsSubsystem
 
         private void InitializePackedBuffer()
         {
-            GetChannelNames(IntPtr.Zero, out var semanticChannelNames);
+            TryGetChannelNames(IntPtr.Zero, out var semanticChannelNames);
             Debug.Assert(default != semanticChannelNames && semanticChannelNames.Count > 0,
                 "For the sake of the mock, it's expected that channel names are available at the time that InitializePackedBuffer is called");
             int allChannelsBitmask = 0;

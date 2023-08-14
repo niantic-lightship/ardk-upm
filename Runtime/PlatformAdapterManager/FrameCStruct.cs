@@ -1,0 +1,157 @@
+using System;
+using System.Runtime.InteropServices;
+
+namespace Niantic.Lightship.AR.PAM
+{
+    // C struct for C# to send frame data to C++. Defined in system_adapter_handler_api.h file.
+    // Note:
+    //   The lengths of color image data are sent as the length in bytes (i.e. sizeof(pixel) * width * height),
+    //   while the lengths of primitive data buffers (intrinsics, platform depth) are equal to the number of elements.
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct FrameCStruct
+    {
+        // An Id to identify the current frame, this Id is promised to be different
+        // across frames within the same run.
+        public UInt64 FrameId;
+
+        // Timestamp in milliseconds that the frame's pose and camera images were generated
+        public UInt64 TimestampMs;
+
+        // Camera pose of the current frame as a 4x4 float matrix.
+        public IntPtr CameraPose;
+
+        // Length of the pose array.
+        public UInt32 CameraPoseLength;
+
+        // Device orientation of current frame. See orientation.h for definitions.
+        public UInt32 DeviceOrientation;
+
+        // Tracking state of current frame. See tracking_state.h for definitions.
+        public UInt32 TrackingState;
+
+        // CPU RGBA image data with resolution [256, 144], in format of uint8.
+        public IntPtr CpuRgba256x144ImageData;
+
+        // Length of the CPU RGBA image with resolution [256, 144]
+        public UInt32 CpuRgba256x144ImageDataLength;
+
+        // Camera intrinsics of the CPU RGBA image with resolution [256, 144]
+        public IntPtr CpuRgba256x144CameraIntrinsics;
+
+        // Length of the awareness camera intrinsics
+        public UInt32 Rgba256x144CameraIntrinsicsLength;
+
+        // JPEG image data with resolution [720, 540] and compression quality 90%, in uint8 format.
+        public IntPtr CpuJpeg720x540ImageData;
+
+        // Length of the JPEG image with resolution [720, 540]
+        public UInt32 CpuJpeg720x540ImageDataLength;
+
+        // Camera intrinsics of the JPEG image with resolution [720, 540]
+        public IntPtr CpuJpeg720x540CameraIntrinsics;
+
+        // Length of the VPS camera intrinsics
+        public UInt32 Jpeg720x540CameraIntrinsicsLength;
+
+        // Most recent GPS data from the device
+        public IntPtr GpsLocationData;
+
+        // Size of the GPS data buffer, in bytes
+        public UInt32 GpsLocationLength;
+
+        // Most recent Compass data from the device
+        public IntPtr CompassData;
+
+        // Length of the Compass data buffer.
+        public UInt32 CompassDataLength;
+
+        // JPEG image data with full resolution and compression quality 90%, in uint8 format.
+        public IntPtr CpuJpegFullResImageData;
+
+        // Width of the full resolution JPEG image.
+        public UInt32 CpuJpegFullResImageWidth;
+
+        // Height of the full resolution JPEG image.
+        public UInt32 CpuJpegFullResImageHeight;
+
+       // Length of the JPEG image with full resolution.
+        public UInt32 CpuJpegFullResImageDataLength;
+
+        // Camera intrinsics of the JPEG image with full resolution.
+        public IntPtr CpuJpegFullResCameraIntrinsics;
+
+        // Length of the full resolution camera image's intrinsics
+        public UInt32 JpegFullResCameraIntrinsicsLength;
+
+        // Depth float buffer
+        public IntPtr PlatformDepthData;
+
+        // Depth confidence uint8 buffer
+        public IntPtr PlatformDepthConfidencesData;
+
+        // Width of the depth float buffer
+        public UInt32 PlatformDepthDataWidth;
+
+        // Height of the depth float buffer
+        public UInt32 PlatformDepthDataHeight;
+
+        // Length of the depth float buffer (same value as depth confidence buffer as well)
+        public UInt32 PlatformDepthDataLength;
+
+        // Camera intrinsics of the platform depth buffer
+        public IntPtr PlatformDepthCameraIntrinsics;
+
+        // Length of the platform depth buffer camera intrinsics
+        public UInt32 PlatformDepthCameraIntrinsicsLength;
+    }
+
+    // C struct for C# to send GPS data to C++.
+    // Needs to match gps_position.h
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct GpsLocation
+    {
+        // GPS timestamp in milliseconds since epoch
+        public UInt64 TimestampMs;
+
+        // GPS location latitude
+        public float Latitude;
+
+        // GPS location longitude
+        public float Longitude;
+
+        // GPS location altitude
+        public float Altitude;
+
+        // GPS vertical accuracy
+        public float VerticalAccuracy;
+
+        // GPS horizontal accuracy
+        public float HorizontalAccuracy;
+
+        public UInt32 padding;
+    }
+
+    // C struct for C# to send Compass data to C++.
+    // Needs to match compass.h.
+    // This struct is based on https://docs.unity3d.com/ScriptReference/Compass.html.
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct CompassData
+    {
+        // Accuracy of heading reading in degrees.
+        public float HeadingAccuracy;
+
+        // The heading in degrees relative to the magnetic North Pole.
+        public float MagneticHeading;
+
+        // The raw geomagnetic data measured in microteslas.
+        public float RawDataX;
+        public float RawDataY;
+        public float RawDataZ;
+
+        // Compass data epoch timestamp in ms.
+        public UInt64 TimestampMs;
+
+        // The heading in degrees relative to the geographic North Pole.
+        public float TrueHeading;
+    }
+}

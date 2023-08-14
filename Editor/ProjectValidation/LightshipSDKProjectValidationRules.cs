@@ -30,7 +30,7 @@ namespace Niantic.Lightship.AR.Editor
             var iOSTargetVersion = OSVersion.Parse(PlayerSettings.iOS.targetOSVersionString);
             var iOSLocUsageDesc = PlayerSettings.iOS.locationUsageDescription;
             var androidTargetVersion = PlayerSettings.Android.targetSdkVersion;
-
+            
             var globalRules = CreateGlobalRules(s_settings);
 
             var iOSRules = CreateiOSRules(s_settings, iOSTargetVersion, iOSLocUsageDesc, false);
@@ -45,7 +45,7 @@ namespace Niantic.Lightship.AR.Editor
 
             BuildValidator.AddRules(BuildTargetGroup.Android, androidRules);
             BuildValidator.AddRules(BuildTargetGroup.Android, globalRules);
-
+            
             BuildValidator.AddRules(BuildTargetGroup.Standalone, globalRulesForStandalone);
             BuildValidator.AddRules(BuildTargetGroup.Standalone, standaloneRules);
         }
@@ -73,11 +73,11 @@ namespace Niantic.Lightship.AR.Editor
                 new BuildValidationRule
                 {
                     Category = kCategory,
-                    Message = "An API Key is needed to access network features like VPS",
+                    Message = "An API Key is needed to access network features like VPS and Scanning",
                     CheckPredicate = () => !string.IsNullOrEmpty(lightshipSettings.ApiKey),
 
                     IsRuleEnabled =
-                        () => lightshipSettings.UseLightshipPersistentAnchor,
+                        () => lightshipSettings.UseLightshipScanning || lightshipSettings.UseLightshipPersistentAnchor,
 
                     FixIt = () =>
                         SettingsService.OpenProjectSettings("Project/XR Plug-in Management/Niantic Lightship SDK"),
@@ -110,7 +110,7 @@ namespace Niantic.Lightship.AR.Editor
                         var hasDatasetPath = !string.IsNullOrEmpty(datasetPath);
                         if (!hasDatasetPath)
                             return false;
-
+                        
                         var isInStreamingAssets =
                             datasetPath.StartsWith(Application.dataPath + "/StreamingAssets");
                         return isInStreamingAssets;
@@ -139,7 +139,7 @@ namespace Niantic.Lightship.AR.Editor
             };
             return globalRules;
         }
-
+        
         internal static BuildValidationRule[] CreateiOSRules(LightshipSettings lightshipSettings, OSVersion iOSTargetVersion, string iOSLocUsageDesc, bool testFlag)
         {
             var iOSRules = new[]
@@ -194,6 +194,20 @@ namespace Niantic.Lightship.AR.Editor
                 new BuildValidationRule
                 {
                     Category = kCategory,
+                    Message = "Scanning requires iOS version 14.0 or higher",
+                    CheckPredicate = () =>
+                    {
+                        var userSetTargetVersion = OSVersion.Parse(PlayerSettings.iOS.targetOSVersionString);
+                        return userSetTargetVersion >= new OSVersion(14);
+                    },
+                    IsRuleEnabled = () => lightshipSettings.UseLightshipScanning,
+                    FixIt = () => { PlayerSettings.iOS.targetOSVersionString = "14.0"; },
+                    FixItMessage = "Please open Project Settings > Player > iOS > Other Settings to change target iOS version",
+                    FixItAutomatic = true
+                },
+                new BuildValidationRule
+                {
+                    Category = kCategory,
                     Message = "A location usage description must be provided when using location services with VPS",
                     CheckPredicate = () =>
                     {
@@ -215,7 +229,7 @@ namespace Niantic.Lightship.AR.Editor
             };
             return iOSRules;
         }
-
+        
         internal static BuildValidationRule[] CreateAndroidRules(AndroidSdkVersions androidTargetVersion, bool testFlag)
         {
             var androidRules = new[]
@@ -344,7 +358,7 @@ namespace Niantic.Lightship.AR.Editor
 
             return managerSettings != null && managerSettings.activeLoaders.Any(loader => loader is LightshipARCoreLoader);
         }
-
+        
         static bool IsLightshipPluginEnabledStandalone()
         {
             var generalSettings = XRGeneralSettingsPerBuildTarget.XRGeneralSettingsForBuildTarget(BuildTargetGroup.Standalone);

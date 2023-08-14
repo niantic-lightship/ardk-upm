@@ -10,7 +10,7 @@ namespace Niantic.Lightship.AR
     /// <summary>
     ///   <para>Interface into compass functionality.</para>
     /// </summary>
-    public class Compass: _IPlaybackDatasetUser, _ILightshipSettingsUser
+    public class Compass: IPlaybackDatasetUser, ILightshipSettingsUser
     {
         /// <summary>
         ///   <para>The heading in degrees relative to the magnetic North Pole. (Read Only)</para>
@@ -84,7 +84,7 @@ namespace Niantic.Lightship.AR
             m_Provider = null;
         }
 
-        void _IPlaybackDatasetUser.SetPlaybackDatasetReader(_PlaybackDatasetReader reader)
+        void IPlaybackDatasetUser.SetPlaybackDatasetReader(PlaybackDatasetReader reader)
         {
             if (m_Provider is PlaybackCompassProvider playbackProvider)
             {
@@ -93,11 +93,11 @@ namespace Niantic.Lightship.AR
             else
             {
                 m_Provider = new PlaybackCompassProvider();
-                ((_IPlaybackDatasetUser)m_Provider).SetPlaybackDatasetReader(reader);
+                ((IPlaybackDatasetUser)m_Provider).SetPlaybackDatasetReader(reader);
             }
         }
 
-        void _ILightshipSettingsUser.SetLightshipSettings(LightshipSettings settings)
+        void ILightshipSettingsUser.SetLightshipSettings(LightshipSettings settings)
         {
             m_LightshipSettings = settings;
         }
@@ -115,10 +115,10 @@ namespace Niantic.Lightship.AR
             void SetHeadingUpdatesEnabled(bool value);
         }
 
-        private class PlaybackCompassProvider: ICompassProvider, _IPlaybackDatasetUser
+        private class PlaybackCompassProvider: ICompassProvider, IPlaybackDatasetUser
         {
             private bool _enabled;
-            private _PlaybackDatasetReader _datasetReader;
+            private PlaybackDatasetReader _datasetReader;
 
             // TODO [AR-17775]
             // Magnetic Heading was not recorded in playback datasets,
@@ -195,7 +195,7 @@ namespace Niantic.Lightship.AR
                 }
             }
 
-            public void SetPlaybackDatasetReader(_PlaybackDatasetReader reader)
+            public void SetPlaybackDatasetReader(PlaybackDatasetReader reader)
             {
                 _datasetReader = reader;
             }

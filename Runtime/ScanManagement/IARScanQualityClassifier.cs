@@ -14,16 +14,18 @@ namespace Niantic.Lightship.AR.Scanning
         Blurry = 1,
         // Is the scan too dark?
         Dark = 2,
+        // Is the scan bad quality?
+        BadQuality = 3,
         // Is the scan focused on the ground or feet?
-        GroundOrFeet = 3,
+        GroundOrFeet = 4,
         // Is the scan captured indoor?
-        ScanIndoor = 4,
+        ScanIndoor = 5,
         // Is the scan captured from inside a car?
-        ScanFromCar = 5,
+        ScanFromCar = 6,
         // Is the scan target obstructed?
-        Obstruction = 6,
+        Obstruction = 7,
         // Is the scan target visible?
-        TargetVisibility = 7
+        ScanTargetNotVisible = 8
     }
 
     /// This struct is used by publicly and internally.

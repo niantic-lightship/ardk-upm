@@ -2,13 +2,12 @@
 
 using System;
 using Niantic.Lightship.AR.Utilities;
-using Niantic.Lightship.AR.Utilities.CTrace;
-using PlatformAdapterManager;
+using Niantic.Lightship.AR.Utilities.Profiling;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 using UnityEngine.XR.ARSubsystems;
 
-namespace Niantic.Lightship.AR.PlatformAdapterManager
+namespace Niantic.Lightship.AR.PAM
 {
     internal class GpuTexturesSetter: AbstractTexturesSetter
     {
@@ -29,7 +28,11 @@ namespace Niantic.Lightship.AR.PlatformAdapterManager
 
         private bool _isGpuImageValid;
 
-        public GpuTexturesSetter(_PlatformDataAcquirer dataAcquirer, _FrameData frameData, _ICTrace ctrace, ulong ctraceId) : base(dataAcquirer, frameData, ctrace, ctraceId) { }
+        private const string TraceCategory = "GpuTexturesSetter";
+
+        public GpuTexturesSetter(PlatformDataAcquirer dataAcquirer, FrameData frameData) : base(dataAcquirer, frameData)
+        {
+        }
 
         public override void Dispose()
         {
@@ -50,64 +53,73 @@ namespace Niantic.Lightship.AR.PlatformAdapterManager
             if (tex != null)
             {
                 if (Application.isPlaying)
+                {
                     GameObject.Destroy(tex);
+                }
                 else
+                {
                     GameObject.DestroyImmediate(tex);
+                }
             }
         }
 
         public override void SetRgba256x144Image()
         {
-            const string cTraceName = "PAM::AwarenessGPUConversion";
-            _ctrace.TraceEventAsyncBegin0("SAL", cTraceName, _ctraceId);
-            _ctrace.TraceEventAsyncStep0("SAL", cTraceName, _ctraceId, "TryGetGpuImage");
-            if (_isGpuImageValid || _platformDataAcquirer.TryGetGpuImage(out _gpuImage))
+            const string traceEvent = "SetRgba256x144Image (GPU)";
+            ProfilerUtility.EventBegin(TraceCategory, traceEvent);
+
+            ProfilerUtility.EventStep(TraceCategory, traceEvent, "TryGetGpuImage");
+            if (_isGpuImageValid || PlatformDataAcquirer.TryGetGpuImage(out _gpuImage))
             {
                 _isGpuImageValid = true;
 
-                _ctrace.TraceEventAsyncStep0("SAL", cTraceName, _ctraceId, "ConvertOnGpuAndWriteToMemory");
-
                 if (_awarenessOutputTexture == null)
                 {
-                    var resolution = _currentFrameData.Rgba256x144ImageResolution;
+                    ProfilerUtility.EventStep(TraceCategory, traceEvent, "Allocate texture");
+                    var resolution = CurrentFrameData.Rgba256x144ImageResolution;
                     _awarenessOutputTexture = new Texture2D(resolution.x, resolution.y, TextureFormat.RGBA32, false);
                     _awarenessOutputRect = new Rect(0, 0, resolution.x, resolution.y);
                 }
+
+                ProfilerUtility.EventStep(TraceCategory, traceEvent, "ConvertOnGpuAndCopy");
 
                 _gpuImage.ConvertOnGpuAndCopy(_awarenessOutputTexture, _awarenessOutputRect);
 
                 unsafe
                 {
-                    _currentFrameData.CpuRgba256x144ImageDataPtr =
+                    CurrentFrameData.CpuRgba256x144ImageDataPtr =
                         (IntPtr)_awarenessOutputTexture.GetRawTextureData<byte>().GetUnsafeReadOnlyPtr();
                 }
 
-                _currentFrameData.CpuRgba256x144ImageDataLength = _DataFormatConstants.RGBA_256_144_DATA_LENGTH;
+                CurrentFrameData.CpuRgba256x144ImageDataLength = DataFormatConstants.Rgba_256_144_DataLength;
             }
             else
             {
-                _currentFrameData.CpuRgba256x144ImageDataLength = 0;
+                CurrentFrameData.CpuRgba256x144ImageDataLength = 0;
             }
 
-            _ctrace.TraceEventAsyncEnd0("SAL", cTraceName, _ctraceId);
+            ProfilerUtility.EventEnd(TraceCategory, traceEvent);
         }
 
         public override void SetJpeg720x540Image()
         {
-            const string cTraceName = "PAM::JpegGPUConversion";
-            _ctrace.TraceEventAsyncBegin0("SAL", cTraceName, _ctraceId);
-            _ctrace.TraceEventAsyncStep0("SAL", cTraceName, _ctraceId, "TryGetGpuImage");
-            if (_isGpuImageValid || _platformDataAcquirer.TryGetGpuImage(out _gpuImage))
+            const string traceEvent = "SetJpeg720x540Image (GPU)";
+            ProfilerUtility.EventBegin(TraceCategory, traceEvent);
+
+            ProfilerUtility.EventStep(TraceCategory, traceEvent, "TryGetGpuImage");
+            if (_isGpuImageValid || PlatformDataAcquirer.TryGetGpuImage(out _gpuImage))
             {
                 _isGpuImageValid = true;
-                _ctrace.TraceEventAsyncStep0("SAL", cTraceName, _ctraceId, "ConvertOnGpuAndWriteToMemory");
                 if (_jpegOutputTexture == null)
                 {
-                    var resolution = _currentFrameData.Jpeg720x540ImageResolution;
+                    ProfilerUtility.EventStep(TraceCategory, traceEvent, "Allocate texture");
+                    var resolution = CurrentFrameData.Jpeg720x540ImageResolution;
                     _jpegOutputTexture = new Texture2D(resolution.x, resolution.y, TextureFormat.RGBA32, false);
 
                     _jpegOutputRect = new Rect(0, 0, resolution.x, resolution.y);
                 }
+
+                ProfilerUtility.EventStep(TraceCategory, traceEvent, "ConvertOnGpuAndCopy");
 
                 // Unity's EncodeToJPG method expects as input texture data formatted in Unity convention (first pixel
                 // bottom left), whereas the raw data of AR textures are in first pixel top left convention.
@@ -115,26 +127,26 @@ namespace Niantic.Lightship.AR.PlatformAdapterManager
                 _gpuImage.ConvertOnGpuAndCopy(_jpegOutputTexture, _jpegOutputRect, mirrorX: true);
 
                 // New buffer from Unity that contains the JPEG data
-                _ctrace.TraceEventAsyncStep0("SAL", cTraceName, _ctraceId, "EncodeToJPG");
-                var jpegArray = _jpegOutputTexture.EncodeToJPG(_DataFormatConstants.JPEG_QUALITY);
+                ProfilerUtility.EventStep(TraceCategory, traceEvent, "EncodeToJPG");
+                var jpegArray = _jpegOutputTexture.EncodeToJPG(DataFormatConstants.JpegQuality);
 
                 // Copy the JPEG byte array to the shared buffer in FrameCStruct
-                _ctrace.TraceEventAsyncStep0("SAL", cTraceName, _ctraceId, "Copy");
+                ProfilerUtility.EventStep(TraceCategory, traceEvent, "Copy JPG to frame mem");
                 unsafe
                 {
                     void* managedJpeg = UnsafeUtility.AddressOf(ref jpegArray[0]);
-                    void* nativeJpeg = (void*)_currentFrameData.CpuJpeg720x540ImageDataPtr;
+                    void* nativeJpeg = (void*)CurrentFrameData.CpuJpeg720x540ImageDataPtr;
                     UnsafeUtility.MemCpy(nativeJpeg, managedJpeg, jpegArray.Length);
                 }
 
-                _currentFrameData.CpuJpeg720x540ImageDataLength = (uint)jpegArray.Length;
+                CurrentFrameData.CpuJpeg720x540ImageDataLength = (uint)jpegArray.Length;
             }
             else
             {
-                _currentFrameData.CpuJpeg720x540ImageDataLength = 0;
+                CurrentFrameData.CpuJpeg720x540ImageDataLength = 0;
             }
 
-            _ctrace.TraceEventAsyncEnd0("SAL", cTraceName, _ctraceId);
+            ProfilerUtility.EventEnd(TraceCategory, traceEvent);
         }
 
         public override void SetJpegFullResImage()
@@ -142,17 +154,17 @@ namespace Niantic.Lightship.AR.PlatformAdapterManager
             if (!ReinitializeJpegFullResDataIfNeeded())
                 return;
 
-            const string cTraceName = "PAM::JpegFullResImageWithGpu";
-            _ctrace.TraceEventAsyncBegin0("SAL", cTraceName, _ctraceId);
-            _ctrace.TraceEventAsyncStep0("SAL", cTraceName, _ctraceId, "TryGetGpuImage");
+            const string traceEvent = "PAM::JpegFullResImageWithGpu";
+            ProfilerUtility.EventBegin(TraceCategory, traceEvent);
+            ProfilerUtility.EventStep(TraceCategory, traceEvent, "TryGetGpuImage");
 
-            if (_isGpuImageValid || _platformDataAcquirer.TryGetGpuImage(out _gpuImage))
+            if (_isGpuImageValid || PlatformDataAcquirer.TryGetGpuImage(out _gpuImage))
             {
                 _isGpuImageValid = true;
-                _ctrace.TraceEventAsyncStep0("SAL", cTraceName, _ctraceId, "ConvertOnGpuAndWriteToMemory");
+                ProfilerUtility.EventStep(TraceCategory, traceEvent, "ConvertOnGpuAndWriteToMemory");
                 if (_jpegFullResOutputTexture == null)
                 {
-                    var resolution = _currentFrameData.JpegFullResImageResolution;
+                    var resolution = CurrentFrameData.JpegFullResImageResolution;
                     _jpegFullResOutputTexture = new Texture2D(resolution.x, resolution.y, TextureFormat.RGBA32, false);
 
                     _jpegFullResOutputRect = new Rect(0, 0, resolution.x, resolution.y);
@@ -164,37 +176,40 @@ namespace Niantic.Lightship.AR.PlatformAdapterManager
                 _gpuImage.ConvertOnGpuAndCopy(_jpegFullResOutputTexture, _jpegFullResOutputRect, mirrorX: true);
 
                 // New buffer from Unity that contains the JPEG data
-                _ctrace.TraceEventAsyncStep0("SAL", cTraceName, _ctraceId, "EncodeToJPG");
-                var jpegArray = _jpegFullResOutputTexture.EncodeToJPG(_DataFormatConstants.JPEG_QUALITY);
+                ProfilerUtility.EventStep(TraceCategory, traceEvent, "EncodeToJPG");
+                var jpegArray = _jpegFullResOutputTexture.EncodeToJPG(DataFormatConstants.JpegQuality);
 
                 // Copy the JPEG byte array to the shared buffer in FrameCStruct
-                _ctrace.TraceEventAsyncStep0("SAL", cTraceName, _ctraceId, "Copy");
+                ProfilerUtility.EventStep(TraceCategory, traceEvent, "Copy");
                 unsafe
                 {
                     void* managedJpeg = UnsafeUtility.AddressOf(ref jpegArray[0]);
-                    void* nativeJpeg = (void*)_currentFrameData.CpuJpegFullResImageDataPtr;
+                    void* nativeJpeg = (void*)CurrentFrameData.CpuJpegFullResImageDataPtr;
                     UnsafeUtility.MemCpy(nativeJpeg, managedJpeg, jpegArray.Length);
                 }
 
-                _currentFrameData.CpuJpegFullResImageDataLength = (uint)jpegArray.Length;
+                CurrentFrameData.CpuJpegFullResImageDataLength = (uint)jpegArray.Length;
             }
             else
             {
-                _currentFrameData.CpuJpegFullResImageDataLength = 0;
+                CurrentFrameData.CpuJpegFullResImageDataLength = 0;
             }
 
-            _ctrace.TraceEventAsyncEnd0("SAL", cTraceName, _ctraceId);
+            ProfilerUtility.EventEnd(TraceCategory, traceEvent);
         }
 
         public override void SetPlatformDepthBuffer()
         {
-            const string cTraceName = "PAM::DepthGPUAcquirement";
-            _ctrace.TraceEventAsyncBegin0("SAL", cTraceName, _ctraceId);
-            _ctrace.TraceEventAsyncStep0("SAL", cTraceName, _ctraceId, "TryGetDepthImage");
-            if (_platformDataAcquirer.TryGetGpuDepthImage(out _gpuDepthImage, out _gpuConfidenceImage))
+            const string traceEvent = "SetPlatformDepthBuffer (GPU)";
+            ProfilerUtility.EventBegin(TraceCategory, traceEvent);
+
+            ProfilerUtility.EventStep(TraceCategory, traceEvent, "TryGetGpuDepthImage");
+            if (PlatformDataAcquirer.TryGetGpuDepthImage(out _gpuDepthImage, out _gpuConfidenceImage))
             {
                 if (_depthOutputTexture == null)
                 {
+                    ProfilerUtility.EventStep(TraceCategory, traceEvent, "Allocate textures");
+
                     _depthOutputTexture =
                         new Texture2D(_gpuDepthImage.width, _gpuDepthImage.height, TextureFormat.RFloat, false);
 
@@ -204,58 +219,59 @@ namespace Niantic.Lightship.AR.PlatformAdapterManager
                     _depthOutputRect = new Rect(0, 0, _gpuDepthImage.width, _gpuDepthImage.height);
                 }
 
+                ProfilerUtility.EventStep(TraceCategory, traceEvent, "ReadFromExternalTexture");
                 _gpuDepthImage.ReadFromExternalTexture(_depthOutputTexture, _depthOutputRect);
                 _gpuConfidenceImage.ReadFromExternalTexture(_depthConfidenceOutputTexture, _depthOutputRect);
 
                 unsafe
                 {
-                    _currentFrameData.PlatformDepthDataPtr =
+                    CurrentFrameData.PlatformDepthDataPtr =
                         (IntPtr)_depthOutputTexture.GetRawTextureData<byte>().GetUnsafeReadOnlyPtr();
 
-                    _currentFrameData.PlatformDepthConfidencesDataPtr =
+                    CurrentFrameData.PlatformDepthConfidencesDataPtr =
                         (IntPtr)_depthConfidenceOutputTexture.GetRawTextureData<byte>().GetUnsafeReadOnlyPtr();
                 }
 
-                _currentFrameData.PlatformDepthResolution = new Vector2Int(_gpuDepthImage.width, _gpuDepthImage.height);
-                _currentFrameData.PlatformDepthDataLength = (uint)(_gpuDepthImage.width * _gpuDepthImage.height);
+                CurrentFrameData.PlatformDepthResolution = new Vector2Int(_gpuDepthImage.width, _gpuDepthImage.height);
+                CurrentFrameData.PlatformDepthDataLength = (uint)(_gpuDepthImage.width * _gpuDepthImage.height);
             }
             else
             {
-                _currentFrameData.PlatformDepthResolution = Vector2Int.zero;
-                _currentFrameData.PlatformDepthDataLength = 0;
+                CurrentFrameData.PlatformDepthResolution = Vector2Int.zero;
+                CurrentFrameData.PlatformDepthDataLength = 0;
             }
 
-            _ctrace.TraceEventAsyncEnd0("SAL", cTraceName, _ctraceId);
+            ProfilerUtility.EventEnd(TraceCategory, traceEvent);
         }
 
         protected override bool ReinitializeJpegFullResDataIfNeeded()
         {
-            if (_platformDataAcquirer.TryGetCameraIntrinsics(out XRCameraIntrinsics jpegCameraIntrinsics))
+            if (PlatformDataAcquirer.TryGetCameraIntrinsics(out XRCameraIntrinsics jpegCameraIntrinsics))
             {
-                if (jpegCameraIntrinsics.resolution != _currentFrameData.JpegFullResImageResolution)
+                if (jpegCameraIntrinsics.resolution != CurrentFrameData.JpegFullResImageResolution)
                 {
                     // Need to call ReinitializeJpegFullResolutionData() to re-allocate memory
                     // for the full res JPEG image in |_currentFrameData|.
-                    _currentFrameData.ReinitializeJpegFullResolutionData(jpegCameraIntrinsics.resolution);
+                    CurrentFrameData.ReinitializeJpegFullResolutionData(jpegCameraIntrinsics.resolution);
                 }
 
-                _ImageConverter.ConvertCameraIntrinsics
+                ImageConverter.ConvertCameraIntrinsics
                 (
                     jpegCameraIntrinsics,
-                    _currentFrameData.JpegFullResImageResolution,
-                    _currentFrameData.JpegFullResCameraIntrinsicsData
+                    CurrentFrameData.JpegFullResImageResolution,
+                    CurrentFrameData.JpegFullResCameraIntrinsicsData
                 );
-                _currentFrameData.JpegFullResCameraIntrinsicsLength = _DataFormatConstants.FLAT_MATRIX3x3_LENGTH;
+                CurrentFrameData.JpegFullResCameraIntrinsicsLength = DataFormatConstants.FlatMatrix3x3Length;
 
                 return true;
             }
 
             // Fail to get the camera image's intrinsics, simply return false and
             // not get the image.
-            _currentFrameData.JpegFullResCameraIntrinsicsLength = 0;
-            _currentFrameData.CpuJpegFullResImageDataLength = 0;
-            _currentFrameData.CpuJpegFullResImageWidth = 0;
-            _currentFrameData.CpuJpegFullResImageHeight = 0;
+            CurrentFrameData.JpegFullResCameraIntrinsicsLength = 0;
+            CurrentFrameData.CpuJpegFullResImageDataLength = 0;
+            CurrentFrameData.CpuJpegFullResImageWidth = 0;
+            CurrentFrameData.CpuJpegFullResImageHeight = 0;
             return false;
         }
     }

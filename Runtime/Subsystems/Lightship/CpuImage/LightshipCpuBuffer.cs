@@ -64,6 +64,8 @@ namespace Niantic.Lightship.AR
 
         public IntPtr nativeHandle { get; private set; }
 
+        public bool valid => buffer != IntPtr.Zero && nativeHandle != IntPtr.Zero;
+
         public LightshipCpuBuffer(IntPtr nativeHandle,  IntPtr buffer, Vector2Int dimensions, Format format)
         {
             this.dimensions = dimensions;

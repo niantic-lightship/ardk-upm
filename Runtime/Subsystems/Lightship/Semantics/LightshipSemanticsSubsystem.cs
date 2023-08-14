@@ -2,7 +2,7 @@
 
 using System;
 using System.Collections.Generic;
-using Niantic.Lightship.AR.ARFoundation;
+using Niantic.Lightship.AR.ARFoundation.Occlusion;
 using Niantic.Lightship.AR.Loader;
 using Niantic.Lightship.AR.SemanticsSubsystem;
 using Niantic.Lightship.AR.Subsystems;
@@ -19,7 +19,7 @@ namespace Niantic.Lightship.AR
     /// Use the <c>SubsystemManager</c> instead.
     /// </summary>
     [Preserve]
-    public sealed class LightshipSemanticsSubsystem : XRSemanticsSubsystem, _ILightshipSettingsUser, ISubsystemWithMutableApi<IApi>
+    public sealed class LightshipSemanticsSubsystem : XRSemanticsSubsystem, ILightshipSettingsUser, ISubsystemWithMutableApi<IApi>
     {
         /// <summary>
         /// Register the Lightship semantics subsystem.
@@ -40,11 +40,11 @@ namespace Niantic.Lightship.AR
             XRSemanticsSubsystem.Register(xrSemanticsSubsystemCinfo);
         }
 
-        void _ILightshipSettingsUser.SetLightshipSettings(LightshipSettings settings)
+        void ILightshipSettingsUser.SetLightshipSettings(LightshipSettings settings)
         {
-            ((_ILightshipSettingsUser)provider).SetLightshipSettings(settings);
+            ((ILightshipSettingsUser)provider).SetLightshipSettings(settings);
         }
-        
+
         void ISubsystemWithMutableApi<IApi>.SwitchApiImplementation(IApi api)
         {
             ((LightshipSemanticsProvider) provider).SwitchApiImplementation(api);
@@ -58,7 +58,7 @@ namespace Niantic.Lightship.AR
         /// <summary>
         /// The implementation provider class.
         /// </summary>
-        internal class LightshipSemanticsProvider : Provider, _ILightshipSettingsUser
+        internal class LightshipSemanticsProvider : Provider, ILightshipSettingsUser
         {
 
             /// <summary>
@@ -94,13 +94,13 @@ namespace Niantic.Lightship.AR
                 {
                     _api.Stop(_nativeProviderHandle);
                     _api.Destruct(_nativeProviderHandle);
-                    _nativeProviderHandle = IntPtr.Zero;
                 }
 
                 _api = api;
+                _nativeProviderHandle = api.Construct(LightshipUnityContext.UnityContextHandle);
             }
 
-            void _ILightshipSettingsUser.SetLightshipSettings(LightshipSettings settings)
+            void ILightshipSettingsUser.SetLightshipSettings(LightshipSettings settings)
             {
                 _lightshipSettings = settings;
                 FrameRate = _lightshipSettings.LightshipSemanticSegmentationFrameRate;
@@ -118,8 +118,30 @@ namespace Niantic.Lightship.AR
             /// <c>true</c> if the semantics channel texture descriptor is available and is returned. Otherwise,
             /// <c>false</c>.
             /// </returns>
-            public override bool TryGetSemanticChannel(string channelName, XRCameraParams? cameraParams, out XRTextureDescriptor semanticChannelDescriptor, out Matrix4x4 samplerMatrix)
-                => _api.TryGetSemanticChannel(_nativeProviderHandle, channelName, cameraParams, out semanticChannelDescriptor, out samplerMatrix);
+            public override bool TryGetSemanticChannel
+            (
+                string channelName,
+                XRCameraParams? cameraParams,
+                out XRTextureDescriptor semanticChannelDescriptor,
+                out Matrix4x4 samplerMatrix
+            )
+            {
+                if (!_nativeProviderHandle.IsValidHandle())
+                {
+                    semanticChannelDescriptor = default;
+                    samplerMatrix = Matrix4x4.identity;
+                    return false;
+                }
+
+                return _api.TryGetSemanticChannel
+                (
+                    _nativeProviderHandle,
+                    channelName,
+                    cameraParams,
+                    out semanticChannelDescriptor,
+                    out samplerMatrix
+                );
+            }
 
             /// <summary>
             /// Tries to acquire the latest semantics channel CPU image.
@@ -130,7 +152,15 @@ namespace Niantic.Lightship.AR
             /// <returns>Returns `true` if an <see cref="LightshipCpuBuffer"/> was successfully acquired.
             /// Returns `false` otherwise.</returns>
             public override bool TryAcquireSemanticChannelCPUImage(string channelName, out LightshipCpuBuffer cpuBuffer)
-                => _api.TryAcquireSemanticChannelCPUImage(_nativeProviderHandle, channelName, out cpuBuffer);
+            {
+                if (!_nativeProviderHandle.IsValidHandle())
+                {
+                    cpuBuffer = default;
+                    return false;
+                }
+
+                return _api.TryAcquireSemanticChannelCPUImage(_nativeProviderHandle, channelName, out cpuBuffer);
+            }
 
             /// <summary>
             /// Calculates a transformation that aligns the pixels in the
@@ -145,15 +175,23 @@ namespace Niantic.Lightship.AR
             /// <exception cref="NotSupportedException"></exception>
             public override bool TryCalculateSamplerMatrix(LightshipCpuBuffer buffer, XRCameraParams cameraParams, out Matrix4x4 result)
             {
+                if (!_nativeProviderHandle.IsValidHandle())
+                {
+                    result = Matrix4x4.identity;
+                    return false;
+                }
+
                 if (PoseProvider.TryAcquireCurrentPose(out var currentPose))
                 {
-                    return _api.TryCalculateSamplerMatrix(
+                    return _api.TryCalculateSamplerMatrix
+                    (
                         _nativeProviderHandle,
                         buffer.nativeHandle,
                         cameraParams,
                         currentPose,
                         OcclusionContext.Shared.OccludeeEyeDepth,
-                        out result);
+                        out result
+                    );
                 }
 
                 result = Matrix4x4.identity;
@@ -168,6 +206,11 @@ namespace Niantic.Lightship.AR
             /// <param name="cpuBuffer"> The <see cref="LightshipCpuBuffer"/> you want to dispose of </param>
             public override void DisposeCPUImage(LightshipCpuBuffer cpuBuffer)
             {
+                if (!_nativeProviderHandle.IsValidHandle() || !cpuBuffer.valid)
+                {
+                    return;
+                }
+
                 _api.DisposeCPUImage(_nativeProviderHandle, cpuBuffer.nativeHandle);
                 cpuBuffer.Dispose();
             }
@@ -183,8 +226,22 @@ namespace Niantic.Lightship.AR
             /// <c>true</c> if the packed semantics texture descriptor is available and is returned. Otherwise,
             /// <c>false</c>.
             /// </returns>
-            public override bool TryGetPackedSemanticChannels(XRCameraParams? cameraParams, out XRTextureDescriptor packedSemanticsDescriptor, out Matrix4x4 samplerMatrix)
-                => _api.TryGetPackedSemanticChannels(_nativeProviderHandle, cameraParams, out packedSemanticsDescriptor, out samplerMatrix);
+            public override bool TryGetPackedSemanticChannels
+            (
+                XRCameraParams? cameraParams,
+                out XRTextureDescriptor packedSemanticsDescriptor,
+                out Matrix4x4 samplerMatrix
+            )
+            {
+                if (!_nativeProviderHandle.IsValidHandle())
+                {
+                    packedSemanticsDescriptor = default;
+                    samplerMatrix = Matrix4x4.identity;
+                    return false;
+                }
+
+                return _api.TryGetPackedSemanticChannels(_nativeProviderHandle, cameraParams, out packedSemanticsDescriptor, out samplerMatrix);
+            }
 
             /// <summary>
             ///  Tries to acquire the latest packed semantic channels CPU image.
@@ -193,7 +250,15 @@ namespace Niantic.Lightship.AR
             /// must be disposed by the caller.</param>
             /// <returns>True if the CPU image is acquired. Otherwise, false</returns>
             public override bool TryAcquirePackedSemanticChannelsCPUImage(out LightshipCpuBuffer cpuBuffer)
-                => _api.TryAcquirePackedSemanticChannelsCPUImage(_nativeProviderHandle, out cpuBuffer);
+            {
+                if (!_nativeProviderHandle.IsValidHandle())
+                {
+                    cpuBuffer = default;
+                    return false;
+                }
+
+                return _api.TryAcquirePackedSemanticChannelsCPUImage(_nativeProviderHandle, out cpuBuffer);
+            }
 
             /// <summary>
             /// Property to be implemented by the provider to get or set the frame rate for the platform's semantic
@@ -215,7 +280,12 @@ namespace Niantic.Lightship.AR
             /// </summary>
             public override List<string> GetChannelNames()
             {
-                if (_api.GetChannelNames(_nativeProviderHandle, out var channelNames))
+                if (!_nativeProviderHandle.IsValidHandle())
+                {
+                    return new List<string>();
+                }
+
+                if (_api.TryGetChannelNames(_nativeProviderHandle, out var channelNames))
                 {
                     return channelNames;
                 }
@@ -228,6 +298,11 @@ namespace Niantic.Lightship.AR
             /// </summary>
             public override void Start()
             {
+                if (!_nativeProviderHandle.IsValidHandle())
+                {
+                    return;
+                }
+
                 _api.Start(_nativeProviderHandle);
             }
 
@@ -236,6 +311,11 @@ namespace Niantic.Lightship.AR
             /// </summary>
             public override void Stop()
             {
+                if (!_nativeProviderHandle.IsValidHandle())
+                {
+                    return;
+                }
+
                 _api.Stop(_nativeProviderHandle);
             }
 
@@ -252,6 +332,11 @@ namespace Niantic.Lightship.AR
                 var channelNames = GetChannelNames();
                 if (default == channelNames || channelNames.Count == 0)
                     return false;
+
+                if (!_nativeProviderHandle.IsValidHandle())
+                {
+                    return false;
+                }
 
                 if (!_api.TryPrepareSubsystem(_nativeProviderHandle))
                     return false;
@@ -283,6 +368,11 @@ namespace Niantic.Lightship.AR
             /// </summary>
             public override void Destroy()
             {
+                if (!_nativeProviderHandle.IsValidHandle())
+                {
+                    return;
+                }
+
                 _api.Destruct(_nativeProviderHandle);
                 _nativeProviderHandle = IntPtr.Zero;
             }
@@ -299,13 +389,18 @@ namespace Niantic.Lightship.AR
             /// A dictionary consisting of keys specifying the name of the semantics channel that is needed and values
             /// between 0 and 1, inclusive, that set the threshold above which the platform will include the specified
             /// channel in the packed semantics buffer. The key must be a semantic channel name present in the list
-            /// returned by <c>GetChannelNames</c>.
+            /// returned by <c>TryGetChannelNames</c>.
             /// </param>
             /// <exception cref="System.NotSupportedException">Thrown when setting confidence thresholds is not
             /// supported by the implementation.</exception>
             /// <returns>True if the threshold was set. Otherwise, false.</returns>
             public override bool TrySetChannelConfidenceThresholds(Dictionary<string,float> channelConfidenceThresholds)
             {
+                if (!_nativeProviderHandle.IsValidHandle())
+                {
+                    return false;
+                }
+
                 var channelNames = GetChannelNames();
 
                 // Keep all the thresholds the same except for the channels that we want to set

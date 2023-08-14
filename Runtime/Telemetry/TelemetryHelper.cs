@@ -4,7 +4,7 @@ using Niantic.Lightship.AR.Protobuf;
 using UnityEngine;
 using UnityEngine.XR.ARFoundation;
 
-namespace Telemetry
+namespace Niantic.Lightship.AR.Telemetry
 {
     internal static class TelemetryHelper
     {

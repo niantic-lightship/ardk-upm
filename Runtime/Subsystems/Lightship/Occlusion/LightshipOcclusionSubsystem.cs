@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
-using Niantic.Lightship.AR.ARFoundation;
+using Niantic.Lightship.AR.ARFoundation.Occlusion;
 using Niantic.Lightship.AR.Loader;
 using Niantic.Lightship.AR.Utilities;
 using Unity.Collections;
@@ -18,7 +18,7 @@ namespace Niantic.Lightship.AR
     /// This subsystem provides implementing functionality for the <c>XROcclusionSubsystem</c> class.s
     /// </summary>
     [Preserve]
-    class LightshipOcclusionSubsystem : XROcclusionSubsystem, _ILightshipSettingsUser
+    class LightshipOcclusionSubsystem : XROcclusionSubsystem, ILightshipSettingsUser
     {
         /// <summary>
         /// Register the Lightship occlusion subsystem.
@@ -43,15 +43,15 @@ namespace Niantic.Lightship.AR
             XROcclusionSubsystem.Register(xrOcclusionSubsystemCinfo);
         }
 
-        void _ILightshipSettingsUser.SetLightshipSettings(LightshipSettings settings)
+        void ILightshipSettingsUser.SetLightshipSettings(LightshipSettings settings)
         {
-            ((_ILightshipSettingsUser)provider).SetLightshipSettings(settings);
+            ((ILightshipSettingsUser)provider).SetLightshipSettings(settings);
         }
 
         /// <summary>
         /// The implementation provider class.
         /// </summary>
-        class LightshipOcclusionProvider : Provider, _ILightshipSettingsUser
+        class LightshipOcclusionProvider : Provider, ILightshipSettingsUser
         {
             /// <summary>
             /// The shader property name for the environment depth texture.
@@ -59,7 +59,7 @@ namespace Niantic.Lightship.AR
             /// <value>
             /// The shader property name for the environment depth texture.
             /// </value>
-            private const string k_TextureEnvironmentDepthPropertyName = "_EnvironmentDepth";
+            private const string _TextureEnvironmentDepthPropertyName = "_EnvironmentDepth";
 
             /// <summary>
             /// The shader property name identifier for the environment depth texture.
@@ -67,8 +67,8 @@ namespace Niantic.Lightship.AR
             /// <value>
             /// The shader property name identifier for the environment depth texture.
             /// </value>
-            private static readonly int s_TextureEnvironmentDepthPropertyId =
-                Shader.PropertyToID(k_TextureEnvironmentDepthPropertyName);
+            private static readonly int _TextureEnvironmentDepthPropertyId =
+                Shader.PropertyToID(_TextureEnvironmentDepthPropertyName);
 
             /// <summary>
             /// The shader keyword for enabling environment depth rendering for ARKit Background shader.
@@ -76,7 +76,7 @@ namespace Niantic.Lightship.AR
             /// <value>
             /// The shader keyword for enabling environment depth rendering.
             /// </value>
-            private const string k_EnvironmentDepthEnabledARKitMaterialKeyword = "ARKIT_ENVIRONMENT_DEPTH_ENABLED";
+            private const string _EnvironmentDepthEnabledARKitMaterialKeyword = "ARKIT_ENVIRONMENT_DEPTH_ENABLED";
 
             /// <summary>
             /// The shader keyword for enabling environment depth rendering for ARCore Background shader.
@@ -84,7 +84,7 @@ namespace Niantic.Lightship.AR
             /// <value>
             /// The shader keyword for enabling environment depth rendering.
             /// </value>
-            private const string k_EnvironmentDepthEnabledARCoreMaterialKeyword = "ARCORE_ENVIRONMENT_DEPTH_ENABLED";
+            private const string _EnvironmentDepthEnabledARCoreMaterialKeyword = "ARCORE_ENVIRONMENT_DEPTH_ENABLED";
 
             /// <summary>
             /// The shader keyword for enabling environment depth rendering for Lightship Playback Background shader.
@@ -92,17 +92,17 @@ namespace Niantic.Lightship.AR
             /// <value>
             /// The shader keyword for enabling environment depth rendering.
             /// </value>
-            private const string k_EnvironmentDepthEnabledLightshipMaterialKeyword =
+            private const string _EnvironmentDepthEnabledLightshipMaterialKeyword =
                 "LIGHTSHIP_ENVIRONMENT_DEPTH_ENABLED";
 
             /// <summary>
             /// The url of the models used in the inference for depth based on its quality/performance metrics
             /// </summary>
-            private const string k_ARDKModelURLFast = "https://armodels.eng.nianticlabs.com/niantic_ca_v1.2_fast.bin";
+            private const string _ARDKModelURLFast = "https://armodels.eng.nianticlabs.com/niantic_ca_v1.2_fast.bin";
 
-            private const string k_ARDKModelURLDefault = "https://armodels.eng.nianticlabs.com/niantic_ca_v1.2.bin";
+            private const string _ARDKModelURLDefault = "https://armodels.eng.nianticlabs.com/niantic_ca_v1.2.bin";
 
-            private const string k_ARDKModelURLSmooth =
+            private const string _ARDKModelURLSmooth =
                 "https://armodels.eng.nianticlabs.com/niantic_ca_v1.2_antiflicker.bin";
 
             /// <summary>
@@ -111,35 +111,35 @@ namespace Niantic.Lightship.AR
             /// <value>
             /// The shader keywords for enabling environment depth rendering.
             /// </value>
-            private static readonly List<string> s_EnvironmentDepthEnabledMaterialKeywords =
+            private static readonly List<string> _environmentDepthEnabledMaterialKeywords =
                 new()
                 {
-                    k_EnvironmentDepthEnabledARKitMaterialKeyword,
-                    k_EnvironmentDepthEnabledARCoreMaterialKeyword,
-                    k_EnvironmentDepthEnabledLightshipMaterialKeyword
+                    _EnvironmentDepthEnabledARKitMaterialKeyword,
+                    _EnvironmentDepthEnabledARCoreMaterialKeyword,
+                    _EnvironmentDepthEnabledLightshipMaterialKeyword
                 };
 
             /// <summary>
             /// The occlusion preference mode for when rendering the background.
             /// </summary>
-            private OcclusionPreferenceMode m_OcclusionPreferenceMode;
+            private OcclusionPreferenceMode _occlusionPreferenceMode;
 
             /// <summary>
             /// The handle to the native version of the provider
             /// </summary>
-            private IntPtr m_nativeProviderHandle;
+            private IntPtr _nativeProviderHandle;
 
             // This value will strongly affect memory usage.  It can also be set by the user in configuration.
             // The value represents the number of frames in memory before the user must make a copy of the data
-            private const int k_FramesInMemoryCount = 2;
-            private BufferedTextureCache m_EnvironmentDepthTextures;
+            private const int FramesInMemoryCount = 2;
+            private BufferedTextureCache _environmentDepthTextures;
 
             // The index of the frame where the depth buffer was last updated
-            private int m_FrameIndexOfLastUpdate = 0;
+            private int _frameIndexOfLastUpdate = 0;
 
-            private EnvironmentDepthMode m_requestedEnvironmentDepthMode;
+            private EnvironmentDepthMode _requestedEnvironmentDepthMode;
 
-            private LightshipSettings m_lightshipSettings;
+            private LightshipSettings _lightshipSettings;
 
             /// <summary>
             /// Construct the implementation provider.
@@ -149,22 +149,22 @@ namespace Niantic.Lightship.AR
                 Debug.Log("LightshipOcclusionSubsystem.LightshipOcclusionProvider construct");
 
 #if NIANTIC_LIGHTSHIP_AR_LOADER_ENABLED
-                m_nativeProviderHandle = NativeApi.Construct(LightshipUnityContext.UnityContextHandle);
+                _nativeProviderHandle = NativeApi.Construct(LightshipUnityContext.UnityContextHandle);
 #endif
-                Debug.Log("LightshipOcclusionSubsystem got nativeProviderHandle: " + m_nativeProviderHandle);
+                Debug.Log("LightshipOcclusionSubsystem got nativeProviderHandle: " + _nativeProviderHandle);
 
                 // Default depth mode
-                m_requestedEnvironmentDepthMode = EnvironmentDepthMode.Fastest;
+                _requestedEnvironmentDepthMode = EnvironmentDepthMode.Fastest;
 
-                m_EnvironmentDepthTextures = new BufferedTextureCache(k_FramesInMemoryCount);
+                _environmentDepthTextures = new BufferedTextureCache(FramesInMemoryCount);
 
                 // Reset settings possibly inherited from a previous session
                 OcclusionContext.ResetOccludee();
             }
 
-            void _ILightshipSettingsUser.SetLightshipSettings(LightshipSettings settings)
+            void ILightshipSettingsUser.SetLightshipSettings(LightshipSettings settings)
             {
-                m_lightshipSettings = settings;
+                _lightshipSettings = settings;
             }
 
             /// <summary>
@@ -172,9 +172,12 @@ namespace Niantic.Lightship.AR
             /// </summary>
             public override void Start()
             {
-                Debug.Log("LightshipOcclusionSubsystem.Start");
+                if (!_nativeProviderHandle.IsValidHandle())
+                {
+                    return;
+                }
+
                 ConfigureProvider();
-                NativeApi.Start(m_nativeProviderHandle);
             }
 
             private string ModelFromMode(EnvironmentDepthMode mode)
@@ -182,20 +185,41 @@ namespace Niantic.Lightship.AR
                 switch (mode)
                 {
                     case EnvironmentDepthMode.Best:
-                        return k_ARDKModelURLSmooth;
+                        return _ARDKModelURLSmooth;
                     case EnvironmentDepthMode.Fastest:
-                        return k_ARDKModelURLFast;
+                        return _ARDKModelURLFast;
                     case EnvironmentDepthMode.Medium:
-                        return k_ARDKModelURLDefault;
+                        return _ARDKModelURLDefault;
+                    case EnvironmentDepthMode.Disabled:
+                        return "Disabled";
                 }
 
-                return "";
+                return _ARDKModelURLDefault;
             }
 
             private void ConfigureProvider()
             {
-                NativeApi.Configure(m_nativeProviderHandle, ModelFromMode(requestedEnvironmentDepthMode),
-                    m_lightshipSettings.LightshipDepthFrameRate);
+                if (!_nativeProviderHandle.IsValidHandle())
+                {
+                    return;
+                }
+
+                NativeApi.Stop(_nativeProviderHandle);
+
+                switch (requestedEnvironmentDepthMode)
+                {
+                    case EnvironmentDepthMode.Disabled:
+                        return;
+                }
+
+                NativeApi.Configure
+                (
+                    _nativeProviderHandle,
+                    ModelFromMode(requestedEnvironmentDepthMode),
+                    _lightshipSettings.LightshipDepthFrameRate
+                );
+
+                NativeApi.Start(_nativeProviderHandle);
             }
 
             /// <summary>
@@ -203,8 +227,13 @@ namespace Niantic.Lightship.AR
             /// </summary>
             public override void Stop()
             {
+                if (!_nativeProviderHandle.IsValidHandle())
+                {
+                    return;
+                }
+
                 Debug.Log("LightshipOcclusionSubsystem.Stop");
-                NativeApi.Stop(m_nativeProviderHandle);
+                NativeApi.Stop(_nativeProviderHandle);
             }
 
             /// <summary>
@@ -212,8 +241,15 @@ namespace Niantic.Lightship.AR
             /// </summary>
             public override void Destroy()
             {
-                m_EnvironmentDepthTextures.Dispose();
-                NativeApi.Destruct(m_nativeProviderHandle);
+                _environmentDepthTextures.Dispose();
+
+                if (!_nativeProviderHandle.IsValidHandle())
+                {
+                    return;
+                }
+
+                NativeApi.Destruct(_nativeProviderHandle);
+                _nativeProviderHandle = IntPtr.Zero;
             }
 
             /// <summary>
@@ -224,12 +260,12 @@ namespace Niantic.Lightship.AR
             /// </value>
             public override EnvironmentDepthMode requestedEnvironmentDepthMode
             {
-                get => m_requestedEnvironmentDepthMode;
+                get => _requestedEnvironmentDepthMode;
                 set
                 {
-                    if (m_requestedEnvironmentDepthMode != value)
+                    if (_requestedEnvironmentDepthMode != value)
                     {
-                        m_requestedEnvironmentDepthMode = value;
+                        _requestedEnvironmentDepthMode = value;
                         ConfigureProvider();
                     }
                 }
@@ -238,8 +274,7 @@ namespace Niantic.Lightship.AR
             /// <summary>
             /// Property to get the current environment depth mode.
             /// </summary>
-            public override EnvironmentDepthMode currentEnvironmentDepthMode
-                => m_requestedEnvironmentDepthMode;
+            public override EnvironmentDepthMode currentEnvironmentDepthMode => _requestedEnvironmentDepthMode;
 
             /// <summary>
             /// Specifies the requested occlusion preference mode.
@@ -249,14 +284,14 @@ namespace Niantic.Lightship.AR
             /// </value>
             public override OcclusionPreferenceMode requestedOcclusionPreferenceMode
             {
-                get => m_OcclusionPreferenceMode;
-                set => m_OcclusionPreferenceMode = value;
+                get => _occlusionPreferenceMode;
+                set => _occlusionPreferenceMode = value;
             }
 
             /// <summary>
             /// Get the occlusion preference mode currently in use by the provider.
             /// </summary>
-            public override OcclusionPreferenceMode currentOcclusionPreferenceMode => m_OcclusionPreferenceMode;
+            public override OcclusionPreferenceMode currentOcclusionPreferenceMode => _occlusionPreferenceMode;
 
             /// <summary>
             /// Get the environment texture descriptor.
@@ -271,41 +306,60 @@ namespace Niantic.Lightship.AR
             {
                 xrTextureDescriptor = default;
 
-                // TODO [AR-16080]: Standardize whatever check we're using to prevent crashes due to accessing
-                // deleted resources in C++
-                if (!running)
-                    return false;
-
-                var needsToUpdate = m_FrameIndexOfLastUpdate != Time.frameCount;
+                var needsToUpdate = _frameIndexOfLastUpdate != Time.frameCount;
                 if (needsToUpdate)
                 {
-                    if (AcquireEnvironmentDepth(
+                    var gotEnvDepth =
+                        TryAcquireEnvironmentDepth
+                        (
                             requestPostProcessing: true,
                             out IntPtr resourceHandle,
                             out IntPtr memoryBuffer,
                             out int size,
                             out int width,
                             out int height,
-                            out TextureFormat format))
+                            out TextureFormat format
+                        );
+
+                    if (gotEnvDepth)
                     {
-                        m_FrameIndexOfLastUpdate = Time.frameCount;
-                        m_EnvironmentDepthTextures.GetUpdatedTextureFromBuffer(memoryBuffer, size, width, height,
-                            format, (uint)m_FrameIndexOfLastUpdate, out _);
-                        NativeApi.DisposeResource(m_nativeProviderHandle, resourceHandle);
+                        _frameIndexOfLastUpdate = Time.frameCount;
+                        _environmentDepthTextures.GetUpdatedTextureFromBuffer
+                        (
+                            memoryBuffer,
+                            size,
+                            width,
+                            height,
+                            format,
+                            (uint)_frameIndexOfLastUpdate,
+                            out _
+                        );
+
+                        NativeApi.DisposeResource(_nativeProviderHandle, resourceHandle);
                     }
                 }
 
-                var texture = m_EnvironmentDepthTextures.GetActiveTexture();
+                var texture = _environmentDepthTextures.GetActiveTexture();
                 if (texture == null)
                     return false;
 
-                var nativeTexture = m_EnvironmentDepthTextures.GetActiveTexturePtr();
+                var nativeTexture = _environmentDepthTextures.GetActiveTexturePtr();
                 if (nativeTexture == IntPtr.Zero)
                     return false;
 
-                xrTextureDescriptor = new XRTextureDescriptor(
-                    nativeTexture, texture.width, texture.height, 0, texture.format,
-                    s_TextureEnvironmentDepthPropertyId, 0, TextureDimension.Tex2D);
+                xrTextureDescriptor =
+                    new XRTextureDescriptor
+                    (
+                        nativeTexture,
+                        texture.width,
+                        texture.height,
+                        0,
+                        texture.format,
+                        _TextureEnvironmentDepthPropertyId,
+                        0,
+                        TextureDimension.Tex2D
+                    );
+
                 return true;
             }
 
@@ -321,30 +375,44 @@ namespace Niantic.Lightship.AR
             {
                 cinfo = default;
 
-                var needsToUpdate = m_FrameIndexOfLastUpdate != Time.frameCount;
+                var needsToUpdate = _frameIndexOfLastUpdate != Time.frameCount;
                 if (needsToUpdate)
                 {
-                    if (AcquireEnvironmentDepth(
+                    var gotEnvDepth =
+                        TryAcquireEnvironmentDepth
+                        (
                             requestPostProcessing: true,
                             out IntPtr resourceHandle,
                             out IntPtr memoryBuffer,
                             out int size,
                             out int width,
                             out int height,
-                            out TextureFormat format))
+                            out TextureFormat format
+                        );
+
+                    if (gotEnvDepth)
                     {
-                        m_FrameIndexOfLastUpdate = Time.frameCount;
-                        m_EnvironmentDepthTextures.GetUpdatedTextureFromBuffer(memoryBuffer, size, width, height,
-                            format, (uint)m_FrameIndexOfLastUpdate, out _);
-                        NativeApi.DisposeResource(m_nativeProviderHandle, resourceHandle);
+                        _frameIndexOfLastUpdate = Time.frameCount;
+                        _environmentDepthTextures.GetUpdatedTextureFromBuffer
+                        (
+                            memoryBuffer,
+                            size,
+                            width,
+                            height,
+                            format,
+                            (uint)_frameIndexOfLastUpdate,
+                            out _
+                        );
+
+                        NativeApi.DisposeResource(_nativeProviderHandle, resourceHandle);
                     }
                 }
 
-                var texture = m_EnvironmentDepthTextures.GetActiveTexture();
+                var texture = _environmentDepthTextures.GetActiveTexture();
                 if (texture == null)
                     return false;
 
-                var nativeTexture = m_EnvironmentDepthTextures.GetActiveTexturePtr();
+                var nativeTexture = _environmentDepthTextures.GetActiveTexturePtr();
                 if (nativeTexture == IntPtr.Zero)
                     return false;
 
@@ -377,8 +445,16 @@ namespace Niantic.Lightship.AR
             /// <param name="height">The height of the image.</param>
             /// <param name="format">The texture format that should be used to represent the image.</param>
             /// <returns>Whether the resource has been acquired.</returns>
-            private bool AcquireEnvironmentDepth(bool requestPostProcessing, out IntPtr resourceHandle, out IntPtr memoryBuffer,
-                out int size, out int width, out int height, out TextureFormat format)
+            private bool TryAcquireEnvironmentDepth
+            (
+                bool requestPostProcessing,
+                out IntPtr resourceHandle,
+                out IntPtr memoryBuffer,
+                out int size,
+                out int width,
+                out int height,
+                out TextureFormat format
+            )
             {
                 // Verify the aspect ratio we need to comply with
                 var cameraImageAspectRatio = OcclusionContext.Shared.CameraImageAspectRatio;
@@ -386,7 +462,7 @@ namespace Niantic.Lightship.AR
                     cameraImageAspectRatio.HasValue && !cameraImageAspectRatio.Value.IsUndefined();
 
                 // Cannot acquire an environment depth image in an appropriate image container
-                if (!isCameraAspectRatioValid)
+                if (!_nativeProviderHandle.IsValidHandle() || !isCameraAspectRatioValid)
                 {
                     resourceHandle = IntPtr.Zero;
                     memoryBuffer = IntPtr.Zero;
@@ -398,8 +474,7 @@ namespace Niantic.Lightship.AR
                 }
 
                 // Acquire the inference result
-                resourceHandle = NativeApi.GetEnvironmentDepth(m_nativeProviderHandle, out memoryBuffer,
-                    out size, out width, out height, out format, out _);
+                resourceHandle = NativeApi.GetEnvironmentDepth(_nativeProviderHandle, out memoryBuffer, out size, out width, out height, out format, out _);
                 if (resourceHandle == IntPtr.Zero)
                     return false;
 
@@ -414,10 +489,10 @@ namespace Niantic.Lightship.AR
                 if (!requestPostProcessing || !didAcquirePose)
                 {
                     // Blit the original image to a container that matches the camera image aspect ratio
-                    var newResource = NativeApi.Blit(m_nativeProviderHandle, resourceHandle, width, height, out memoryBuffer, out size);
+                    var newResource = NativeApi.Blit(_nativeProviderHandle, resourceHandle, width, height, out memoryBuffer, out size);
 
                     // Release the original buffer
-                    NativeApi.DisposeResource(m_nativeProviderHandle, resourceHandle);
+                    NativeApi.DisposeResource(_nativeProviderHandle, resourceHandle);
 
                     // Deliver the image
                     resourceHandle = newResource;
@@ -425,21 +500,24 @@ namespace Niantic.Lightship.AR
                 }
 
                 // Convert the pose to native ARDK format
-                var pose = _Convert.Matrix4x4ToInternalArray(poseMatrix.FromUnityToArdk());
+                var pose = MatrixConversionHelper.Matrix4x4ToInternalArray(poseMatrix.FromUnityToArdk());
 
                 // Warp the original depth image to align it with the current pose
-                var processedResource = NativeApi.Warp(
-                    m_nativeProviderHandle,
-                    resourceHandle,
-                    pose,
-                    width,
-                    height,
-                    OcclusionContext.Shared.OccludeeEyeDepth,
-                    out memoryBuffer,
-                    out size);
+                var processedResource =
+                    NativeApi.Warp
+                    (
+                        _nativeProviderHandle,
+                        resourceHandle,
+                        pose,
+                        width,
+                        height,
+                        OcclusionContext.Shared.OccludeeEyeDepth,
+                        out memoryBuffer,
+                        out size
+                    );
 
                 // Release the original buffer
-                NativeApi.DisposeResource(m_nativeProviderHandle, resourceHandle);
+                NativeApi.DisposeResource(_nativeProviderHandle, resourceHandle);
 
                 // Deliver the image
                 resourceHandle = processedResource;
@@ -458,9 +536,11 @@ namespace Niantic.Lightship.AR
             /// <param name="defaultDescriptor">The default descriptor value.</param>
             /// <param name="allocator">The allocator to use when creating the returned <c>NativeArray</c>.</param>
             /// <returns>The occlusion texture descriptors.</returns>
-            public override unsafe NativeArray<XRTextureDescriptor> GetTextureDescriptors(
+            public override unsafe NativeArray<XRTextureDescriptor> GetTextureDescriptors
+            (
                 XRTextureDescriptor defaultDescriptor,
-                Allocator allocator)
+                Allocator allocator
+            )
             {
                 if (TryGetEnvironmentDepth(out var xrTextureDescriptor))
                 {
@@ -477,10 +557,13 @@ namespace Niantic.Lightship.AR
             /// </summary>
             /// <param name="enabledKeywords">The keywords to enable for the material.</param>
             /// <param name="disabledKeywords">The keywords to disable for the material.</param>
-            public override void GetMaterialKeywords(out List<string> enabledKeywords,
-                out List<string> disabledKeywords)
+            public override void GetMaterialKeywords
+            (
+                out List<string> enabledKeywords,
+                out List<string> disabledKeywords
+            )
             {
-                enabledKeywords = s_EnvironmentDepthEnabledMaterialKeywords;
+                enabledKeywords = _environmentDepthEnabledMaterialKeywords;
                 disabledKeywords = null;
             }
         }
@@ -491,23 +574,22 @@ namespace Niantic.Lightship.AR
         static class NativeApi
         {
 #if NIANTIC_LIGHTSHIP_AR_LOADER_ENABLED
-            [DllImport(_LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_OcclusionProvider_Construct")]
+            [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_OcclusionProvider_Construct")]
             public static extern IntPtr Construct(IntPtr unityContext);
 
-            [DllImport(_LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_OcclusionProvider_Start")]
+            [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_OcclusionProvider_Start")]
             public static extern void Start(IntPtr depthApiHandle);
 
-            [DllImport(_LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_OcclusionProvider_Stop")]
+            [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_OcclusionProvider_Stop")]
             public static extern void Stop(IntPtr depthApiHandle);
 
-            [DllImport(_LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_OcclusionProvider_Configure")]
+            [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_OcclusionProvider_Configure")]
             public static extern void Configure(IntPtr depthApiHandle, string modelUrl, uint frameRate);
 
-            [DllImport(_LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_OcclusionProvider_Destruct")]
+            [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_OcclusionProvider_Destruct")]
             public static extern void Destruct(IntPtr depthApiHandle);
 
-            [DllImport(_LightshipPlugin.Name,
-                EntryPoint = "Lightship_ARDK_Unity_OcclusionProvider_GetEnvironmentDepth")]
+            [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_OcclusionProvider_GetEnvironmentDepth")]
             public static extern IntPtr GetEnvironmentDepth
             (
                 IntPtr depthApiHandle,
@@ -519,8 +601,7 @@ namespace Niantic.Lightship.AR
                 out uint frameId
             );
 
-            [DllImport(_LightshipPlugin.Name,
-                EntryPoint = "Lightship_ARDK_Unity_OcclusionProvider_Warp")]
+            [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_OcclusionProvider_Warp")]
             public static extern IntPtr Warp
             (
                 IntPtr depthApiHandle,
@@ -533,8 +614,7 @@ namespace Niantic.Lightship.AR
                 out int size
             );
 
-            [DllImport(_LightshipPlugin.Name,
-                EntryPoint = "Lightship_ARDK_Unity_OcclusionProvider_Blit")]
+            [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_OcclusionProvider_Blit")]
             public static extern IntPtr Blit
             (
                 IntPtr depthApiHandle,
@@ -545,7 +625,7 @@ namespace Niantic.Lightship.AR
                 out int size
             );
 
-            [DllImport(_LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_OcclusionProvider_ReleaseResource")]
+            [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_OcclusionProvider_ReleaseResource")]
             public static extern IntPtr DisposeResource(IntPtr depthApiHandle, IntPtr resourceHandle);
 
 #else

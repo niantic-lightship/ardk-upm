@@ -6,7 +6,7 @@ using UnityEngine.XR.Management;
 
 namespace Niantic.Lightship.AR.Loader
 {
-    public class LightshipStandaloneLoader : XRLoaderHelper, _ILightshipLoader
+    public class LightshipStandaloneLoader : XRLoaderHelper, ILightshipLoader
     {
         /// <summary>
         /// The `XROcclusionSubsystem` whose lifecycle is managed by this loader.
@@ -25,8 +25,8 @@ namespace Niantic.Lightship.AR.Loader
         public XRMeshSubsystem lightshipMeshSubsystem =>
             GetLoadedSubsystem<XRMeshSubsystem>();
 
-        private _PlaybackLoaderHelper _playbackHelper;
-        private _NativeLoaderHelper _nativeHelper;
+        private PlaybackLoaderHelper _playbackHelper;
+        private NativeLoaderHelper _nativeHelper;
 
         /// <summary>
         /// Initializes the loader.
@@ -34,15 +34,15 @@ namespace Niantic.Lightship.AR.Loader
         /// <returns>`True` if the session subsystems were successfully created, otherwise `false`.</returns>
         public override bool Initialize()
         {
-            return ((_ILightshipLoader)this).InitializeWithSettings(LightshipSettings.Instance);
+            return ((ILightshipLoader)this).InitializeWithSettings(LightshipSettings.Instance);
         }
 
-        bool _ILightshipLoader.InitializeWithSettings(LightshipSettings settings, bool isTest)
+        bool ILightshipLoader.InitializeWithSettings(LightshipSettings settings, bool isTest)
         {
 #if NIANTIC_LIGHTSHIP_AR_LOADER_ENABLED
             if (settings.EditorPlaybackSettings.UsePlayback)
             {
-                _playbackHelper = new _PlaybackLoaderHelper();
+                _playbackHelper = new PlaybackLoaderHelper();
                 if (!_playbackHelper.Initialize(this, settings))
                 {
                     return false;
@@ -54,18 +54,19 @@ namespace Niantic.Lightship.AR.Loader
 
                 // Initialize native helper after playback helper, because playback helper creates the dataset reader,
                 // then native helper injects it into the PAM
-                _nativeHelper = new _NativeLoaderHelper();
+                _nativeHelper = new NativeLoaderHelper();
                 return _nativeHelper.Initialize(this, settings, isLidarSupported, isTest);
             }
             else
             {
                 // Initialize native helper with no subsystems except the API key.
-                _nativeHelper = new _NativeLoaderHelper();
+                _nativeHelper = new NativeLoaderHelper();
                 var emptySettings = LightshipSettings._CreateRuntimeInstance(apiKey: settings.ApiKey);
                 return _nativeHelper.Initialize(this, emptySettings, false, isTest);
             }
+#else
+            return false;
 #endif
-            return true;
         }
 
         /// <summary>
@@ -81,6 +82,6 @@ namespace Niantic.Lightship.AR.Loader
             return true;
         }
 
-        _PlaybackDatasetReader _ILightshipLoader.PlaybackDatasetReader => _playbackHelper?.DatasetReader;
+        PlaybackDatasetReader ILightshipLoader.PlaybackDatasetReader => _playbackHelper?.DatasetReader;
     }
 }

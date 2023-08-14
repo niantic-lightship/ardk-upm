@@ -19,21 +19,39 @@ namespace Niantic.Lightship.AR.SemanticsSubsystem
 
         public void Destruct(IntPtr nativeProviderHandle);
 
-        public bool TryGetSemanticChannel(IntPtr nativeProviderHandle, string channelName, XRCameraParams? cameraParams,
-            out XRTextureDescriptor semanticsChannelDescriptor, out Matrix4x4 samplerMatrix);
+        public bool TryGetSemanticChannel
+        (
+            IntPtr nativeProviderHandle,
+            string channelName,
+            XRCameraParams? cameraParams,
+            out XRTextureDescriptor semanticsChannelDescriptor,
+            out Matrix4x4 samplerMatrix
+        );
 
         public bool TryAcquireSemanticChannelCPUImage(IntPtr nativeProviderHandle, string channelName, out LightshipCpuBuffer cpuBuffer);
 
         public void DisposeCPUImage(IntPtr nativeProviderHandle,  IntPtr resHandle);
 
-        public bool TryGetPackedSemanticChannels(IntPtr nativeProviderHandle, XRCameraParams? cameraParams,
-            out XRTextureDescriptor packedSemanticsDescriptor, out Matrix4x4 samplerMatrix);
+        public bool TryGetPackedSemanticChannels
+        (
+            IntPtr nativeProviderHandle,
+            XRCameraParams? cameraParams,
+            out XRTextureDescriptor packedSemanticsDescriptor,
+            out Matrix4x4 samplerMatrix
+        );
 
         public bool TryAcquirePackedSemanticChannelsCPUImage(IntPtr nativeProviderHandle, out LightshipCpuBuffer cpuBuffer);
 
-        public bool TryCalculateSamplerMatrix(IntPtr nativeProviderHandle, IntPtr resourceHandle,
-            XRCameraParams cameraParams, Matrix4x4 pose, float backProjectionPlane, out Matrix4x4 result);
+        public bool TryCalculateSamplerMatrix
+        (
+            IntPtr nativeProviderHandle,
+            IntPtr resourceHandle,
+            XRCameraParams cameraParams,
+            Matrix4x4 pose,
+            float backProjectionPlane,
+            out Matrix4x4 result
+        );
 
-        public bool GetChannelNames(IntPtr nativeProviderHandle, out List<string> semanticChannelNames);
+        public bool TryGetChannelNames(IntPtr nativeProviderHandle, out List<string> semanticChannelNames);
     }
 }

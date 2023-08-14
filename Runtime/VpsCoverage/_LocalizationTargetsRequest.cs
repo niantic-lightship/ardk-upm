@@ -1,7 +1,7 @@
 // Copyright 2022 Niantic, Inc. All Rights Reserved.
 
 using System;
-using Niantic.Lightship.AR.Loader;
+using Niantic.Lightship.AR.Settings.User;
 using UnityEngine;
 
 namespace Niantic.Lightship.AR
@@ -13,9 +13,9 @@ namespace Niantic.Lightship.AR
         private string[] query_id;
 
         [SerializeField]
-        internal ARCommonMetadataStruct ar_common_metadata;
+        internal LegacyMetadataHelper.ARCommonMetadataStruct ar_common_metadata;
 
-        public _LocalizationTargetsRequest(string[] queryId, ARCommonMetadataStruct arCommonMetadata)
+        public _LocalizationTargetsRequest(string[] queryId, LegacyMetadataHelper.ARCommonMetadataStruct arCommonMetadata)
         {
             query_id = queryId;
             ar_common_metadata = arCommonMetadata;

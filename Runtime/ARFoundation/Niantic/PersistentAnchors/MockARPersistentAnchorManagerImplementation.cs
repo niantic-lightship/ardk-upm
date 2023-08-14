@@ -1,4 +1,5 @@
 #if UNITY_EDITOR
+using System.Collections.Generic;
 using System.Reflection;
 using System.Threading.Tasks;
 
@@ -13,6 +14,8 @@ namespace Niantic.Lightship.AR.Subsystems
 {
     internal class MockARPersistentAnchorManagerImplementation : IARPersistentAnchorManagerImplementation
     {
+        private MockCamera mockCamera;
+        private List<Behaviour> disabledComponents = new List<Behaviour>();
         public MockARPersistentAnchorManagerImplementation(ARPersistentAnchorManager arPersistentAnchorManager)
         {
             InitializeMockCamera(arPersistentAnchorManager);
@@ -49,6 +52,19 @@ namespace Niantic.Lightship.AR.Subsystems
             Object.Destroy(arPersistentAnchor.gameObject);
         }
 
+        public void Dispose()
+        {
+            if (mockCamera)
+            {
+                Object.Destroy(mockCamera);
+            }
+
+            foreach (var component in disabledComponents)
+            {
+                component.enabled = true;
+            }
+        }
+
         private async void MockLocalization(ARPersistentAnchorManager arPersistentAnchorManager,
             ARPersistentAnchor arPersistentAnchor)
         {
@@ -67,16 +83,30 @@ namespace Niantic.Lightship.AR.Subsystems
         private void InitializeMockCamera(ARPersistentAnchorManager arPersistentAnchorManager)
         {
             var trackedPoseDriver = arPersistentAnchorManager.GetComponentInChildren<TrackedPoseDriver>();
-            if (trackedPoseDriver)
+            if (trackedPoseDriver && trackedPoseDriver.enabled)
             {
                 trackedPoseDriver.enabled = false;
-                trackedPoseDriver.gameObject.AddComponent<MockCamera>();
+                disabledComponents.Add(trackedPoseDriver);
             }
-            else
+            
+#pragma warning disable 0618
+            // ARPoseDriver is deprecated but is currently the official workaround for tracking drift
+            var arPoseDriver = arPersistentAnchorManager.GetComponentInChildren<ARPoseDriver>();
+#pragma warning restore 0618
+            if (arPoseDriver && arPoseDriver.enabled)
             {
-                Debug.LogError($"No TrackedPoseDriver was found as a child of the ARLocationManager GameObject.",
-                    arPersistentAnchorManager.gameObject);
+                arPoseDriver.enabled = false;
+                disabledComponents.Add(arPoseDriver);
             }
+
+            var camera = arPersistentAnchorManager.GetComponentInChildren<Camera>();
+            if (!camera)
+            {
+                Debug.LogError("No Camera found as a child of the ARPersistentAnchorManager, cannot use Mock");
+                return;
+            }
+
+            mockCamera = camera.gameObject.AddComponent<MockCamera>();
         }
 
         private void SetTrackingState(ARPersistentAnchor arPersistentAnchor, TrackingState trackingState)

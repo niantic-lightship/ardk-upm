@@ -11,15 +11,19 @@ namespace Niantic.Lightship.AR
 {
     public class CoverageClient
     {
-        private const string VpsCoverageEndpoint = "https://vps-coverage-api.nianticlabs.com/api/json/v1/";
+        private const string BasePath = "api/json/v1/";
+
         private const string CoverageAreasMethodName = "GET_VPS_COVERAGE";
         private const string LocalizationTargetMethodName = "GET_VPS_LOCALIZATION_TARGETS";
-        private const string CoverageAreasEndpoint = VpsCoverageEndpoint + CoverageAreasMethodName;
-        private const string LocalizationTargetsEndpoint = VpsCoverageEndpoint + LocalizationTargetMethodName;
 
-        private readonly LightshipSettings _lightshipSettings;
-
-        public CoverageClient(LightshipSettings lightshipSettings) => _lightshipSettings = lightshipSettings;
+        private readonly string _coverageAreasEndpoint;
+        private readonly string _localizationTargetsEndpoint;
+        
+        public CoverageClient(LightshipSettings lightshipSettings)
+        {
+            _coverageAreasEndpoint = lightshipSettings.VpsCoverageEndpoint + BasePath + CoverageAreasMethodName;
+            _localizationTargetsEndpoint = lightshipSettings.VpsCoverageEndpoint + BasePath + LocalizationTargetMethodName;
+        }
 
         private async Task<CoverageAreasResult> RequestCoverageAreasAsync(LatLng queryLocation, int queryRadius)
         {
@@ -37,9 +41,8 @@ namespace Niantic.Lightship.AR
             }
 
             string requestId = Guid.NewGuid().ToString();
-            var metadata = _lightshipSettings.GetCommonDataEnvelopeWithRequestIdAsStruct(requestId);
+            var metadata = LegacyMetadataHelper.GetCommonDataEnvelopeWithRequestIdAsStruct(requestId);
             var requestHeaders = Metadata.GetApiGatewayHeaders(requestId);
-            requestHeaders.Add("Authorization", _lightshipSettings.ApiKey);
 
             if (Input.location.status == LocationServiceStatus.Running)
             {
@@ -54,7 +57,7 @@ namespace Niantic.Lightship.AR
             var response =
                 await _HttpClient.SendPostAsync<_CoverageAreasRequest, _CoverageAreasResponse>
                 (
-                    CoverageAreasEndpoint,
+                    _coverageAreasEndpoint,
                     request,
                     requestHeaders
                 );
@@ -72,16 +75,15 @@ namespace Niantic.Lightship.AR
         private async Task<LocalizationTargetsResult> RequestLocalizationTargetsAsync(string[] targetIdentifiers)
         {
             string requestId = Guid.NewGuid().ToString();
-            var metadata = _lightshipSettings.GetCommonDataEnvelopeWithRequestIdAsStruct(requestId);
+            var metadata = LegacyMetadataHelper.GetCommonDataEnvelopeWithRequestIdAsStruct(requestId);
             var requestHeaders = Metadata.GetApiGatewayHeaders(requestId);
-            requestHeaders.Add("Authorization", _lightshipSettings.ApiKey);
 
             var request = new _LocalizationTargetsRequest(targetIdentifiers, metadata);
 
             var response =
                 await _HttpClient.SendPostAsync<_LocalizationTargetsRequest, _LocalizationTargetsResponse>
                 (
-                    LocalizationTargetsEndpoint,
+                    _localizationTargetsEndpoint,
                     request,
                     requestHeaders
                 );

@@ -26,6 +26,7 @@ namespace Niantic.Lightship.AR.Editor
         private SerializedProperty _preferLidarIfAvailableProperty;
         private SerializedProperty _useLightshipPersistentAnchorProperty;
         private SerializedProperty _useLightshipSemanticSegmentationProperty;
+        private SerializedProperty _useLightshipScanningProperty;
 
         private readonly PlaybackProperties[] _platformPlaybackProperties = new PlaybackProperties[2];
         private PlaybackProperties _editorPlaybackProperties;
@@ -52,6 +53,7 @@ namespace Niantic.Lightship.AR.Editor
             _preferLidarIfAvailableProperty = _lightshipSettings.FindProperty("_preferLidarIfAvailable");
             _useLightshipPersistentAnchorProperty = _lightshipSettings.FindProperty("_useLightshipPersistentAnchor");
             _useLightshipSemanticSegmentationProperty = _lightshipSettings.FindProperty("_useLightshipSemanticSegmentation");
+            _useLightshipScanningProperty = _lightshipSettings.FindProperty("_useLightshipScanning");
 
             string[] platformSettingsStrings = {"_editorPlaybackSettings", "_devicePlaybackSettings"};
             for (int i = 0; i < _platformPlaybackProperties.Length; i++)
@@ -62,7 +64,7 @@ namespace Niantic.Lightship.AR.Editor
                     _lightshipSettings.FindProperty($"{platformSettingsStrings[i]}._playbackDatasetPath");
                 _platformPlaybackProperties[i].RunManually =
                     _lightshipSettings.FindProperty($"{platformSettingsStrings[i]}._runPlaybackManually");
-                _platformPlaybackProperties[i].LoopInfinitely =
+                _platformPlaybackProperties[i].LoopInfinitely = 
                     _lightshipSettings.FindProperty($"{platformSettingsStrings[i]}._loopInfinitely");
                 _platformPlaybackProperties[i].NumberOfIterations =
                     _lightshipSettings.FindProperty($"{platformSettingsStrings[i]}._numberOfIterations");
@@ -126,6 +128,13 @@ namespace Niantic.Lightship.AR.Editor
                 EditorGUI.indentLevel--;
 
                 EditorGUILayout.Space(10);
+                EditorGUILayout.LabelField("Scanning", EditorStyles.boldLabel);
+                EditorGUILayout.PropertyField(_useLightshipScanningProperty, new GUIContent("Enabled"));
+                EditorGUI.indentLevel++;
+                // Put Scanning sub-settings here
+                EditorGUI.indentLevel--;
+
+                EditorGUILayout.Space(10);
                 EditorGUILayout.LabelField("Playback", EditorStyles.boldLabel);
 
                 GUILayout.BeginHorizontal();
@@ -133,7 +142,7 @@ namespace Niantic.Lightship.AR.Editor
                 GUILayout.EndHorizontal();
 
                 DrawPlaybackGui();
-
+                
                 EditorGUI.EndDisabledGroup();
 
                 if (change.changed)
@@ -214,7 +223,7 @@ namespace Niantic.Lightship.AR.Editor
 
             EditorGUILayout.EndHorizontal();
         }
-
+    
         private void ValidateFramerates()
         {
             var depthFramerate = _lightshipDepthFrameRateProperty.intValue;

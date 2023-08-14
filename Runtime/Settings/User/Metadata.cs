@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using Google.Protobuf;
 using Niantic.ARDK.AR.Protobuf;
+using Niantic.Lightship.AR.Loader;
 using Niantic.Lightship.AR.Utilities.Device;
 using UnityEngine;
 
@@ -13,8 +14,10 @@ namespace Niantic.Lightship.AR.Settings.User
 {
     internal static class Metadata
     {
-        private const string ArdkVersion = "3.0.0-beta-2.230717133359";
-
+        private const string ArdkVersion = "3.0.0-beta-3.230810213802";
+        
+        private const string AuthorizationHeaderKey = "Authorization";
+        public const string ApplicationIdHeaderKey = "x-ardk-application-id";
         private const string UserIdHeaderKey = "x-ardk-userid";
         private const string ClientIdHeaderKey = "x-ardk-clientid";
         private const string ArClientEnvelopeHeaderKey = "x-ardk-clientenvelope";
@@ -57,6 +60,8 @@ namespace Niantic.Lightship.AR.Settings.User
             var gatewayHeaders = new Dictionary<string, string>();
             gatewayHeaders.Add(ArClientEnvelopeHeaderKey, ConvertToBase64(GetArClientEnvelopeAsJson(requestId)));
             gatewayHeaders.Add(ClientIdHeaderKey, ClientId);
+            gatewayHeaders.Add(AuthorizationHeaderKey, LightshipSettings.Instance.ApiKey);
+            gatewayHeaders.Add(ApplicationIdHeaderKey, ApplicationId);
             if(!string.IsNullOrWhiteSpace(UserId))
             {
                 gatewayHeaders.Add(UserIdHeaderKey, UserId);
@@ -64,10 +69,23 @@ namespace Niantic.Lightship.AR.Settings.User
 
             return gatewayHeaders;
         }
-
-        private static string ConvertToBase64(string stringToConvert)
+        
+        public static ARCommonMetadata GetArCommonMetadata(string requestId)
         {
-            return System.Convert.ToBase64String(Encoding.UTF8.GetBytes(stringToConvert));
+            ARCommonMetadata commonMetadata = new ARCommonMetadata()
+            {
+                ApplicationId = ApplicationId??"",
+                Manufacturer = Manufacturer??"",
+                Platform = Platform??"",
+                ClientId = ClientId??"",
+                ArdkVersion = Version??"",
+                ArdkAppInstanceId = AppInstanceId??"",
+                RequestId = requestId??"",
+                DeviceModel = DeviceModel??"",
+                UserId = UserId??"",
+            };
+
+            return commonMetadata;
         }
 
         public static string GetArClientEnvelopeAsJson(string requestId)
@@ -163,7 +181,12 @@ namespace Niantic.Lightship.AR.Settings.User
             // Other
             return Application.platform.ToString();
         }
-
+        
+        private static string ConvertToBase64(string stringToConvert)
+        {
+            return System.Convert.ToBase64String(Encoding.UTF8.GetBytes(stringToConvert));
+        }
+        
         /// <summary>
         /// INTERNAL FOR TESTING ONLY. DO NOT USE DIRECTLY.
         /// </summary>
@@ -270,24 +293,6 @@ namespace Niantic.Lightship.AR.Settings.User
             return SystemInfo.operatingSystemFamily == OperatingSystemFamily.Linux;
         }
 
-        internal static ARCommonMetadata GetArCommonMetadata(string requestId)
-        {
-            ARCommonMetadata commonMetadata = new ARCommonMetadata()
-            {
-                ApplicationId = ApplicationId??"",
-                Manufacturer = Manufacturer??"",
-                Platform = Platform??"",
-                ClientId = ClientId??"",
-                ArdkVersion = Version??"",
-                ArdkAppInstanceId = AppInstanceId??"",
-                RequestId = requestId??"",
-                DeviceModel = DeviceModel??"",
-                UserId = UserId??"",
-            };
-
-            return commonMetadata;
-        }
-
         private static string GetSanitizedUserId(string userId)
         {
             if (userId == null)
@@ -308,7 +313,7 @@ namespace Niantic.Lightship.AR.Settings.User
             }
         }
 
-        [DllImport(_LightshipPlugin.Name)]
+        [DllImport(LightshipPlugin.Name)]
         private static extern void Lightship_ARDK_Unity_CoreContext_SetUserId(IntPtr unityContext, string userId);
     }
 }

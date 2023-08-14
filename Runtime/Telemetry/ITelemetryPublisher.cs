@@ -3,10 +3,10 @@
 using Niantic.ARDK.AR.Protobuf;
 using Niantic.Lightship.AR.Protobuf;
 
-namespace Telemetry
+namespace Niantic.Lightship.AR.Telemetry
 {
     internal interface ITelemetryPublisher
     {
-        public void RecordEvent(ArdkNextTelemetryOmniProto telemetryEvent, ARClientEnvelope.Types.AgeLevel ageLevel);
+        public void RecordEvent(ArdkNextTelemetryOmniProto telemetryEvent);
     }
 }

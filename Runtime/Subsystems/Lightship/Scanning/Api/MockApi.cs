@@ -28,17 +28,25 @@ namespace Niantic.Lightship.AR.ScanningSubsystem
 
         public void Start(IntPtr handle)
         {
-
         }
 
         public void Stop(IntPtr handle)
         {
-
         }
 
-        public void Configure(IntPtr handle, int framerate, bool raycastVisualizationEnabled,
-            int raycastVisualizationWidth, int raycastVisualizationHeight,
-            bool voxelVisualizationEnabled, string scanBasePath)
+        public void Configure
+        (
+            IntPtr handle,
+            int framerate,
+            bool raycastVisualizationEnabled,
+            int raycastVisualizationWidth,
+            int raycastVisualizationHeight,
+            bool voxelVisualizationEnabled,
+            string scanBasePath,
+            string scanTargetId,
+            bool fullResolutionEnabled,
+            bool useEstimatedDepth
+        )
         {
             _currentConfiguration.Framerate = framerate;
             _currentConfiguration.RaycasterVisualizationEnabled = raycastVisualizationEnabled;
@@ -46,10 +54,23 @@ namespace Niantic.Lightship.AR.ScanningSubsystem
                 new Vector2(raycastVisualizationWidth, raycastVisualizationHeight);
             _currentConfiguration.VoxelVisualizationEnabled = voxelVisualizationEnabled;
             _currentConfiguration.ScanBasePath = scanBasePath;
+            _currentConfiguration.ScanTargetId = scanTargetId;
+            _currentConfiguration.FullResolutionEnabled = fullResolutionEnabled;
+            _currentConfiguration.UseEstimatedDepth = useEstimatedDepth;
         }
 
-        public IntPtr TryGetRaycastBuffer(IntPtr handle, out IntPtr colorBuffer, out IntPtr normalBuffer, out IntPtr positionBuffer,
-            out int colorSize, out int normalSize, out int positionSize, out int width, out int height)
+        public IntPtr TryGetRaycastBuffer
+        (
+            IntPtr handle,
+            out IntPtr colorBuffer,
+            out IntPtr normalBuffer,
+            out IntPtr positionBuffer,
+            out int colorSize,
+            out int normalSize,
+            out int positionSize,
+            out int width,
+            out int height
+        )
         {
             throw new NotImplementedException();
         }
@@ -67,11 +88,15 @@ namespace Niantic.Lightship.AR.ScanningSubsystem
         public bool TryGetRecordingInfo(IntPtr handle, out string scanId, out RecordingStatus status)
         {
             throw new NotImplementedException();
-            return false;
         }
 
-        public IntPtr TryGetVoxelBuffer(IntPtr handle, out IntPtr positionBuffer, out IntPtr colorBuffer,
-            out int pointCount)
+        public IntPtr TryGetVoxelBuffer
+        (
+            IntPtr handle,
+            out IntPtr positionBuffer,
+            out IntPtr colorBuffer,
+            out int pointCount
+        )
         {
             throw new NotImplementedException();
         }
@@ -81,7 +106,7 @@ namespace Niantic.Lightship.AR.ScanningSubsystem
             throw new NotImplementedException();
         }
 
-        public void ReleaseResource(IntPtr hanlde, IntPtr resourceHandle)
+        public void ReleaseResource(IntPtr handle, IntPtr resourceHandle)
         {
             throw new NotImplementedException();
         }

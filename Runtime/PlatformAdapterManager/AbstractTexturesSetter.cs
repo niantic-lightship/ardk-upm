@@ -1,28 +1,23 @@
 // Copyright 2023 Niantic, Inc. All Rights Reserved.
 
 using System;
-using Niantic.Lightship.AR.Utilities.CTrace;
-using PlatformAdapterManager;
 using UnityEngine.XR.ARSubsystems;
 
-namespace Niantic.Lightship.AR.PlatformAdapterManager
+namespace Niantic.Lightship.AR.PAM
 {
     internal abstract class AbstractTexturesSetter : IDisposable
     {
-        protected _PlatformDataAcquirer _platformDataAcquirer;
-        protected _FrameData _currentFrameData;
+        protected PlatformDataAcquirer PlatformDataAcquirer;
+        protected FrameData CurrentFrameData;
 
-        protected _ICTrace _ctrace;
-        protected UInt64 _ctraceId;
+        protected UInt64 CtraceId;
 
         private const int MillisecondToNanosecondFactor = 1000000;
 
-        public AbstractTexturesSetter(_PlatformDataAcquirer dataAcquirer, _FrameData frameData, _ICTrace ctrace, UInt64 ctraceId)
+        public AbstractTexturesSetter(PlatformDataAcquirer dataAcquirer, FrameData frameData)
         {
-            _ctrace = ctrace;
-            _ctraceId = ctraceId;
-            _platformDataAcquirer = dataAcquirer;
-            _currentFrameData = frameData;
+            PlatformDataAcquirer = dataAcquirer;
+            CurrentFrameData = frameData;
         }
 
         public abstract void InvalidateCachedTextures();
@@ -32,7 +27,7 @@ namespace Niantic.Lightship.AR.PlatformAdapterManager
         // Get the timestamp associated with the current textures
         public virtual double GetCurrentTimestampMs()
         {
-            if (_platformDataAcquirer.TryGetCameraFrame(out XRCameraFrame frame))
+            if (PlatformDataAcquirer.TryGetCameraFrame(out XRCameraFrame frame))
                 return frame.timestampNs / MillisecondToNanosecondFactor;
 
             return 0;

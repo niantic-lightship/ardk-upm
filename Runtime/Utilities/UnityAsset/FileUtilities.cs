@@ -3,9 +3,6 @@
 using System;
 using System.IO;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using UnityEngine;
 using UnityEngine.Networking;
 
 namespace Niantic.Lightship.Utilities
@@ -13,11 +10,27 @@ namespace Niantic.Lightship.Utilities
     // Utility class class for reading from LOCAL files.
     internal class FileUtilities
     {
-        private const int LocalWebRequestDelay = 5;
-
         // Reads from streaming assets return near-immediately and should never timeout.
         // But we still need to provide some timeout?
         private const int LocalWebRequestMaxWait = 100;
+
+        public static bool TryReadAllText(string filePath, out string result)
+        {
+            result = null;
+            try
+            {
+                // File.Exists(filePath); returns false for android even when the file exists.
+                // so we use try catch instead of something sensible
+                result = GetAllText(filePath);
+                return true;
+            }
+            catch
+            {
+                // ignored
+            }
+
+            return false;
+        }
 
         public static string GetAllText(string filePath)
         {
@@ -26,7 +39,7 @@ namespace Niantic.Lightship.Utilities
             {
                 return GetTextViaWebRequest(filePath);
             }
-
+            
             return File.ReadAllText(filePath);
         }
 

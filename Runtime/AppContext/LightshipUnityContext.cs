@@ -2,13 +2,13 @@ using System;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
-using Newtonsoft.Json;
 using Niantic.Lightship.AR.Loader;
 using UnityEngine;
-using Niantic.Lightship.AR.PlatformAdapterManager;
-using Niantic.Lightship.AR.Utilities.CTrace;
+using Niantic.Lightship.AR.PAM;
+using Niantic.Lightship.AR.Utilities.Profiling;
 using Niantic.Lightship.AR.Settings.User;
-using Telemetry;
+using Niantic.Lightship.AR.Telemetry;
+
 
 namespace Niantic.Lightship.AR
 {
@@ -19,12 +19,12 @@ namespace Niantic.Lightship.AR
 
         // Temporarily exposing this so loaders can inject the PlaybackDatasetReader into the PAM
         // To remove once all subsystems are implemented via playback.
-        internal static _PlatformAdapterManager PlatformAdapterManager { get; private set; }
+        internal static PlatformAdapterManager PlatformAdapterManager { get; private set; }
 
         private static IntPtr s_propertyBagHandle = IntPtr.Zero;
-        private static _ICTrace s_ctrace;
-        private static _EnvironmentConfig s_environmentConfig;
+        private static EnvironmentConfig s_environmentConfig;
         private static TelemetryService s_telemetryService;
+        internal static bool s_isDeviceLidarSupported = false;
 
         // Event triggered right before the context is destroyed. Used by internal code its lifecycle is not managed
         // by native UnityContext
@@ -34,18 +34,7 @@ namespace Niantic.Lightship.AR
         internal static void Initialize(LightshipSettings settings, bool isDeviceLidarSupported, bool isTest = false)
         {
 #if NIANTIC_LIGHTSHIP_AR_LOADER_ENABLED
-
-            if (!isTest)
-            {
-                // Cannot use Application.persistentDataPath in testing
-                AnalyticsTelemetryPublisher telemetryPublisher = new AnalyticsTelemetryPublisher(
-                    endpoint: settings.TelemetryEndpoint,
-                    directoryPath: Path.Combine(Application.persistentDataPath, "telemetry"),
-                    key: settings.TelemetryApiKey,
-                    registerLogger: false);
-
-                s_telemetryService = new TelemetryService(telemetryPublisher, settings.ApiKey);
-            }
+            s_isDeviceLidarSupported = isDeviceLidarSupported;
 
             if (UnityContextHandle != IntPtr.Zero)
             {
@@ -54,7 +43,7 @@ namespace Niantic.Lightship.AR
             }
 
             Debug.Log($"Initializing {nameof(LightshipUnityContext)}");
-            s_environmentConfig = new _EnvironmentConfig
+            s_environmentConfig = new EnvironmentConfig
             {
                 ApiKey = settings.ApiKey,
                 ScanningEndpoint = settings.ScanningEndpoint,
@@ -67,7 +56,7 @@ namespace Niantic.Lightship.AR
                 SmoothDepthSemanticsEndpoint = settings.SmoothDepthSemanticsEndpoint,
             };
 
-            _DeviceInfo deviceInfo = new _DeviceInfo
+            DeviceInfo deviceInfo = new DeviceInfo
             {
                 AppId = Metadata.ApplicationId,
                 Platform = Metadata.Platform,
@@ -79,6 +68,18 @@ namespace Niantic.Lightship.AR
                 DeviceLidarSupported = isDeviceLidarSupported,
             };
             UnityContextHandle = NativeApi.Lightship_ARDK_Unity_Context_Create(false, ref deviceInfo, ref s_environmentConfig);
+
+            if (!isTest)
+            {
+                // Cannot use Application.persistentDataPath in testing
+                AnalyticsTelemetryPublisher telemetryPublisher = new AnalyticsTelemetryPublisher(
+                    endpoint: settings.TelemetryEndpoint,
+                    directoryPath: Path.Combine(Application.persistentDataPath, "telemetry"),
+                    key: settings.TelemetryApiKey,
+                    registerLogger: false);
+
+                s_telemetryService = new TelemetryService(UnityContextHandle, telemetryPublisher, settings.ApiKey);
+            }
             OnUnityContextHandleInitialized?.Invoke();
 
             var modelPath = Path.Combine(Application.streamingAssetsPath, "full_model.bin");
@@ -92,8 +93,8 @@ namespace Niantic.Lightship.AR
                 modelPath
             );
 
-            s_ctrace = new _NativeCTrace();
-            s_ctrace.InitializeCtrace();
+            ProfilerUtility.RegisterProfiler(new UnityProfiler());
+            ProfilerUtility.RegisterProfiler(new CTraceProfiler());
 
             CreatePam(settings);
 #endif
@@ -112,14 +113,20 @@ namespace Niantic.Lightship.AR
             if (settings.EditorPlaybackEnabled || settings.DevicePlaybackEnabled)
             {
                 PlatformAdapterManager =
-                    _PlatformAdapterManager.Create<_NativeApi, _PlaybackSubsystemsDataAcquirer>(UnityContextHandle,
-                        _PlatformAdapterManager.ImageProcessingMode.GPU, s_ctrace);
+                    AR.PAM.PlatformAdapterManager.Create<PAM.NativeApi, PlaybackSubsystemsDataAcquirer>
+                    (
+                        UnityContextHandle,
+                        AR.PAM.PlatformAdapterManager.ImageProcessingMode.GPU
+                    );
             }
             else
             {
                 PlatformAdapterManager =
-                    _PlatformAdapterManager.Create<_NativeApi, _SubsystemsDataAcquirer>(UnityContextHandle,
-                        _PlatformAdapterManager.ImageProcessingMode.CPU, s_ctrace);
+                    AR.PAM.PlatformAdapterManager.Create<PAM.NativeApi, SubsystemsDataAcquirer>
+                    (
+                        UnityContextHandle,
+                        AR.PAM.PlatformAdapterManager.ImageProcessingMode.CPU
+                    );
             }
         }
 
@@ -150,7 +157,7 @@ namespace Niantic.Lightship.AR
                 s_telemetryService?.Dispose();
                 s_telemetryService = null;
 
-                s_ctrace?.ShutdownCtrace();
+                ProfilerUtility.ShutdownAll();
 
                 NativeApi.Lightship_ARDK_Unity_Context_Shutdown(UnityContextHandle);
                 UnityContextHandle = IntPtr.Zero;
@@ -158,54 +165,31 @@ namespace Niantic.Lightship.AR
 #endif
         }
 
-        /// Temporarily host this function here until we have a ApiGatewayAccess class implementation
-        /// ONLY FOR TESTS
-        internal static string FetchApiKeyFromNative()
-        {
-            if (UnityContextHandle == IntPtr.Zero)
-            {
-                Debug.LogWarning($"Cannot fetch api key from native as {nameof(LightshipUnityContext)} is not initialized");
-                return string.Empty;
-            }
-
-            // this function is rather obsolete as we already have the api key at this point on the c# side and is
-            // more useful for tests scripts until we implement username/password auth
-            var sb = new StringBuilder(s_environmentConfig.ApiKey.Length);
-            NativeApi.Lightship_ARDK_Unity_ApiGatewayAccess_GetApiKey(UnityContextHandle, sb, (ulong)sb.Capacity);
-            return sb.ToString();
-        }
-
         /// <summary>
         /// Container to wrap the native Lightship C APIs
         /// </summary>
         private static class NativeApi
         {
-            [DllImport(_LightshipPlugin.Name)]
+            [DllImport(LightshipPlugin.Name)]
             public static extern IntPtr Lightship_ARDK_Unity_Context_Create(
-                bool disableCtrace, ref _DeviceInfo deviceInfo, ref _EnvironmentConfig environmentConfig);
+                bool disableCtrace, ref DeviceInfo deviceInfo, ref EnvironmentConfig environmentConfig);
 
-            [DllImport(_LightshipPlugin.Name)]
+            [DllImport(LightshipPlugin.Name)]
             public static extern void Lightship_ARDK_Unity_Context_Shutdown(IntPtr unityContext);
 
-            [DllImport(_LightshipPlugin.Name)]
+            [DllImport(LightshipPlugin.Name)]
             public static extern IntPtr Lightship_ARDK_Unity_Property_Bag_Create(IntPtr unityContext);
 
-            [DllImport(_LightshipPlugin.Name)]
+            [DllImport(LightshipPlugin.Name)]
             public static extern void Lightship_ARDK_Unity_Property_Bag_Release(IntPtr bagHandle);
 
-            [DllImport(_LightshipPlugin.Name)]
-            public static extern bool
-                Lightship_ARDK_Unity_Property_Bag_Put(IntPtr bagHandle, string key, string value);
-
-            /// Temporarily host this function here until we have a ApiGatewayAccess class implementation
-            [DllImport(_LightshipPlugin.Name)]
-            public static extern ulong Lightship_ARDK_Unity_ApiGatewayAccess_GetApiKey(IntPtr unityContext,
-                StringBuilder outKey, ulong outKeyBufferLength);
+            [DllImport(LightshipPlugin.Name)]
+            public static extern bool Lightship_ARDK_Unity_Property_Bag_Put(IntPtr bagHandle, string key, string value);
         }
 
         // PLEASE NOTE: Do NOT add feature flags in this struct.
         [StructLayout(LayoutKind.Sequential)]
-        private struct _EnvironmentConfig
+        private struct EnvironmentConfig
         {
             public string ApiKey;
             public string VpsEndpoint;
@@ -221,7 +205,7 @@ namespace Niantic.Lightship.AR
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        private struct _DeviceInfo
+        private struct DeviceInfo
         {
             public string AppId;
             public string Platform;

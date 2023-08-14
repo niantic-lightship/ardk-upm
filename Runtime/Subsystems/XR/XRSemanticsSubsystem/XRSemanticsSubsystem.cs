@@ -154,7 +154,7 @@ namespace Niantic.Lightship.AR.Subsystems
         /// A dictionary consisting of keys specifying the name of the semantics channel that is needed and values
         /// between 0 and 1, inclusive, that set the threshold above which the platform will include the specified
         /// channel in the packed semantics buffer. The key must be a semantic channel name present in the list
-        /// returned by <c>GetChannelNames</c>.
+        /// returned by <c>TryGetChannelNames</c>.
         /// </param>
         /// <exception cref="System.NotSupportedException">Thrown when setting confidence thresholds is not
         /// supported by the implementation.</exception>
@@ -302,7 +302,7 @@ namespace Niantic.Lightship.AR.Subsystems
             /// A dictionary consisting of keys specifying the name of the semantics channel that is needed and values
             /// between 0 and 1, inclusive, that set the threshold above which the platform will include the specified
             /// channel in the packed semantics buffer. The key must be a semantic channel name present in the list
-            /// returned by <c>GetChannelNames</c>.
+            /// returned by <c>TryGetChannelNames</c>.
             /// </param>
             /// <exception cref="System.NotSupportedException">Thrown when setting confidence thresholds is not
             /// supported by the implementation.</exception>

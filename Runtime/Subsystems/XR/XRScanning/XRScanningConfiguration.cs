@@ -2,6 +2,8 @@
 
 using System;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
+using System.Text;
 using UnityEngine;
 
 namespace Niantic.Lightship.AR.Subsystems
@@ -18,6 +20,7 @@ namespace Niantic.Lightship.AR.Subsystems
         private const int DEFAULT_RAYCASTER_VIS_WIDTH = 256;
         private const int DEFAULT_RAYCASTER_VIS_HEIGHT = 144;
         private const bool DEFAULT_VOXEL_VIS_ENABLED = true;
+        private const bool DEFAULT_FULL_RESOLUTION_ENABLED = false;
         private const float DEFAULT_MAX_SCANNING_DISTANCE = 5.0f;
         private const int MIN_FRAMERATE = 1;
         private const int MAX_FRAMERATE = 15;
@@ -25,6 +28,7 @@ namespace Niantic.Lightship.AR.Subsystems
         private const int MAX_RAYCASTER_VIS_RESOLUTION = 1024;
         private const float MIN_MAX_SCANNING_DISTANCE = 0.1f;
         private const float MAX_MAX_SCANNING_DISTANCE = 5.0f;
+        private const bool DEFAULT_USE_ESTIMATED_DEPTH = true;
 
         private int _framerate;
         private bool _raycasterVisualizationEnabled;
@@ -32,6 +36,10 @@ namespace Niantic.Lightship.AR.Subsystems
         private bool _voxelVisualizationEnabled;
         private float _maxScanningDistance;
         private string _scanBasePath;
+        private string _scanTargetId;
+        private bool _useEstimatedDepth;
+        internal string RawScanTargetId { get; private set; }
+        private bool _fullResolutionEnabled;
 
         public int Framerate
         {
@@ -59,6 +67,12 @@ namespace Niantic.Lightship.AR.Subsystems
             set => _voxelVisualizationEnabled = value;
         }
 
+        public bool UseEstimatedDepth
+        {
+            get => _useEstimatedDepth;
+            set => _useEstimatedDepth = value;
+        }
+
         /// The resolution of the raycast visualization's output images. The output quality is bound by both this resolution
         /// as well as the quality of the underlying 3D reconstruction data. On devices without native depth support, the
         /// underlying data is unlikely to be good enough to support resolution larger than 256x144.
@@ -81,6 +95,12 @@ namespace Niantic.Lightship.AR.Subsystems
                 _raycasterVisualizationResolution.y = Mathf.Clamp(
                     (int)value.y, MIN_RAYCASTER_VIS_RESOLUTION, MAX_RAYCASTER_VIS_RESOLUTION);
             }
+        }
+
+        public bool FullResolutionEnabled
+        {
+            get => _fullResolutionEnabled;
+            set => _fullResolutionEnabled = value;
         }
 
         public float MaxScanningDistance
@@ -111,6 +131,44 @@ namespace Niantic.Lightship.AR.Subsystems
             }
         }
 
+        public string ScanTargetId
+        {
+            get => _scanTargetId;
+            set
+            {
+                _scanTargetId = value;
+                if (string.IsNullOrEmpty(_scanTargetId))
+                {
+                    RawScanTargetId = "";
+                } else
+                {
+                    try
+                    {
+                        byte[] encodedId = System.Convert.FromBase64String(_scanTargetId);
+                        byte[] key = new byte[8];
+                        byte[] iv = new byte[8];
+                        byte[] remainder = new byte[encodedId.Length - 17];
+
+                        Buffer.BlockCopy(encodedId, 1, key, 0, 8);
+                        Buffer.BlockCopy(encodedId, 9, iv, 0, 8);
+                        Buffer.BlockCopy(encodedId, 17, remainder, 0, remainder.Length);
+
+                        SymmetricAlgorithm algorithm = DES.Create();
+                        ICryptoTransform transform = algorithm.CreateDecryptor(key, iv);
+                        byte[] decodedId = transform.TransformFinalBlock(remainder, 0, remainder.Length);
+                        RawScanTargetId = Encoding.Unicode.GetString(decodedId);
+                    }
+                    catch (Exception e)
+                    {
+                        throw new ArgumentException(
+                            "Failed to decode scan target ID. Is this ID obtained from ScanTargetClient?", e);
+                    }
+
+                }
+            }
+        }
+
+
         /// <summary>
         /// Default constructor for the XRScanningConfiguration.
         /// </summary>
@@ -122,6 +180,10 @@ namespace Niantic.Lightship.AR.Subsystems
             _voxelVisualizationEnabled = DEFAULT_VOXEL_VIS_ENABLED;
             _maxScanningDistance = DEFAULT_MAX_SCANNING_DISTANCE;
             _scanBasePath = Application.persistentDataPath;
+            _scanTargetId = "";
+            _useEstimatedDepth = DEFAULT_USE_ESTIMATED_DEPTH;
+            RawScanTargetId = "";
+            _fullResolutionEnabled = DEFAULT_FULL_RESOLUTION_ENABLED;
         }
 
         /// <summary>
@@ -137,7 +199,10 @@ namespace Niantic.Lightship.AR.Subsystems
                 _raycasterVisualizationResolution == other.RaycasterVisualizationResolution &&
                 _voxelVisualizationEnabled == other.VoxelVisualizationEnabled &&
                 _maxScanningDistance.Equals(other.MaxScanningDistance) &&
-                string.Equals(_scanBasePath, other._scanBasePath);
+                string.Equals(_scanBasePath, other._scanBasePath) &&
+                string.Equals(_scanTargetId, other._scanTargetId) &&
+                _fullResolutionEnabled == other._fullResolutionEnabled &&
+                _useEstimatedDepth == other._useEstimatedDepth;
         }
     }
 }

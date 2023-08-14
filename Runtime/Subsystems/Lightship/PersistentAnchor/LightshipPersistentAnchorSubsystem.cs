@@ -13,74 +13,106 @@ namespace Niantic.Lightship.AR
     /// Use the <c>SubsystemManager</c> instead.
     /// </summary>
     [Preserve]
-    public sealed class LightshipPersistentAnchorSubsystem : XRPersistentAnchorSubsystem, ISubsystemWithMutableApi<_IApi>
+    public sealed class LightshipPersistentAnchorSubsystem : XRPersistentAnchorSubsystem, ISubsystemWithMutableApi<IApi>
     {
         internal class LightshipProvider : Provider
         {
-            private _IApi _api;
+            private IApi _api;
 
             /// <summary>
             /// The handle to the native version of the provider
             /// </summary>
-            private IntPtr nativeProviderHandle;
+            private IntPtr _nativeProviderHandle;
 
             /// <summary>
             /// Construct the implementation provider.
             /// </summary>
-            public LightshipProvider(): this(new _NativeApi()) { }
+            public LightshipProvider(): this(new NativeApi()) { }
 
-            public LightshipProvider(_IApi api)
+            public LightshipProvider(IApi api)
             {
                 Debug.Log("LightshipPersistentAnchorSubsystem.LightshipProvider construct");
                 _api = api;
 #if NIANTIC_LIGHTSHIP_AR_LOADER_ENABLED
-                nativeProviderHandle = _api.Construct(LightshipUnityContext.UnityContextHandle);
+                _nativeProviderHandle = _api.Construct(LightshipUnityContext.UnityContextHandle);
 #endif
-                Debug.Log("LightshipPersistentAnchorSubsystem got nativeProviderHandle: " + nativeProviderHandle);
+                Debug.Log("LightshipPersistentAnchorSubsystem got _nativeProviderHandle: " + _nativeProviderHandle);
             }
 
             // Destruct the native provider and replace it with the provided (or default mock) provider
             // Used for testing and mocking
-            public void SwitchApiImplementation(_IApi api)
+            public void SwitchApiImplementation(IApi api)
             {
-                if (nativeProviderHandle != IntPtr.Zero)
+                if (_nativeProviderHandle != IntPtr.Zero)
                 {
-                    _api.Stop(nativeProviderHandle);
-                    _api.Destruct(nativeProviderHandle);
+                    _api.Stop(_nativeProviderHandle);
+                    _api.Destruct(_nativeProviderHandle);
                 }
 
                 _api = api;
+                _nativeProviderHandle = _api.Construct(LightshipUnityContext.UnityContextHandle);
             }
 
             public override void Start()
             {
-                _api.Start(nativeProviderHandle);
+                if (!_nativeProviderHandle.IsValidHandle())
+                {
+                    return;
+                }
+
+                _api.Start(_nativeProviderHandle);
             }
 
             public override void Stop()
             {
-                _api.Stop(nativeProviderHandle);
+                if (!_nativeProviderHandle.IsValidHandle())
+                {
+                    return;
+                }
+
+                _api.Stop(_nativeProviderHandle);
             }
 
             public override void Destroy()
             {
-                _api.Destruct(nativeProviderHandle);
-                nativeProviderHandle = IntPtr.Zero;;
+                if (!_nativeProviderHandle.IsValidHandle())
+                {
+                    return;
+                }
+
+                _api.Destruct(_nativeProviderHandle);
+                _nativeProviderHandle = IntPtr.Zero;;
             }
 
             public void Configure(IntPtr persistentAnchorApiHandle)
             {
+                if (!_nativeProviderHandle.IsValidHandle())
+                {
+                    return;
+                }
+
                 // TO DO: Expose configuration
                 _api.Configure(persistentAnchorApiHandle);
             }
 
-            public override TrackableChanges<XRPersistentAnchor> GetChanges(XRPersistentAnchor defaultAnchor,
-                Allocator allocator)
+            public override TrackableChanges<XRPersistentAnchor> GetChanges
+            (
+                XRPersistentAnchor defaultAnchor,
+                Allocator allocator
+            )
             {
-                var changes_handle = _api.AcquireLatestChanges(nativeProviderHandle,
+                if (!_nativeProviderHandle.IsValidHandle())
+                {
+                    return default;
+                }
+
+                var changesHandle = _api.AcquireLatestChanges
+                (
+                    _nativeProviderHandle,
                     out IntPtr addedPtr, out int addedCount,
                     out IntPtr updatedPtr, out int updatedCount,
-                    out IntPtr removedPtr, out int removedCount);
+                    out IntPtr removedPtr, out int removedCount
+                );
                 try
                 {
                     unsafe
@@ -123,18 +155,34 @@ namespace Niantic.Lightship.AR
                 }
                 finally
                 {
-                    _api.ReleaseLatestChanges(changes_handle);
+                    if (!changesHandle.IsValidHandle())
+                    {
+                        Debug.LogError("Tried to release anchor changes handle with invalid pointer.");
+                    }
+
+                    _api.ReleaseLatestChanges(changesHandle);
                 }
             }
 
             public override bool GetNetworkStatusUpdate(out XRPersistentAnchorNetworkRequestStatus[] statuses)
             {
-                var handle = _api.AcquireNetworkStatus
-                    (nativeProviderHandle, out var statusList, out var listCount);
+                if (!_nativeProviderHandle.IsValidHandle())
+                {
+                    statuses = default;
+                    return false;
+                }
+
+                var handle = _api.AcquireNetworkStatus(_nativeProviderHandle, out var statusList, out var listCount);
 
                 if (listCount == 0)
                 {
                     statuses = default;
+
+                    if (!handle.IsValidHandle())
+                    {
+                        Debug.LogError("Tried to release network status handle with invalid pointer.");
+                    }
+
                     _api.ReleaseNetworkStatus(handle);
                     return false;
                 }
@@ -162,6 +210,11 @@ namespace Niantic.Lightship.AR
                 }
                 finally
                 {
+                    if (!handle.IsValidHandle())
+                    {
+                        Debug.LogError("Tried to release network status handle with invalid pointer.");
+                    }
+
                     _api.ReleaseNetworkStatus(handle);
                 }
 
@@ -170,12 +223,23 @@ namespace Niantic.Lightship.AR
 
             public override bool GetLocalizationStatusUpdate(out XRPersistentAnchorLocalizationStatus[] statuses)
             {
-                var handle = _api.AcquireLocalizationStatus
-                    (nativeProviderHandle, out var statusList, out var listCount);
+                if (!_nativeProviderHandle.IsValidHandle())
+                {
+                    statuses = default;
+                    return false;
+                }
+
+                var handle = _api.AcquireLocalizationStatus(_nativeProviderHandle, out var statusList, out var listCount);
 
                 if (listCount == 0)
                 {
                     statuses = default;
+
+                    if (!handle.IsValidHandle())
+                    {
+                        Debug.LogError("Tried to release localization status handle with invalid pointer.");
+                    }
+
                     _api.ReleaseLocalizationStatus(handle);
                     return false;
                 }
@@ -203,6 +267,11 @@ namespace Niantic.Lightship.AR
                 }
                 finally
                 {
+                    if (!handle.IsValidHandle())
+                    {
+                        Debug.LogError("Tried to release localization status handle with invalid pointer.");
+                    }
+
                     _api.ReleaseLocalizationStatus(handle);
                 }
 
@@ -212,83 +281,115 @@ namespace Niantic.Lightship.AR
 
             public override bool TryAddAnchor(Pose pose, out XRPersistentAnchor anchor)
             {
-                bool success = _api.TryAddAnchor(nativeProviderHandle, pose, out var anchorId);
-                if (success)
+                if (!_nativeProviderHandle.IsValidHandle())
                 {
-                    anchor = new XRPersistentAnchor(anchorId);
-                }
-                else
-                {
-                    anchor = XRPersistentAnchor.defaultValue;;
+                    anchor = XRPersistentAnchor.defaultValue;
+                    return false;
                 }
 
-                return success;
+                if (_api.TryCreateAnchor(_nativeProviderHandle, pose, out var anchorId))
+                {
+                    anchor = new XRPersistentAnchor(anchorId);
+                    return true;
+                }
+
+                anchor = XRPersistentAnchor.defaultValue;;
+                return false;
             }
 
             public override bool TryRemoveAnchor(TrackableId anchorId)
             {
-                return _api.TryRemoveAnchor(nativeProviderHandle, anchorId);
+                if (!_nativeProviderHandle.IsValidHandle())
+                {
+                    return false;
+                }
+
+                return _api.TryRemoveAnchor(_nativeProviderHandle, anchorId);
             }
 
-            public override bool TryRestoreAnchor(XRPersistentAnchorPayload anchorPayload,
-                out XRPersistentAnchor anchor)
+            public override bool TryRestoreAnchor
+            (
+                XRPersistentAnchorPayload anchorPayload,
+                out XRPersistentAnchor anchor
+            )
             {
-                bool success =
-                    _api.TryRestoreAnchor(nativeProviderHandle, anchorPayload.nativePtr, anchorPayload.size,
-                        out var anchorId);
-                if (success)
-                {
-                    anchor = new XRPersistentAnchor(anchorId);
-                }
-                else
-                {
-                    anchor = XRPersistentAnchor.defaultValue;;
-                }
-
-                return success;
+                return TryLocalize(anchorPayload, out anchor);
             }
 
             public override bool TryLocalize(XRPersistentAnchorPayload anchorPayload, out XRPersistentAnchor anchor)
             {
-                var success = _api.TryLocalize(nativeProviderHandle, anchorPayload.nativePtr, anchorPayload.size, out var anchorId);
-                if (success)
+                if (!_nativeProviderHandle.IsValidHandle())
+                {
+                    anchor = XRPersistentAnchor.defaultValue;
+                    return false;
+                }
+
+                if (_api.TryTrackAnchor(_nativeProviderHandle, anchorPayload.nativePtr, anchorPayload.size, out var anchorId))
                 {
                     anchor = new XRPersistentAnchor(anchorId);
+                    return true;
                 }
-                else
-                {
-                    Debug.LogError($"Failed to localize.");
-                    anchor = XRPersistentAnchor.defaultValue;;
-                }
-                return success;
+
+                anchor = XRPersistentAnchor.defaultValue;;
+                return false;
             }
 
             private XRPersistentAnchor CreateXRPersistentAnchor(IntPtr anchorChangeIntPtr)
             {
-                bool success = _api.TryExtractAnchorChange(anchorChangeIntPtr,
-                    out var trackableId,
-                    out var pose, out int trackingState, out int trackingStateReason,
-                    out var xrPersistentAnchorPayloadIntPtr, out int payloadSize);
+                if (!_nativeProviderHandle.IsValidHandle())
+                {
+                    return XRPersistentAnchor.defaultValue;
+                }
+
+                if (!anchorChangeIntPtr.IsValidHandle())
+                {
+                    Debug.LogError("Tried to extract anchor changes with invalid anchor change pointer.");
+                }
+
+                var success =
+                    _api.TryExtractAnchorChange
+                    (
+                        anchorChangeIntPtr,
+                        out var trackableId,
+                        out var pose,
+                        out int trackingState, out int trackingStateReason,
+                        out var xrPersistentAnchorPayloadIntPtr, out int payloadSize
+                    );
+
                 if (success)
                 {
                     var xrPersistentAnchorPayload =
                         new XRPersistentAnchorPayload(xrPersistentAnchorPayloadIntPtr, payloadSize);
-                    var xrPersistentAnchor = new XRPersistentAnchor(trackableId,
-                        pose,
-                        (TrackingState)trackingState,
-                        (TrackingStateReason)trackingStateReason,
-                        xrPersistentAnchorPayload);
+
+                    var xrPersistentAnchor =
+                        new XRPersistentAnchor
+                        (
+                            trackableId,
+                            pose,
+                            (TrackingState)trackingState,
+                            (TrackingStateReason)trackingStateReason,
+                            xrPersistentAnchorPayload
+                        );
+
                     return xrPersistentAnchor;
                 }
-                else
-                {
-                    Debug.LogError($"Failed to create XR Persistent Anchor.");
-                    return default;
-                }
+
+                Debug.LogError($"Failed to create XR Persistent Anchor.");
+                return default;
             }
 
             private XRPersistentAnchorNetworkRequestStatus GetNetworkStatus(IntPtr statusIntPtr)
             {
+                if (!_nativeProviderHandle.IsValidHandle())
+                {
+                    return default;
+                }
+
+                if (!statusIntPtr.IsValidHandle())
+                {
+                    Debug.LogError("Tried to extract network status with invalid status pointer.");
+                }
+
                 var success = _api.TryExtractNetworkStatus
                 (
                     statusIntPtr,
@@ -319,6 +420,16 @@ namespace Niantic.Lightship.AR
 
             private XRPersistentAnchorLocalizationStatus GetLocalizationStatus(IntPtr statusIntPtr)
             {
+                if (!_nativeProviderHandle.IsValidHandle())
+                {
+                    return default;
+                }
+
+                if (!statusIntPtr.IsValidHandle())
+                {
+                    Debug.LogError("Tried to extract localization status with invalid status pointer.");
+                }
+
                 var success = _api.TryExtractLocalizationStatus
                 (
                     statusIntPtr,
@@ -356,14 +467,14 @@ namespace Niantic.Lightship.AR
             XRPersistentAnchorSubsystemDescriptor.Create(cinfo);
         }
 
-        void ISubsystemWithMutableApi<_IApi>.SwitchApiImplementation(_IApi api)
+        void ISubsystemWithMutableApi<IApi>.SwitchApiImplementation(IApi api)
         {
             ((LightshipProvider) provider).SwitchApiImplementation(api);
         }
 
-        void ISubsystemWithMutableApi<_IApi>.SwitchToInternalMockImplementation()
+        void ISubsystemWithMutableApi<IApi>.SwitchToInternalMockImplementation()
         {
-            ((LightshipProvider) provider).SwitchApiImplementation(new _MockApi());
+            ((LightshipProvider) provider).SwitchApiImplementation(new MockApi());
         }
     }
 }

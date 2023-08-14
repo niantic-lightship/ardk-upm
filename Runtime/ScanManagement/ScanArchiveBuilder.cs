@@ -35,8 +35,7 @@ namespace Niantic.ARDK.AR.Scanning
         {
             _api = new NativeScanArchiveBuilderApi();
 #if NIANTIC_LIGHTSHIP_AR_LOADER_ENABLED
-            _nativeHandle = _api.Create(scan.ScanPath, scan.ScanId,
-                JsonUtility.ToJson(uploadUserInfo));
+            _nativeHandle = _api.Create(scan.ScanPath, scan.ScanId, JsonUtility.ToJson(uploadUserInfo));
 #endif
         }
 
@@ -74,10 +73,11 @@ namespace Niantic.ARDK.AR.Scanning
         }
 
         /// <summary>
-        /// Creates a task for packing the next chunk. Must only be called if HasMoreChunks is true, and no other task
-        /// is currently running.
+        /// Creates a task for packing the next chunk. Must only be called if HasMoreChunks is true, and
+        /// no other task is currently running.
         ///
-        /// The task is not started automatically. The caller of this method should start the task. The task does not block.
+        /// The task is not started automatically. The caller of this method should start the task. The
+        /// task does not block.
         /// </summary>
         /// <returns></returns>
         public Task<string> CreateTaskToGetNextChunk()

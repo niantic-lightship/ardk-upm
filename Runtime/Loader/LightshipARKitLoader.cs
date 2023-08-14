@@ -16,7 +16,7 @@ namespace Niantic.Lightship.AR.Loader
     /// <summary>
     /// Manages the lifecycle of Lightship and ARKit subsystems.
     /// </summary>
-    public class LightshipARKitLoader : ARKitLoader, _ILightshipLoader
+    public class LightshipARKitLoader : ARKitLoader, ILightshipLoader
     {
         /// <summary>
         /// The `XROcclusionSubsystem` whose lifecycle is managed by this loader.
@@ -29,8 +29,8 @@ namespace Niantic.Lightship.AR.Loader
         public XRPersistentAnchorSubsystem LightshipPersistentAnchorSubsystem =>
             GetLoadedSubsystem<XRPersistentAnchorSubsystem>();
 
-        private _PlaybackLoaderHelper _playbackHelper;
-        private _NativeLoaderHelper _nativeHelper;
+        private PlaybackLoaderHelper _playbackHelper;
+        private NativeLoaderHelper _nativeHelper;
 
         /// <summary>
         /// Initializes the loader.
@@ -38,10 +38,10 @@ namespace Niantic.Lightship.AR.Loader
         /// <returns>`True` if the session subsystems were successfully created, otherwise `false`.</returns>
         public override bool Initialize()
         {
-            return ((_ILightshipLoader)this).InitializeWithSettings(LightshipSettings.Instance);
+            return ((ILightshipLoader)this).InitializeWithSettings(LightshipSettings.Instance);
         }
 
-        bool _ILightshipLoader.InitializeWithSettings(LightshipSettings settings, bool isTest)
+        bool ILightshipLoader.InitializeWithSettings(LightshipSettings settings, bool isTest)
         {
 #if NIANTIC_LIGHTSHIP_ARKIT_LOADER_ENABLED
             bool initializationSuccess;
@@ -50,7 +50,7 @@ namespace Niantic.Lightship.AR.Loader
             {
                 // Initialize Playback subsystems instead of initializing ARKit subsystems
                 // (for those features that aren't added/supplanted by Lightship),
-                _playbackHelper = new _PlaybackLoaderHelper();
+                _playbackHelper = new PlaybackLoaderHelper();
                 initializationSuccess = _playbackHelper.Initialize(this, settings);
             }
             else
@@ -68,7 +68,7 @@ namespace Niantic.Lightship.AR.Loader
             // Must initialize Lightship subsystems after ARKit's, because when there's overlap, the native helper will
             // (1) destroy ARKit's subsystems and then
             // (2) create Lightship's version of the subsystems
-            _nativeHelper = new _NativeLoaderHelper();
+            _nativeHelper = new NativeLoaderHelper();
 
             // Determine if device supports LiDAR only during the window where AFTER arf loader initializes but BEFORE
             // lightship loader initializes as non-playback relies on checking the existence of ARF meshing subsystem
@@ -124,7 +124,7 @@ namespace Niantic.Lightship.AR.Loader
 #endif
         }
 
-        _PlaybackDatasetReader _ILightshipLoader.PlaybackDatasetReader => _playbackHelper?.DatasetReader;
+        PlaybackDatasetReader ILightshipLoader.PlaybackDatasetReader => _playbackHelper?.DatasetReader;
     }
 }
 
