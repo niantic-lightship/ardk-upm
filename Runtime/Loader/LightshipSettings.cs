@@ -5,6 +5,7 @@ using Niantic.Lightship.AR.Editor;
 using Niantic.Lightship.AR.Settings.User;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.XR.Management;
 
 namespace Niantic.Lightship.AR.Loader
@@ -73,13 +74,6 @@ namespace Niantic.Lightship.AR.Loader
         /// </summary>
         public bool PreferLidarIfAvailable => _preferLidarIfAvailable;
 
-        [SerializeField, Tooltip("Frame rate at which to run depth inference")]
-        private uint _lightshipDepthFrameRate = 20;
-
-        /// <summary>
-        /// Desired frame rate of the depth inference model
-        /// </summary>
-        public uint LightshipDepthFrameRate => _lightshipDepthFrameRate;
 
         [SerializeField,
          Tooltip("When enabled, use Niantic's persistent anchor provider instead of the native platform's")]
@@ -98,14 +92,6 @@ namespace Niantic.Lightship.AR.Loader
         /// Use Lightship provider for semantic segmentation
         /// </summary>
         public bool UseLightshipSemanticSegmentation => _useLightshipSemanticSegmentation;
-
-        [SerializeField, Tooltip("Frame rate at which to run semantic segmentation")]
-        private uint _LightshipSemanticSegmentationFrameRate = 10;
-
-        /// <summary>
-        /// Desired frame rate of the semantic segmentation model
-        /// </summary>
-        public uint LightshipSemanticSegmentationFrameRate => _LightshipSemanticSegmentationFrameRate;
 
         [SerializeField,
          Tooltip("When enabled, use Niantic's scanning subsystem provider")]
@@ -252,7 +238,6 @@ namespace Niantic.Lightship.AR.Loader
         internal static LightshipSettings _CreateRuntimeInstance
         (
             bool enableDepth = false,
-            uint depthFrameRate = 20,
             bool enableMeshing = false,
             bool enablePersistentAnchors = false,
             bool usePlayback = false,
@@ -263,18 +248,15 @@ namespace Niantic.Lightship.AR.Loader
             string apiKey = "",
             bool enableSemanticSegmentation = false,
             bool preferLidarIfAvailable = false,
-            uint semanticSegmentationFrameRate = 10,
             bool enableScanning = false)
         {
             var settings = CreateInstance<LightshipSettings>();
 
             settings._apiKey = apiKey;
             settings._useLightshipDepth = enableDepth;
-            settings._lightshipDepthFrameRate = depthFrameRate;
             settings._useLightshipMeshing = enableMeshing;
             settings._useLightshipPersistentAnchor = enablePersistentAnchors;
             settings._useLightshipSemanticSegmentation = enableSemanticSegmentation;
-            settings._LightshipSemanticSegmentationFrameRate = semanticSegmentationFrameRate;
             settings._useLightshipScanning = enableScanning;
 
             settings._editorPlaybackSettings.UsePlayback = usePlayback;

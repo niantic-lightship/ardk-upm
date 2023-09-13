@@ -1,7 +1,9 @@
 using System.IO;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Xml;
 using UnityEngine;
+using System.Collections;
 
 #if UNITY_ANDROID && UNITY_EDITOR
 using UnityEditor.Android;
@@ -50,6 +52,15 @@ namespace Niantic.ARDK.Editor
     // Append any missing Ardk requirements to the merged AndroidManifest
     public void OnPostGenerateGradleAndroidProject(string basePath)
     {
+
+// We use a custom version for the gradle plugin version for 2021 due to us needing newer features
+// not present in the one shipped in unity 2021. Once unity gets to 2022.2, the unity gradle
+// version is adequate for what we need and we can use it versus our custom version
+#if UNITY_2022_2_OR_NEWER
+#else
+      SetGradlePluginVersion("4.2.0", GetBuildGradlePath(basePath));
+#endif
+
       var needsWrite = false;
       var androidManifest = new AndroidManifest(GetManifestPath(basePath));
       needsWrite |= androidManifest.AddPermissionRequest(CameraPermissionString);
@@ -74,6 +85,7 @@ namespace Niantic.ARDK.Editor
     }
 
     private string _manifestFilePath;
+    private string _buildGradlePath;
 
     private string GetManifestPath(string basePath)
     {
@@ -87,6 +99,35 @@ namespace Niantic.ARDK.Editor
       }
 
       return _manifestFilePath;
+    }
+
+    private string GetBuildGradlePath(string basePath)
+    {
+      var pathBuilder = new StringBuilder(basePath);
+      pathBuilder.Append(Path.DirectorySeparatorChar).Append("..");
+      pathBuilder.Append(Path.DirectorySeparatorChar).Append("build.gradle");
+      return pathBuilder.ToString();
+    }
+
+    // Tool to set gradle plugin version when we aren't using the one shipped with unity
+    private void SetGradlePluginVersion(string version, string buildGradlePath)
+    {
+      if (File.Exists(buildGradlePath))
+      {
+        string[] arrLine = File.ReadAllLines(buildGradlePath);
+        for (int i = 0; i < arrLine.Length; i++)
+        {
+          if (arrLine[i].Contains("com.android.tools.build:gradle:"))
+          {
+            arrLine[i] = Regex.Replace(arrLine[i], "\\d+\\.\\d+\\.\\d+", version);
+          }
+        }
+        File.WriteAllLines(buildGradlePath, arrLine);
+      }
+      else
+      {
+        Debug.LogWarning("build.gradle not found. Unable to set gradle plugin version");
+      }
     }
 
     // Tools for manipulating an xmlDocument with Android specifics

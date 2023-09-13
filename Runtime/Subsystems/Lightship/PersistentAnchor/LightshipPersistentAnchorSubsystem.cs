@@ -279,6 +279,18 @@ namespace Niantic.Lightship.AR
 
             }
 
+            public override bool GetVpsSessionId(out string vpsSessionId)
+            {
+                if (!_nativeProviderHandle.IsValidHandle())
+                {
+                    vpsSessionId = default;
+                    return false;
+                }
+
+                return _api.GetVpsSessionId(_nativeProviderHandle, out vpsSessionId);
+
+            }
+
             public override bool TryAddAnchor(Pose pose, out XRPersistentAnchor anchor)
             {
                 if (!_nativeProviderHandle.IsValidHandle())
@@ -353,7 +365,8 @@ namespace Niantic.Lightship.AR
                         out var trackableId,
                         out var pose,
                         out int trackingState, out int trackingStateReason,
-                        out var xrPersistentAnchorPayloadIntPtr, out int payloadSize
+                        out var xrPersistentAnchorPayloadIntPtr, out int payloadSize,
+                        out UInt64 timestampMs
                     );
 
                 if (success)
@@ -368,7 +381,8 @@ namespace Niantic.Lightship.AR
                             pose,
                             (TrackingState)trackingState,
                             (TrackingStateReason)trackingStateReason,
-                            xrPersistentAnchorPayload
+                            xrPersistentAnchorPayload,
+                            timestampMs
                         );
 
                     return xrPersistentAnchor;
@@ -448,7 +462,7 @@ namespace Niantic.Lightship.AR
                 {
                     NodeId = requestId,
                     Status = status,
-                    confidence = confidence
+                    LocalizationConfidence = confidence
                 };
             }
         }

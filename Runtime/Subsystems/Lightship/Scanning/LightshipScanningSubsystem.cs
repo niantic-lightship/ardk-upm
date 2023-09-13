@@ -49,12 +49,14 @@ namespace Niantic.Lightship.AR
             /// </summary>
             private IntPtr _nativeProviderHandle = IntPtr.Zero;
 
+            public LightshipProvider() : this(new NativeApi()) { }
+
             /// <summary>
             /// Construct the implementation provider.
             /// </summary>
-            public LightshipProvider()
+            public LightshipProvider(IApi api)
             {
-                _api = new NativeApi();
+                _api = api;
 #if NIANTIC_LIGHTSHIP_AR_LOADER_ENABLED
                 _nativeProviderHandle = _api.Construct(LightshipUnityContext.UnityContextHandle);
 #endif
@@ -291,29 +293,77 @@ namespace Niantic.Lightship.AR
                 // TODO(sxian): Don't use the hardcoded value but get the dimention, format and
                 // frameId from GetRaycasterImage().
                 _frameId = _frameId + 1;
-                _colorBufferedTextureCache.GetUpdatedTextureFromBuffer(
-                    colorBuffer, colorSize, width, height,
-                    DEFAULT_RAYCAST_COLOR_IMAGE_FORMAT, _frameId, out IntPtr nativeColorTexturePtr);
+                var raycastTex =
+                    _colorBufferedTextureCache.GetUpdatedTextureFromBuffer
+                    (
+                        colorBuffer,
+                        colorSize,
+                        width,
+                        height,
+                        DEFAULT_RAYCAST_COLOR_IMAGE_FORMAT,
+                        _frameId
+                    );
 
-                raycastBufferDescriptor = new XRTextureDescriptor(nativeColorTexturePtr, width,
-                    height, 0, DEFAULT_RAYCAST_COLOR_IMAGE_FORMAT,
-                    _raycastColorTexturePropertyNameID, 0, TextureDimension.Tex2D);
+                raycastBufferDescriptor =
+                    new XRTextureDescriptor
+                    (
+                        raycastTex.GetNativeTexturePtr(),
+                        width,
+                        height,
+                        0,
+                        DEFAULT_RAYCAST_COLOR_IMAGE_FORMAT,
+                        _raycastColorTexturePropertyNameID,
+                        0,
+                        TextureDimension.Tex2D
+                    );
 
-                _normalBufferedTextureCache.GetUpdatedTextureFromBuffer(
-                    normalBuffer, normalSize, width, height,
-                    DEFAULT_RAYCAST_COLOR_IMAGE_FORMAT, _frameId, out IntPtr nativeNormalTexturePtr);
+                var normalsTex =
+                    _normalBufferedTextureCache.GetUpdatedTextureFromBuffer
+                    (
+                        normalBuffer,
+                        normalSize,
+                        width,
+                        height,
+                        DEFAULT_RAYCAST_COLOR_IMAGE_FORMAT,
+                        _frameId
+                    );
 
-                raycastNormalBufferDescriptor = new XRTextureDescriptor(nativeNormalTexturePtr, width,
-                    height, 0, DEFAULT_RAYCAST_NORMAL_IMAGE_FORMAT,
-                    _raycastNormalTexturePropertyNameID, 0, TextureDimension.Tex2D);
+                raycastNormalBufferDescriptor =
+                    new XRTextureDescriptor
+                    (
+                        normalsTex.GetNativeTexturePtr(),
+                        width,
+                        height,
+                        0,
+                        DEFAULT_RAYCAST_NORMAL_IMAGE_FORMAT,
+                        _raycastNormalTexturePropertyNameID,
+                        0,
+                        TextureDimension.Tex2D
+                    );
 
-                _positionBufferedTextureCache.GetUpdatedTextureFromBuffer(
-                    positionBuffer, positionSize, width, height,
-                    DEFAULT_RAYCAST_POSITION_IMAGE_FORMAT, _frameId, out IntPtr nativePositionTexturePtr);
+                var positionsTex =
+                    _positionBufferedTextureCache.GetUpdatedTextureFromBuffer
+                    (
+                        positionBuffer,
+                        positionSize,
+                        width,
+                        height,
+                        DEFAULT_RAYCAST_POSITION_IMAGE_FORMAT,
+                        _frameId
+                    );
 
-                raycastPositionAndConfidenceDescriptor = new XRTextureDescriptor(nativePositionTexturePtr, width,
-                    height, 0, DEFAULT_RAYCAST_POSITION_IMAGE_FORMAT,
-                    _raycastPositionTexturePropertyNameID, 0, TextureDimension.Tex2D);
+                raycastPositionAndConfidenceDescriptor =
+                    new XRTextureDescriptor
+                    (
+                        positionsTex.GetNativeTexturePtr(),
+                        width,
+                        height,
+                        0,
+                        DEFAULT_RAYCAST_POSITION_IMAGE_FORMAT,
+                        _raycastPositionTexturePropertyNameID,
+                        0,
+                        TextureDimension.Tex2D
+                    );
 
                 _api.ReleaseResource(_nativeProviderHandle, resultPtr);
                 return true;

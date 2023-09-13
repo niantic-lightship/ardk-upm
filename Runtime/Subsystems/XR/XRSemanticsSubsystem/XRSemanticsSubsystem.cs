@@ -119,24 +119,24 @@ namespace Niantic.Lightship.AR.Subsystems
         }
 
         /// <summary>
-        /// Specifies the frame rate for the platform to run semantic segmentation at.
+        /// Specifies the target frame rate for the platform to target running semantic segmentation inference at.
         /// </summary>
         /// <value>
-        /// The requested frame rate.
+        /// The target frame rate.
         /// </value>
-        /// <exception cref="System.NotSupportedException">Thrown if the requested frame rate is not supported.
+        /// <exception cref="System.NotSupportedException">Thrown frame rate configuration is not supported.
         /// </exception>
-        public uint FrameRate
+        public uint TargetFrameRate
         {
-            get => provider.FrameRate;
-            set => provider.FrameRate = value;
+            get => provider.TargetFrameRate;
+            set => provider.TargetFrameRate = value;
         }
 
         /// <summary>
         /// Get a list of the semantic channel names for the current semantic model.
         /// </summary>
         /// <returns>
-        /// A list of semantic category labels.
+        /// A list of semantic category labels. The list will be empty if the model has not completed loading.
         /// </returns>
         /// <exception cref="System.NotSupportedException">Thrown when reading the channel names is not supported
         /// by the implementation.</exception>
@@ -267,7 +267,7 @@ namespace Niantic.Lightship.AR.Subsystems
             /// </value>
             /// <exception cref="System.NotSupportedException">Thrown when requesting a frame rate that is not supported
             /// by the implementation.</exception>
-            public virtual uint FrameRate
+            public virtual uint TargetFrameRate
             {
                 get => 0;
                 set

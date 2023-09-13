@@ -1,8 +1,11 @@
+
 using System;
 using System.Runtime.InteropServices;
 using Niantic.Lightship.AR.Utilities;
 using Niantic.Lightship.AR.Utilities.Profiling;
+using Niantic.Lightship.Spaces;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
@@ -68,8 +71,31 @@ namespace Niantic.Lightship.AR.PAM
                 transformation = transformation
             };
 
+
+#if NIANTIC_LIGHTSHIP_SPACES_ENABLED
+            var intermediateBuffer =
+                new NativeArray<byte>
+                (
+                    1280 * 720 * 4,
+                    Allocator.Temp
+                );
+
+            IntPtr intermediatePointer;
+            unsafe
+            {
+                intermediatePointer = (IntPtr)intermediateBuffer.GetUnsafePtr();
+            }
+            
+            // Apply conversion - TODO: in the case of Spaces, it does not conform to the conversion params so we hack it for now
+            var hackconversionParams = new XRCpuImage.ConversionParams(image, TextureFormat.RGBA32);
+
+            image.Convert(hackconversionParams, intermediatePointer, 1280*720*4);
+
+            SpacesCameraImageHack.ImageUtilsConvertCameraImage(intermediatePointer, destinationPointer);
+#else 
             // Apply conversion
             image.Convert(conversionParams, destinationPointer, image.GetConvertedDataSize(conversionParams));
+#endif
         }
 
         /// Write the conversion of the input texture into the output texture.

@@ -98,7 +98,8 @@ namespace Niantic.Lightship.AR.SemanticsSubsystem
         /// 1, inclusive.</param>
         public void Configure(IntPtr nativeProviderHandle, UInt32 framesPerSecond, UInt32 numThresholds, IntPtr thresholds)
         {
-            Native.Configure(nativeProviderHandle, framesPerSecond, numThresholds, thresholds);
+            // TODO(rbarnes): expose semantics mode in Lightship settings UI
+            Native.Configure(nativeProviderHandle, framesPerSecond, numThresholds, thresholds, 0);
         }
 
         public void Destruct(IntPtr nativeProviderHandle)
@@ -157,15 +158,14 @@ namespace Niantic.Lightship.AR.SemanticsSubsystem
             if (memoryBuffer != IntPtr.Zero)
             {
                 // Copy data to a texture, acquire its pointer
-                _semanticsBufferedTextureCaches[channelName].GetUpdatedTextureFromBuffer
+                var tex = _semanticsBufferedTextureCaches[channelName].GetUpdatedTextureFromBuffer
                 (
                     memoryBuffer,
                     size,
                     width,
                     height,
                     format,
-                    frameId,
-                    out IntPtr nativeTexturePtr
+                    frameId
                 );
 
                 // Calculate the sampler matrix
@@ -202,7 +202,7 @@ namespace Niantic.Lightship.AR.SemanticsSubsystem
                 // Package results
                 semanticsChannelDescriptor = new XRTextureDescriptor
                 (
-                    nativeTexturePtr,
+                    tex.GetNativeTexturePtr(),
                     width,
                     height,
                     0,
@@ -307,15 +307,14 @@ namespace Niantic.Lightship.AR.SemanticsSubsystem
 
             if (memoryBuffer != IntPtr.Zero)
             {
-                _packedSemanticsBufferedTextureCache.GetUpdatedTextureFromBuffer
+                var tex = _packedSemanticsBufferedTextureCache.GetUpdatedTextureFromBuffer
                 (
                     memoryBuffer,
                     size,
                     width,
                     height,
                     format,
-                    frameId,
-                    out IntPtr nativeTexturePtr
+                    frameId
                 );
 
                 // Calculate the sampler matrix
@@ -351,7 +350,7 @@ namespace Niantic.Lightship.AR.SemanticsSubsystem
 
                 packedSemanticsDescriptor = new XRTextureDescriptor
                 (
-                    nativeTexturePtr,
+                    tex.GetNativeTexturePtr(),
                     width,
                     height,
                     0,
@@ -509,7 +508,7 @@ namespace Niantic.Lightship.AR.SemanticsSubsystem
             public static extern void Stop(IntPtr nativeProviderHandle);
 
             [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_SemanticsProvider_Configure")]
-            public static extern void Configure(IntPtr nativeProviderHandle, UInt32 framesPerSecond, UInt32 numThresholds, IntPtr thresholds);
+            public static extern void Configure(IntPtr nativeProviderHandle, UInt32 framesPerSecond, UInt32 numThresholds, IntPtr thresholds, byte mode);
 
             [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_SemanticsProvider_Destruct")]
             public static extern void Destruct(IntPtr nativeProviderHandle);

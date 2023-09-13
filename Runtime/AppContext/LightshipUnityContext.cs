@@ -23,6 +23,7 @@ namespace Niantic.Lightship.AR
 
         private static IntPtr s_propertyBagHandle = IntPtr.Zero;
         private static EnvironmentConfig s_environmentConfig;
+        private static UserConfig s_userConfig;
         private static TelemetryService s_telemetryService;
         internal static bool s_isDeviceLidarSupported = false;
 
@@ -45,15 +46,27 @@ namespace Niantic.Lightship.AR
             Debug.Log($"Initializing {nameof(LightshipUnityContext)}");
             s_environmentConfig = new EnvironmentConfig
             {
-                ApiKey = settings.ApiKey,
                 ScanningEndpoint = settings.ScanningEndpoint,
                 ScanningSqcEndpoint = settings.ScanningSqcEndpoint,
                 SharedArEndpoint = settings.SharedArEndpoint,
                 VpsEndpoint = settings.VpsEndpoint,
                 VpsCoverageEndpoint = settings.VpsCoverageEndpoint,
-                DefaultDepthSemanticsEndpoint = settings.DefaultDepthSemanticsEndpoint,
-                FastDepthSemanticsEndpoint = settings.FastDepthSemanticsEndpoint,
-                SmoothDepthSemanticsEndpoint = settings.SmoothDepthSemanticsEndpoint,
+                FastDepthEndpoint = settings.FastDepthSemanticsEndpoint,
+                MediumDepthEndpoint = settings.DefaultDepthSemanticsEndpoint,
+                SmoothDepthEndpoint = settings.SmoothDepthSemanticsEndpoint,
+                FastSemanticsEndpoint = settings.FastDepthSemanticsEndpoint,
+                MediumSemanticsEndpoint = settings.DefaultDepthSemanticsEndpoint,
+                SmoothSemanticsEndpoint = settings.SmoothDepthSemanticsEndpoint,
+                TelemetryEndpoint = "",
+                TelemetryKey = "",
+            };
+
+            s_userConfig = new UserConfig
+            {
+                ApiKey = settings.ApiKey,
+                ScanningCustomEndpoint = "",
+                CustomDepthEndpoint = "",
+                CustomSemanticsEndpoint = "",
             };
 
             DeviceInfo deviceInfo = new DeviceInfo
@@ -67,7 +80,7 @@ namespace Niantic.Lightship.AR
                 AppInstanceId = Metadata.AppInstanceId,
                 DeviceLidarSupported = isDeviceLidarSupported,
             };
-            UnityContextHandle = NativeApi.Lightship_ARDK_Unity_Context_Create(false, ref deviceInfo, ref s_environmentConfig);
+            UnityContextHandle = NativeApi.Lightship_ARDK_Unity_Context_Create(false, ref deviceInfo, ref s_environmentConfig, ref s_userConfig);
 
             if (!isTest)
             {
@@ -172,7 +185,7 @@ namespace Niantic.Lightship.AR
         {
             [DllImport(LightshipPlugin.Name)]
             public static extern IntPtr Lightship_ARDK_Unity_Context_Create(
-                bool disableCtrace, ref DeviceInfo deviceInfo, ref EnvironmentConfig environmentConfig);
+                bool disableCtrace, ref DeviceInfo deviceInfo, ref EnvironmentConfig environmentConfig, ref UserConfig userConfig);
 
             [DllImport(LightshipPlugin.Name)]
             public static extern void Lightship_ARDK_Unity_Context_Shutdown(IntPtr unityContext);
@@ -191,17 +204,29 @@ namespace Niantic.Lightship.AR
         [StructLayout(LayoutKind.Sequential)]
         private struct EnvironmentConfig
         {
-            public string ApiKey;
             public string VpsEndpoint;
             public string VpsCoverageEndpoint;
             public string SharedArEndpoint;
-            public string FastDepthSemanticsEndpoint;
-            public string DefaultDepthSemanticsEndpoint;
-            public string SmoothDepthSemanticsEndpoint;
+            public string FastDepthEndpoint;
+            public string MediumDepthEndpoint;
+            public string SmoothDepthEndpoint;
+            public string FastSemanticsEndpoint;
+            public string MediumSemanticsEndpoint;
+            public string SmoothSemanticsEndpoint;
             public string ScanningEndpoint;
             public string ScanningSqcEndpoint;
             public string TelemetryEndpoint;
             public string TelemetryKey;
+        }
+
+        // PLEASE NOTE: Do NOT add feature flags in this struct.
+        [StructLayout(LayoutKind.Sequential)]
+        private struct UserConfig
+        {
+            public string ApiKey;
+            public string CustomDepthEndpoint;
+            public string CustomSemanticsEndpoint;
+            public string ScanningCustomEndpoint;
         }
 
         [StructLayout(LayoutKind.Sequential)]

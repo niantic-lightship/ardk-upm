@@ -1,9 +1,9 @@
 {
   "name": "com.nianticlabs.lightship",
   "displayName": "Niantic Lightship AR Plugin",
-  "version": "3.0.0-beta-3.230810213802",
+  "version": "3.0.0-beta-4.230912170042",
   "unity": "2021.3",
-  "description": "Provides native Niantic Lightship SDK integration for use with Unity's multi-platform XR API.\n* Lightship is a trademark of Niantic Labs Inc., registered in the U.S. and other countries and regions.",
+  "description": "Provides native Niantic Lightship SDK integration for use with Unity's multi-platform XR API.\n* Lightship is a trademark of Niantic Labs Inc., registered in the U.S. and other countries and regions. \n Samples available at https://github.com/niantic-lightship/ardk-samples",
   "keywords": [
     "lightship",
     "ar",
@@ -13,15 +13,26 @@
     "xreditorsubsystem",
     "niantic"
   ],
+  "documentationUrl": "https://lightship.dev/docs/beta/ardk",
+  "changelogUrl": "https://lightship.dev/docs/beta/ardk/release_notes/",
+  "author": {
+    "name": "Niantic Labs, Inc",
+    "email": "support@lightship.dev",
+    "url": "https://lightship.dev/"
+  },
   "dependencies": {
     "com.unity.editorcoroutines": "1.0.0",
     "com.unity.xr.arfoundation": "5.0.7",
     "com.unity.xr.arcore": "5.0.7",
     "com.unity.xr.arkit": "5.0.7",
+    "com.unity.xr.openxr": "1.6.0",
     "com.unity.xr.core-utils": "2.1.0",
     "com.unity.xr.management": "4.0.1",
     "com.unity.nuget.newtonsoft-json": "3.2.1"
   },
+  "documentationUrl": "https://lightship.dev/docs/beta/ardk/",
+  "changelogUrl": "https://lightship.dev/docs/beta/ardk/release_notes/beta3/",
+  "licensesUrl": "https://lightship.dev/legal/terms",
   "repository": {},
   "samples": []
 }

@@ -80,15 +80,14 @@ namespace Niantic.Lightship.AR.SemanticsSubsystem
             {
                 var nativePtr = (IntPtr) _semanticsChannelCpu.GetUnsafePtr();
 
-                _semanticsChannelBufferedTextureCache.GetUpdatedTextureFromBuffer
+                var tex = _semanticsChannelBufferedTextureCache.GetUpdatedTextureFromBuffer
                 (
                     nativePtr,
                     _semanticsChannelCpu.Length * sizeof(float),
                     _width,
                     _height,
                     TextureFormat.RFloat,
-                    _frameNumber,
-                    out IntPtr nativeTexturePtr
+                    _frameNumber
                 );
 
                 if (cameraParams.HasValue)
@@ -101,7 +100,7 @@ namespace Niantic.Lightship.AR.SemanticsSubsystem
                 semanticsChannelDescriptor =
                     new XRTextureDescriptor
                     (
-                        nativeTexturePtr,
+                        tex.GetNativeTexturePtr(),
                         _width,
                         _height,
                         0,
@@ -156,15 +155,14 @@ namespace Niantic.Lightship.AR.SemanticsSubsystem
             {
                 var nativePtr = (IntPtr)_packedSemanticsCpu.GetUnsafePtr();
 
-                _packedSemanticsBufferedTextureCache.GetUpdatedTextureFromBuffer
+                var tex = _packedSemanticsBufferedTextureCache.GetUpdatedTextureFromBuffer
                 (
                     nativePtr,
                     _packedSemanticsCpu.Length * sizeof(Int32),
                     _width,
                     _height,
-                    TextureFormat.RGBA32,
-                    _frameNumber,
-                    out IntPtr nativeTexturePtr
+                    TextureFormat.RFloat,
+                    _frameNumber
                 );
 
                 if (cameraParams.HasValue)
@@ -177,11 +175,11 @@ namespace Niantic.Lightship.AR.SemanticsSubsystem
                 packedSemanticsDescriptor =
                     new XRTextureDescriptor
                     (
-                        nativeTexturePtr,
+                        tex.GetNativeTexturePtr(),
                         _width,
                         _height,
                         0,
-                        TextureFormat.RGBA32,
+                        TextureFormat.RFloat,
                         Shader.PropertyToID(_textureMockSemanticPackedPropertyName),
                         0,
                         TextureDimension.Tex2D

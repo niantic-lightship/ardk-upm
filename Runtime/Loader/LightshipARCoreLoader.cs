@@ -22,6 +22,16 @@ namespace Niantic.Lightship.AR.Loader
     /// </summary>
     public class LightshipARCoreLoader : ARCoreLoader, ILightshipLoader
     {
+        private PlaybackLoaderHelper _playbackHelper;
+        private NativeLoaderHelper _nativeHelper;
+
+        PlaybackDatasetReader ILightshipLoader.PlaybackDatasetReader => _playbackHelper?.DatasetReader;
+
+        /// <summary>
+        /// Optional override settings for manual XR Loader initialization
+        /// </summary>
+        public LightshipSettings InitializationSettings { get; set; }
+
         /// <summary>
         /// The `XROcclusionSubsystem` whose lifecycle is managed by this loader.
         /// </summary>
@@ -33,16 +43,18 @@ namespace Niantic.Lightship.AR.Loader
         public XRPersistentAnchorSubsystem LightshipPersistentAnchorSubsystem =>
             GetLoadedSubsystem<XRPersistentAnchorSubsystem>();
 
-        private PlaybackLoaderHelper _playbackHelper;
-        private NativeLoaderHelper _nativeHelper;
-
         /// <summary>
         /// Initializes the loader.
         /// </summary>
         /// <returns>`True` if the session subsystems were successfully created, otherwise `false`.</returns>
         public override bool Initialize()
         {
-            return ((ILightshipLoader)this).InitializeWithSettings(LightshipSettings.Instance);
+            if (InitializationSettings == null)
+            {
+                InitializationSettings = LightshipSettings.Instance;
+            }
+
+            return ((ILightshipLoader)this).InitializeWithSettings(InitializationSettings);
         }
 
         bool ILightshipLoader.InitializeWithSettings(LightshipSettings settings, bool isTest)
@@ -206,8 +218,6 @@ namespace Niantic.Lightship.AR.Loader
             return true;
 #endif
         }
-
-        PlaybackDatasetReader ILightshipLoader.PlaybackDatasetReader => _playbackHelper?.DatasetReader;
     }
 }
 

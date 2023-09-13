@@ -93,11 +93,7 @@ namespace Niantic.Lightship.AR
                 ((IPlaybackDatasetUser)occlusionSubsystem).SetPlaybackDatasetReader(DatasetReader);
             }
 
-            ((ILightshipSettingsUser)Input.location).SetLightshipSettings(settings);
-            ((IPlaybackDatasetUser)Input.location).SetPlaybackDatasetReader(DatasetReader);
-
-            ((ILightshipSettingsUser)Input.compass).SetLightshipSettings(settings);
-            ((IPlaybackDatasetUser)Input.compass).SetPlaybackDatasetReader(DatasetReader);
+            InitializeInput(settings, DatasetReader);
 
             return true;
         }
@@ -112,7 +108,19 @@ namespace Niantic.Lightship.AR
             loader.DestroySubsystem<XRSessionSubsystem>();
             loader.DestroySubsystem<XRCameraSubsystem>();
 
+            DatasetReader = null;
+            InitializeInput(null, null);
+
             return true;
+        }
+
+        private static void InitializeInput(LightshipSettings settings, PlaybackDatasetReader datasetReader)
+        {
+            ((ILightshipSettingsUser)Input.location).SetLightshipSettings(settings);
+            ((IPlaybackDatasetUser)Input.location).SetPlaybackDatasetReader(datasetReader);
+
+            ((ILightshipSettingsUser)Input.compass).SetLightshipSettings(settings);
+            ((IPlaybackDatasetUser)Input.compass).SetPlaybackDatasetReader(datasetReader);
         }
     }
 }

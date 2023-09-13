@@ -1,4 +1,5 @@
 using System;
+using System.Text;
 using System.Runtime.InteropServices;
 using Niantic.Lightship.AR.Subsystems;
 using Niantic.Lightship.AR.Utilities;
@@ -95,7 +96,8 @@ namespace Niantic.Lightship.AR.PersistentAnchorSubsystem
             out int trackingState,
             out int trackingStateReason,
             out IntPtr anchorPayloadPtr,
-            out int anchorPayloadSize
+            out int anchorPayloadSize,
+            out UInt64 timestampMs
         )
         {
             var poseArray = new NativeArray<float>(16, Allocator.Temp);
@@ -110,7 +112,8 @@ namespace Niantic.Lightship.AR.PersistentAnchorSubsystem
                     out trackingState,
                     out trackingStateReason,
                     out anchorPayloadPtr,
-                    out anchorPayloadSize
+                    out anchorPayloadSize,
+                    out timestampMs
                 );
             }
 
@@ -203,6 +206,20 @@ namespace Niantic.Lightship.AR.PersistentAnchorSubsystem
             return success;
         }
 
+        public bool GetVpsSessionId(IntPtr anchorProviderHandle, out string vpsSessionId)
+        {
+            StringBuilder buffer = new StringBuilder(32); // sessionId is as 32 character hexidecimal upper-case string
+            if (!Native.GetVpsSessionId(anchorProviderHandle, buffer)) 
+            {
+                vpsSessionId = default;
+                return false;
+            }
+
+            vpsSessionId = buffer.ToString();
+            return true;
+        }
+
+
         private static class Native
         {
             [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_AnchorProvider_Construct")]
@@ -256,7 +273,8 @@ namespace Niantic.Lightship.AR.PersistentAnchorSubsystem
                 out int trackingState,
                 out int trackingStateReason,
                 out IntPtr anchorPayloadPtr,
-                out int anchorPayloadSize
+                out int anchorPayloadSize,
+                out UInt64 timestampMs
             );
 
             [DllImport
@@ -320,6 +338,17 @@ namespace Niantic.Lightship.AR.PersistentAnchorSubsystem
                 out Guid trackableId,
                 out byte status,
                 out float confidence
+            );
+
+            [DllImport
+            (
+                LightshipPlugin.Name,
+                EntryPoint = "Lightship_ARDK_Unity_AnchorProvider_GetVpsSessionId"
+            )]
+            public static extern bool GetVpsSessionId
+            (
+                IntPtr anchorChangeIntPtr,
+                StringBuilder vpsSessionIdOut
             );
         }
     }

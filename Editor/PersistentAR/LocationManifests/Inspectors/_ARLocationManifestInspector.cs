@@ -14,7 +14,7 @@ namespace Niantic.Lightship.AR.Editor.Inspectors
         private readonly int _colOneWidth = 200;
         private bool _anchorFoldoutState;
 
-        private string _copiedAnchorIdentifier;
+        private bool _copied;
         private float _timeout;
         private const int _MaxPayloadHintLength = 40;
 
@@ -160,15 +160,16 @@ namespace Niantic.Lightship.AR.Editor.Inspectors
             {
                 GUIUtility.systemCopyBuffer = payload;
                 _timeout = Time.realtimeSinceStartup + 1;
-                _copiedAnchorIdentifier = anchorIdentifier;
+                _copied = true;
             }
 
-            if (anchorIdentifier.Equals(_copiedAnchorIdentifier) && Time.realtimeSinceStartup < _timeout)
+            if (_copied && Time.realtimeSinceStartup < _timeout)
             {
                 GUILayout.Label("Copied!", CenteredLabelStyle);
             }
             else
             {
+                _copied = false;
                 GUILayout.Label("Click to copy", CenteredLabelStyle);
             }
 

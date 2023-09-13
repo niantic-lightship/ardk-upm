@@ -67,7 +67,7 @@ namespace Niantic.Lightship.AR.PersistentAnchorSubsystem
         }
 
         public bool TryExtractAnchorChange(IntPtr anchorChangeHandle, out TrackableId trackableId, out Pose pose,
-            out int trackingState, out int trackingStateReason, out IntPtr anchorPayloadPtr, out int anchorPayloadSize)
+            out int trackingState, out int trackingStateReason, out IntPtr anchorPayloadPtr, out int anchorPayloadSize, out UInt64 timestampMs)
         {
             throw new NotImplementedException();
         }
@@ -104,6 +104,9 @@ namespace Niantic.Lightship.AR.PersistentAnchorSubsystem
 
         public bool TryExtractLocalizationStatus
             (IntPtr localizationStatusHandle, out Guid nodeId, out LocalizationStatus statusOut, out float confidenceOut) =>
+            throw new NotImplementedException();
+
+        public bool GetVpsSessionId (IntPtr anchorProviderHandle, out string vpsSessionId) =>
             throw new NotImplementedException();
     }
 }

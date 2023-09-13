@@ -47,8 +47,13 @@ namespace Niantic.Lightship.AR.ScanningSubsystem
 
         public bool TryGetRecordingInfo(IntPtr handle, out string scanId, out RecordingStatus status);
 
-        public IntPtr TryGetVoxelBuffer(IntPtr handle, out IntPtr positionBuffer, out IntPtr colorBuffer,
-            out int pointCount);
+        public IntPtr TryGetVoxelBuffer
+        (
+            IntPtr handle,
+            out IntPtr positionBuffer,
+            out IntPtr colorBuffer,
+            out int pointCount
+        );
 
         public void ComputeVoxels(IntPtr handle);
 

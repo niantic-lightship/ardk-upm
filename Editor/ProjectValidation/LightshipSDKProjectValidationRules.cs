@@ -30,7 +30,7 @@ namespace Niantic.Lightship.AR.Editor
             var iOSTargetVersion = OSVersion.Parse(PlayerSettings.iOS.targetOSVersionString);
             var iOSLocUsageDesc = PlayerSettings.iOS.locationUsageDescription;
             var androidTargetVersion = PlayerSettings.Android.targetSdkVersion;
-            
+
             var globalRules = CreateGlobalRules(s_settings);
 
             var iOSRules = CreateiOSRules(s_settings, iOSTargetVersion, iOSLocUsageDesc, false);
@@ -38,14 +38,15 @@ namespace Niantic.Lightship.AR.Editor
             var androidRules = CreateAndroidRules(androidTargetVersion, false);
 
             var standaloneRules = CreateStandaloneRules();
-            var globalRulesForStandalone = new BuildValidationRule[] {globalRules[0], globalRules[4]};
+            // Only want the Unity Editor version and Editor Playback rules
+            var globalRulesForStandalone = new BuildValidationRule[] {globalRules[0], globalRules[3]};
 
             BuildValidator.AddRules(BuildTargetGroup.iOS, iOSRules);
             BuildValidator.AddRules(BuildTargetGroup.iOS, globalRules);
 
             BuildValidator.AddRules(BuildTargetGroup.Android, androidRules);
             BuildValidator.AddRules(BuildTargetGroup.Android, globalRules);
-            
+
             BuildValidator.AddRules(BuildTargetGroup.Standalone, globalRulesForStandalone);
             BuildValidator.AddRules(BuildTargetGroup.Standalone, standaloneRules);
         }
@@ -90,19 +91,6 @@ namespace Niantic.Lightship.AR.Editor
                 new BuildValidationRule
                 {
                     Category = kCategory,
-                    Message = "Framerate over 20 could negatively affect performance in older devices",
-                    CheckPredicate = () => lightshipSettings.LightshipDepthFrameRate <= 20,
-                    IsRuleEnabled = () => lightshipSettings.UseLightshipDepth,
-                    FixIt = () =>
-                        SettingsService.OpenProjectSettings("Project/XR Plug-in Management/Niantic Lightship SDK"),
-
-                    FixItMessage = "Go to Lightship Settings > Depth and lower the framerate for better performance",
-                    FixItAutomatic = false,
-                    Error = false
-                },
-                new BuildValidationRule
-                {
-                    Category = kCategory,
                     Message = "A dataset path inside the project's Streaming Assets folder must be specified for playback on device.",
                     CheckPredicate = () =>
                     {
@@ -110,7 +98,7 @@ namespace Niantic.Lightship.AR.Editor
                         var hasDatasetPath = !string.IsNullOrEmpty(datasetPath);
                         if (!hasDatasetPath)
                             return false;
-                        
+
                         var isInStreamingAssets =
                             datasetPath.StartsWith(Application.dataPath + "/StreamingAssets");
                         return isInStreamingAssets;
@@ -139,7 +127,7 @@ namespace Niantic.Lightship.AR.Editor
             };
             return globalRules;
         }
-        
+
         internal static BuildValidationRule[] CreateiOSRules(LightshipSettings lightshipSettings, OSVersion iOSTargetVersion, string iOSLocUsageDesc, bool testFlag)
         {
             var iOSRules = new[]
@@ -229,7 +217,7 @@ namespace Niantic.Lightship.AR.Editor
             };
             return iOSRules;
         }
-        
+
         internal static BuildValidationRule[] CreateAndroidRules(AndroidSdkVersions androidTargetVersion, bool testFlag)
         {
             var androidRules = new[]
@@ -358,7 +346,7 @@ namespace Niantic.Lightship.AR.Editor
 
             return managerSettings != null && managerSettings.activeLoaders.Any(loader => loader is LightshipARCoreLoader);
         }
-        
+
         static bool IsLightshipPluginEnabledStandalone()
         {
             var generalSettings = XRGeneralSettingsPerBuildTarget.XRGeneralSettingsForBuildTarget(BuildTargetGroup.Standalone);

@@ -16,6 +16,8 @@ namespace Niantic.Lightship.AR.Subsystems
     {
         private MockCamera mockCamera;
         private List<Behaviour> disabledComponents = new List<Behaviour>();
+        private const string PersistentAnchorGameObjectName = "Persistent Anchor";
+        
         public MockARPersistentAnchorManagerImplementation(ARPersistentAnchorManager arPersistentAnchorManager)
         {
             InitializeMockCamera(arPersistentAnchorManager);
@@ -25,7 +27,20 @@ namespace Niantic.Lightship.AR.Subsystems
             ARPersistentAnchorPayload payload,
             out ARPersistentAnchor arPersistentAnchor)
         {
-            var anchorGameObject = new GameObject("Persistent Anchor", typeof(ARPersistentAnchor));
+            GameObject anchorGameObject;
+            if (arPersistentAnchorManager.DefaultAnchorPrefab)
+            {
+                anchorGameObject = Object.Instantiate(arPersistentAnchorManager.DefaultAnchorPrefab);
+                anchorGameObject.name = PersistentAnchorGameObjectName;
+                if (anchorGameObject.GetComponent<ARPersistentAnchor>() == null)
+                {
+                    anchorGameObject.AddComponent<ARPersistentAnchor>();
+                }
+            }
+            else
+            {
+                anchorGameObject = new GameObject(PersistentAnchorGameObjectName, typeof(ARPersistentAnchor));
+            }
             
             // If we can grab the TrackablesParent, use that, otherwise just child to the persistent anchor manager
             var xrOrigin = arPersistentAnchorManager.GetComponent<XROrigin>();
@@ -50,6 +65,13 @@ namespace Niantic.Lightship.AR.Subsystems
             arPersistentAnchorManager.ReportRemovedAnchors(arPersistentAnchor);
             
             Object.Destroy(arPersistentAnchor.gameObject);
+        }
+
+        public bool GetVpsSessionId(ARPersistentAnchorManager arPersistentAnchorManager, out string vpsSessionId)
+        {
+            // Invalid vps session id because no real system is running
+            vpsSessionId = default;
+            return false;
         }
 
         public void Dispose()

@@ -88,7 +88,7 @@ namespace Niantic.Lightship.AR.Playback
             // This value will strongly affect memory usage.  It can also be set by the user in configuration.
             // The value represents the number of frames in memory before the user must make a copy of the data
             private const int k_FramesInMemoryCount = 2;
-            private BufferedTextureCache m_CameraImageTextures;
+            private SizedBufferedTextureCache m_CameraImageTextures;
 
             public override XRCpuImage.Api cpuImageApi => LightshipCpuImageApi.instance;
 
@@ -169,12 +169,12 @@ namespace Niantic.Lightship.AR.Playback
 
                 var imageRes = m_DatasetReader.GetImageResolution();
                 m_CameraImageTextures =
-                    new BufferedTextureCache
+                    new SizedBufferedTextureCache
                     (
                         k_FramesInMemoryCount,
                         imageRes.x,
                         imageRes.y,
-                        TextureFormat.RGB24, // format that JPG images are loaded as
+                        TextureFormat.RGB24,  // format that JPG images are loaded as
                         false
                     );
             }
@@ -235,7 +235,7 @@ namespace Niantic.Lightship.AR.Playback
                         layout:CameraMath.MatrixLayout.RowMajor
 #endif
                     );
-                
+
                 var projectionMatrix = CameraMath.CalculateProjectionMatrix(frame.Intrinsics, cameraParams);
 
                 cameraFrame = new XRCameraFrame
@@ -295,20 +295,19 @@ namespace Niantic.Lightship.AR.Playback
 
                 var arr = new NativeArray<XRTextureDescriptor>(1, allocator);
 
-                m_CameraImageTextures.GetUpdatedTextureFromEncodedBuffer
+                var tex = m_CameraImageTextures.GetUpdatedTextureFromEncodedBuffer
                 (
                     m_DatasetReader.GetCurrentImageData(),
                     (uint)frame.Sequence,
                     true,
-                    3,
-                    out IntPtr nativeTexturePtr
+                    3
                 );
 
                 var res = m_DatasetReader.GetImageResolution();
                 arr[0] =
                     new XRTextureDescriptor
                     (
-                        nativeTexturePtr,
+                        tex.GetNativeTexturePtr(),
                         res.x,
                         res.y,
                         0,

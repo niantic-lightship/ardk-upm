@@ -23,6 +23,9 @@ namespace Niantic.Lightship.AR.Subsystems
 #if UNITY_EDITOR
         [SerializeField]
         internal ARLocationManifest ARLocationManifest;
+
+        [SerializeField]
+        internal string AssetGuid;
 #endif
     }
 }

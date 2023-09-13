@@ -20,11 +20,7 @@ namespace Niantic.Lightship.AR.ARFoundation.Occlusion
 
         internal static void ResetOccludee()
         {
-#if UNITY_EDITOR
-            Shared.OccludeeEyeDepth = 100.0f;
-#else
             Shared.OccludeeEyeDepth = 5.0f;
-#endif
         }
     }
 }

@@ -23,7 +23,7 @@ namespace Niantic.Lightship.AR.Subsystems
         private void Update()
         {
 #if UNITY_EDITOR
-            if (transform.hasChanged)
+            if (transform.hasChanged && !Application.isPlaying)
             {
                 if (FixScale)
                 {

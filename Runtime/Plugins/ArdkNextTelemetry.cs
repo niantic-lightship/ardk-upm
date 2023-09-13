@@ -30,15 +30,59 @@ namespace Niantic.Lightship.AR.Protobuf {
             "bnRIABI8ChJhcl9jb21tb25fbWV0YWRhdGEY6AcgASgLMh8ubmFyLnRlbGVt",
             "ZXRyeS5BUkNvbW1vbk1ldGFkYXRhEhYKDWRldmVsb3Blcl9rZXkY6QcgASgJ",
             "EhUKDHRpbWVzdGFtcF9tcxjqByABKANCEQoPdGVsZW1ldHJ5X2V2ZW50IisK",
-            "E0luaXRpYWxpemF0aW9uRXZlbnQSFAoMaW5zdGFsbF9tb2RlGAEgASgJQmIK",
-            "HmNvbS5uaWFudGljbGFicy5hcmRrLnRlbGVtZXRyeVogbmlhbnRpYy9saWdo",
-            "dHNoaXAvYXJkay90ZWxlbWV0cnmqAh1OaWFudGljLkxpZ2h0c2hpcC5BUi5Q",
-            "cm90b2J1ZmIGcHJvdG8z"));
+            "E0luaXRpYWxpemF0aW9uRXZlbnQSFAoMaW5zdGFsbF9tb2RlGAEgASgJIoUC",
+            "ChZTY2FuUmVjb3JkZXJTdGFydEV2ZW50EhAKCGZlYXR1cmVzGAEgASgJEg8K",
+            "B3NjYW5faWQYAiABKAkSSAoMZGVwdGhfc291cmNlGAMgASgOMjIuYXJkay50",
+            "ZWxlbWV0cnkuU2NhblJlY29yZGVyU3RhcnRFdmVudC5EZXB0aFNvdXJjZRIR",
+            "CglmcmFtZXJhdGUYBCABKA0SGAoQaXNfdm94ZWxfZW5hYmxlZBgFIAEoCBIa",
+            "ChJpc19yYXljYXN0X2VuYWJsZWQYBiABKAgiNQoLRGVwdGhTb3VyY2USCwoH",
+            "VU5LTk9XThAAEgkKBUxJREFSEAESDgoKTVVMVElERVBUSBACIkIKFVNjYW5S",
+            "ZWNvcmRlclN0b3BFdmVudBIPCgdzY2FuX2lkGAEgASgJEhgKEHNjYW5fZHVy",
+            "YXRpb25fbXMYAiABKA0iRAoYU2NhblJlY29yZGVyRGlzY2FyZEV2ZW50Eg8K",
+            "B3NjYW5faWQYASABKAkSFwoPc2Nhbl9kdXJhdGlvbl9zGAIgASgNImIKFVNj",
+            "YW5SZWNvcmRlclNhdmVFdmVudBIPCgdzY2FuX2lkGAEgASgJEhcKD3NjYW5f",
+            "ZHVyYXRpb25fcxgCIAEoDRIfChdudW1lcl9vZl9mcmFtZXNfaW5fc2NhbhgD",
+            "IAEoDSIiCg9TY2FuU1FDUnVuRXZlbnQSDwoHc2Nhbl9pZBgBIAEoCSK4AwoQ",
+            "U2NhblNRQ0RvbmVFdmVudBIPCgdzY2FuX2lkGAEgASgJEhUKDW92ZXJhbGxf",
+            "c2NvcmUYAiABKAISFgoOdGltZV9lbGFwc2VfbXMYAyABKA0STAoOZmFpbGVk",
+            "X3JlYXNvbnMYBCADKAsyNC5hcmRrLnRlbGVtZXRyeS5TY2FuU1FDRG9uZUV2",
+            "ZW50LlNjYW5TUUNGYWlsZWRSZWFzb24alQIKE1NjYW5TUUNGYWlsZWRSZWFz",
+            "b24SWAoNZmFpbGVkX3JlYXNvbhgBIAEoDjJBLmFyZGsudGVsZW1ldHJ5LlNj",
+            "YW5TUUNEb25lRXZlbnQuU2NhblNRQ0ZhaWxlZFJlYXNvbi5GYWlsZWRSZWFz",
+            "b24SDQoFc2NvcmUYAiABKAIilAEKDEZhaWxlZFJlYXNvbhIKCgZCTFVSUlkQ",
+            "ABIJCgVEQVJESxABEg8KC0JBRF9RVUFMSVRZEAISEgoOR1JPVU5EX09SX0ZF",
+            "RVQQAxISCg5JTkRPT1JfVU5DTEVBUhAEEgwKCEZST01fQ0FSEAUSDgoKT0JT",
+            "VFJVQ1RFRBAGEhYKElRBUkdFVF9OT1RfVklTSUJMRRAHIrQCCg5TY2FuRXJy",
+            "b3JFdmVudBIPCgdzY2FuX2lkGAEgASgJEjgKCmVycm9yX2NvZGUYAiABKA4y",
+            "JC5hcmRrLnRlbGVtZXRyeS5TY2FuRXJyb3JFdmVudC5FcnJvchIVCg1lcnJv",
+            "cl9tZXNzYWdlGAMgASgJIr8BCgVFcnJvchILCgdVbmtub3duEAASEQoNU1FD",
+            "X05PVF9SRUFEWRABEhEKDVNRQ19CQURfSU5QVVQQAhIRCg1TUUNfQkFEX01P",
+            "REVMEAMSFwoTU1FDX01PREVMX1JFQURfRkFJTBAEEhQKEFNRQ19ERUNSWVBU",
+            "X0ZBSUwQBRITCg9TUUNfVU5QQUNLX0ZBSUwQBhIXChNTUUNfTk9fSU5QVVRf",
+            "RlJBTUVTEAcSEwoPU1FDX0lOVEVSUlVQVEVEEAgiLwocU2NhbkFyY2hpdmVC",
+            "dWlsZGVyU3RhcnRFdmVudBIPCgdzY2FuX2lkGAEgASgJIngKG1NjYW5BcmNo",
+            "aXZlQnVpbGRlckRvbmVFdmVudBIPCgdzY2FuX2lkGAEgASgJEhYKDnNjYW5f",
+            "ZmlsZV9zaXplGAIgASgEEhgKEG51bWJlcl9vZl9jaHVua3MYAyABKA0SFgoO",
+            "dGltZV9lbGFwc2VfbXMYBCABKA0iSAodU2NhbkFyY2hpdmVCdWlsZGVyQ2Fu",
+            "Y2VsRXZlbnQSDwoHc2Nhbl9pZBgBIAEoCRIWCg5zY2FuX2ZpbGVfc2l6ZRgC",
+            "IAEoBEJiCh5jb20ubmlhbnRpY2xhYnMuYXJkay50ZWxlbWV0cnlaIG5pYW50",
+            "aWMvbGlnaHRzaGlwL2FyZGsvdGVsZW1ldHJ5qgIdTmlhbnRpYy5MaWdodHNo",
+            "aXAuQVIuUHJvdG9idWZiBnByb3RvMw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Niantic.ARDK.AR.Protobuf.ArCommonMetadataReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(null, new pbr::GeneratedClrTypeInfo[] {
             new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.Lightship.AR.Protobuf.ArdkNextTelemetryOmniProto), global::Niantic.Lightship.AR.Protobuf.ArdkNextTelemetryOmniProto.Parser, new[]{ "InitializationEvent", "ArCommonMetadata", "DeveloperKey", "TimestampMs" }, new[]{ "TelemetryEvent" }, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.Lightship.AR.Protobuf.InitializationEvent), global::Niantic.Lightship.AR.Protobuf.InitializationEvent.Parser, new[]{ "InstallMode" }, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.Lightship.AR.Protobuf.InitializationEvent), global::Niantic.Lightship.AR.Protobuf.InitializationEvent.Parser, new[]{ "InstallMode" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.Lightship.AR.Protobuf.ScanRecorderStartEvent), global::Niantic.Lightship.AR.Protobuf.ScanRecorderStartEvent.Parser, new[]{ "Features", "ScanId", "DepthSource", "Framerate", "IsVoxelEnabled", "IsRaycastEnabled" }, null, new[]{ typeof(global::Niantic.Lightship.AR.Protobuf.ScanRecorderStartEvent.Types.DepthSource) }, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.Lightship.AR.Protobuf.ScanRecorderStopEvent), global::Niantic.Lightship.AR.Protobuf.ScanRecorderStopEvent.Parser, new[]{ "ScanId", "ScanDurationMs" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.Lightship.AR.Protobuf.ScanRecorderDiscardEvent), global::Niantic.Lightship.AR.Protobuf.ScanRecorderDiscardEvent.Parser, new[]{ "ScanId", "ScanDurationS" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.Lightship.AR.Protobuf.ScanRecorderSaveEvent), global::Niantic.Lightship.AR.Protobuf.ScanRecorderSaveEvent.Parser, new[]{ "ScanId", "ScanDurationS", "NumerOfFramesInScan" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.Lightship.AR.Protobuf.ScanSQCRunEvent), global::Niantic.Lightship.AR.Protobuf.ScanSQCRunEvent.Parser, new[]{ "ScanId" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.Lightship.AR.Protobuf.ScanSQCDoneEvent), global::Niantic.Lightship.AR.Protobuf.ScanSQCDoneEvent.Parser, new[]{ "ScanId", "OverallScore", "TimeElapseMs", "FailedReasons" }, null, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.Lightship.AR.Protobuf.ScanSQCDoneEvent.Types.ScanSQCFailedReason), global::Niantic.Lightship.AR.Protobuf.ScanSQCDoneEvent.Types.ScanSQCFailedReason.Parser, new[]{ "FailedReason", "Score" }, null, new[]{ typeof(global::Niantic.Lightship.AR.Protobuf.ScanSQCDoneEvent.Types.ScanSQCFailedReason.Types.FailedReason) }, null)}),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.Lightship.AR.Protobuf.ScanErrorEvent), global::Niantic.Lightship.AR.Protobuf.ScanErrorEvent.Parser, new[]{ "ScanId", "ErrorCode", "ErrorMessage" }, null, new[]{ typeof(global::Niantic.Lightship.AR.Protobuf.ScanErrorEvent.Types.Error) }, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.Lightship.AR.Protobuf.ScanArchiveBuilderStartEvent), global::Niantic.Lightship.AR.Protobuf.ScanArchiveBuilderStartEvent.Parser, new[]{ "ScanId" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.Lightship.AR.Protobuf.ScanArchiveBuilderDoneEvent), global::Niantic.Lightship.AR.Protobuf.ScanArchiveBuilderDoneEvent.Parser, new[]{ "ScanId", "ScanFileSize", "NumberOfChunks", "TimeElapseMs" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.Lightship.AR.Protobuf.ScanArchiveBuilderCancelEvent), global::Niantic.Lightship.AR.Protobuf.ScanArchiveBuilderCancelEvent.Parser, new[]{ "ScanId", "ScanFileSize" }, null, null, null)
           }));
     }
     #endregion
@@ -410,6 +454,1877 @@ namespace Niantic.Lightship.AR.Protobuf {
             break;
           case 10: {
             InstallMode = input.ReadString();
+            break;
+          }
+        }
+      }
+    }
+
+  }
+
+  public sealed partial class ScanRecorderStartEvent : pb::IMessage<ScanRecorderStartEvent> {
+    private static readonly pb::MessageParser<ScanRecorderStartEvent> _parser = new pb::MessageParser<ScanRecorderStartEvent>(() => new ScanRecorderStartEvent());
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public static pb::MessageParser<ScanRecorderStartEvent> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Niantic.Lightship.AR.Protobuf.ArdkNextTelemetryReflection.Descriptor.MessageTypes[2]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public ScanRecorderStartEvent() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public ScanRecorderStartEvent(ScanRecorderStartEvent other) : this() {
+      features_ = other.features_;
+      scanId_ = other.scanId_;
+      depthSource_ = other.depthSource_;
+      framerate_ = other.framerate_;
+      isVoxelEnabled_ = other.isVoxelEnabled_;
+      isRaycastEnabled_ = other.isRaycastEnabled_;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public ScanRecorderStartEvent Clone() {
+      return new ScanRecorderStartEvent(this);
+    }
+
+    /// <summary>Field number for the "features" field.</summary>
+    public const int FeaturesFieldNumber = 1;
+    private string features_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public string Features {
+      get { return features_; }
+      set {
+        features_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
+    /// <summary>Field number for the "scan_id" field.</summary>
+    public const int ScanIdFieldNumber = 2;
+    private string scanId_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public string ScanId {
+      get { return scanId_; }
+      set {
+        scanId_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
+    /// <summary>Field number for the "depth_source" field.</summary>
+    public const int DepthSourceFieldNumber = 3;
+    private global::Niantic.Lightship.AR.Protobuf.ScanRecorderStartEvent.Types.DepthSource depthSource_ = 0;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public global::Niantic.Lightship.AR.Protobuf.ScanRecorderStartEvent.Types.DepthSource DepthSource {
+      get { return depthSource_; }
+      set {
+        depthSource_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "framerate" field.</summary>
+    public const int FramerateFieldNumber = 4;
+    private uint framerate_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public uint Framerate {
+      get { return framerate_; }
+      set {
+        framerate_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "is_voxel_enabled" field.</summary>
+    public const int IsVoxelEnabledFieldNumber = 5;
+    private bool isVoxelEnabled_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public bool IsVoxelEnabled {
+      get { return isVoxelEnabled_; }
+      set {
+        isVoxelEnabled_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "is_raycast_enabled" field.</summary>
+    public const int IsRaycastEnabledFieldNumber = 6;
+    private bool isRaycastEnabled_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public bool IsRaycastEnabled {
+      get { return isRaycastEnabled_; }
+      set {
+        isRaycastEnabled_ = value;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override bool Equals(object other) {
+      return Equals(other as ScanRecorderStartEvent);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public bool Equals(ScanRecorderStartEvent other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (Features != other.Features) return false;
+      if (ScanId != other.ScanId) return false;
+      if (DepthSource != other.DepthSource) return false;
+      if (Framerate != other.Framerate) return false;
+      if (IsVoxelEnabled != other.IsVoxelEnabled) return false;
+      if (IsRaycastEnabled != other.IsRaycastEnabled) return false;
+      return true;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (Features.Length != 0) hash ^= Features.GetHashCode();
+      if (ScanId.Length != 0) hash ^= ScanId.GetHashCode();
+      if (DepthSource != 0) hash ^= DepthSource.GetHashCode();
+      if (Framerate != 0) hash ^= Framerate.GetHashCode();
+      if (IsVoxelEnabled != false) hash ^= IsVoxelEnabled.GetHashCode();
+      if (IsRaycastEnabled != false) hash ^= IsRaycastEnabled.GetHashCode();
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void WriteTo(pb::CodedOutputStream output) {
+      if (Features.Length != 0) {
+        output.WriteRawTag(10);
+        output.WriteString(Features);
+      }
+      if (ScanId.Length != 0) {
+        output.WriteRawTag(18);
+        output.WriteString(ScanId);
+      }
+      if (DepthSource != 0) {
+        output.WriteRawTag(24);
+        output.WriteEnum((int) DepthSource);
+      }
+      if (Framerate != 0) {
+        output.WriteRawTag(32);
+        output.WriteUInt32(Framerate);
+      }
+      if (IsVoxelEnabled != false) {
+        output.WriteRawTag(40);
+        output.WriteBool(IsVoxelEnabled);
+      }
+      if (IsRaycastEnabled != false) {
+        output.WriteRawTag(48);
+        output.WriteBool(IsRaycastEnabled);
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public int CalculateSize() {
+      int size = 0;
+      if (Features.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(Features);
+      }
+      if (ScanId.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(ScanId);
+      }
+      if (DepthSource != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeEnumSize((int) DepthSource);
+      }
+      if (Framerate != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(Framerate);
+      }
+      if (IsVoxelEnabled != false) {
+        size += 1 + 1;
+      }
+      if (IsRaycastEnabled != false) {
+        size += 1 + 1;
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void MergeFrom(ScanRecorderStartEvent other) {
+      if (other == null) {
+        return;
+      }
+      if (other.Features.Length != 0) {
+        Features = other.Features;
+      }
+      if (other.ScanId.Length != 0) {
+        ScanId = other.ScanId;
+      }
+      if (other.DepthSource != 0) {
+        DepthSource = other.DepthSource;
+      }
+      if (other.Framerate != 0) {
+        Framerate = other.Framerate;
+      }
+      if (other.IsVoxelEnabled != false) {
+        IsVoxelEnabled = other.IsVoxelEnabled;
+      }
+      if (other.IsRaycastEnabled != false) {
+        IsRaycastEnabled = other.IsRaycastEnabled;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void MergeFrom(pb::CodedInputStream input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            input.SkipLastField();
+            break;
+          case 10: {
+            Features = input.ReadString();
+            break;
+          }
+          case 18: {
+            ScanId = input.ReadString();
+            break;
+          }
+          case 24: {
+            depthSource_ = (global::Niantic.Lightship.AR.Protobuf.ScanRecorderStartEvent.Types.DepthSource) input.ReadEnum();
+            break;
+          }
+          case 32: {
+            Framerate = input.ReadUInt32();
+            break;
+          }
+          case 40: {
+            IsVoxelEnabled = input.ReadBool();
+            break;
+          }
+          case 48: {
+            IsRaycastEnabled = input.ReadBool();
+            break;
+          }
+        }
+      }
+    }
+
+    #region Nested types
+    /// <summary>Container for nested types declared in the ScanRecorderStartEvent message type.</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public static partial class Types {
+      public enum DepthSource {
+        [pbr::OriginalName("UNKNOWN")] Unknown = 0,
+        [pbr::OriginalName("LIDAR")] Lidar = 1,
+        [pbr::OriginalName("MULTIDEPTH")] Multidepth = 2,
+      }
+
+    }
+    #endregion
+
+  }
+
+  public sealed partial class ScanRecorderStopEvent : pb::IMessage<ScanRecorderStopEvent> {
+    private static readonly pb::MessageParser<ScanRecorderStopEvent> _parser = new pb::MessageParser<ScanRecorderStopEvent>(() => new ScanRecorderStopEvent());
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public static pb::MessageParser<ScanRecorderStopEvent> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Niantic.Lightship.AR.Protobuf.ArdkNextTelemetryReflection.Descriptor.MessageTypes[3]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public ScanRecorderStopEvent() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public ScanRecorderStopEvent(ScanRecorderStopEvent other) : this() {
+      scanId_ = other.scanId_;
+      scanDurationMs_ = other.scanDurationMs_;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public ScanRecorderStopEvent Clone() {
+      return new ScanRecorderStopEvent(this);
+    }
+
+    /// <summary>Field number for the "scan_id" field.</summary>
+    public const int ScanIdFieldNumber = 1;
+    private string scanId_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public string ScanId {
+      get { return scanId_; }
+      set {
+        scanId_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
+    /// <summary>Field number for the "scan_duration_ms" field.</summary>
+    public const int ScanDurationMsFieldNumber = 2;
+    private uint scanDurationMs_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public uint ScanDurationMs {
+      get { return scanDurationMs_; }
+      set {
+        scanDurationMs_ = value;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override bool Equals(object other) {
+      return Equals(other as ScanRecorderStopEvent);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public bool Equals(ScanRecorderStopEvent other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (ScanId != other.ScanId) return false;
+      if (ScanDurationMs != other.ScanDurationMs) return false;
+      return true;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (ScanId.Length != 0) hash ^= ScanId.GetHashCode();
+      if (ScanDurationMs != 0) hash ^= ScanDurationMs.GetHashCode();
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void WriteTo(pb::CodedOutputStream output) {
+      if (ScanId.Length != 0) {
+        output.WriteRawTag(10);
+        output.WriteString(ScanId);
+      }
+      if (ScanDurationMs != 0) {
+        output.WriteRawTag(16);
+        output.WriteUInt32(ScanDurationMs);
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public int CalculateSize() {
+      int size = 0;
+      if (ScanId.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(ScanId);
+      }
+      if (ScanDurationMs != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(ScanDurationMs);
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void MergeFrom(ScanRecorderStopEvent other) {
+      if (other == null) {
+        return;
+      }
+      if (other.ScanId.Length != 0) {
+        ScanId = other.ScanId;
+      }
+      if (other.ScanDurationMs != 0) {
+        ScanDurationMs = other.ScanDurationMs;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void MergeFrom(pb::CodedInputStream input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            input.SkipLastField();
+            break;
+          case 10: {
+            ScanId = input.ReadString();
+            break;
+          }
+          case 16: {
+            ScanDurationMs = input.ReadUInt32();
+            break;
+          }
+        }
+      }
+    }
+
+  }
+
+  public sealed partial class ScanRecorderDiscardEvent : pb::IMessage<ScanRecorderDiscardEvent> {
+    private static readonly pb::MessageParser<ScanRecorderDiscardEvent> _parser = new pb::MessageParser<ScanRecorderDiscardEvent>(() => new ScanRecorderDiscardEvent());
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public static pb::MessageParser<ScanRecorderDiscardEvent> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Niantic.Lightship.AR.Protobuf.ArdkNextTelemetryReflection.Descriptor.MessageTypes[4]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public ScanRecorderDiscardEvent() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public ScanRecorderDiscardEvent(ScanRecorderDiscardEvent other) : this() {
+      scanId_ = other.scanId_;
+      scanDurationS_ = other.scanDurationS_;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public ScanRecorderDiscardEvent Clone() {
+      return new ScanRecorderDiscardEvent(this);
+    }
+
+    /// <summary>Field number for the "scan_id" field.</summary>
+    public const int ScanIdFieldNumber = 1;
+    private string scanId_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public string ScanId {
+      get { return scanId_; }
+      set {
+        scanId_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
+    /// <summary>Field number for the "scan_duration_s" field.</summary>
+    public const int ScanDurationSFieldNumber = 2;
+    private uint scanDurationS_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public uint ScanDurationS {
+      get { return scanDurationS_; }
+      set {
+        scanDurationS_ = value;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override bool Equals(object other) {
+      return Equals(other as ScanRecorderDiscardEvent);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public bool Equals(ScanRecorderDiscardEvent other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (ScanId != other.ScanId) return false;
+      if (ScanDurationS != other.ScanDurationS) return false;
+      return true;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (ScanId.Length != 0) hash ^= ScanId.GetHashCode();
+      if (ScanDurationS != 0) hash ^= ScanDurationS.GetHashCode();
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void WriteTo(pb::CodedOutputStream output) {
+      if (ScanId.Length != 0) {
+        output.WriteRawTag(10);
+        output.WriteString(ScanId);
+      }
+      if (ScanDurationS != 0) {
+        output.WriteRawTag(16);
+        output.WriteUInt32(ScanDurationS);
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public int CalculateSize() {
+      int size = 0;
+      if (ScanId.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(ScanId);
+      }
+      if (ScanDurationS != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(ScanDurationS);
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void MergeFrom(ScanRecorderDiscardEvent other) {
+      if (other == null) {
+        return;
+      }
+      if (other.ScanId.Length != 0) {
+        ScanId = other.ScanId;
+      }
+      if (other.ScanDurationS != 0) {
+        ScanDurationS = other.ScanDurationS;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void MergeFrom(pb::CodedInputStream input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            input.SkipLastField();
+            break;
+          case 10: {
+            ScanId = input.ReadString();
+            break;
+          }
+          case 16: {
+            ScanDurationS = input.ReadUInt32();
+            break;
+          }
+        }
+      }
+    }
+
+  }
+
+  public sealed partial class ScanRecorderSaveEvent : pb::IMessage<ScanRecorderSaveEvent> {
+    private static readonly pb::MessageParser<ScanRecorderSaveEvent> _parser = new pb::MessageParser<ScanRecorderSaveEvent>(() => new ScanRecorderSaveEvent());
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public static pb::MessageParser<ScanRecorderSaveEvent> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Niantic.Lightship.AR.Protobuf.ArdkNextTelemetryReflection.Descriptor.MessageTypes[5]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public ScanRecorderSaveEvent() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public ScanRecorderSaveEvent(ScanRecorderSaveEvent other) : this() {
+      scanId_ = other.scanId_;
+      scanDurationS_ = other.scanDurationS_;
+      numerOfFramesInScan_ = other.numerOfFramesInScan_;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public ScanRecorderSaveEvent Clone() {
+      return new ScanRecorderSaveEvent(this);
+    }
+
+    /// <summary>Field number for the "scan_id" field.</summary>
+    public const int ScanIdFieldNumber = 1;
+    private string scanId_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public string ScanId {
+      get { return scanId_; }
+      set {
+        scanId_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
+    /// <summary>Field number for the "scan_duration_s" field.</summary>
+    public const int ScanDurationSFieldNumber = 2;
+    private uint scanDurationS_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public uint ScanDurationS {
+      get { return scanDurationS_; }
+      set {
+        scanDurationS_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "numer_of_frames_in_scan" field.</summary>
+    public const int NumerOfFramesInScanFieldNumber = 3;
+    private uint numerOfFramesInScan_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public uint NumerOfFramesInScan {
+      get { return numerOfFramesInScan_; }
+      set {
+        numerOfFramesInScan_ = value;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override bool Equals(object other) {
+      return Equals(other as ScanRecorderSaveEvent);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public bool Equals(ScanRecorderSaveEvent other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (ScanId != other.ScanId) return false;
+      if (ScanDurationS != other.ScanDurationS) return false;
+      if (NumerOfFramesInScan != other.NumerOfFramesInScan) return false;
+      return true;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (ScanId.Length != 0) hash ^= ScanId.GetHashCode();
+      if (ScanDurationS != 0) hash ^= ScanDurationS.GetHashCode();
+      if (NumerOfFramesInScan != 0) hash ^= NumerOfFramesInScan.GetHashCode();
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void WriteTo(pb::CodedOutputStream output) {
+      if (ScanId.Length != 0) {
+        output.WriteRawTag(10);
+        output.WriteString(ScanId);
+      }
+      if (ScanDurationS != 0) {
+        output.WriteRawTag(16);
+        output.WriteUInt32(ScanDurationS);
+      }
+      if (NumerOfFramesInScan != 0) {
+        output.WriteRawTag(24);
+        output.WriteUInt32(NumerOfFramesInScan);
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public int CalculateSize() {
+      int size = 0;
+      if (ScanId.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(ScanId);
+      }
+      if (ScanDurationS != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(ScanDurationS);
+      }
+      if (NumerOfFramesInScan != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(NumerOfFramesInScan);
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void MergeFrom(ScanRecorderSaveEvent other) {
+      if (other == null) {
+        return;
+      }
+      if (other.ScanId.Length != 0) {
+        ScanId = other.ScanId;
+      }
+      if (other.ScanDurationS != 0) {
+        ScanDurationS = other.ScanDurationS;
+      }
+      if (other.NumerOfFramesInScan != 0) {
+        NumerOfFramesInScan = other.NumerOfFramesInScan;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void MergeFrom(pb::CodedInputStream input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            input.SkipLastField();
+            break;
+          case 10: {
+            ScanId = input.ReadString();
+            break;
+          }
+          case 16: {
+            ScanDurationS = input.ReadUInt32();
+            break;
+          }
+          case 24: {
+            NumerOfFramesInScan = input.ReadUInt32();
+            break;
+          }
+        }
+      }
+    }
+
+  }
+
+  public sealed partial class ScanSQCRunEvent : pb::IMessage<ScanSQCRunEvent> {
+    private static readonly pb::MessageParser<ScanSQCRunEvent> _parser = new pb::MessageParser<ScanSQCRunEvent>(() => new ScanSQCRunEvent());
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public static pb::MessageParser<ScanSQCRunEvent> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Niantic.Lightship.AR.Protobuf.ArdkNextTelemetryReflection.Descriptor.MessageTypes[6]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public ScanSQCRunEvent() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public ScanSQCRunEvent(ScanSQCRunEvent other) : this() {
+      scanId_ = other.scanId_;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public ScanSQCRunEvent Clone() {
+      return new ScanSQCRunEvent(this);
+    }
+
+    /// <summary>Field number for the "scan_id" field.</summary>
+    public const int ScanIdFieldNumber = 1;
+    private string scanId_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public string ScanId {
+      get { return scanId_; }
+      set {
+        scanId_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override bool Equals(object other) {
+      return Equals(other as ScanSQCRunEvent);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public bool Equals(ScanSQCRunEvent other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (ScanId != other.ScanId) return false;
+      return true;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (ScanId.Length != 0) hash ^= ScanId.GetHashCode();
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void WriteTo(pb::CodedOutputStream output) {
+      if (ScanId.Length != 0) {
+        output.WriteRawTag(10);
+        output.WriteString(ScanId);
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public int CalculateSize() {
+      int size = 0;
+      if (ScanId.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(ScanId);
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void MergeFrom(ScanSQCRunEvent other) {
+      if (other == null) {
+        return;
+      }
+      if (other.ScanId.Length != 0) {
+        ScanId = other.ScanId;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void MergeFrom(pb::CodedInputStream input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            input.SkipLastField();
+            break;
+          case 10: {
+            ScanId = input.ReadString();
+            break;
+          }
+        }
+      }
+    }
+
+  }
+
+  public sealed partial class ScanSQCDoneEvent : pb::IMessage<ScanSQCDoneEvent> {
+    private static readonly pb::MessageParser<ScanSQCDoneEvent> _parser = new pb::MessageParser<ScanSQCDoneEvent>(() => new ScanSQCDoneEvent());
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public static pb::MessageParser<ScanSQCDoneEvent> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Niantic.Lightship.AR.Protobuf.ArdkNextTelemetryReflection.Descriptor.MessageTypes[7]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public ScanSQCDoneEvent() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public ScanSQCDoneEvent(ScanSQCDoneEvent other) : this() {
+      scanId_ = other.scanId_;
+      overallScore_ = other.overallScore_;
+      timeElapseMs_ = other.timeElapseMs_;
+      failedReasons_ = other.failedReasons_.Clone();
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public ScanSQCDoneEvent Clone() {
+      return new ScanSQCDoneEvent(this);
+    }
+
+    /// <summary>Field number for the "scan_id" field.</summary>
+    public const int ScanIdFieldNumber = 1;
+    private string scanId_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public string ScanId {
+      get { return scanId_; }
+      set {
+        scanId_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
+    /// <summary>Field number for the "overall_score" field.</summary>
+    public const int OverallScoreFieldNumber = 2;
+    private float overallScore_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public float OverallScore {
+      get { return overallScore_; }
+      set {
+        overallScore_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "time_elapse_ms" field.</summary>
+    public const int TimeElapseMsFieldNumber = 3;
+    private uint timeElapseMs_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public uint TimeElapseMs {
+      get { return timeElapseMs_; }
+      set {
+        timeElapseMs_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "failed_reasons" field.</summary>
+    public const int FailedReasonsFieldNumber = 4;
+    private static readonly pb::FieldCodec<global::Niantic.Lightship.AR.Protobuf.ScanSQCDoneEvent.Types.ScanSQCFailedReason> _repeated_failedReasons_codec
+        = pb::FieldCodec.ForMessage(34, global::Niantic.Lightship.AR.Protobuf.ScanSQCDoneEvent.Types.ScanSQCFailedReason.Parser);
+    private readonly pbc::RepeatedField<global::Niantic.Lightship.AR.Protobuf.ScanSQCDoneEvent.Types.ScanSQCFailedReason> failedReasons_ = new pbc::RepeatedField<global::Niantic.Lightship.AR.Protobuf.ScanSQCDoneEvent.Types.ScanSQCFailedReason>();
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public pbc::RepeatedField<global::Niantic.Lightship.AR.Protobuf.ScanSQCDoneEvent.Types.ScanSQCFailedReason> FailedReasons {
+      get { return failedReasons_; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override bool Equals(object other) {
+      return Equals(other as ScanSQCDoneEvent);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public bool Equals(ScanSQCDoneEvent other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (ScanId != other.ScanId) return false;
+      if (OverallScore != other.OverallScore) return false;
+      if (TimeElapseMs != other.TimeElapseMs) return false;
+      if(!failedReasons_.Equals(other.failedReasons_)) return false;
+      return true;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (ScanId.Length != 0) hash ^= ScanId.GetHashCode();
+      if (OverallScore != 0F) hash ^= OverallScore.GetHashCode();
+      if (TimeElapseMs != 0) hash ^= TimeElapseMs.GetHashCode();
+      hash ^= failedReasons_.GetHashCode();
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void WriteTo(pb::CodedOutputStream output) {
+      if (ScanId.Length != 0) {
+        output.WriteRawTag(10);
+        output.WriteString(ScanId);
+      }
+      if (OverallScore != 0F) {
+        output.WriteRawTag(21);
+        output.WriteFloat(OverallScore);
+      }
+      if (TimeElapseMs != 0) {
+        output.WriteRawTag(24);
+        output.WriteUInt32(TimeElapseMs);
+      }
+      failedReasons_.WriteTo(output, _repeated_failedReasons_codec);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public int CalculateSize() {
+      int size = 0;
+      if (ScanId.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(ScanId);
+      }
+      if (OverallScore != 0F) {
+        size += 1 + 4;
+      }
+      if (TimeElapseMs != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(TimeElapseMs);
+      }
+      size += failedReasons_.CalculateSize(_repeated_failedReasons_codec);
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void MergeFrom(ScanSQCDoneEvent other) {
+      if (other == null) {
+        return;
+      }
+      if (other.ScanId.Length != 0) {
+        ScanId = other.ScanId;
+      }
+      if (other.OverallScore != 0F) {
+        OverallScore = other.OverallScore;
+      }
+      if (other.TimeElapseMs != 0) {
+        TimeElapseMs = other.TimeElapseMs;
+      }
+      failedReasons_.Add(other.failedReasons_);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void MergeFrom(pb::CodedInputStream input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            input.SkipLastField();
+            break;
+          case 10: {
+            ScanId = input.ReadString();
+            break;
+          }
+          case 21: {
+            OverallScore = input.ReadFloat();
+            break;
+          }
+          case 24: {
+            TimeElapseMs = input.ReadUInt32();
+            break;
+          }
+          case 34: {
+            failedReasons_.AddEntriesFrom(input, _repeated_failedReasons_codec);
+            break;
+          }
+        }
+      }
+    }
+
+    #region Nested types
+    /// <summary>Container for nested types declared in the ScanSQCDoneEvent message type.</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public static partial class Types {
+      public sealed partial class ScanSQCFailedReason : pb::IMessage<ScanSQCFailedReason> {
+        private static readonly pb::MessageParser<ScanSQCFailedReason> _parser = new pb::MessageParser<ScanSQCFailedReason>(() => new ScanSQCFailedReason());
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        public static pb::MessageParser<ScanSQCFailedReason> Parser { get { return _parser; } }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        public static pbr::MessageDescriptor Descriptor {
+          get { return global::Niantic.Lightship.AR.Protobuf.ScanSQCDoneEvent.Descriptor.NestedTypes[0]; }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        pbr::MessageDescriptor pb::IMessage.Descriptor {
+          get { return Descriptor; }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        public ScanSQCFailedReason() {
+          OnConstruction();
+        }
+
+        partial void OnConstruction();
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        public ScanSQCFailedReason(ScanSQCFailedReason other) : this() {
+          failedReason_ = other.failedReason_;
+          score_ = other.score_;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        public ScanSQCFailedReason Clone() {
+          return new ScanSQCFailedReason(this);
+        }
+
+        /// <summary>Field number for the "failed_reason" field.</summary>
+        public const int FailedReasonFieldNumber = 1;
+        private global::Niantic.Lightship.AR.Protobuf.ScanSQCDoneEvent.Types.ScanSQCFailedReason.Types.FailedReason failedReason_ = 0;
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        public global::Niantic.Lightship.AR.Protobuf.ScanSQCDoneEvent.Types.ScanSQCFailedReason.Types.FailedReason FailedReason {
+          get { return failedReason_; }
+          set {
+            failedReason_ = value;
+          }
+        }
+
+        /// <summary>Field number for the "score" field.</summary>
+        public const int ScoreFieldNumber = 2;
+        private float score_;
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        public float Score {
+          get { return score_; }
+          set {
+            score_ = value;
+          }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        public override bool Equals(object other) {
+          return Equals(other as ScanSQCFailedReason);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        public bool Equals(ScanSQCFailedReason other) {
+          if (ReferenceEquals(other, null)) {
+            return false;
+          }
+          if (ReferenceEquals(other, this)) {
+            return true;
+          }
+          if (FailedReason != other.FailedReason) return false;
+          if (Score != other.Score) return false;
+          return true;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        public override int GetHashCode() {
+          int hash = 1;
+          if (FailedReason != 0) hash ^= FailedReason.GetHashCode();
+          if (Score != 0F) hash ^= Score.GetHashCode();
+          return hash;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        public override string ToString() {
+          return pb::JsonFormatter.ToDiagnosticString(this);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        public void WriteTo(pb::CodedOutputStream output) {
+          if (FailedReason != 0) {
+            output.WriteRawTag(8);
+            output.WriteEnum((int) FailedReason);
+          }
+          if (Score != 0F) {
+            output.WriteRawTag(21);
+            output.WriteFloat(Score);
+          }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        public int CalculateSize() {
+          int size = 0;
+          if (FailedReason != 0) {
+            size += 1 + pb::CodedOutputStream.ComputeEnumSize((int) FailedReason);
+          }
+          if (Score != 0F) {
+            size += 1 + 4;
+          }
+          return size;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        public void MergeFrom(ScanSQCFailedReason other) {
+          if (other == null) {
+            return;
+          }
+          if (other.FailedReason != 0) {
+            FailedReason = other.FailedReason;
+          }
+          if (other.Score != 0F) {
+            Score = other.Score;
+          }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        public void MergeFrom(pb::CodedInputStream input) {
+          uint tag;
+          while ((tag = input.ReadTag()) != 0) {
+            switch(tag) {
+              default:
+                input.SkipLastField();
+                break;
+              case 8: {
+                failedReason_ = (global::Niantic.Lightship.AR.Protobuf.ScanSQCDoneEvent.Types.ScanSQCFailedReason.Types.FailedReason) input.ReadEnum();
+                break;
+              }
+              case 21: {
+                Score = input.ReadFloat();
+                break;
+              }
+            }
+          }
+        }
+
+        #region Nested types
+        /// <summary>Container for nested types declared in the ScanSQCFailedReason message type.</summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        public static partial class Types {
+          public enum FailedReason {
+            [pbr::OriginalName("BLURRY")] Blurry = 0,
+            [pbr::OriginalName("DARDK")] Dardk = 1,
+            [pbr::OriginalName("BAD_QUALITY")] BadQuality = 2,
+            [pbr::OriginalName("GROUND_OR_FEET")] GroundOrFeet = 3,
+            [pbr::OriginalName("INDOOR_UNCLEAR")] IndoorUnclear = 4,
+            [pbr::OriginalName("FROM_CAR")] FromCar = 5,
+            [pbr::OriginalName("OBSTRUCTED")] Obstructed = 6,
+            [pbr::OriginalName("TARGET_NOT_VISIBLE")] TargetNotVisible = 7,
+          }
+
+        }
+        #endregion
+
+      }
+
+    }
+    #endregion
+
+  }
+
+  public sealed partial class ScanErrorEvent : pb::IMessage<ScanErrorEvent> {
+    private static readonly pb::MessageParser<ScanErrorEvent> _parser = new pb::MessageParser<ScanErrorEvent>(() => new ScanErrorEvent());
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public static pb::MessageParser<ScanErrorEvent> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Niantic.Lightship.AR.Protobuf.ArdkNextTelemetryReflection.Descriptor.MessageTypes[8]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public ScanErrorEvent() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public ScanErrorEvent(ScanErrorEvent other) : this() {
+      scanId_ = other.scanId_;
+      errorCode_ = other.errorCode_;
+      errorMessage_ = other.errorMessage_;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public ScanErrorEvent Clone() {
+      return new ScanErrorEvent(this);
+    }
+
+    /// <summary>Field number for the "scan_id" field.</summary>
+    public const int ScanIdFieldNumber = 1;
+    private string scanId_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public string ScanId {
+      get { return scanId_; }
+      set {
+        scanId_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
+    /// <summary>Field number for the "error_code" field.</summary>
+    public const int ErrorCodeFieldNumber = 2;
+    private global::Niantic.Lightship.AR.Protobuf.ScanErrorEvent.Types.Error errorCode_ = 0;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public global::Niantic.Lightship.AR.Protobuf.ScanErrorEvent.Types.Error ErrorCode {
+      get { return errorCode_; }
+      set {
+        errorCode_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "error_message" field.</summary>
+    public const int ErrorMessageFieldNumber = 3;
+    private string errorMessage_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public string ErrorMessage {
+      get { return errorMessage_; }
+      set {
+        errorMessage_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override bool Equals(object other) {
+      return Equals(other as ScanErrorEvent);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public bool Equals(ScanErrorEvent other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (ScanId != other.ScanId) return false;
+      if (ErrorCode != other.ErrorCode) return false;
+      if (ErrorMessage != other.ErrorMessage) return false;
+      return true;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (ScanId.Length != 0) hash ^= ScanId.GetHashCode();
+      if (ErrorCode != 0) hash ^= ErrorCode.GetHashCode();
+      if (ErrorMessage.Length != 0) hash ^= ErrorMessage.GetHashCode();
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void WriteTo(pb::CodedOutputStream output) {
+      if (ScanId.Length != 0) {
+        output.WriteRawTag(10);
+        output.WriteString(ScanId);
+      }
+      if (ErrorCode != 0) {
+        output.WriteRawTag(16);
+        output.WriteEnum((int) ErrorCode);
+      }
+      if (ErrorMessage.Length != 0) {
+        output.WriteRawTag(26);
+        output.WriteString(ErrorMessage);
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public int CalculateSize() {
+      int size = 0;
+      if (ScanId.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(ScanId);
+      }
+      if (ErrorCode != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeEnumSize((int) ErrorCode);
+      }
+      if (ErrorMessage.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(ErrorMessage);
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void MergeFrom(ScanErrorEvent other) {
+      if (other == null) {
+        return;
+      }
+      if (other.ScanId.Length != 0) {
+        ScanId = other.ScanId;
+      }
+      if (other.ErrorCode != 0) {
+        ErrorCode = other.ErrorCode;
+      }
+      if (other.ErrorMessage.Length != 0) {
+        ErrorMessage = other.ErrorMessage;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void MergeFrom(pb::CodedInputStream input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            input.SkipLastField();
+            break;
+          case 10: {
+            ScanId = input.ReadString();
+            break;
+          }
+          case 16: {
+            errorCode_ = (global::Niantic.Lightship.AR.Protobuf.ScanErrorEvent.Types.Error) input.ReadEnum();
+            break;
+          }
+          case 26: {
+            ErrorMessage = input.ReadString();
+            break;
+          }
+        }
+      }
+    }
+
+    #region Nested types
+    /// <summary>Container for nested types declared in the ScanErrorEvent message type.</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public static partial class Types {
+      public enum Error {
+        [pbr::OriginalName("Unknown")] Unknown = 0,
+        [pbr::OriginalName("SQC_NOT_READY")] SqcNotReady = 1,
+        [pbr::OriginalName("SQC_BAD_INPUT")] SqcBadInput = 2,
+        [pbr::OriginalName("SQC_BAD_MODEL")] SqcBadModel = 3,
+        [pbr::OriginalName("SQC_MODEL_READ_FAIL")] SqcModelReadFail = 4,
+        [pbr::OriginalName("SQC_DECRYPT_FAIL")] SqcDecryptFail = 5,
+        [pbr::OriginalName("SQC_UNPACK_FAIL")] SqcUnpackFail = 6,
+        [pbr::OriginalName("SQC_NO_INPUT_FRAMES")] SqcNoInputFrames = 7,
+        /// <summary>
+        ///  TODO(sxian): extend the error code.
+        /// </summary>
+        [pbr::OriginalName("SQC_INTERRUPTED")] SqcInterrupted = 8,
+      }
+
+    }
+    #endregion
+
+  }
+
+  public sealed partial class ScanArchiveBuilderStartEvent : pb::IMessage<ScanArchiveBuilderStartEvent> {
+    private static readonly pb::MessageParser<ScanArchiveBuilderStartEvent> _parser = new pb::MessageParser<ScanArchiveBuilderStartEvent>(() => new ScanArchiveBuilderStartEvent());
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public static pb::MessageParser<ScanArchiveBuilderStartEvent> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Niantic.Lightship.AR.Protobuf.ArdkNextTelemetryReflection.Descriptor.MessageTypes[9]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public ScanArchiveBuilderStartEvent() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public ScanArchiveBuilderStartEvent(ScanArchiveBuilderStartEvent other) : this() {
+      scanId_ = other.scanId_;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public ScanArchiveBuilderStartEvent Clone() {
+      return new ScanArchiveBuilderStartEvent(this);
+    }
+
+    /// <summary>Field number for the "scan_id" field.</summary>
+    public const int ScanIdFieldNumber = 1;
+    private string scanId_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public string ScanId {
+      get { return scanId_; }
+      set {
+        scanId_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override bool Equals(object other) {
+      return Equals(other as ScanArchiveBuilderStartEvent);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public bool Equals(ScanArchiveBuilderStartEvent other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (ScanId != other.ScanId) return false;
+      return true;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (ScanId.Length != 0) hash ^= ScanId.GetHashCode();
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void WriteTo(pb::CodedOutputStream output) {
+      if (ScanId.Length != 0) {
+        output.WriteRawTag(10);
+        output.WriteString(ScanId);
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public int CalculateSize() {
+      int size = 0;
+      if (ScanId.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(ScanId);
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void MergeFrom(ScanArchiveBuilderStartEvent other) {
+      if (other == null) {
+        return;
+      }
+      if (other.ScanId.Length != 0) {
+        ScanId = other.ScanId;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void MergeFrom(pb::CodedInputStream input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            input.SkipLastField();
+            break;
+          case 10: {
+            ScanId = input.ReadString();
+            break;
+          }
+        }
+      }
+    }
+
+  }
+
+  public sealed partial class ScanArchiveBuilderDoneEvent : pb::IMessage<ScanArchiveBuilderDoneEvent> {
+    private static readonly pb::MessageParser<ScanArchiveBuilderDoneEvent> _parser = new pb::MessageParser<ScanArchiveBuilderDoneEvent>(() => new ScanArchiveBuilderDoneEvent());
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public static pb::MessageParser<ScanArchiveBuilderDoneEvent> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Niantic.Lightship.AR.Protobuf.ArdkNextTelemetryReflection.Descriptor.MessageTypes[10]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public ScanArchiveBuilderDoneEvent() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public ScanArchiveBuilderDoneEvent(ScanArchiveBuilderDoneEvent other) : this() {
+      scanId_ = other.scanId_;
+      scanFileSize_ = other.scanFileSize_;
+      numberOfChunks_ = other.numberOfChunks_;
+      timeElapseMs_ = other.timeElapseMs_;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public ScanArchiveBuilderDoneEvent Clone() {
+      return new ScanArchiveBuilderDoneEvent(this);
+    }
+
+    /// <summary>Field number for the "scan_id" field.</summary>
+    public const int ScanIdFieldNumber = 1;
+    private string scanId_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public string ScanId {
+      get { return scanId_; }
+      set {
+        scanId_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
+    /// <summary>Field number for the "scan_file_size" field.</summary>
+    public const int ScanFileSizeFieldNumber = 2;
+    private ulong scanFileSize_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public ulong ScanFileSize {
+      get { return scanFileSize_; }
+      set {
+        scanFileSize_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "number_of_chunks" field.</summary>
+    public const int NumberOfChunksFieldNumber = 3;
+    private uint numberOfChunks_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public uint NumberOfChunks {
+      get { return numberOfChunks_; }
+      set {
+        numberOfChunks_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "time_elapse_ms" field.</summary>
+    public const int TimeElapseMsFieldNumber = 4;
+    private uint timeElapseMs_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public uint TimeElapseMs {
+      get { return timeElapseMs_; }
+      set {
+        timeElapseMs_ = value;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override bool Equals(object other) {
+      return Equals(other as ScanArchiveBuilderDoneEvent);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public bool Equals(ScanArchiveBuilderDoneEvent other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (ScanId != other.ScanId) return false;
+      if (ScanFileSize != other.ScanFileSize) return false;
+      if (NumberOfChunks != other.NumberOfChunks) return false;
+      if (TimeElapseMs != other.TimeElapseMs) return false;
+      return true;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (ScanId.Length != 0) hash ^= ScanId.GetHashCode();
+      if (ScanFileSize != 0UL) hash ^= ScanFileSize.GetHashCode();
+      if (NumberOfChunks != 0) hash ^= NumberOfChunks.GetHashCode();
+      if (TimeElapseMs != 0) hash ^= TimeElapseMs.GetHashCode();
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void WriteTo(pb::CodedOutputStream output) {
+      if (ScanId.Length != 0) {
+        output.WriteRawTag(10);
+        output.WriteString(ScanId);
+      }
+      if (ScanFileSize != 0UL) {
+        output.WriteRawTag(16);
+        output.WriteUInt64(ScanFileSize);
+      }
+      if (NumberOfChunks != 0) {
+        output.WriteRawTag(24);
+        output.WriteUInt32(NumberOfChunks);
+      }
+      if (TimeElapseMs != 0) {
+        output.WriteRawTag(32);
+        output.WriteUInt32(TimeElapseMs);
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public int CalculateSize() {
+      int size = 0;
+      if (ScanId.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(ScanId);
+      }
+      if (ScanFileSize != 0UL) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt64Size(ScanFileSize);
+      }
+      if (NumberOfChunks != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(NumberOfChunks);
+      }
+      if (TimeElapseMs != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(TimeElapseMs);
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void MergeFrom(ScanArchiveBuilderDoneEvent other) {
+      if (other == null) {
+        return;
+      }
+      if (other.ScanId.Length != 0) {
+        ScanId = other.ScanId;
+      }
+      if (other.ScanFileSize != 0UL) {
+        ScanFileSize = other.ScanFileSize;
+      }
+      if (other.NumberOfChunks != 0) {
+        NumberOfChunks = other.NumberOfChunks;
+      }
+      if (other.TimeElapseMs != 0) {
+        TimeElapseMs = other.TimeElapseMs;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void MergeFrom(pb::CodedInputStream input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            input.SkipLastField();
+            break;
+          case 10: {
+            ScanId = input.ReadString();
+            break;
+          }
+          case 16: {
+            ScanFileSize = input.ReadUInt64();
+            break;
+          }
+          case 24: {
+            NumberOfChunks = input.ReadUInt32();
+            break;
+          }
+          case 32: {
+            TimeElapseMs = input.ReadUInt32();
+            break;
+          }
+        }
+      }
+    }
+
+  }
+
+  public sealed partial class ScanArchiveBuilderCancelEvent : pb::IMessage<ScanArchiveBuilderCancelEvent> {
+    private static readonly pb::MessageParser<ScanArchiveBuilderCancelEvent> _parser = new pb::MessageParser<ScanArchiveBuilderCancelEvent>(() => new ScanArchiveBuilderCancelEvent());
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public static pb::MessageParser<ScanArchiveBuilderCancelEvent> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Niantic.Lightship.AR.Protobuf.ArdkNextTelemetryReflection.Descriptor.MessageTypes[11]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public ScanArchiveBuilderCancelEvent() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public ScanArchiveBuilderCancelEvent(ScanArchiveBuilderCancelEvent other) : this() {
+      scanId_ = other.scanId_;
+      scanFileSize_ = other.scanFileSize_;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public ScanArchiveBuilderCancelEvent Clone() {
+      return new ScanArchiveBuilderCancelEvent(this);
+    }
+
+    /// <summary>Field number for the "scan_id" field.</summary>
+    public const int ScanIdFieldNumber = 1;
+    private string scanId_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public string ScanId {
+      get { return scanId_; }
+      set {
+        scanId_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
+    /// <summary>Field number for the "scan_file_size" field.</summary>
+    public const int ScanFileSizeFieldNumber = 2;
+    private ulong scanFileSize_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public ulong ScanFileSize {
+      get { return scanFileSize_; }
+      set {
+        scanFileSize_ = value;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override bool Equals(object other) {
+      return Equals(other as ScanArchiveBuilderCancelEvent);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public bool Equals(ScanArchiveBuilderCancelEvent other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (ScanId != other.ScanId) return false;
+      if (ScanFileSize != other.ScanFileSize) return false;
+      return true;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (ScanId.Length != 0) hash ^= ScanId.GetHashCode();
+      if (ScanFileSize != 0UL) hash ^= ScanFileSize.GetHashCode();
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void WriteTo(pb::CodedOutputStream output) {
+      if (ScanId.Length != 0) {
+        output.WriteRawTag(10);
+        output.WriteString(ScanId);
+      }
+      if (ScanFileSize != 0UL) {
+        output.WriteRawTag(16);
+        output.WriteUInt64(ScanFileSize);
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public int CalculateSize() {
+      int size = 0;
+      if (ScanId.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(ScanId);
+      }
+      if (ScanFileSize != 0UL) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt64Size(ScanFileSize);
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void MergeFrom(ScanArchiveBuilderCancelEvent other) {
+      if (other == null) {
+        return;
+      }
+      if (other.ScanId.Length != 0) {
+        ScanId = other.ScanId;
+      }
+      if (other.ScanFileSize != 0UL) {
+        ScanFileSize = other.ScanFileSize;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void MergeFrom(pb::CodedInputStream input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            input.SkipLastField();
+            break;
+          case 10: {
+            ScanId = input.ReadString();
+            break;
+          }
+          case 16: {
+            ScanFileSize = input.ReadUInt64();
             break;
           }
         }

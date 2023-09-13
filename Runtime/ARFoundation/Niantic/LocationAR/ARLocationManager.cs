@@ -1,8 +1,15 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using Niantic.Lightship.AR.Utilities;
 using UnityEngine;
 using UnityEngine.XR.ARSubsystems;
+
+#if !UNITY_EDITOR && UNITY_ANDROID
+using UnityEngine.Android;
+#endif
+
+using Input = Niantic.Lightship.AR.Input;
 
 namespace Niantic.Lightship.AR.Subsystems
 {
@@ -14,9 +21,79 @@ namespace Niantic.Lightship.AR.Subsystems
     [PublicAPI]
     public class ARLocationManager : ARPersistentAnchorManager
     {
+#if NIANTIC_ARDK_EXPERIMENTAL_FEATURES
+        [Header("Experimental: Drift Mitigation")]
+        [Tooltip("Continuously send localization requests to refine ARLocation tracking")]
+        [SerializeField]
+        private bool _ContinuousLocalizationEnabled;
+        
+        [Tooltip("Interpolate anchor updates instead of snapping. Only works when continuous localization is enabled")]
+        [SerializeField]
+        private bool _InterpolationEnabled;
+        
+        [Tooltip("Averages multiple localization results to provide a more stable localization. Only works when continuous localization is enabled")]
+        [SerializeField]
+        private bool _TemporalFusionEnabled;
+
+        // Number of seconds between attempting Continuous Localization requests.
+        // After attempting localization, server requests will be sent once a second until localization success
+        public float ContinuousLocalizationRateSeconds
+        {
+            get => _continuousLocalizationRateSeconds;
+            set => _continuousLocalizationRateSeconds = value;
+        }
+
+        // Number of seconds over which anchor interpolation occurs.
+        // Faster times will result in more noticeable movement.
+        public float InterpolationTimeSeconds
+        {
+            get => ARPersistentAnchor.InterpolationTimeSeconds;
+            set => ARPersistentAnchor.InterpolationTimeSeconds = value;
+        }
+        
+        // Number of localization results to average for temporal fusion
+        public int TemporalFusionSlidingWindow {             
+            get => ARPersistentAnchor.FusionSlidingWindowSize;
+            set => ARPersistentAnchor.FusionSlidingWindowSize = value;
+        }
+
+        // Whether to enable or disable continuous localization
+        public bool ContinuousLocalizationEnabled
+        {
+            get => _continuousLocalizationEnabled;
+            set => _continuousLocalizationEnabled = value;
+        }
+
+        // Whether to enable or disable interpolation
+        public bool InterpolationEnabled
+        {
+            get => InterpolateAnchors;
+            set => InterpolateAnchors = value;
+        }
+
+        // Whether to enable or disable temporal fusion
+        public new bool TemporalFusionEnabled
+        {
+            get => base.TemporalFusionEnabled;
+            set => base.TemporalFusionEnabled = value;
+        }
+#endif
+
+        [Header("AR Locations")]
         [Tooltip("Whether or not to auto-track the currently selected location.  Auto-tracked locations will be enabled, including their children, when the camera is aimed at the physical location.")]
         [SerializeField]
         private bool _autoTrack = false;
+
+#region Experimental implementation
+        private bool _continuousLocalizationEnabled = false;
+        private float _continuousLocalizationRateSeconds = 2.0f;
+        private float _elapsedTime = 0;
+#endregion
+
+        private bool _keepTryingStartLocationServices = false;
+        
+        // We only support MaxLocationTrackingCount = 1 at the moment
+        private const int _maxLocationTrackingCount = 1;
 
         /// <summary>
         /// Called when the location tracking state has changed.
@@ -34,35 +111,74 @@ namespace Niantic.Lightship.AR.Subsystems
         /// </summary>
         public bool AutoTrack => _autoTrack;
 
-        private Dictionary<ARPersistentAnchor, ARLocation> _trackedARLocations = new();
-        private Dictionary<ARPersistentAnchor, Transform> _originalParents = new();
+        /// <summary>
+        /// Maximun number of locations that will be tracked by StartTracking. We only support MaxLocationTrackingCount = 1 at the moment
+        /// </summary>
+        public int MaxLocationTrackingCount
+        {
+            get
+            { 
+                return _maxLocationTrackingCount;
+            }
+        }
 
-        private bool _onlyUsingPrimaryARLocation = false;
-        private ARLocation _primaryARLocation = null;
+        // _targetARLocations hold the locations specified by SetARLocations().
+        // Only a subset of _targetARLocations will be tracked. How many is capped by MaxLocationTrackingCount
+        // _targetARLocations will be populated by SetARLocations()
+        private readonly List<ARLocation> _targetARLocations = new();
 
+        // _trackedARLocations holds the location actively being tracked.
+        // Its maximun size will be MaxLocationTrackingCount
+        // _trackedARLocations will be populated by HandleARPersistentAnchorStateChanged()
+        private readonly List<ARLocation> _trackedARLocations = new();
+
+        // _anchorToARLocationMap holds the relationship between each anchor and its corresponding location
+        // ARPersistentAnchorManager updates anchors and then we use this map to determine what location corresponds to what anchor update
+        // ARLocationManager will only consume a subset of the anchor updates. What ar locations will be tracked is determined by _trackedARLocations
+        // _anchorToARLocationMap will be populated by StartTracking()
+        private readonly Dictionary<ARPersistentAnchor, ARLocation> _anchorToARLocationMap = new();
+
+        // _originalParents holds the transform that each location's anchor replaces
+        private readonly Dictionary<ARPersistentAnchor, Transform> _originalParents = new();
+
+        // _coverageClient is used when no location is set in SetARLocations
         private CoverageClient _coverageClient = null;
-        private List<GameObject> _arLocationHolders = new();
+
+        // _coverageARLocationHolders hold the game objects that hold the ARLocations retreived from _coverageClient
+        // _coverageARLocationHolders will be populated by OnCoverageLocationsQueried
+        private readonly List<GameObject> _coverageARLocationHolders = new();
 
         protected override void OnEnable()
         {
             base.OnEnable();
+#if NIANTIC_ARDK_EXPERIMENTAL_FEATURES
+            _continuousLocalizationEnabled = _ContinuousLocalizationEnabled;
+            InterpolateAnchors = _InterpolationEnabled;
+            base.TemporalFusionEnabled = _TemporalFusionEnabled;
+#endif
             arPersistentAnchorStateChanged += HandleARPersistentAnchorStateChanged;
         }
 
         protected override void Start()
         {
             base.Start();
+            var arLocations = new List<ARLocation>();
             foreach (var arLocation in ARLocations)
             {
                 if (_autoTrack && arLocation.gameObject.activeSelf)
                 {
                     arLocation.gameObject.SetActive(false);
-                    StartTracking(arLocation);
+                    arLocations.Add(arLocation);
                 }
                 else //TODO: Do this at build time, not in start here
                 {
                     arLocation.gameObject.SetActive(false);
                 }
+            }
+            if (arLocations.Count != 0)
+            {
+                SetARLocations(arLocations.ToArray());
+                StartTracking();
             }
         }
 
@@ -70,6 +186,49 @@ namespace Niantic.Lightship.AR.Subsystems
         {
             base.OnDisable();
             arPersistentAnchorStateChanged -= HandleARPersistentAnchorStateChanged;
+
+            // This stops TryStartLocationServiceForCoverage coroutine
+            _keepTryingStartLocationServices = true;
+        }
+
+        /// <summary>
+        /// Selects what AR Locations to track when StartTracking() is called
+        /// </summary>
+        /// <param name="arLocation">The locations to track.</param>
+        public void SetARLocations(params ARLocation[] arLocations)
+        {
+            _targetARLocations.Clear();
+            _targetARLocations.AddRange(arLocations);
+        }
+
+        /// <summary>
+        /// Starts tracking locations specified by SetARLocations(). The number of locations tracked will be limited to MaxAnchorTrackingCount
+        /// The location(s) that ends up being tracked up to MaxAnchorTrackingCount are in first-come first-serve order. This will create digital content in the physical world.
+        /// Content authored as children of the ARLocation will be enabled once the ARLocation becomes tracked.
+        /// If no locations were specified in SetARLocations(), the closest five locations for the area will be selected
+        /// </summary>
+        public void StartTracking()
+        {
+            // No locations specified by SetARLocations(). Finding closest locations.
+            if (_targetARLocations.Count == 0)
+            {
+                if (_coverageARLocationHolders.Count != 0)
+                {
+                    Debug.LogError(
+                        $"You are already tracking the {_coverageARLocationHolders.Count} closest locations. Call StopTracking() before calling StartTracking().", 
+                        gameObject);
+                    return;
+                }
+
+                if (_coverageClient == null)
+                {
+                    _coverageClient = CoverageClientFactory.Create();
+                }
+                TryTrackLocationsFromCoverage();
+                return;
+            }
+            
+            TryTrackLocations(_targetARLocations.ToArray());
         }
 
         /// <summary>
@@ -77,89 +236,23 @@ namespace Niantic.Lightship.AR.Subsystems
         /// Content authored as children of the ARLocation will be enabled once the ARLocation becomes tracked.
         /// </summary>
         /// <param name="arLocation">The location to track.</param>
+        [Obsolete("StartTracking(ARLocation arLocation) is deprecated, please SetARLocations(params ARLocation[] arLocations) and StartTracking() instead")]
         public void StartTracking(ARLocation arLocation)
         {
             ARLocation[] arLocations = { arLocation };
-            StartTrackingOneOfMany(arLocations);
+            SetARLocations(arLocations);
+            StartTracking();
         }
 
         /// <summary>
-        /// Attempt to track one of the many locations provided. The first location to gain tracking will be tracked until StopTracking() is called.
-        /// We currently only support up to 5 locations. This will create digital content in the physical world.
-        /// Content authored as children of each ARLocation will be enabled once the ARLocation becomes tracked.
-        /// To switch which location of the array is tracked, call StopTracking() and this function again.
-        /// </summary>
-        /// <param name="arLocations">The locations to track. Only one of them will be tracked</param>
-        public void StartTrackingOneOfMany(params ARLocation[] arLocations)
-        {
-            if (_trackedARLocations.Count != 0)
-            {
-                Debug.LogError(
-                    $"You are already tracking {_trackedARLocations.Count} locations.  Call StopTracking() before attempting to track a new location.", 
-                    gameObject);
-                return;
-            }
-
-            // We currently only support up to 5 locations atm.
-            if (5 < arLocations.Length)
-            {
-                Debug.LogError("More than 5 ARLocations were passed into StartTrackingOneOfMany. We only support up to 5.", 
-                    gameObject);
-                return;
-            }
-
-            foreach (var arLocation in arLocations)
-            {
-
-                var payload = arLocation.Payload;
-                bool success =
-                    TryTrackAnchor(payload, out var anchor);
-                if (success)
-                {
-                    _originalParents.Add(anchor, arLocation.transform);
-                    arLocation.transform.SetParent(anchor.transform, false);
-                    _trackedARLocations.Add(anchor, arLocation);
-                }
-                else
-                {
-#if UNITY_EDITOR
-                    Debug.LogError($"Failed to track anchor." +
-                        $"{Environment.NewLine}" +
-                        $"In-Editor Playback uses Standalone XR Plug-in Management.  Try enabling \"Niantic Lightship SDK\" for Standalone in XR Plug-in Management under Project Settings.",
-                        gameObject);
-#else
-                    Debug.LogError($"Failed to track anchor.", arLocation.gameObject);
-#endif
-                }
-            }
-
-            _onlyUsingPrimaryARLocation = true;
-        }
-
-        /// <summary>
-        /// Starts tracking one location out of many possible default locations.
+        /// Starts tracking one location out of closest five locations around.
         /// Content authored as children of default ARLocation will be enabled while the default ARLocation is tracked.
-        /// To get a different default location, call StopTracking() and this function again.
+        /// To get a different tracked location, call StopTracking() and this function again.
         /// </summary>
+        [Obsolete("StartTrackingOneDefaultLocation() is deprecated, please use SetARLocations(params ARLocation[] arLocations) and StartTracking() instead")]
         public void StartTrackingOneDefaultLocation()
         {
-            if (_arLocationHolders.Count != 0)
-            {
-                Debug.LogError(
-                    $"You are already tracking {_arLocationHolders.Count} default locations.  Call StopTracking() before attempting to track new default locations.", 
-                    gameObject);
-                return;
-            }
-
-            if (_coverageClient == null)
-            {
-                _coverageClient = CoverageClientFactory.Create();
-            }
-            
-            // Location Permissions should already have been granted 
-            var inputLocation = new LatLng(Input.location.lastData);
-            var queryRadius = 500; // 500 meters
-            _coverageClient.TryGetCoverage(inputLocation, queryRadius, OnTryGetCoverage);
+            StartTracking();
         }
 
         /// <summary>
@@ -167,14 +260,14 @@ namespace Niantic.Lightship.AR.Subsystems
         /// </summary>
         public void StopTracking()
         {
-            if (_trackedARLocations.Count == 0)
+            if (_anchorToARLocationMap.Count == 0)
             {
                 Debug.LogError($"No AR Location is currently being tracked, so StopTracking() is not needed.",
                     gameObject);
                 return;
             }
 
-            foreach (var (anchor, arLocation) in _trackedARLocations)
+            foreach (var (anchor, arLocation) in _anchorToARLocationMap)
             {
                 arLocation.gameObject.SetActive(false);
                 var originalParent = _originalParents[anchor];
@@ -185,16 +278,14 @@ namespace Niantic.Lightship.AR.Subsystems
                 DestroyAnchor(anchor);
             }
             _trackedARLocations.Clear();
+            _anchorToARLocationMap.Clear();
             _originalParents.Clear();
 
-            _onlyUsingPrimaryARLocation = false;
-            _primaryARLocation = null;
-
-            foreach (var arLocationHolder in _arLocationHolders)
+            foreach (var arLocationHolder in _coverageARLocationHolders)
             {
                 Destroy(arLocationHolder);
             }
-            _arLocationHolders.Clear();
+            _coverageARLocationHolders.Clear();
         }
 
         /// <summary>
@@ -202,29 +293,14 @@ namespace Niantic.Lightship.AR.Subsystems
         /// </summary>
         public void TryUpdateTracking()
         {
-            if (_trackedARLocations.Count == 0)
+            if (_anchorToARLocationMap.Count == 0)
             {
-                Debug.LogError($"No AR Location is currently being tracked, so AttemptToUpdateTracking() is not needed.",
+                Debug.LogError($"No AR Location is currently being tracked, so TryUpdateTracking() is not needed.",
                     gameObject);
                 return;
             }
 
-            // If using primary location, we do not update the other ones.
-            if (_onlyUsingPrimaryARLocation)
-            {
-                if (_primaryARLocation)
-                {
-                    bool success =
-                        TryTrackAnchor(_primaryARLocation.Payload, out var existingAnchor);
-                    if (!success)
-                    {
-                        Debug.LogError($"Failed to attempt to update tracking of anchor.", _primaryARLocation.gameObject);
-                    }
-                }
-                return;
-            }
-
-            foreach (var (anchor, arLocation) in _trackedARLocations)
+            foreach (var arLocation in _trackedARLocations)
             {
                 bool success =
                     TryTrackAnchor(arLocation.Payload, out var existingAnchor);
@@ -241,50 +317,165 @@ namespace Niantic.Lightship.AR.Subsystems
             using (new ScopedProfiler("OnLocationTracked"))
             {
 
-                foreach (var (anchor, arLocation) in _trackedARLocations)
+                var anchor = arPersistentAnchorStateChangedEventArgs.arPersistentAnchor;
+                var arLocation = _anchorToARLocationMap[anchor];
+                bool tracked = anchor.trackingState == TrackingState.Tracking;
+                if (tracked)
+                {
+                    if (!_trackedARLocations.Contains(arLocation))
+                    {
+                        if (_trackedARLocations.Count < _maxLocationTrackingCount) 
+                        {
+                            // We can still track more locations because we have not reached _maxLocationTrackingCount
+                            _trackedARLocations.Add(arLocation);
+                        }
+                        else
+                        {
+                            // This arLocation is NOT one we track
+                            return;
+                        }
+                    }
+
+                    arLocation.gameObject.SetActive(true);
+                    var args = new ARLocationTrackedEventArgs(arLocation, true);
+                    locationTrackingStateChanged?.Invoke(args);
+                }
+                else
                 {
 
-                    // We only want to track the primary location if _onlyUsingPrimaryARLocation = true
-                    if (_onlyUsingPrimaryARLocation && _primaryARLocation) 
+                    if (!_trackedARLocations.Contains(arLocation))
                     {
-                        if (_primaryARLocation != arLocation)
-                        {
-                            // This arLocation is NOT the primary location
-                            continue;
-                        }
+                        // This arLocation is NOT one we track
+                        return;
                     }
 
-                    bool tracked = anchor.trackingState == TrackingState.Tracking;
-                    if (tracked)
-                    {
-                        // The primary location is set to the first tracked location
-                        if (_onlyUsingPrimaryARLocation && !_primaryARLocation) 
-                        {
-                            _primaryARLocation = arLocation;
-                        }
-
-                        arLocation.gameObject.SetActive(true);
-                        var args = new ARLocationTrackedEventArgs(arLocation, true);
-                        locationTrackingStateChanged?.Invoke(args);
-                    }
-                    else
-                    {
-
-                        // We only want to give updates to the primary location if _onlyUsingPrimaryARLocation = true
-                        if (_onlyUsingPrimaryARLocation && !_primaryARLocation) 
-                        {
-                            continue;
-                        }
-
-                        arLocation.gameObject.SetActive(false);
-                        var args = new ARLocationTrackedEventArgs(arLocation, false);
-                        locationTrackingStateChanged?.Invoke(args);
-                    }
+                    arLocation.gameObject.SetActive(false);
+                    var args = new ARLocationTrackedEventArgs(arLocation, false);
+                    locationTrackingStateChanged?.Invoke(args);
                 }
             }
         }
 
-        private void OnTryGetCoverage(AreaTargetsResult args)
+        private void TryTrackLocations(params ARLocation[] arLocations)
+        {
+            if (_anchorToARLocationMap.Count != 0)
+            {
+                Debug.LogError(
+                    $"You are already tracking {_anchorToARLocationMap.Count} locations.  Call StopTracking() before attempting to track a new location.", 
+                    gameObject);
+                return;
+            }
+
+            // We currently only support up to 5 locations.
+            if (arLocations.Length > 5)
+            {
+                Debug.LogError("More than 5 ARLocations were passed into StartTrackingOneOfMany. We only support up to 5.", 
+                    gameObject);
+                return;
+            }
+
+            foreach (var arLocation in arLocations)
+            {
+                var payload = arLocation.Payload;
+                bool success =
+                    TryTrackAnchor(payload, out var anchor);
+                if (success)
+                {
+                    _originalParents.Add(anchor, arLocation.transform.parent);
+                    arLocation.transform.SetParent(anchor.transform, false);
+                    _anchorToARLocationMap.Add(anchor, arLocation);
+                }
+                else
+                {
+#if UNITY_EDITOR
+                    Debug.LogError($"Failed to track anchor." +
+                        $"{Environment.NewLine}" +
+                        $"In-Editor Playback uses Standalone XR Plug-in Management. Try enabling \"Niantic Lightship SDK\" for Standalone in XR Plug-in Management under Project Settings. And verify validity of Playback dataset",
+                        gameObject);
+#else
+                    Debug.LogError($"Failed to track anchor.", arLocation.gameObject);
+#endif
+                }
+            }
+
+        }
+
+        private IEnumerator TryStartLocationServiceForCoverage()
+        {
+            _keepTryingStartLocationServices = true;
+            while (_keepTryingStartLocationServices)
+            {
+                if (!Input.location.isEnabledByUser)
+                {
+                    // Cannot Start() if Location Permissions have not been granted
+                    yield return new WaitForEndOfFrame();
+                }
+                else if (Input.location.status == LocationServiceStatus.Initializing)
+                {
+                    // Start() was already called. We need to wait until service is running to TryGetCoverage
+                    yield return new WaitForEndOfFrame();
+                }
+                else if (Input.location.status == LocationServiceStatus.Stopped)
+                {
+                    // Default values match SubsystemDataAcquirer.cs
+                    const float defaultAccuracyMeters = 0.01f;
+                    const float defaultDistanceMeters = 0.01f;
+                    Input.location.Start(defaultAccuracyMeters, defaultDistanceMeters);
+                    // Start() was called. We need to wait until service is running to TryGetCoverage
+                    yield return new WaitForEndOfFrame();
+                }
+                else if (Input.location.status == LocationServiceStatus.Running)
+                {
+                    // Successfully getting GPS!
+                    _keepTryingStartLocationServices = false;
+
+                    // We use coverage client to track nearby locations
+                    var inputLocation = new LatLng(Input.location.lastData);
+                    const int queryRadius = 500; // 500 meters
+                    _coverageClient.TryGetCoverage(inputLocation, queryRadius, OnCoverageLocationsQueried);
+
+                    // We will hit yield break; below
+                }
+                else
+                {
+                    // LocationServiceStatus.Failed
+                    _keepTryingStartLocationServices = false;
+                    Debug.LogError($"Cannot get GPS!", gameObject);
+                    // We will hit yield break; below
+                }
+            }
+
+            yield break;
+        }
+
+        private void TryTrackLocationsFromCoverage()
+        {
+#if !UNITY_EDITOR && UNITY_ANDROID
+            if (!Permission.HasUserAuthorizedPermission(Permission.FineLocation))
+            {
+                var androidPermissionCallbacks = new PermissionCallbacks();
+                androidPermissionCallbacks.PermissionGranted += permissionName =>
+                {
+                    if (permissionName == "android.permission.ACCESS_FINE_LOCATION")
+                    {
+                        // This will call OnCoverageLocationsQueried() eventually
+                        StartCoroutine(TryStartLocationServiceForCoverage());
+                    }
+                    else
+                    {
+                        Debug.LogError($"We need FineLocation Permission from Android!", gameObject);
+                    }
+                };
+
+                Permission.RequestUserPermission(Permission.FineLocation, androidPermissionCallbacks);
+                return;
+            }
+#endif
+            // This will call OnCoverageLocationsQueried() eventually
+            StartCoroutine(TryStartLocationServiceForCoverage());
+        }
+        
+        private void OnCoverageLocationsQueried(AreaTargetsResult args)
         {
             var areaTargets = args.AreaTargets;
 
@@ -313,18 +504,37 @@ namespace Niantic.Lightship.AR.Subsystems
                 arLocation.Payload = new ARPersistentAnchorPayload(anchorString);
 
                 // We keep track of ar locations gathered
-                _arLocationHolders.Add(arLocationHolder);
+                _coverageARLocationHolders.Add(arLocationHolder);
                 arLocations.Add(arLocation);
 
                 // Only choose the closest 5 locations.
-                if (5 <= arLocations.Count)
+                if (arLocations.Count >= 5)
                 {
                     break;
                 }
             }
 
-            StartTrackingOneOfMany(arLocations.ToArray());
+            TryTrackLocations(arLocations.ToArray());
         }
 
+        protected override void Update()
+        {
+            base.Update();
+
+            if (!_continuousLocalizationEnabled || _trackedARLocations.Count == 0)
+            {
+                _elapsedTime = 0;
+                return;
+            }
+            
+            _elapsedTime += Time.deltaTime;
+            // Currently the only criteria is elapsed time.
+            // Can experiment with other behaviours here
+            if (_elapsedTime >= _continuousLocalizationRateSeconds)
+            {
+                _elapsedTime = 0;
+                TryUpdateTracking();
+            }
+        }
     }
 }

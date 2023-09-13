@@ -76,7 +76,7 @@ namespace Niantic.Lightship.AR.Subsystems
             {
                 foreach (var status in localizationStatuses)
                 {
-                    Debug.Log($"Localization got a result of {status.Status} with confidence {status.confidence}");
+                    Debug.Log($"Localization got a result of {status.Status} with LocalizationConfidence {status.LocalizationConfidence}");
                 }
             }
 #if DEVELOPMENT_BUILD || UNITY_EDITOR
@@ -123,6 +123,16 @@ namespace Niantic.Lightship.AR.Subsystems
         }
 
         /// <summary>
+        /// Get the vps session id, if any
+        /// </summary>
+        /// <param name="vpsSessionId">The vps session id as 32 character hexidecimal upper-case string.</param>
+        /// <returns>True if vps session id is present, false otherwise</returns>
+        public bool GetVpsSessionId(out string vpsSessionId)
+        {
+            return provider.GetVpsSessionId(out vpsSessionId);
+        }
+
+        /// <summary>
         /// An abstract class to be implemented by providers of this subsystem.
         /// </summary>
         public abstract class Provider : SubsystemProvider<XRPersistentAnchorSubsystem>
@@ -151,6 +161,17 @@ namespace Niantic.Lightship.AR.Subsystems
             /// </summary>
             /// <returns>True if an update is present, false otherwise</returns>
             public abstract bool GetLocalizationStatusUpdate(out XRPersistentAnchorLocalizationStatus[] statuses);
+
+            /// <summary>
+            /// Get the vps session id, if any
+            /// </summary>
+            /// <param name="vpsSessionId">The vps session id as 32 character hexidecimal upper-case string.</param>
+            /// <returns>True if vps session id is present, false otherwise</returns>
+            public virtual bool GetVpsSessionId(out string vpsSessionId)
+            {
+                vpsSessionId = default;
+                return false;
+            }
 
             /// <summary>
             /// Should create a new anchor with the provided <paramref name="pose"/>.

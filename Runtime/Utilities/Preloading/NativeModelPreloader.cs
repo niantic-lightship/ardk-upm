@@ -1,0 +1,168 @@
+// Copyright 2023 Niantic, Inc. All Rights Reserved.
+
+using System;
+using System.ComponentModel;
+using System.Runtime.InteropServices;
+
+namespace Niantic.Lightship.AR.Utilities.Preloading
+{
+    // This feature enumeration corresponds to ARDK_Feature in the native implementation
+    internal enum Feature : byte
+    {
+        [Description("None")] Unspecified = 0,
+        [Description("Lightship Depth")] Depth,
+        [Description("Lightship Semantic Segmentation")] Semantics,
+        [Description("Lightship Scanning Framework")] Scanning,
+    }
+
+    internal sealed class NativeModelPreloader: IModelPreloader
+    {
+        private IntPtr _nativeHandle;
+
+        internal NativeModelPreloader(IntPtr unityContext)
+        {
+            _nativeHandle = Native.Create(unityContext);
+        }
+
+        ~NativeModelPreloader()
+        {
+            Dispose();
+        }
+
+        public override void Dispose()
+        {
+            if (_nativeHandle.IsValidHandle())
+            {
+                Native.Release(_nativeHandle);
+                _nativeHandle = IntPtr.Zero;
+            }
+        }
+
+        public override PreloaderStatusCode DownloadModel(DepthMode depthMode)
+        {
+            return DownloadModel(Feature.Depth, (byte) depthMode);
+        }
+
+        public override PreloaderStatusCode DownloadModel(SemanticsMode semanticsMode)
+        {
+            return DownloadModel(Feature.Semantics, (byte) semanticsMode);
+        }
+
+        private PreloaderStatusCode DownloadModel(Feature feature, byte mode)
+        {
+            if (!_nativeHandle.IsValidHandle())
+            {
+                return PreloaderStatusCode.Failure;
+            }
+
+            var statusCode = Native.DownloadModel(_nativeHandle, (byte) feature, mode);
+            return (PreloaderStatusCode) statusCode;
+        }
+
+        public override PreloaderStatusCode RegisterModel(DepthMode depthMode, string filepath)
+        {
+            return RegisterModel(Feature.Depth, (byte) depthMode, filepath);
+        }
+
+        public override PreloaderStatusCode RegisterModel(SemanticsMode semanticsMode, string filepath)
+        {
+            return RegisterModel(Feature.Semantics, (byte) semanticsMode, filepath);
+        }
+
+        private PreloaderStatusCode RegisterModel(Feature feature, byte mode, string filepath)
+        {
+            if (!_nativeHandle.IsValidHandle())
+            {
+                return PreloaderStatusCode.Failure;
+            }
+
+            var statusCode = Native.RegisterModel(_nativeHandle, (byte) feature, mode, filepath);
+            return (PreloaderStatusCode) statusCode;
+        }
+
+        public override float CurrentProgress(DepthMode depthMode)
+        {
+            return CurrentProgress(Feature.Depth, (byte) depthMode);
+        }
+
+        public override float CurrentProgress(SemanticsMode semanticsMode)
+        {
+            return CurrentProgress(Feature.Semantics, (byte) semanticsMode);
+        }
+
+        private float CurrentProgress(Feature feature, byte mode)
+        {
+            if (!_nativeHandle.IsValidHandle())
+            {
+                return 0;
+            }
+
+            return Native.CurrentProgress(_nativeHandle, (byte) feature, mode);
+        }
+
+        public override bool ExistsInCache(DepthMode depthMode)
+        {
+            return ExistsInCache(Feature.Depth, (byte) depthMode);
+        }
+
+        public override bool ExistsInCache(SemanticsMode semanticsMode)
+        {
+            return ExistsInCache(Feature.Semantics, (byte) semanticsMode);
+        }
+
+        private bool ExistsInCache(Feature feature, byte mode)
+        {
+            if (!_nativeHandle.IsValidHandle())
+            {
+                return false;
+            }
+
+            return Native.ExistsInCache(_nativeHandle, (byte) feature, mode);
+        }
+
+        public override bool ClearFromCache(DepthMode depthMode)
+        {
+            return ClearFromCache(Feature.Depth, (byte) depthMode);
+        }
+
+        public override bool ClearFromCache(SemanticsMode semanticsMode)
+        {
+            return ClearFromCache(Feature.Semantics, (byte) semanticsMode);
+        }
+
+        private bool ClearFromCache(Feature feature, byte mode)
+        {
+            if (!_nativeHandle.IsValidHandle())
+            {
+                return false;
+            }
+
+            return Native.ClearFromCache(_nativeHandle, (byte) feature, mode);
+        }
+
+        private static class Native
+        {
+            [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_Preloader_Create")]
+            public static extern IntPtr Create(IntPtr unityContext);
+
+            [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_Preloader_Release")]
+            public static extern void Release(IntPtr preloaderHandle);
+
+            [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_Preloader_DownloadModel")]
+            public static extern int DownloadModel(IntPtr preloaderHandle, byte feature, byte mode);
+
+            [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_Preloader_RegisterModel")]
+            public static extern int RegisterModel(IntPtr preloaderHandle, byte feature, byte mode, string filepath);
+
+            [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_Preloader_CurrentProgress")]
+            public static extern float CurrentProgress(IntPtr preloaderHandle, byte feature, byte mode);
+
+            [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_Preloader_ExistsInCache")]
+            public static extern bool ExistsInCache(IntPtr preloaderHandle, byte feature, byte mode);
+
+            [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_Preloader_ClearFromCache")]
+            public static extern bool ClearFromCache(IntPtr preloaderHandle, byte feature, byte mode);
+        }
+    }
+
+}

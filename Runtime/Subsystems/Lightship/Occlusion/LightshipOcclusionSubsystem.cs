@@ -1,16 +1,15 @@
 using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
 using Niantic.Lightship.AR.ARFoundation.Occlusion;
-using Niantic.Lightship.AR.Loader;
+using Niantic.Lightship.AR.OcclusionSubsystem;
 using Niantic.Lightship.AR.Utilities;
+using Niantic.Lightship.AR.Utilities.Preloading;
 using Unity.Collections;
 using Unity.XR.CoreUtils;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Scripting;
 using UnityEngine.XR.ARSubsystems;
-using UnityEngine.XR.Management;
 
 namespace Niantic.Lightship.AR
 {
@@ -18,8 +17,30 @@ namespace Niantic.Lightship.AR
     /// This subsystem provides implementing functionality for the <c>XROcclusionSubsystem</c> class.s
     /// </summary>
     [Preserve]
-    class LightshipOcclusionSubsystem : XROcclusionSubsystem, ILightshipSettingsUser
+    public sealed class LightshipOcclusionSubsystem : XROcclusionSubsystem
     {
+        internal const uint MaxRecommendedFrameRate = 20;
+
+        public uint TargetFrameRate
+        {
+            get
+            {
+                if (provider is LightshipOcclusionProvider lightshipProvider)
+                {
+                    return lightshipProvider.TargetFrameRate;
+                }
+
+                throw new NotSupportedException();
+            }
+            set
+            {
+                if (provider is LightshipOcclusionProvider lightshipProvider)
+                {
+                    lightshipProvider.TargetFrameRate = value;
+                }
+            }
+        }
+
         /// <summary>
         /// Register the Lightship occlusion subsystem.
         /// </summary>
@@ -43,15 +64,10 @@ namespace Niantic.Lightship.AR
             XROcclusionSubsystem.Register(xrOcclusionSubsystemCinfo);
         }
 
-        void ILightshipSettingsUser.SetLightshipSettings(LightshipSettings settings)
-        {
-            ((ILightshipSettingsUser)provider).SetLightshipSettings(settings);
-        }
-
         /// <summary>
         /// The implementation provider class.
         /// </summary>
-        class LightshipOcclusionProvider : Provider, ILightshipSettingsUser
+        internal class LightshipOcclusionProvider : Provider
         {
             /// <summary>
             /// The shader property name for the environment depth texture.
@@ -96,16 +112,6 @@ namespace Niantic.Lightship.AR
                 "LIGHTSHIP_ENVIRONMENT_DEPTH_ENABLED";
 
             /// <summary>
-            /// The url of the models used in the inference for depth based on its quality/performance metrics
-            /// </summary>
-            private const string _ARDKModelURLFast = "https://armodels.eng.nianticlabs.com/niantic_ca_v1.2_fast.bin";
-
-            private const string _ARDKModelURLDefault = "https://armodels.eng.nianticlabs.com/niantic_ca_v1.2.bin";
-
-            private const string _ARDKModelURLSmooth =
-                "https://armodels.eng.nianticlabs.com/niantic_ca_v1.2_antiflicker.bin";
-
-            /// <summary>
             /// The shader keywords for enabling environment depth rendering.
             /// </summary>
             /// <value>
@@ -118,6 +124,31 @@ namespace Niantic.Lightship.AR
                     _EnvironmentDepthEnabledARCoreMaterialKeyword,
                     _EnvironmentDepthEnabledLightshipMaterialKeyword
                 };
+
+            // TODO [ARDK-685]: Value will be held and validated in native layer
+            private uint _targetFrameRate = MaxRecommendedFrameRate;
+
+            public uint TargetFrameRate
+            {
+                get
+                {
+                    return _targetFrameRate;
+                }
+                set
+                {
+                    if (value <= 0)
+                    {
+                        Debug.LogError("Target frame rate value must be greater than zero.");
+                        return;
+                    }
+
+                    if (_targetFrameRate != value)
+                    {
+                        _targetFrameRate = value;
+                        ConfigureProvider();
+                    }
+                }
+            }
 
             /// <summary>
             /// The occlusion preference mode for when rendering the background.
@@ -139,19 +170,18 @@ namespace Niantic.Lightship.AR
 
             private EnvironmentDepthMode _requestedEnvironmentDepthMode;
 
-            private LightshipSettings _lightshipSettings;
+            private IApi _api;
+
+            public LightshipOcclusionProvider(): this(new NativeApi()) {}
 
             /// <summary>
             /// Construct the implementation provider.
             /// </summary>
-            public LightshipOcclusionProvider()
+            public LightshipOcclusionProvider(IApi api)
             {
-                Debug.Log("LightshipOcclusionSubsystem.LightshipOcclusionProvider construct");
+                _api = api;
 
-#if NIANTIC_LIGHTSHIP_AR_LOADER_ENABLED
-                _nativeProviderHandle = NativeApi.Construct(LightshipUnityContext.UnityContextHandle);
-#endif
-                Debug.Log("LightshipOcclusionSubsystem got nativeProviderHandle: " + _nativeProviderHandle);
+                _nativeProviderHandle = _api.Construct(LightshipUnityContext.UnityContextHandle);
 
                 // Default depth mode
                 _requestedEnvironmentDepthMode = EnvironmentDepthMode.Fastest;
@@ -160,11 +190,6 @@ namespace Niantic.Lightship.AR
 
                 // Reset settings possibly inherited from a previous session
                 OcclusionContext.ResetOccludee();
-            }
-
-            void ILightshipSettingsUser.SetLightshipSettings(LightshipSettings settings)
-            {
-                _lightshipSettings = settings;
             }
 
             /// <summary>
@@ -180,21 +205,19 @@ namespace Niantic.Lightship.AR
                 ConfigureProvider();
             }
 
-            private string ModelFromMode(EnvironmentDepthMode mode)
+            private byte UnityModeToLightshipMode(EnvironmentDepthMode mode)
             {
                 switch (mode)
                 {
                     case EnvironmentDepthMode.Best:
-                        return _ARDKModelURLSmooth;
+                        return (byte)DepthMode.Smooth;
                     case EnvironmentDepthMode.Fastest:
-                        return _ARDKModelURLFast;
+                        return (byte)DepthMode.Fast;
                     case EnvironmentDepthMode.Medium:
-                        return _ARDKModelURLDefault;
-                    case EnvironmentDepthMode.Disabled:
-                        return "Disabled";
+                        return (byte)DepthMode.Medium;
+                    default:
+                        return (byte)DepthMode.Unspecified;
                 }
-
-                return _ARDKModelURLDefault;
             }
 
             private void ConfigureProvider()
@@ -204,22 +227,27 @@ namespace Niantic.Lightship.AR
                     return;
                 }
 
-                NativeApi.Stop(_nativeProviderHandle);
+                _api.Stop(_nativeProviderHandle);
 
                 switch (requestedEnvironmentDepthMode)
                 {
+                    // Don't start if depth is disabled
                     case EnvironmentDepthMode.Disabled:
                         return;
                 }
 
-                NativeApi.Configure
+                // Don't start if occlusion is disabled
+                if (_occlusionPreferenceMode == OcclusionPreferenceMode.NoOcclusion)
+                    return;
+
+                _api.Configure
                 (
                     _nativeProviderHandle,
-                    ModelFromMode(requestedEnvironmentDepthMode),
-                    _lightshipSettings.LightshipDepthFrameRate
+                    UnityModeToLightshipMode(requestedEnvironmentDepthMode),
+                    TargetFrameRate
                 );
 
-                NativeApi.Start(_nativeProviderHandle);
+                _api.Start(_nativeProviderHandle);
             }
 
             /// <summary>
@@ -232,8 +260,7 @@ namespace Niantic.Lightship.AR
                     return;
                 }
 
-                Debug.Log("LightshipOcclusionSubsystem.Stop");
-                NativeApi.Stop(_nativeProviderHandle);
+                _api.Stop(_nativeProviderHandle);
             }
 
             /// <summary>
@@ -248,7 +275,7 @@ namespace Niantic.Lightship.AR
                     return;
                 }
 
-                NativeApi.Destruct(_nativeProviderHandle);
+                _api.Destruct(_nativeProviderHandle);
                 _nativeProviderHandle = IntPtr.Zero;
             }
 
@@ -285,7 +312,14 @@ namespace Niantic.Lightship.AR
             public override OcclusionPreferenceMode requestedOcclusionPreferenceMode
             {
                 get => _occlusionPreferenceMode;
-                set => _occlusionPreferenceMode = value;
+                set
+                {
+                    if (_occlusionPreferenceMode != value)
+                    {
+                        _occlusionPreferenceMode = value;
+                        ConfigureProvider();
+                    }
+                }
             }
 
             /// <summary>
@@ -306,6 +340,7 @@ namespace Niantic.Lightship.AR
             {
                 xrTextureDescriptor = default;
 
+                Texture2D texture = null;
                 var needsToUpdate = _frameIndexOfLastUpdate != Time.frameCount;
                 if (needsToUpdate)
                 {
@@ -324,33 +359,31 @@ namespace Niantic.Lightship.AR
                     if (gotEnvDepth)
                     {
                         _frameIndexOfLastUpdate = Time.frameCount;
-                        _environmentDepthTextures.GetUpdatedTextureFromBuffer
+                        texture = _environmentDepthTextures.GetUpdatedTextureFromBuffer
                         (
                             memoryBuffer,
                             size,
                             width,
                             height,
                             format,
-                            (uint)_frameIndexOfLastUpdate,
-                            out _
+                            (uint)_frameIndexOfLastUpdate
                         );
 
-                        NativeApi.DisposeResource(_nativeProviderHandle, resourceHandle);
+                        _api.DisposeResource(_nativeProviderHandle, resourceHandle);
                     }
                 }
+                else
+                {
+                    texture = _environmentDepthTextures.GetActiveTexture();
+                }
 
-                var texture = _environmentDepthTextures.GetActiveTexture();
                 if (texture == null)
-                    return false;
-
-                var nativeTexture = _environmentDepthTextures.GetActiveTexturePtr();
-                if (nativeTexture == IntPtr.Zero)
                     return false;
 
                 xrTextureDescriptor =
                     new XRTextureDescriptor
                     (
-                        nativeTexture,
+                        texture.GetNativeTexturePtr(),
                         texture.width,
                         texture.height,
                         0,
@@ -400,11 +433,10 @@ namespace Niantic.Lightship.AR
                             width,
                             height,
                             format,
-                            (uint)_frameIndexOfLastUpdate,
-                            out _
+                            (uint)_frameIndexOfLastUpdate
                         );
 
-                        NativeApi.DisposeResource(_nativeProviderHandle, resourceHandle);
+                        _api.DisposeResource(_nativeProviderHandle, resourceHandle);
                     }
                 }
 
@@ -412,11 +444,7 @@ namespace Niantic.Lightship.AR
                 if (texture == null)
                     return false;
 
-                var nativeTexture = _environmentDepthTextures.GetActiveTexturePtr();
-                if (nativeTexture == IntPtr.Zero)
-                    return false;
-
-                int nativeHandle = nativeTexture.ToInt32();
+                int nativeHandle = texture.GetNativeTexturePtr().ToInt32();
                 ((LightshipCpuImageApi)environmentDepthCpuImageApi).AddManagedXRCpuImage(nativeHandle, texture);
                 Vector2Int dimensions = new Vector2Int(texture.width, texture.height);
                 cinfo = new XRCpuImage.Cinfo(nativeHandle, dimensions, 1, 0.0d, texture.format.XRCpuImageFormat());
@@ -474,7 +502,7 @@ namespace Niantic.Lightship.AR
                 }
 
                 // Acquire the inference result
-                resourceHandle = NativeApi.GetEnvironmentDepth(_nativeProviderHandle, out memoryBuffer, out size, out width, out height, out format, out _);
+                resourceHandle = _api.GetEnvironmentDepth(_nativeProviderHandle, out memoryBuffer, out size, out width, out height, out format, out _);
                 if (resourceHandle == IntPtr.Zero)
                     return false;
 
@@ -489,10 +517,10 @@ namespace Niantic.Lightship.AR
                 if (!requestPostProcessing || !didAcquirePose)
                 {
                     // Blit the original image to a container that matches the camera image aspect ratio
-                    var newResource = NativeApi.Blit(_nativeProviderHandle, resourceHandle, width, height, out memoryBuffer, out size);
+                    var newResource = _api.Blit(_nativeProviderHandle, resourceHandle, width, height, out memoryBuffer, out size);
 
                     // Release the original buffer
-                    NativeApi.DisposeResource(_nativeProviderHandle, resourceHandle);
+                    _api.DisposeResource(_nativeProviderHandle, resourceHandle);
 
                     // Deliver the image
                     resourceHandle = newResource;
@@ -504,7 +532,7 @@ namespace Niantic.Lightship.AR
 
                 // Warp the original depth image to align it with the current pose
                 var processedResource =
-                    NativeApi.Warp
+                    _api.Warp
                     (
                         _nativeProviderHandle,
                         resourceHandle,
@@ -517,7 +545,7 @@ namespace Niantic.Lightship.AR
                     );
 
                 // Release the original buffer
-                NativeApi.DisposeResource(_nativeProviderHandle, resourceHandle);
+                _api.DisposeResource(_nativeProviderHandle, resourceHandle);
 
                 // Deliver the image
                 resourceHandle = processedResource;
@@ -566,115 +594,6 @@ namespace Niantic.Lightship.AR
                 enabledKeywords = _environmentDepthEnabledMaterialKeywords;
                 disabledKeywords = null;
             }
-        }
-
-        /// <summary>
-        /// Container to wrap the native Lightship human body APIs.
-        /// </summary>
-        static class NativeApi
-        {
-#if NIANTIC_LIGHTSHIP_AR_LOADER_ENABLED
-            [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_OcclusionProvider_Construct")]
-            public static extern IntPtr Construct(IntPtr unityContext);
-
-            [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_OcclusionProvider_Start")]
-            public static extern void Start(IntPtr depthApiHandle);
-
-            [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_OcclusionProvider_Stop")]
-            public static extern void Stop(IntPtr depthApiHandle);
-
-            [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_OcclusionProvider_Configure")]
-            public static extern void Configure(IntPtr depthApiHandle, string modelUrl, uint frameRate);
-
-            [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_OcclusionProvider_Destruct")]
-            public static extern void Destruct(IntPtr depthApiHandle);
-
-            [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_OcclusionProvider_GetEnvironmentDepth")]
-            public static extern IntPtr GetEnvironmentDepth
-            (
-                IntPtr depthApiHandle,
-                out IntPtr memoryBuffer,
-                out int size,
-                out int width,
-                out int height,
-                out TextureFormat format,
-                out uint frameId
-            );
-
-            [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_OcclusionProvider_Warp")]
-            public static extern IntPtr Warp
-            (
-                IntPtr depthApiHandle,
-                IntPtr depthResourceHandle,
-                float[] poseMatrix,
-                int targetWidth,
-                int targetHeight,
-                float backProjectionPlane,
-                out IntPtr memoryBuffer,
-                out int size
-            );
-
-            [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_OcclusionProvider_Blit")]
-            public static extern IntPtr Blit
-            (
-                IntPtr depthApiHandle,
-                IntPtr depthResourceHandle,
-                int targetWidth,
-                int targetHeight,
-                out IntPtr memoryBuffer,
-                out int size
-            );
-
-            [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_OcclusionProvider_ReleaseResource")]
-            public static extern IntPtr DisposeResource(IntPtr depthApiHandle, IntPtr resourceHandle);
-
-#else
-            public static IntPtr Construct(IntPtr unityContext)
-            {
-                throw new NotImplementedException();
-            }
-
-            public static void Start(IntPtr depthApiHandle)
-            {
-                throw new NotImplementedException();
-            }
-
-            public static void Stop(IntPtr depthApiHandle)
-            {
-                throw new NotImplementedException();
-            }
-
-            public static void Configure(IntPtr depthApiHandle, string modelUrl, uint frameRate)
-            {
-                throw new NotImplementedException();
-            }
-
-            public static void Destruct(IntPtr depthApiHandle)
-            {
-                throw new NotImplementedException();
-            }
-
-            public static IntPtr GetEnvironmentDepth(IntPtr depthApiHandle, out IntPtr memoryBuffer, out int size, out int width, out int height, out TextureFormat format, out uint frameId)
-            {
-                throw new NotImplementedException();
-            }
-
-            public static IntPtr Warp(IntPtr depthApiHandle, IntPtr depthResourceHandle, float[] poseMatrix, int targetWidth, int targetHeight, float backProjectionPlane, out IntPtr memoryBuffer, out int size)
-            {
-                throw new NotImplementedException();
-            }
-
-            public static IntPtr Blit(IntPtr depthApiHandle, IntPtr depthResourceHandle, int targetWidth,
-                int targetHeight, out IntPtr memoryBuffer, out int size)
-            {
-                throw new NotImplementedException();
-            }
-
-            public static IntPtr DisposeResource(IntPtr depthApiHandle, IntPtr resourceHandle)
-            {
-                throw new NotImplementedException();
-            }
-#endif
         }
     }
 }

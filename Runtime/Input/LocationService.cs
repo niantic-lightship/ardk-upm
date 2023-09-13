@@ -2,9 +2,9 @@ using System;
 using System.Reflection;
 using Niantic.Lightship.AR.Loader;
 using Niantic.Lightship.AR.Playback;
+using Niantic.Lightship.AR.Utilities;
 using UnityEngine;
-using UnityEngine.Assertions;
-using UnityEngine.XR.ARFoundation;
+using UnityEditor;
 
 namespace Niantic.Lightship.AR
 {
@@ -67,72 +67,189 @@ namespace Niantic.Lightship.AR
         /// </summary>
         public void Stop() => GetOrCreateProvider().Stop();
 
+        internal ILocationServiceProvider Provider => _provider;
+
         private ILocationServiceProvider _provider;
         private LightshipSettings _lightshipSettings;
 
+        // Defaults as defined by Unity
+        private const float k_DefaultAccuracyInMeters = 10f;
+        private const float k_DefaultUpdateDistanceInMeters = 10f;
+
         private ILocationServiceProvider GetOrCreateProvider()
         {
-            if (_lightshipSettings == null)
-                throw new InvalidOperationException("Missing LightshipSettings.");
-
             if (_provider == null)
             {
-                var  isPlayback = _lightshipSettings.EditorPlaybackEnabled || _lightshipSettings.DevicePlaybackEnabled;
-                CreateOrSwitchProvider(isPlayback);
+                CreateProvider();
             }
 
             return _provider;
         }
 
-        private bool prevWasRunning;
-
-        private void CreateOrSwitchProvider(bool isPlayback)
+        // Logic for determining what the next provider implementation should be is kept contained
+        // to this class, otherwise it would be _split_ between this class and the PlaybackLoaderHelper class,
+        // because we need to account for when this method is invoked without XR having been initialized.
+        private void CreateProvider()
         {
-            if (_provider != null)
+            var nextIsPlayback =
+                _lightshipSettings != null &&
+                (_lightshipSettings.EditorPlaybackEnabled || _lightshipSettings.DevicePlaybackEnabled);
+
+            if (_provider == null)
             {
-                prevWasRunning = _provider.status != LocationServiceStatus.Stopped;
-                if (prevWasRunning)
-                    _provider.Stop();
+                CreateProvider(nextIsPlayback);
+                return;
             }
 
-            _provider = isPlayback
-                ? new PlaybackLocationServiceProvider()
-                : new UnityLocationServiceProvider();
+            var currHasStarted =
+                _provider.status == LocationServiceStatus.Running ||
+                _provider.status == LocationServiceStatus.Initializing;
 
-            if (prevWasRunning)
-                _provider.Start();
+            if (nextIsPlayback)
+            {
+                ReplaceProvider(InputImplementationType.Playback, currHasStarted);
+            }
+            else if (Application.isEditor)
+            {
+                ReplaceProvider(InputImplementationType.Mock, currHasStarted);
+            }
+            else
+            {
+                ReplaceProvider(InputImplementationType.Unity, currHasStarted);
+            }
+        }
+
+        private void CreateProvider(bool isPlayback)
+        {
+            if (isPlayback)
+            {
+                _provider = new PlaybackLocationServiceProvider();
+            }
+            else
+            {
+                _provider = Application.isEditor
+                    ? new MockLocationServiceProvider()
+                    : new UnityLocationServiceProvider();
+            }
+        }
+
+        // Switch from the Mock to Playback implementation and back are expected scenariso,
+        // as the lifetime/usage of the LocationService is independent of XR.
+        //
+        // Switching from the Unity and Playback/Mock providers and back is only expected to happen in
+        // testing scenarios.
+        private void ReplaceProvider(InputImplementationType nextImplType, bool currIsRunning)
+        {
+            if (_provider.ImplementationType == nextImplType)
+            {
+                // Replacing a provider with another of the same type will never happen currently.
+                // But if it happens, just keep the same provider.
+                return;
+            }
+
+            var oldProvider = _provider;
+
+            var nextIsRunning = currIsRunning;
+
+#if UNITY_EDITOR
+            // Silence warning logs when exiting Play Mode
+            var exitingPlayMode = !EditorApplication.isPlayingOrWillChangePlaymode && EditorApplication.isPlaying;
+            nextIsRunning &= !exitingPlayMode;
+#endif
+
+            switch (nextImplType)
+            {
+                case InputImplementationType.Unity:
+                    _provider = new UnityLocationServiceProvider();
+                    if (nextIsRunning)
+                    {
+                        if (_provider.status != LocationServiceStatus.Running)
+                        {
+                            Debug.LogWarning
+                            (
+                                "Location service implementation was reinitialized to now be provided by the device." +
+                                "There will be a short disruption in service while it initializes."
+                            );
+                        }
+
+                        _provider.Start(oldProvider.AccuracyInMeters, oldProvider.UpdateDistanceInMeters);
+                    }
+
+                    break;
+
+                case InputImplementationType.Mock:
+                    _provider = new MockLocationServiceProvider(oldProvider);
+                    if (nextIsRunning)
+                    {
+                        // Log is specifically about switching from the Playback --> Mock implementation, because
+                        // switching from the Unity --> Mock implementation is not expected to ever happen.
+                        Debug.LogWarning
+                        (
+                            "Because XR was deinitialized, there is no Playback dataset for Input.location to draw " +
+                            "data updates from. While the location service status will continue to be Running, data " +
+                            "will not be updated."
+                        );
+
+                        ((MockLocationServiceProvider)_provider).StartImmediately
+                        (
+                            oldProvider.AccuracyInMeters,
+                            oldProvider.UpdateDistanceInMeters
+                        );
+                    }
+
+                    break;
+                case InputImplementationType.Playback:
+                    _provider = new PlaybackLocationServiceProvider();
+                    if (nextIsRunning)
+                    {
+                        _provider.Start(oldProvider.AccuracyInMeters, oldProvider.UpdateDistanceInMeters);
+                    }
+                    break;
+            }
+        }
+
+        internal LocationService()
+        {
         }
 
         void IPlaybackDatasetUser.SetPlaybackDatasetReader(PlaybackDatasetReader reader)
         {
-            var playbackProvider = GetOrCreateProvider() as PlaybackLocationServiceProvider;
-            Assert.IsNotNull
-            (
-                playbackProvider,
-                "Tried to set the dataset of a non-Playback Location Service. This should not have happened."
-            );
+            if (reader == null)
+            {
+                if (_provider is PlaybackLocationServiceProvider)
+                {
+                    Debug.LogError
+                    (
+                        "Cannot set the PlaybackDatasetReader of an active PlaybackLocationServiceProvider to null."
+                    );
+                }
 
-            playbackProvider.SetPlaybackDatasetReader(reader);
+                return;
+            }
+
+            if (_provider is PlaybackLocationServiceProvider playbackProvider)
+            {
+                playbackProvider.SetPlaybackDatasetReader(reader);
+            }
         }
 
         void ILightshipSettingsUser.SetLightshipSettings(LightshipSettings settings)
         {
             _lightshipSettings = settings;
-
-            // The provider is not reset when the LightshipLoader deinitializes to cover the situation
-            // where AR has been unloaded but location services needs to keep running. So now when new
-            // LightshipSettings are injected by the loader, the provider implementations needs to be
-            // switched out.
-            var isPlayback = _lightshipSettings.EditorPlaybackEnabled || _lightshipSettings.DevicePlaybackEnabled;
-            CreateOrSwitchProvider(isPlayback);
+            CreateProvider();
         }
 
-        private interface ILocationServiceProvider
+        internal interface ILocationServiceProvider
         {
             bool isEnabledByUser { get; }
             LocationServiceStatus status { get; }
 
             LocationInfo lastData { get; }
+
+            InputImplementationType ImplementationType { get; }
+
+            float AccuracyInMeters { get; }
+            float UpdateDistanceInMeters { get; }
 
             void Start(float desiredAccuracyInMeters, float updateDistanceInMeters);
             void Start(float desiredAccuracyInMeters);
@@ -143,6 +260,10 @@ namespace Niantic.Lightship.AR
 
         private class PlaybackLocationServiceProvider : ILocationServiceProvider, IPlaybackDatasetUser
         {
+            public InputImplementationType ImplementationType => InputImplementationType.Playback;
+            public float AccuracyInMeters { get; private set; }
+            public float UpdateDistanceInMeters { get; private set; }
+
             public bool isEnabledByUser => _datasetReader.GetLocationServicesEnabled();
 
             public LocationServiceStatus status
@@ -187,26 +308,22 @@ namespace Niantic.Lightship.AR
 
             private PlaybackDatasetReader _datasetReader;
 
-            public void Start(float desiredAccuracyInMeters, float updateDistanceInMeters)
-            {
-                Start(desiredAccuracyInMeters, updateDistanceInMeters, true);
-            }
-
             public void Start(float desiredAccuracyInMeters)
             {
-                Start(desiredAccuracyInMeters, 10f, true);
+                Start(desiredAccuracyInMeters, k_DefaultUpdateDistanceInMeters);
             }
 
             public void Start()
             {
-                Start(10f, 10f, false);
+                Start(k_DefaultAccuracyInMeters, k_DefaultUpdateDistanceInMeters);
             }
 
-            private void Start(float desiredAccuracyInMeters, float updateDistanceInMeters, bool logWarning)
+            public void Start(float desiredAccuracyInMeters, float updateDistanceInMeters)
             {
                 // TODO [AR-16134]
                 // Improve Input.location by filtering location updates with configured updateDistanceInMeters
-                if (logWarning)
+                if (Math.Abs(desiredAccuracyInMeters - k_DefaultAccuracyInMeters) > 0.001 ||
+                    Math.Abs(updateDistanceInMeters - k_DefaultUpdateDistanceInMeters) > 0.001)
                 {
                     Debug.LogWarning
                     (
@@ -214,6 +331,9 @@ namespace Niantic.Lightship.AR
                         "while using Lightship Playback."
                     );
                 }
+
+                AccuracyInMeters = desiredAccuracyInMeters;
+                UpdateDistanceInMeters = updateDistanceInMeters;
 
                 _started = true;
             }
@@ -259,24 +379,130 @@ namespace Niantic.Lightship.AR
             }
         }
 
+        private class MockLocationServiceProvider : ILocationServiceProvider
+        {
+            public InputImplementationType ImplementationType => InputImplementationType.Mock;
+            public float AccuracyInMeters { get; private set; }
+            public float UpdateDistanceInMeters { get; private set; }
+            public bool isEnabledByUser { get; private set; }
+            public LocationServiceStatus status { get; private set; }
+
+            public LocationInfo lastData
+            {
+                get
+                {
+                    if (status != LocationServiceStatus.Running)
+                    {
+                        Debug.Log
+                        (
+                            "Location service updates are not enabled. " +
+                            "Check LocationService.status before querying last location."
+                        );
+
+                        return default;
+                    }
+
+                    return _lastData;
+                }
+            }
+
+            private LocationInfo _lastData = default;
+
+            public MockLocationServiceProvider()
+            {
+                isEnabledByUser = true;
+            }
+
+            public MockLocationServiceProvider(ILocationServiceProvider prevProvider)
+            {
+                isEnabledByUser = prevProvider.isEnabledByUser;
+                _lastData = prevProvider.lastData;
+            }
+
+            public void Start(float desiredAccuracyInMeters, float updateDistanceInMeters)
+            {
+                if (status == LocationServiceStatus.Stopped)
+                {
+                    if (!isEnabledByUser)
+                    {
+                        status = LocationServiceStatus.Failed;
+                    }
+                    else
+                    {
+                        AccuracyInMeters = desiredAccuracyInMeters;
+                        UpdateDistanceInMeters = updateDistanceInMeters;
+
+                        status = LocationServiceStatus.Initializing;
+                        MonoBehaviourEventDispatcher.Updating.AddListener(SetStatusToRunning);
+                    }
+                }
+            }
+
+            public void Start(float desiredAccuracyInMeters)
+            {
+                Start(desiredAccuracyInMeters, k_DefaultUpdateDistanceInMeters);
+            }
+
+            public void Start()
+            {
+                Start(k_DefaultAccuracyInMeters, k_DefaultUpdateDistanceInMeters);
+            }
+
+            public void StartImmediately(float desiredAccuracyInMeters, float updateDistanceInMeters)
+            {
+                isEnabledByUser = true;
+                AccuracyInMeters = desiredAccuracyInMeters;
+                UpdateDistanceInMeters = updateDistanceInMeters;
+                status = LocationServiceStatus.Running;
+            }
+
+            private void SetStatusToRunning()
+            {
+                MonoBehaviourEventDispatcher.Updating.RemoveListener(SetStatusToRunning);
+                status = LocationServiceStatus.Running;
+            }
+
+            public void Stop()
+            {
+                if (status != LocationServiceStatus.Failed)
+                {
+                    status = LocationServiceStatus.Stopped;
+                }
+            }
+        }
+
         private class UnityLocationServiceProvider : ILocationServiceProvider
         {
+            public InputImplementationType ImplementationType => InputImplementationType.Unity;
+
+            public float AccuracyInMeters { get; private set; }
+            public float UpdateDistanceInMeters { get; private set; }
+
             public bool isEnabledByUser => UnityEngine.Input.location.isEnabledByUser;
             public LocationServiceStatus status => UnityEngine.Input.location.status;
             public LocationInfo lastData => UnityEngine.Input.location.lastData;
 
             public void Start(float desiredAccuracyInMeters, float updateDistanceInMeters)
             {
+                AccuracyInMeters = desiredAccuracyInMeters;
+                UpdateDistanceInMeters = updateDistanceInMeters;
+
                 UnityEngine.Input.location.Start(desiredAccuracyInMeters, updateDistanceInMeters);
             }
 
             public void Start(float desiredAccuracyInMeters)
             {
+                AccuracyInMeters = desiredAccuracyInMeters;
+                UpdateDistanceInMeters = k_DefaultUpdateDistanceInMeters;
+
                 UnityEngine.Input.location.Start(desiredAccuracyInMeters);
             }
 
             public void Start()
             {
+                AccuracyInMeters = k_DefaultUpdateDistanceInMeters;
+                UpdateDistanceInMeters = k_DefaultUpdateDistanceInMeters;
+
                 UnityEngine.Input.location.Start();
             }
 

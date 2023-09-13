@@ -75,6 +75,11 @@ namespace Niantic.Lightship.AR.Subsystems
             }
         }
 
+        public bool GetVpsSessionId(ARPersistentAnchorManager arPersistentAnchorManager, out string vpsSessionId)
+        {
+            return arPersistentAnchorManager.subsystem.GetVpsSessionId(out vpsSessionId);
+        }
+
         public void Dispose()
         {
             // Do nothing

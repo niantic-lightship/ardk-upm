@@ -1,5 +1,8 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
+using Niantic.Lightship.AR.ARFoundation;
 using Niantic.Lightship.AR.Loader;
 using Niantic.Lightship.AR.Playback;
 using Unity.EditorCoroutines.Editor;
@@ -16,6 +19,7 @@ using UnityEditor.XR.ARSubsystems;
 using UnityEditor.XR.Management;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.XR.OpenXR;
 
 namespace Niantic.Lightship.AR.Editor
 {
@@ -50,6 +54,23 @@ namespace Niantic.Lightship.AR.Editor
                 }
             }
 
+            private static void PostProcessIosUnityAppControllerFix(string buildPath)
+            {
+                // Apply patch for Unity timing bug: https://support.unity.com/hc/en-us/requests/1630624
+                // We're going to do a simple replace for any UnityAppController.mm which includes the buggy line.
+                // Affects release versions 2021.3.24-29, 2022.2.13-21,3.0-6, 2023.1.0-7
+                const string buggyLine = "[self startUnity: application];";
+                const string fixedLine = "[self performSelector: @selector(startUnity:) withObject: application afterDelay: 0];";
+                string appControllerPath = buildPath + "/Classes/UnityAppController.mm";
+                var appControllerLines = File.ReadAllLines(appControllerPath);
+                int index = Array.FindIndex(appControllerLines, line => line.Contains(buggyLine));
+                if (index >= 0)
+                {
+                    appControllerLines[index] = appControllerLines[index].Replace(buggyLine, fixedLine);
+                    File.WriteAllLines(appControllerPath, appControllerLines);
+                }
+            }
+
             private static void PostProcessIosBuild(string buildPath)
             {
 #if UNITY_IOS
@@ -71,6 +92,18 @@ namespace Niantic.Lightship.AR.Editor
                 }
 
                 project.WriteToFile(projectPath);
+
+// Begin Unity minor version gating
+// Unfortunately this is necessary since the _OR_NEWER macros only cover major versions.
+#if UNITY_2021_3_24 || UNITY_2021_3_25 || UNITY_2021_3_26 || UNITY_2021_3_27 || UNITY_2021_3_28 || UNITY_2021_3_29
+                PostProcessIosUnityAppControllerFix(buildPath);
+#elif UNITY_2022_2_13 || UNITY_2022_2_14 || UNITY_2022_2_15 || UNITY_2022_2_16 || UNITY_2022_2_17 || UNITY_2022_2_18 || UNITY_2022_2_19 || UNITY_2022_2_20 || UNITY_2022_2_21
+                PostProcessIosUnityAppControllerFix(buildPath);
+#elif UNITY_2022_3_0 || UNITY_2022_3_1 || UNITY_2022_3_2 || UNITY_2022_3_3 || UNITY_2022_3_4 || UNITY_2022_3_5 || UNITY_2022_3_6
+                PostProcessIosUnityAppControllerFix(buildPath);
+#endif
+// End Unity minor version gating
+
 #endif
             }
         }
@@ -124,6 +157,8 @@ namespace Niantic.Lightship.AR.Editor
                 {
                     BuildHelper.AddBackgroundShaderToProject(backgroundShaderName);
                 }
+
+                BuildHelper.AddBackgroundShaderToProject(LightshipOcclusionExtension.occlusionExtensionShaderName);
 
                 // TODO: Things that ARKit and ARCore BuildProcessor implementations doe
                 // - Check camera usage description
@@ -201,10 +236,12 @@ namespace Niantic.Lightship.AR.Editor
             if (generalSettings != null)
             {
                 LightshipBuildProcessor.loaderEnabled = false;
+                bool loaderIsOpenXR = false;
                 foreach (var loader in generalSettings.Manager.activeLoaders)
                 {
+                    loaderIsOpenXR = loader is OpenXRLoader;   //TODO: make this actually check for spaces
                     if (loader is LightshipStandaloneLoader || loader is LightshipARCoreLoader ||
-                        loader is LightshipARKitLoader)
+                        loader is LightshipARKitLoader || loaderIsOpenXR)
                     {
                         LightshipBuildProcessor.loaderEnabled = true;
                         break;
@@ -213,11 +250,16 @@ namespace Niantic.Lightship.AR.Editor
 
                 if (LightshipBuildProcessor.loaderEnabled && !previousLoaderEnabled)
                 {
+                    if (loaderIsOpenXR)
+                    {
+                        AddDefineSymbols.Add("NIANTIC_LIGHTSHIP_SPACES_ENABLED");
+                    }
                     AddDefineSymbols.Add("NIANTIC_LIGHTSHIP_AR_LOADER_ENABLED");
                 }
                 else if (!LightshipBuildProcessor.loaderEnabled && previousLoaderEnabled)
                 {
                     AddDefineSymbols.Remove("NIANTIC_LIGHTSHIP_AR_LOADER_ENABLED");
+                    AddDefineSymbols.Remove("NIANTIC_LIGHTSHIP_SPACES_ENABLED");
                 }
             }
         }

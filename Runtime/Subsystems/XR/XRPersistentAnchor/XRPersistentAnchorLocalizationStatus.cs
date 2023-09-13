@@ -16,6 +16,6 @@ namespace Niantic.Lightship.AR.Subsystems
     {
         public Guid NodeId;
         public LocalizationStatus Status;
-        public float confidence;
+        public float LocalizationConfidence;
     }
 }

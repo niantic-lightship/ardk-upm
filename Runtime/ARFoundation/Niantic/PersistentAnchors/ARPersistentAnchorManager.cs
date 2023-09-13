@@ -48,9 +48,12 @@ namespace Niantic.Lightship.AR.Subsystems
         /// <summary>
         /// Called when the state of an anchor has changed
         ///
-        /// Each invocation of this event contains a single Persistent Anchor that has had a state change
-        ///     this frame. Query the arg's arPersistentAnchor's TrackingState to determine its new
-        ///     TrackingState
+        /// Each invocation of this event contains a single Persistent Anchor that has had a state or pose change
+        ///     this frame.
+        /// Query the arg's arPersistentAnchor's TrackingState to determine its new
+        ///     TrackingState.
+        /// Query the arPersistentAnchor's PredictedPose to determine its new
+        ///     PredictedPose.
         /// </summary>
         public event Action<ARPersistentAnchorStateChangedEventArgs> arPersistentAnchorStateChanged;
 
@@ -69,6 +72,14 @@ namespace Niantic.Lightship.AR.Subsystems
         /// The prefab to use when creating an ARPersistentAnchor.  If null, a new GameObject will be created.
         /// </summary>
         protected override GameObject GetPrefab() => _defaultAnchorGameobject;
+
+        protected bool InterpolateAnchors = false;
+        protected bool TemporalFusionEnabled = false;
+
+        internal GameObject DefaultAnchorPrefab
+        {
+            get => _defaultAnchorGameobject;
+        }
 
         private IARPersistentAnchorManagerImplementation _arPersistentAnchorManagerImplementation;
 
@@ -109,6 +120,20 @@ namespace Niantic.Lightship.AR.Subsystems
         /// The name to assign to the `GameObject` instantiated for each <see cref="ARPersistentAnchor"/>.
         /// </summary>
         protected override string gameObjectName => "Persistent Anchor";
+
+        /// <summary>
+        /// Gets the vps session id (as 32 character hexidecimal upper-case string)
+        /// A vps session is defined between first TryTrackAnchor and last DestroyAnchor for a given set of anchors
+        /// </summary>
+        /// <param name="vpsSessionId">The vps session id as 32 character hexidecimal upper-case string</param>
+        /// <returns>
+        /// <c>True</c> If vps session id can be obtained
+        /// <c>False</c> If no vps session is running
+        /// </returns>
+        public bool GetVpsSessionId(out string vpsSessionId)
+        {
+            return _arPersistentAnchorManagerImplementation.GetVpsSessionId(this, out vpsSessionId);
+        }
 
         /// <summary>
         /// Restores a Persistent Anchor from a Payload. The Anchor GameObject will be returned immediately,
@@ -171,6 +196,12 @@ namespace Niantic.Lightship.AR.Subsystems
             foreach (var addedAnchor in addedAnchors)
             {
                 _arPersistentAnchorStates.Add(addedAnchor, addedAnchor.trackingState);
+                if (addedAnchor.trackingState == TrackingState.Tracking || 
+                    addedAnchor.trackingState == TrackingState.Limited)
+                {
+                    addedAnchor.PredictedPose = TransformToPose(addedAnchor.transform);
+                }
+
                 var arPersistentAnchorStateChangedEvent = new ARPersistentAnchorStateChangedEventArgs(addedAnchor);
                 arPersistentAnchorStateChanged?.Invoke(arPersistentAnchorStateChangedEvent);
             }
@@ -185,13 +216,57 @@ namespace Niantic.Lightship.AR.Subsystems
                     //Sometimes an anchor is updated before it is added.  This waits until an anchor is added before running update logic.
                     continue;
                 }
-                if (_arPersistentAnchorStates[updatedAnchor] != updatedAnchor.trackingState)
+
+                var predictedPose = TransformToPose(updatedAnchor.transform);
+                var nextAnchorPose = predictedPose;
+                var lastAnchorPose = updatedAnchor.PredictedPose;
+
+                if (TemporalFusionEnabled)
                 {
-                    _arPersistentAnchorStates[updatedAnchor] = updatedAnchor.trackingState;
-                    var arPersistentAnchorStateChangedEvent =
-                        new ARPersistentAnchorStateChangedEventArgs(updatedAnchor);
-                    arPersistentAnchorStateChanged?.Invoke(arPersistentAnchorStateChangedEvent);
+                    // Override the raw predicted pose with the previous fused pose
+                    lastAnchorPose = updatedAnchor.FusedPose;
+
+                    if (updatedAnchor.trackingState == TrackingState.None)
+                    {
+                        updatedAnchor.ClearTemporalFusion();
+                    }
+                    else if (updatedAnchor.trackingState == TrackingState.Tracking)
+                    {
+                        // Update temporal fusion, this manipulates the pose of the anchor.
+                        nextAnchorPose = updatedAnchor.UpdateAndApplyTemporalFusion(predictedPose);
+                    }
+                    else if (updatedAnchor.trackingState == TrackingState.Limited)
+                    {
+                        // Apply the previous fused pose to overwrite the limited prediction
+                        updatedAnchor.ApplyPoseToTransform(updatedAnchor.FusedPose);
+                        
+                        // For interpolation, target == start, so no interpolation takes place
+                        nextAnchorPose = lastAnchorPose;
+                    }
                 }
+
+                if (InterpolateAnchors)
+                {
+                    // Start interpolation with the previous cached pose, before updating it
+                    // With temporal fusion, this will set the pose back to the previous fused pose
+                    updatedAnchor.StartInterpolationToPose
+                        (
+                            nextAnchorPose,
+                            lastAnchorPose
+                        );
+                }
+
+                // Update predicted pose last, this destroys the previous prediction data
+                if (updatedAnchor.trackingState == TrackingState.Tracking || 
+                    updatedAnchor.trackingState == TrackingState.Limited)
+                {
+                    updatedAnchor.PredictedPose = predictedPose;
+                }
+
+                _arPersistentAnchorStates[updatedAnchor] = updatedAnchor.trackingState;
+                var arPersistentAnchorStateChangedEvent =
+                    new ARPersistentAnchorStateChangedEventArgs(updatedAnchor);
+                arPersistentAnchorStateChanged?.Invoke(arPersistentAnchorStateChangedEvent);
             }
         }
 
@@ -239,6 +314,11 @@ namespace Niantic.Lightship.AR.Subsystems
                 Permission.RequestUserPermission(Permission.FineLocation);
             }
 #endif
+        }
+
+        private Pose TransformToPose(Transform tf)
+        {
+            return new Pose(tf.position, tf.rotation);
         }
     }
 }

@@ -11,6 +11,7 @@
         "Niantic.Lightship.AR",
         "Unity.XR.ARCore",
         "Unity.XR.ARKit",
+        "Unity.XR.OpenXR",
         "Unity.XR.ARSubsystems.Editor",
         "Unity.XR.ARFoundation",
         "Unity.XR.Simulation"

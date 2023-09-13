@@ -46,7 +46,8 @@ namespace Niantic.Lightship.AR.PersistentAnchorSubsystem
             out int trackingState,
             out int trackingStateReason,
             out IntPtr anchorPayloadPtr,
-            out int anchorPayloadSize
+            out int anchorPayloadSize,
+            out UInt64 timestampMs
         );
 
         public IntPtr AcquireNetworkStatus(IntPtr anchorProviderHandle, out IntPtr networkStatusList, out int listCount);
@@ -75,5 +76,7 @@ namespace Niantic.Lightship.AR.PersistentAnchorSubsystem
             out LocalizationStatus statusOut,
             out float confidenceOut
         );
+
+        public bool GetVpsSessionId(IntPtr anchorProviderHandle, out string vpsSessionId);
     }
 }

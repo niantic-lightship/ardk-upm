@@ -136,8 +136,8 @@ namespace Niantic.Lightship.AR.Playback
             // This value will strongly affect memory usage.  It can also be set by the user in configuration.
             // The value represents the number of frames in memory before the user must make a copy of the data
             private const int k_FramesInMemoryCount = 2;
-            private BufferedTextureCache m_EnvironmentDepthTextures;
-            private BufferedTextureCache m_EnvironmentConfidenceTextures;
+            private SizedBufferedTextureCache m_EnvironmentDepthTextures;
+            private SizedBufferedTextureCache m_EnvironmentConfidenceTextures;
 
             private EnvironmentDepthMode m_requestedEnvironmentDepthMode;
 
@@ -174,7 +174,7 @@ namespace Niantic.Lightship.AR.Playback
                 var depthRes = m_DatasetReader.GetDepthResolution();
 
                 m_EnvironmentDepthTextures =
-                    new BufferedTextureCache
+                    new SizedBufferedTextureCache
                     (
                         k_FramesInMemoryCount,
                         depthRes.x,
@@ -184,7 +184,7 @@ namespace Niantic.Lightship.AR.Playback
                     );
 
                 m_EnvironmentConfidenceTextures =
-                    new BufferedTextureCache
+                    new SizedBufferedTextureCache
                     (
                         k_FramesInMemoryCount,
                         depthRes.x,
@@ -255,18 +255,17 @@ namespace Niantic.Lightship.AR.Playback
 
                 var path = Path.Combine(m_DatasetReader.GetDatasetPath(), frame.DepthPath);
 
-                m_EnvironmentDepthTextures.GetUpdatedTextureFromPath
+                var tex = m_EnvironmentDepthTextures.GetUpdatedTextureFromPath
                 (
                     path,
-                    (uint)frame.Sequence,
-                    out IntPtr nativeTexturePtr
+                    (uint)frame.Sequence
                 );
 
                 var depthResolution = m_DatasetReader.GetDepthResolution();
                 xrTextureDescriptor =
                     new XRTextureDescriptor
                     (
-                        nativeTexturePtr,
+                        tex.GetNativeTexturePtr(),
                         depthResolution.x,
                         depthResolution.y,
                         0,
@@ -301,18 +300,17 @@ namespace Niantic.Lightship.AR.Playback
 
                 var path = Path.Combine(m_DatasetReader.GetDatasetPath(), frame.DepthConfidencePath);
 
-                m_EnvironmentConfidenceTextures.GetUpdatedTextureFromPath
+                var tex = m_EnvironmentConfidenceTextures.GetUpdatedTextureFromPath
                 (
                     path,
-                    (uint)frame.Sequence,
-                    out IntPtr nativeTexturePtr
+                    (uint)frame.Sequence
                 );
 
                 var res = m_DatasetReader.GetDepthResolution();
                 environmentDepthConfidenceDescriptor =
                     new XRTextureDescriptor
                     (
-                        nativeTexturePtr,
+                        tex.GetNativeTexturePtr(),
                         res.x,
                         res.y,
                         0,

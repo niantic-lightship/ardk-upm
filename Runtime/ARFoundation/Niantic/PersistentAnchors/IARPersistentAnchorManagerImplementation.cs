@@ -6,5 +6,6 @@ namespace Niantic.Lightship.AR.Subsystems
     {
         bool TryTrackAnchor(ARPersistentAnchorManager arPersistentAnchorManager, ARPersistentAnchorPayload payload, out ARPersistentAnchor arPersistentAnchor);
         void DestroyAnchor(ARPersistentAnchorManager arPersistentAnchorManager, ARPersistentAnchor arPersistentAnchor);
+        bool GetVpsSessionId(ARPersistentAnchorManager arPersistentAnchorManager, out string vpsSessionId);
     }
 }

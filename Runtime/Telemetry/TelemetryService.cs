@@ -93,17 +93,20 @@ namespace Niantic.Lightship.AR.Telemetry
 
         private void EnqueueNativeEvents()
         {
-            if (_telemetryServiceHandle.IsValidHandle())
+            if (!_telemetryServiceHandle.IsValidHandle())
             {
                 // not possible. But in the off chance this does happen, its better to fail gracefully and silently
                 return;
             }
 
+            IntPtr eventLengthsArrayPtr = IntPtr.Zero;
+            IntPtr eventsAsByteArrayArrayPtr = IntPtr.Zero;
+            int eventCount = 0;
             try
             {
-                IntPtr eventsAsByteArrayArrayPtr = Lightship_ARDK_Unity_Telemetry_GetPendingEventsAsArray(
+                eventsAsByteArrayArrayPtr = Lightship_ARDK_Unity_Telemetry_GetPendingEventsAsArray(
                     _telemetryServiceHandle,
-                    out IntPtr eventLengthsArrayPtr, out int eventCount);
+                    out eventLengthsArrayPtr, out eventCount);
 
                 if (!eventLengthsArrayPtr.IsValidHandle() || !eventsAsByteArrayArrayPtr.IsValidHandle())
                 {
@@ -164,13 +167,28 @@ namespace Niantic.Lightship.AR.Telemetry
                     }
                 }
 
-                Lightship_ARDK_Unity_Telemetry_ReleasePendingEventsArray(eventsAsByteArrayArrayPtr, eventLengthsArrayPtr);
             }
             catch (Exception)
             {
                 // fail silently for users
                 // for local debugging only.
                 // Debug.LogError($"Encountered exception: {e} while running the GetArray call");
+            }
+            finally
+            {
+                // nested try catch because code in a finally block can still throw exceptions.
+                try
+                {
+                    if (eventLengthsArrayPtr.IsValidHandle() && eventsAsByteArrayArrayPtr.IsValidHandle())
+                    {
+                        Lightship_ARDK_Unity_Telemetry_ReleasePendingEventsArray(eventsAsByteArrayArrayPtr,
+                            eventLengthsArrayPtr, eventCount);
+                    }
+                }
+                catch
+                {
+                    // swallow and fail quietly
+                }
             }
         }
 
@@ -256,6 +274,6 @@ namespace Niantic.Lightship.AR.Telemetry
         private static extern IntPtr Lightship_ARDK_Unity_Telemetry_GetPendingEventsAsArray(IntPtr telemetryServiceHandle, out IntPtr array, out int arrayLength);
 
         [DllImport(LightshipPlugin.Name)]
-        private static extern void Lightship_ARDK_Unity_Telemetry_ReleasePendingEventsArray(IntPtr eventsAsByteArrayArrayPtr, IntPtr lengthsArray);
+        private static extern void Lightship_ARDK_Unity_Telemetry_ReleasePendingEventsArray(IntPtr eventsAsByteArrayArrayPtr, IntPtr lengthsArray, int eventCount);
     }
 }

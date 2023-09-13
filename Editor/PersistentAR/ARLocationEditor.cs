@@ -7,13 +7,14 @@ using UnityEngine;
 [CustomEditor(typeof(ARLocation))]
 internal class ARLocationEditor : Editor
 {
-    private ARLocationManifest _previousARLocationManifest;
     private bool _previousIncludeInBuildState;
+    private const string _arMeshContainerNameString = "MeshContainer";
+    private ARLocationManifest _manifest;
+    private const string _defaultARLocationName = "AR Location";
 
     private void Awake()
     {
         var arLocation = (ARLocation)target;
-        _previousARLocationManifest = arLocation.ARLocationManifest;
         _previousIncludeInBuildState = arLocation.IncludeMeshInBuild;
     }
 
@@ -33,13 +34,101 @@ internal class ARLocationEditor : Editor
 
     private void LayOutARLocationManifest(ARLocation arLocation)
     {
-        arLocation.ARLocationManifest = (ARLocationManifest)EditorGUILayout.ObjectField("AR Location Manifest",
-            arLocation.ARLocationManifest, typeof(ARLocationManifest), false);
+        TryMigrateLocationManifestAsset(arLocation);
+        if (!string.IsNullOrEmpty(arLocation.AssetGuid) && _manifest == null)
+        {
+            _manifest = LoadManifestFromGuid(arLocation.AssetGuid);
+            if (!_manifest)
+            {
+                Debug.LogError($"Could not load ARLocationManifest for {arLocation.name}");
+            }
+        }
+
+        var updatedManifest = (ARLocationManifest)EditorGUILayout.ObjectField("AR Location Manifest",
+            _manifest, typeof(ARLocationManifest), false);
+
+        if (updatedManifest != _manifest)
+        {
+            _manifest = updatedManifest;
+            arLocation.AssetGuid = GetAssetGuidFromManifest(_manifest);
+            
+            arLocation.Payload = _manifest
+                ? new ARPersistentAnchorPayload(_manifest.MeshOriginAnchorPayload)
+                : null;
+            if (arLocation.MeshContainer)
+            {
+                DestroyImmediate(arLocation.MeshContainer);
+                Resources.UnloadUnusedAssets();
+            }
+
+            if (_manifest)
+            {
+                arLocation.name = _manifest.LocationName;
+                arLocation.MeshContainer = Instantiate(_manifest.MockAsset, arLocation.transform);
+                arLocation.MeshContainer.name = _arMeshContainerNameString;
+                arLocation.MeshContainer.tag = arLocation.IncludeMeshInBuild ? "Untagged" : "EditorOnly";
+            }
+            else
+            {
+                arLocation.name = _defaultARLocationName;
+                arLocation.MeshContainer = null;
+            }
+            EditorUtility.SetDirty(target);
+        }
+    }
+
+    // One time migration code to remove the hard linked ARLocationManifest and cache as asset guid instead
+    private void TryMigrateLocationManifestAsset(ARLocation arLocation)
+    {
+        if (arLocation.ARLocationManifest != null)
+        {
+            var guid = GetAssetGuidFromManifest(arLocation.ARLocationManifest);
+            if (guid == null)
+            {
+                return;
+            }
+
+            arLocation.AssetGuid = guid;
+            arLocation.ARLocationManifest = null;
+            EditorUtility.SetDirty(target);
+        }
+    }
+
+    private ARLocationManifest LoadManifestFromGuid(string assetGuid)
+    {
+        var assetPath = AssetDatabase.GUIDToAssetPath(assetGuid);
+        if (string.IsNullOrEmpty(assetPath))
+        {
+            Debug.LogError($"Could not load ARLocationManifest {assetGuid}");
+            return null;
+        }
+
+        var manifest = AssetDatabase.LoadAssetAtPath<ARLocationManifest>(assetPath);
+        return manifest;
+    }
+
+    private string GetAssetGuidFromManifest(ARLocationManifest manifest)
+    {
+        var assetPath = AssetDatabase.GetAssetPath(manifest);
+
+        if (string.IsNullOrEmpty(assetPath))
+        {
+            return null;
+        }
+
+        var guid = AssetDatabase.AssetPathToGUID(assetPath);
+        if (string.IsNullOrEmpty(guid))
+        {
+            Debug.LogError($"Could not get guid at path {assetPath}");
+            return null;
+        }
+
+        return guid;
     }
 
     private void LayOutPayload(ARLocation arLocation)
     {
-        if (arLocation.ARLocationManifest)
+        if (_manifest)
         {
             EditorGUILayout.LabelField("Payload", arLocation.Payload?.ToBase64());
         }
@@ -73,31 +162,6 @@ internal class ARLocationEditor : Editor
                 
                 EditorUtility.SetDirty(target);
             }
-        }
-
-        if (_previousARLocationManifest != arLocation.ARLocationManifest)
-        {
-            arLocation.Payload = arLocation.ARLocationManifest
-                ? new ARPersistentAnchorPayload(arLocation.ARLocationManifest.MeshOriginAnchorPayload)
-                : null;
-            if (arLocation.MeshContainer)
-            {
-                DestroyImmediate(arLocation.MeshContainer);
-            }
-
-            if (arLocation.ARLocationManifest)
-            {
-                arLocation.name = arLocation.ARLocationManifest.LocationName;
-                arLocation.MeshContainer = Instantiate(arLocation.ARLocationManifest.MockAsset, arLocation.transform);
-                arLocation.MeshContainer.hideFlags = HideFlags.HideInHierarchy;
-                arLocation.MeshContainer.tag = arLocation.IncludeMeshInBuild ? "Untagged" : "EditorOnly";
-            }
-            else
-            {
-                arLocation.MeshContainer = null;
-            }
-            _previousARLocationManifest = arLocation.ARLocationManifest;
-            EditorUtility.SetDirty(target);
         }
     }
 }

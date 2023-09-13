@@ -8,6 +8,16 @@ namespace Niantic.Lightship.AR.Loader
 {
     public class LightshipStandaloneLoader : XRLoaderHelper, ILightshipLoader
     {
+        private PlaybackLoaderHelper _playbackHelper;
+        private NativeLoaderHelper _nativeHelper;
+
+        PlaybackDatasetReader ILightshipLoader.PlaybackDatasetReader => _playbackHelper?.DatasetReader;
+
+        /// <summary>
+        /// Optional override settings for manual XR Loader initialization
+        /// </summary>
+        public LightshipSettings InitializationSettings { get; set; }
+
         /// <summary>
         /// The `XROcclusionSubsystem` whose lifecycle is managed by this loader.
         /// </summary>
@@ -22,11 +32,7 @@ namespace Niantic.Lightship.AR.Loader
         /// <summary>
         /// The `XRMeshingSubsystem` whose lifecycle is managed by this loader.
         /// </summary>
-        public XRMeshSubsystem lightshipMeshSubsystem =>
-            GetLoadedSubsystem<XRMeshSubsystem>();
-
-        private PlaybackLoaderHelper _playbackHelper;
-        private NativeLoaderHelper _nativeHelper;
+        public XRMeshSubsystem lightshipMeshSubsystem => GetLoadedSubsystem<XRMeshSubsystem>();
 
         /// <summary>
         /// Initializes the loader.
@@ -34,7 +40,12 @@ namespace Niantic.Lightship.AR.Loader
         /// <returns>`True` if the session subsystems were successfully created, otherwise `false`.</returns>
         public override bool Initialize()
         {
-            return ((ILightshipLoader)this).InitializeWithSettings(LightshipSettings.Instance);
+            if (InitializationSettings == null)
+            {
+                InitializationSettings = LightshipSettings.Instance;
+            }
+
+            return ((ILightshipLoader)this).InitializeWithSettings(InitializationSettings);
         }
 
         bool ILightshipLoader.InitializeWithSettings(LightshipSettings settings, bool isTest)
@@ -61,8 +72,7 @@ namespace Niantic.Lightship.AR.Loader
             {
                 // Initialize native helper with no subsystems except the API key.
                 _nativeHelper = new NativeLoaderHelper();
-                var emptySettings = LightshipSettings._CreateRuntimeInstance(apiKey: settings.ApiKey);
-                return _nativeHelper.Initialize(this, emptySettings, false, isTest);
+                return _nativeHelper.Initialize(this, settings, false, isTest);
             }
 #else
             return false;
@@ -81,7 +91,5 @@ namespace Niantic.Lightship.AR.Loader
 #endif
             return true;
         }
-
-        PlaybackDatasetReader ILightshipLoader.PlaybackDatasetReader => _playbackHelper?.DatasetReader;
     }
 }

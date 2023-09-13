@@ -1,15 +1,17 @@
 using System;
 using System.Collections.Generic;
-using Niantic.Lightship.AR.Playback;
-using Niantic.Lightship.AR.Utilities.Profiling;
-using Niantic.Lightship.AR.Subsystems;
 using Niantic.Lightship.AR.Utilities;
 using Unity.Collections;
 using UnityEngine;
-using UnityEngine.Android;
 using UnityEngine.XR;
 using UnityEngine.XR.ARSubsystems;
 using UnityEngine.XR.Management;
+
+#if !UNITY_EDITOR && UNITY_ANDROID
+using UnityEngine.Android;
+#endif
+
+using Input = Niantic.Lightship.AR.Input;
 
 namespace Niantic.Lightship.AR.PAM
 {
@@ -22,7 +24,7 @@ namespace Niantic.Lightship.AR.PAM
         private XRInputSubsystem _inputSubsystem;
 
         private bool _usingLightshipOcclusion;
-        private bool _locationServiceNeedsRestart = false;
+        private bool _locationServiceNeedsToStart = false;
 
         private Resolution? _cachedImageResolution;
 
@@ -299,7 +301,6 @@ namespace Niantic.Lightship.AR.PAM
                 return false;
             }
 
-
             var gotDepth = _occlusionSubsystem.TryAcquireRawEnvironmentDepthCpuImage(out cpuDepthImage);
 
             bool gotConfidence = false;
@@ -376,8 +377,8 @@ namespace Niantic.Lightship.AR.PAM
 
         public override bool TryGetGpsLocation(out GpsLocation gps)
         {
-            if (_locationServiceNeedsRestart)
-                RestartLocationServiceOnEnable();
+            if (_locationServiceNeedsToStart)
+                TryStartLocationService();
 
             if (Input.location.status != LocationServiceStatus.Running)
             {
@@ -397,8 +398,8 @@ namespace Niantic.Lightship.AR.PAM
 
         public override bool TryGetCompass(out CompassData compass)
         {
-            if (_locationServiceNeedsRestart)
-                RestartLocationServiceOnEnable();
+            if (_locationServiceNeedsToStart)
+                TryStartLocationService();
 
             if (Input.location.status != LocationServiceStatus.Running)
             {
@@ -423,26 +424,16 @@ namespace Niantic.Lightship.AR.PAM
                 case DataFormat.kGpsLocation:
                     if (Input.location.status == LocationServiceStatus.Stopped)
                     {
-                        // Android devices require location service to restart if the user grants permission mid-scene.
-                        bool startedWithLocationPermission = UnityEngine.Input.location.isEnabledByUser;
-                        if (!startedWithLocationPermission && Application.platform == RuntimePlatform.Android)
-                            _locationServiceNeedsRestart = true;
-
-                        Input.location.Start(DefaultAccuracyMeters, DefaultDistanceMeters);
+                        RequestLocationPermissions();
                     }
                     break;
 
                 case DataFormat.kCompass:
                     if (Input.location.status == LocationServiceStatus.Stopped)
                     {
-                        // Android devices require location service to restart if the user grants permission mid-scene
-                        bool startedWithLocationPermission = UnityEngine.Input.location.isEnabledByUser;
-                        if (!startedWithLocationPermission && Application.platform == RuntimePlatform.Android)
-                            _locationServiceNeedsRestart = true;
-
                         // Lazy start of location services with compass.
                         Input.compass.enabled = true;
-                        Input.location.Start(DefaultAccuracyMeters, DefaultDistanceMeters);
+                        RequestLocationPermissions();
                     }
 
                     if (Input.compass.enabled == false)
@@ -470,25 +461,52 @@ namespace Niantic.Lightship.AR.PAM
         }
 
         /// <summary>
-        /// For Android devices, restart location services after the user grants permission in order to start the data
-        /// stream.
+        /// How permissions are requested differs between iOS and Android
         /// </summary>
-        private void RestartLocationServiceOnEnable()
+        private void RequestLocationPermissions()
         {
-            // Wait until the service is actually running before restarting
-            if (Input.location.status == LocationServiceStatus.Running)
+            // Android devices require permissions to be granted before starting the Location Service.
+            bool startedWithLocationPermission = Input.location.isEnabledByUser;
+            if (!startedWithLocationPermission && Application.platform == RuntimePlatform.Android)
             {
-                if (UnityEngine.Input.location.isEnabledByUser)
-                {
-                    Input.location.Stop();
-                }
+#if !UNITY_EDITOR && UNITY_ANDROID
+                Permission.RequestUserPermission(Permission.FineLocation);
+#endif
+                _locationServiceNeedsToStart = true;
+                // We will try to start Location Service in TryStartLocationService() 
+                return;
             }
 
-            if (UnityEngine.Input.location.status == LocationServiceStatus.Stopped)
+            // This will trigger Permissions on iOS
+            Input.location.Start(DefaultAccuracyMeters, DefaultDistanceMeters);
+        }
+
+        /// <summary>
+        /// For Android devices, the Location Service can only be stared after Permissions are granted
+        /// </summary>
+        private void TryStartLocationService()
+        {
+            if (!Input.location.isEnabledByUser)
+            {
+                // Cannot Start if Location Permissions have not been granted
+                return;
+            }
+
+            if (Input.location.status == LocationServiceStatus.Initializing || Input.location.status == LocationServiceStatus.Running)
+            {
+                // Start was already called
+                _locationServiceNeedsToStart = false;
+                return;
+            }
+
+            // We can only start the Location Service when it is not running
+            if (Input.location.status == LocationServiceStatus.Stopped)
             {
                 Input.location.Start(DefaultAccuracyMeters, DefaultDistanceMeters);
-                _locationServiceNeedsRestart = false;
+                _locationServiceNeedsToStart = false;
+                return;
             }
+
         }
     }
 }

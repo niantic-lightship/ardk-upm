@@ -13,3 +13,5 @@ using UnityEngine.Scripting;
 [assembly: InternalsVisibleTo("Niantic.Lightship.SharedAR")]
 [assembly: InternalsVisibleTo("Niantic.Lightship.AR.IQP")]
 [assembly: InternalsVisibleTo("Niantic.Lightship.AR.SQP")]
+[assembly: InternalsVisibleTo("Niantic.Lightship.AR.InternalSamples")]
+[assembly: InternalsVisibleTo("Niantic.Lightship.Spaces")]

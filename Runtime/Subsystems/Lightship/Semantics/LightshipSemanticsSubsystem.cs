@@ -19,8 +19,10 @@ namespace Niantic.Lightship.AR
     /// Use the <c>SubsystemManager</c> instead.
     /// </summary>
     [Preserve]
-    public sealed class LightshipSemanticsSubsystem : XRSemanticsSubsystem, ILightshipSettingsUser, ISubsystemWithMutableApi<IApi>
+    public sealed class LightshipSemanticsSubsystem : XRSemanticsSubsystem, ISubsystemWithMutableApi<IApi>
     {
+        internal const uint MaxRecommendedFrameRate = 20;
+
         /// <summary>
         /// Register the Lightship semantics subsystem.
         /// </summary>
@@ -40,11 +42,6 @@ namespace Niantic.Lightship.AR
             XRSemanticsSubsystem.Register(xrSemanticsSubsystemCinfo);
         }
 
-        void ILightshipSettingsUser.SetLightshipSettings(LightshipSettings settings)
-        {
-            ((ILightshipSettingsUser)provider).SetLightshipSettings(settings);
-        }
-
         void ISubsystemWithMutableApi<IApi>.SwitchApiImplementation(IApi api)
         {
             ((LightshipSemanticsProvider) provider).SwitchApiImplementation(api);
@@ -58,27 +55,52 @@ namespace Niantic.Lightship.AR
         /// <summary>
         /// The implementation provider class.
         /// </summary>
-        internal class LightshipSemanticsProvider : Provider, ILightshipSettingsUser
+        internal class LightshipSemanticsProvider : Provider
         {
-
             /// <summary>
             /// The handle to the native version of the provider
             /// </summary>
             private IntPtr _nativeProviderHandle;
 
-            private LightshipSettings _lightshipSettings;
             private IApi _api;
-            private uint _frameRate = 10;
+            private uint _targetFrameRate = MaxRecommendedFrameRate;
             private const float _useDefaultConfidenceThreshold = -1.0f;
+
+            public LightshipSemanticsProvider() : this(new NativeApi()) { }
+
+            /// <summary>
+            /// Property to get or set the target frame rate for the semantic segmentation feature.
+            /// </summary>
+            /// <value>
+            /// The requested target frame rate in frames per second.
+            /// </value>
+            public override uint TargetFrameRate
+            {
+                get => _targetFrameRate;
+                set
+                {
+                    if (value <= 0)
+                    {
+                        Debug.LogError("Target frame rate value must be greater than zero.");
+                        return;
+                    }
+
+                    if (_targetFrameRate != value)
+                    {
+                        _targetFrameRate = value;
+                        ConfigureTargetFrameRate();
+                    }
+                }
+            }
 
             /// <summary>
             /// Construct the implementation provider.
             /// </summary>
-            public LightshipSemanticsProvider()
+            public LightshipSemanticsProvider(IApi api)
             {
                 Debug.Log("LightshipSemanticsSubsystem.LightshipSemanticsProvider construct");
 
-                _api = new NativeApi();
+                _api = api;
 #if NIANTIC_LIGHTSHIP_AR_LOADER_ENABLED
                 _nativeProviderHandle = _api.Construct(LightshipUnityContext.UnityContextHandle);
 #endif
@@ -98,12 +120,6 @@ namespace Niantic.Lightship.AR
 
                 _api = api;
                 _nativeProviderHandle = api.Construct(LightshipUnityContext.UnityContextHandle);
-            }
-
-            void ILightshipSettingsUser.SetLightshipSettings(LightshipSettings settings)
-            {
-                _lightshipSettings = settings;
-                FrameRate = _lightshipSettings.LightshipSemanticSegmentationFrameRate;
             }
 
             /// <summary>
@@ -261,21 +277,6 @@ namespace Niantic.Lightship.AR
             }
 
             /// <summary>
-            /// Property to be implemented by the provider to get or set the frame rate for the platform's semantic
-            /// segmentation feature.
-            /// </summary>
-            /// <value>
-            /// The requested frame rate in frames per second.
-            /// </value>
-            /// <exception cref="System.NotSupportedException">Thrown when requesting a frame rate that is not supported
-            /// by the implementation.</exception>
-            public override uint FrameRate
-            {
-                get => _frameRate;
-                set => _frameRate = value;
-            }
-
-            /// <summary>
             /// Gets a list of the semantic channel names for the current semantic model.
             /// </summary>
             public override List<string> GetChannelNames()
@@ -341,25 +342,7 @@ namespace Niantic.Lightship.AR
                 if (!_api.TryPrepareSubsystem(_nativeProviderHandle))
                     return false;
 
-                // Use a negative value to keep the thresholds unchanged from the model's default
-                NativeArray<float> confidenceList = new NativeArray<float>(channelNames.Count, Allocator.Temp);
-
-                for (int i = 0; i < confidenceList.Length; i++)
-                    confidenceList[i] = _useDefaultConfidenceThreshold;
-
-                // Set config values
-                unsafe
-                {
-                    _api.Configure
-                    (
-                        _nativeProviderHandle,
-                        FrameRate,
-                        (uint)confidenceList.Length,
-                        (IntPtr)confidenceList.GetUnsafePtr()
-                    );
-                }
-
-                confidenceList.Dispose();
+                ConfigureTargetFrameRate();
                 return true;
             }
 
@@ -375,6 +358,27 @@ namespace Niantic.Lightship.AR
 
                 _api.Destruct(_nativeProviderHandle);
                 _nativeProviderHandle = IntPtr.Zero;
+            }
+
+            // TODO [ARDK-737]: Once it's possible to set channel thresholds outside of calling the
+            // TrySetChannelConfidenceThresholds method, this method should be turned into a "ConfigureProvider"
+            // method that sets both the requested target frame rate and the requested thresholds.
+            // For now, passing on a thresholds list of size = 0 doesn't matter because of the
+            // bug [ARDK-653] where thresholds are never configured.
+            private void ConfigureTargetFrameRate()
+            {
+                if (!_nativeProviderHandle.IsValidHandle())
+                {
+                    return;
+                }
+
+                _api.Configure
+                (
+                    _nativeProviderHandle,
+                    TargetFrameRate,
+                    0,
+                    IntPtr.Zero
+                );
             }
 
             /// <summary>
@@ -434,7 +438,7 @@ namespace Niantic.Lightship.AR
                 // Set config values
                 unsafe
                 {
-                    _api.Configure(_nativeProviderHandle, FrameRate, (uint) confidenceList.Length, (System.IntPtr) confidenceList.GetUnsafePtr());
+                    _api.Configure(_nativeProviderHandle, TargetFrameRate, (uint) confidenceList.Length, (System.IntPtr) confidenceList.GetUnsafePtr());
                 }
 
                 confidenceList.Dispose();

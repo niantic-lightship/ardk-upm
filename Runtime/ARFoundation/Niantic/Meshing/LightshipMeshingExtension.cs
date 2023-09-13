@@ -5,10 +5,10 @@ using UnityEngine;
 using UnityEngine.XR.ARFoundation;
 
 
-namespace Niantic.Lightship.AR.ARFoundation
+namespace Niantic.Lightship.AR.ARFoundation.Meshing
 {
     [RequireComponent(typeof(ARMeshManager))]
-    public class NianticLightshipMeshingExtensionSettings : MonoBehaviour
+    public class LightshipMeshingExtension : MonoBehaviour
     {
       [SerializeField]
       [Tooltip("Target number of times per second to run the mesh update routine.")]

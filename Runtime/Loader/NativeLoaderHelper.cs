@@ -36,9 +36,6 @@ namespace Niantic.Lightship.AR.Loader
                     _occlusionSubsystemDescriptors,
                     "Lightship-Occlusion"
                 );
-
-                var settingsUser = (ILightshipSettingsUser)loader.GetLoadedSubsystem<XROcclusionSubsystem>();
-                settingsUser.SetLightshipSettings(settings);
             }
 
             // Create Lightship Persistent Anchor subsystem
@@ -61,9 +58,6 @@ namespace Niantic.Lightship.AR.Loader
                     _semanticsSubsystemDescriptors,
                     "Lightship-Semantics"
                 );
-
-                var settingsUser = (ILightshipSettingsUser)loader.GetLoadedSubsystem<XRSemanticsSubsystem>();
-                settingsUser.SetLightshipSettings(settings);
             }
 
             // Create Lightship Scanning subsystem
@@ -97,14 +91,6 @@ namespace Niantic.Lightship.AR.Loader
                     _inputSubsystemDescriptors,
                     "LightshipInput"
                 );
-            }
-            else
-            {
-                var lightshipLocationService = ((ILightshipSettingsUser)Input.location);
-                lightshipLocationService.SetLightshipSettings(settings);
-
-                var lightshipCompass = ((ILightshipSettingsUser)Input.compass);
-                lightshipCompass.SetLightshipSettings(settings);
             }
 
             if (settings.UseLightshipMeshing)

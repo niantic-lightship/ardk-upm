@@ -21,7 +21,7 @@ namespace Niantic.Lightship.AR.Subsystems
 
         static readonly XRPersistentAnchor s_Default = new XRPersistentAnchor
         {
-            m_Id = TrackableId.invalidId, m_Pose = Pose.identity
+            m_Id = TrackableId.invalidId, m_Pose = Pose.identity, m_timestampMs = 0
         };
 
         /// <summary>
@@ -39,13 +39,15 @@ namespace Niantic.Lightship.AR.Subsystems
             Pose pose,
             TrackingState trackingState,
             TrackingStateReason trackingStateReason,
-            XRPersistentAnchorPayload xrPersistentAnchorPayload)
+            XRPersistentAnchorPayload xrPersistentAnchorPayload,
+            UInt64 timestampMs)
         {
             m_Id = trackableId;
             m_Pose = pose;
             m_TrackingState = trackingState;
             m_TrackingStateReason = trackingStateReason;
             m_XRPersistentAnchorPayload = xrPersistentAnchorPayload;
+            m_timestampMs = timestampMs;
         }
 
         public XRPersistentAnchor(
@@ -56,6 +58,7 @@ namespace Niantic.Lightship.AR.Subsystems
             m_TrackingState = TrackingState.None;
             m_TrackingStateReason = TrackingStateReason.None;
             m_XRPersistentAnchorPayload = new XRPersistentAnchorPayload(new IntPtr(0), 0);
+            m_timestampMs = 0;
         }
 
         /// <summary>
@@ -84,6 +87,12 @@ namespace Niantic.Lightship.AR.Subsystems
         public XRPersistentAnchorPayload xrPersistentAnchorPayload => m_XRPersistentAnchorPayload;
 
         /// <summary>
+        /// Get the timestamp in miliseconds of the latest update for this anchor.
+        /// The timestamp has the same base as the frame.
+        /// </summary>
+        public UInt64 timestampMs => m_timestampMs;
+
+        /// <summary>
         /// A native pointer associated with the anchor.
         /// The data pointed to by this pointer is implementation-specific.
         /// </summary>
@@ -100,6 +109,7 @@ namespace Niantic.Lightship.AR.Subsystems
                 var hashCode = m_Id.GetHashCode();
                 hashCode = hashCode * 486187739 + m_Pose.GetHashCode();
                 hashCode = hashCode * 486187739 + ((int)m_TrackingState).GetHashCode();
+                hashCode = hashCode * 486187739 + m_timestampMs.GetHashCode();
                 return hashCode;
             }
         }
@@ -115,7 +125,8 @@ namespace Niantic.Lightship.AR.Subsystems
                 m_Id.Equals(other.m_Id) &&
                 m_Pose.Equals(other.m_Pose) &&
                 m_TrackingState == other.m_TrackingState &&
-                m_XRPersistentAnchorPayload == other.m_XRPersistentAnchorPayload;
+                m_XRPersistentAnchorPayload == other.m_XRPersistentAnchorPayload &&
+                m_timestampMs == other.m_timestampMs;
         }
 
         /// <summary>
@@ -151,5 +162,7 @@ namespace Niantic.Lightship.AR.Subsystems
         TrackingStateReason m_TrackingStateReason;
 
         XRPersistentAnchorPayload m_XRPersistentAnchorPayload;
+
+        UInt64 m_timestampMs;
     }
 }

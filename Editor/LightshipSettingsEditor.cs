@@ -21,8 +21,6 @@ namespace Niantic.Lightship.AR.Editor
         private SerializedProperty _apiKeyProperty;
         private SerializedProperty _useLightshipDepthProperty;
         private SerializedProperty _useLightshipMeshingProperty;
-        private SerializedProperty _lightshipDepthFrameRateProperty;
-        private SerializedProperty _lightshipSemanticSegmentationFrameRateProperty;
         private SerializedProperty _preferLidarIfAvailableProperty;
         private SerializedProperty _useLightshipPersistentAnchorProperty;
         private SerializedProperty _useLightshipSemanticSegmentationProperty;
@@ -48,8 +46,6 @@ namespace Niantic.Lightship.AR.Editor
             _apiKeyProperty = _lightshipSettings.FindProperty("_apiKey");
             _useLightshipDepthProperty = _lightshipSettings.FindProperty("_useLightshipDepth");
             _useLightshipMeshingProperty = _lightshipSettings.FindProperty("_useLightshipMeshing");
-            _lightshipDepthFrameRateProperty = _lightshipSettings.FindProperty("_lightshipDepthFrameRate");
-            _lightshipSemanticSegmentationFrameRateProperty = _lightshipSettings.FindProperty("_LightshipSemanticSegmentationFrameRate");
             _preferLidarIfAvailableProperty = _lightshipSettings.FindProperty("_preferLidarIfAvailable");
             _useLightshipPersistentAnchorProperty = _lightshipSettings.FindProperty("_useLightshipPersistentAnchor");
             _useLightshipSemanticSegmentationProperty = _lightshipSettings.FindProperty("_useLightshipSemanticSegmentation");
@@ -64,7 +60,7 @@ namespace Niantic.Lightship.AR.Editor
                     _lightshipSettings.FindProperty($"{platformSettingsStrings[i]}._playbackDatasetPath");
                 _platformPlaybackProperties[i].RunManually =
                     _lightshipSettings.FindProperty($"{platformSettingsStrings[i]}._runPlaybackManually");
-                _platformPlaybackProperties[i].LoopInfinitely = 
+                _platformPlaybackProperties[i].LoopInfinitely =
                     _lightshipSettings.FindProperty($"{platformSettingsStrings[i]}._loopInfinitely");
                 _platformPlaybackProperties[i].NumberOfIterations =
                     _lightshipSettings.FindProperty($"{platformSettingsStrings[i]}._numberOfIterations");
@@ -92,7 +88,6 @@ namespace Niantic.Lightship.AR.Editor
                 // Put Depth sub-settings here
                 if (_useLightshipDepthProperty.boolValue)
                 {
-                    EditorGUILayout.IntSlider(_lightshipDepthFrameRateProperty, 1, 90, new GUIContent("Framerate"));
                     EditorGUILayout.PropertyField
                     (
                         _preferLidarIfAvailableProperty,
@@ -105,13 +100,6 @@ namespace Niantic.Lightship.AR.Editor
                 EditorGUILayout.Space(10);
                 EditorGUILayout.LabelField("Semantic Segmentation", EditorStyles.boldLabel);
                 EditorGUILayout.PropertyField(_useLightshipSemanticSegmentationProperty, new GUIContent("Enabled"));
-                EditorGUI.indentLevel++;
-                // Put Semantic Segmentation sub-settings here
-                if (_useLightshipSemanticSegmentationProperty.boolValue)
-                {
-                    EditorGUILayout.IntSlider(_lightshipSemanticSegmentationFrameRateProperty, 1, 90, new GUIContent("Framerate"));
-                }
-                EditorGUI.indentLevel--;
 
                 EditorGUILayout.Space(10);
                 EditorGUILayout.LabelField("Meshing", EditorStyles.boldLabel);
@@ -142,12 +130,11 @@ namespace Niantic.Lightship.AR.Editor
                 GUILayout.EndHorizontal();
 
                 DrawPlaybackGui();
-                
+
                 EditorGUI.EndDisabledGroup();
 
                 if (change.changed)
                 {
-                    ValidateFramerates();
                     _lightshipSettings.ApplyModifiedProperties();
                 }
             }
@@ -222,47 +209,6 @@ namespace Niantic.Lightship.AR.Editor
             }
 
             EditorGUILayout.EndHorizontal();
-        }
-    
-        private void ValidateFramerates()
-        {
-            var depthFramerate = _lightshipDepthFrameRateProperty.intValue;
-            var semanticsFramerate = _lightshipSemanticSegmentationFrameRateProperty.intValue;
-
-            if (!_useLightshipSemanticSegmentationProperty.boolValue || !_useLightshipDepthProperty.boolValue ||
-                semanticsFramerate <= 0)
-                return;
-
-            if (depthFramerate % semanticsFramerate != 0)
-            {
-                // Semantics FPS must be set to an integer multiple of depth FPS
-                int minDistance = Math.Abs(depthFramerate - semanticsFramerate);
-                int closestFactor = depthFramerate;
-                for (int i = 1; i < Math.Sqrt(depthFramerate); i++)
-                {
-                    // Find the factors and sort by distance
-                    if (depthFramerate % i == 0)
-                    {
-                        int[] factors = { i, depthFramerate / i };
-                        foreach (var factor in factors)
-                        {
-                            int distance = Math.Abs(semanticsFramerate - factor);
-                            if (distance < minDistance)
-                            {
-                                closestFactor = factor;
-                                minDistance = distance;
-                            }
-                            else if (distance == minDistance)
-                            {
-                                // If there's a tie, choose the greater value
-                                closestFactor = (factor > closestFactor) ? factor : closestFactor;
-                            }
-                        }
-                    }
-                }
-
-                _lightshipSemanticSegmentationFrameRateProperty.intValue = closestFactor;
-            }
         }
     }
 }

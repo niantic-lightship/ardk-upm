@@ -2,11 +2,13 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using Niantic.Lightship.AR.Subsystems;
 using Niantic.Lightship.AR.Utilities;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
+using UnityEngine.Profiling;
 using UnityEngine.Rendering;
 using UnityEngine.XR.ARFoundation;
 using UnityEngine.XR.ARSubsystems;
@@ -26,6 +28,82 @@ namespace Niantic.Lightship.AR.ARFoundation
     public class ARSemanticSegmentationManager :
         SubsystemLifecycleManager<XRSemanticsSubsystem, XRSemanticsSubsystemDescriptor, XRSemanticsSubsystem.Provider>
     {
+        [SerializeField]
+        [Tooltip("Frame rate that semantic segmentation inference will aim to run at")]
+        [Range(1, 90)]
+        private uint _targetFrameRate = LightshipSemanticsSubsystem.MaxRecommendedFrameRate;
+
+        /// <summary>
+        /// Frame rate that semantic segmentation inference will aim to run at.
+        /// </summary>
+        public uint TargetFrameRate
+        {
+            get => subsystem?.TargetFrameRate ?? _targetFrameRate;
+            set
+            {
+                if (value <= 0)
+                {
+                    Debug.LogError("Target frame rate value must be greater than zero.");
+                    return;
+                }
+
+                _targetFrameRate = value;
+                if (subsystem != null)
+                {
+                    subsystem.TargetFrameRate = value;
+                }
+            }
+        }
+
+        /// <summary>
+        /// The names of the semantic channels that the current model is able to detect.
+        /// </summary>
+        public IReadOnlyList<string> ChannelNames => _readOnlyChannelNames;
+
+        private IReadOnlyList<string> _readOnlyChannelNames;
+        private List<string> _channelNames;
+
+        /// <summary>
+        /// The indices of the semantic channels that the current model is able to detect.
+        /// </summary>
+        public IReadOnlyDictionary<string, int> ChannelIndices => _readOnlyChannelNamesToIndices;
+
+        private IReadOnlyDictionary<string, int> _readOnlyChannelNamesToIndices;
+        private Dictionary<string, int> _channelNamesToIndices;
+
+        /// <summary>
+        /// True if the underlying subsystem is in a state where it is outputting data.
+        /// </summary>
+        public bool IsDataAvailable { get; private set; }
+
+        /// <summary>
+        /// An event which fires when the underlying subsystem has finished initializing and started outputting data.
+        /// </summary>
+        public event Action<ARSemanticSegmentationModelEventArgs> DataInitialized
+        {
+            add
+            {
+                _dataInitialized += value;
+                if (IsDataAvailable)
+                {
+                    var args =
+                        new ARSemanticSegmentationModelEventArgs
+                        {
+                            ChannelNames = ChannelNames,
+                            ChannelIndices = ChannelIndices
+                        };
+
+                    value.Invoke(args);
+                }
+            }
+            remove
+            {
+                _dataInitialized -= value;
+            }
+        }
+
+        private Action<ARSemanticSegmentationModelEventArgs> _dataInitialized;
+
         /// <summary>
         /// A dictionary mapping semantic confidence textures (<c>ARTextureInfo</c>s) to their respective semantic
         /// segmentation channel names.
@@ -49,25 +127,13 @@ namespace Niantic.Lightship.AR.ARFoundation
         private XRCameraParams _viewport;
 
         /// <summary>
-        /// The names of the semantic channels that the current model is able to detect.
-        /// </summary>
-        public List<string> SemanticChannelNames
-        {
-            get { return _semanticChannelNames; }
-        }
-        private List<string> _semanticChannelNames = new();
-
-        /// <summary>
-        /// An event which fires when the semantic segmentation model is downloaded and ready for use.
-        /// </summary>
-        public event Action<ARSemanticModelReadyEventArgs> SemanticModelIsReady;
-
-        /// <summary>
         /// Callback before the subsystem is started (but after it is created).
         /// </summary>
         protected override void OnBeforeStart()
         {
+            TargetFrameRate = _targetFrameRate;
             ResetTextureInfos();
+            ResetModelData();
         }
 
         /// <summary>
@@ -78,6 +144,7 @@ namespace Niantic.Lightship.AR.ARFoundation
             base.OnDisable();
 
             ResetTextureInfos();
+            ResetModelData();
         }
 
         /// <summary>
@@ -85,22 +152,32 @@ namespace Niantic.Lightship.AR.ARFoundation
         /// </summary>
         public void Update()
         {
-            if (subsystem != null && subsystem.running)
+            if (subsystem == null)
+                return;
+
+            TargetFrameRate = _targetFrameRate;
+
+            if (subsystem.running)
             {
-                // Not initialized?
-                var shouldDispatchReadyEvent = false;
-                if (_semanticChannelNames.Count == 0)
+                if (_channelNames.Count == 0)
                 {
-                    // Wait until the model is ready
                     if (!subsystem.TryPrepareSubsystem())
                     {
                         return;
                     }
 
                     // Initialize channel names
-                    _semanticChannelNames = subsystem.GetChannelNames();
-                    Debug.Assert(_semanticChannelNames.Count > 0, "TryGetChannelNames is expected to be non-empty after TryPrepareSubsystem returns true");
-                    shouldDispatchReadyEvent = true;
+                    _channelNames = subsystem.GetChannelNames();
+                    Debug.Assert(_channelNames.Count > 0, "GetChannelNames is expected to be non-empty after TryPrepareSubsystem returns true");
+
+                    _channelNamesToIndices.Clear();
+                    for (int i = 0; i < _channelNames.Count; i++)
+                    {
+                        _channelNamesToIndices.Add(_channelNames[i], i);
+                    }
+
+                    _readOnlyChannelNames = _channelNames.AsReadOnly();
+                    _readOnlyChannelNamesToIndices = new ReadOnlyDictionary<string, int>(_channelNamesToIndices);
                 }
 
                 // Update viewport info
@@ -109,18 +186,49 @@ namespace Niantic.Lightship.AR.ARFoundation
                 _viewport.screenOrientation = Screen.orientation;
 
                 // Update the packed semantics texture
-                if (subsystem.TryGetPackedSemanticChannels(_viewport, out var packedTextureDescriptor,
-                        out var packedSamplerMatrix))
+                Profiler.BeginSample("TryGetPackedSemanticChannels");
+                if (subsystem.TryGetPackedSemanticChannels(_viewport, out var packedTextureDescriptor, out var packedSamplerMatrix))
                 {
-                    _packedBitmaskTextureInfo = ARTextureInfo.GetUpdatedTextureInfo(_packedBitmaskTextureInfo,
-                        packedTextureDescriptor, packedSamplerMatrix);
-                }
+                    _packedBitmaskTextureInfo = ARTextureInfo.GetUpdatedTextureInfo(_packedBitmaskTextureInfo, packedTextureDescriptor, packedSamplerMatrix);
 
-                if (shouldDispatchReadyEvent)
-                {
-                    InvokeModelIsReady();
+                    if (!IsDataAvailable)
+                    {
+                        IsDataAvailable = true;
+                        var args =
+                            new ARSemanticSegmentationModelEventArgs
+                            {
+                                ChannelNames = ChannelNames,
+                                ChannelIndices = ChannelIndices
+                            };
+
+                        _dataInitialized?.Invoke(args);
+                    }
                 }
+                Profiler.EndSample();
             }
+        }
+
+        /// <summary>
+        /// Retrieves the texture of semantic data where each pixel can be interpreted as a uint with bits
+        /// corresponding to different classifications.
+        /// </summary>
+        /// <param name="texture">The packed semantics texture, owned by the manager.</param>
+        /// <param name="samplerMatrix">A matrix that aligns the texture to the viewport according to the latest pose.</param>
+        /// <returns></returns>
+        public bool TryGetPackedSemanticsChannelsTexture(out Texture2D texture, out Matrix4x4 samplerMatrix)
+        {
+            // Update the packed semantics texture
+            if (subsystem.TryGetPackedSemanticChannels(_viewport, out var textureDescriptor, out samplerMatrix))
+            {
+                _packedBitmaskTextureInfo = ARTextureInfo.GetUpdatedTextureInfo(_packedBitmaskTextureInfo,
+                    textureDescriptor, samplerMatrix);
+                texture = _packedBitmaskTextureInfo.Texture as Texture2D;
+                return true;
+            }
+
+            texture = null;
+            samplerMatrix = default;
+            return false;
         }
 
         /// <summary>
@@ -134,7 +242,16 @@ namespace Niantic.Lightship.AR.ARFoundation
                 pair.Value.Dispose();
 
             _semanticChannelTextureInfos.Clear();
-            _semanticChannelNames.Clear();
+        }
+
+        private void ResetModelData()
+        {
+            IsDataAvailable = false;
+            _channelNames = new List<string>();
+            _readOnlyChannelNames = _channelNames.AsReadOnly();
+
+            _channelNamesToIndices = new Dictionary<string, int>();
+            _readOnlyChannelNamesToIndices = new ReadOnlyDictionary<string, int>(_channelNamesToIndices);
         }
 
         /// <summary>
@@ -175,8 +292,11 @@ namespace Niantic.Lightship.AR.ARFoundation
             // Format mismatch
             if (textureDescriptor.dimension != TextureDimension.Tex2D)
             {
-                Debug.Log("Semantic confidence texture needs to be a Texture2D, but instead is "
-                    + $"{textureDescriptor.dimension.ToString()}.");
+                Debug.LogError
+                (
+                    "Semantic confidence texture needs to be a Texture2D, but is " + textureDescriptor.dimension + "."
+                );
+
                 return null;
             }
 
@@ -188,8 +308,12 @@ namespace Niantic.Lightship.AR.ARFoundation
             else
             {
                 _semanticChannelTextureInfos[channelName] =
-                    ARTextureInfo.GetUpdatedTextureInfo(_semanticChannelTextureInfos[channelName], textureDescriptor,
-                        samplerMatrix);
+                    ARTextureInfo.GetUpdatedTextureInfo
+                    (
+                        _semanticChannelTextureInfos[channelName],
+                        textureDescriptor,
+                        samplerMatrix
+                    );
             }
 
             return _semanticChannelTextureInfos[channelName].Texture as Texture2D;
@@ -206,8 +330,16 @@ namespace Niantic.Lightship.AR.ARFoundation
         /// <returns>Whether filling the texture with semantics data was successful.</returns>
         public bool GetSemanticChannelTexture(string channelName, XRCameraParams cameraParams, ref Texture texture, out Matrix4x4 samplerMatrix)
         {
-            return subsystem.TryGetSemanticChannel(channelName, cameraParams, out var textureDescriptor,
-                out samplerMatrix) && ExternalTextureUtils.UpdateExternalTexture(ref texture, textureDescriptor);
+            var gotChannel =
+                subsystem.TryGetSemanticChannel
+                (
+                    channelName,
+                    cameraParams,
+                    out var textureDescriptor,
+                    out samplerMatrix
+                );
+
+            return gotChannel && ExternalTextureUtils.UpdateExternalTexture(ref texture, textureDescriptor);
         }
 
         /// <summary>
@@ -269,12 +401,9 @@ namespace Niantic.Lightship.AR.ARFoundation
         /// <returns>The index of the specified semantic class, or -1 if the channel does not exist.</returns>
         public int GetChannelIndex(string channelName)
         {
-            for (int idx = 0; idx < _semanticChannelNames.Count; idx++)
+            if (_channelNamesToIndices.TryGetValue(channelName, out int index))
             {
-                if (_semanticChannelNames[idx] == channelName)
-                {
-                    return idx;
-                }
+                return index;
             }
 
             return -1;
@@ -286,13 +415,11 @@ namespace Niantic.Lightship.AR.ARFoundation
         /// <param name="screenX">Horizontal coordinate in screen space.</param>
         /// <param name="screenY">Vertical coordinate in screen space.</param>
         /// <returns>
-        /// The result is a 32-bit packed unsigned integer where each bit is a binary indicator for a class.
+        /// The result is a 32-bit packed unsigned integer where each bit is a binary indicator for a class, and the
+        /// most-significant bit corresponds to the channel that is the 0th element of the ChannelNames list.
         /// </returns>
         public uint GetSemantics(int screenX, int screenY)
         {
-            if (!_packedBitmaskTextureInfo.Descriptor.valid || _packedBitmaskTextureInfo.Texture == null)
-                return 0u;
-
             // Acquire the CPU image
             if (!subsystem.TryAcquirePackedSemanticChannelsCPUImage(out var packedBuffer))
                 return 0u;
@@ -313,18 +440,25 @@ namespace Niantic.Lightship.AR.ARFoundation
             unsafe
             {
                 // Access the data through a native array
-                var nativeArray = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<UInt32>(
-                    (void*)packedBuffer.buffer, imageWidth * imageHeight, Allocator.None);
+                var nativeArray =
+                    NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<UInt32>
+                    (
+                        (void*)packedBuffer.buffer,
+                        imageWidth * imageHeight,
+                        Allocator.None
+                    );
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
                 NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref nativeArray, AtomicSafetyHandle.GetTempMemoryHandle());
 #endif
                 // Sample the image
-                result = nativeArray.Sample(
+                result = nativeArray.Sample
+                (
                     width: imageWidth,
                     height: imageHeight,
                     uv: uv,
-                    transform: samplerMatrix);
+                    transform: samplerMatrix
+                );
             }
 
             subsystem.DisposeCPUImage(packedBuffer);
@@ -343,7 +477,7 @@ namespace Niantic.Lightship.AR.ARFoundation
             uint sample = GetSemantics(screenX, screenY);
 
             var indices = new List<int>();
-            for (int idx = 0; idx < 32; idx++)
+            for (int idx = 0; idx < ChannelNames.Count; idx++)
             {
                 // MSB = beginning of the channel names list
                 if ((sample & (1 << 31)) != 0)
@@ -367,7 +501,7 @@ namespace Niantic.Lightship.AR.ARFoundation
         public List<string> GetChannelNamesAt(int screenX, int screenY)
         {
             var names = new List<string>();
-            if (_semanticChannelNames.Count == 0)
+            if (_channelNames.Count == 0)
             {
                 return names;
             }
@@ -376,13 +510,13 @@ namespace Niantic.Lightship.AR.ARFoundation
 
             foreach (var idx in indices)
             {
-                if (idx >= _semanticChannelNames.Count)
+                if (idx >= _channelNames.Count)
                 {
                     Debug.LogError("Semantics channel index exceeded channel names list");
                     return new List<string>();
                 }
 
-                names.Add(_semanticChannelNames[idx]);
+                names.Add(_channelNames[idx]);
             }
 
             return names;
@@ -398,8 +532,26 @@ namespace Niantic.Lightship.AR.ARFoundation
         /// <returns>True if the semantic class exists at the given coordinates.</returns>
         public bool DoesChannelExistAt(int screenX, int screenY, string channelName)
         {
-            var channelNamesList = GetChannelNamesAt(screenX, screenY);
-            return channelNamesList.Contains(channelName);
+            if (ChannelIndices.TryGetValue(channelName, out int index))
+            {
+                return DoesChannelExistAt(screenX, screenY, index);
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Check if a semantic class is detected at the specified location in screen space, based on the confidence
+        /// threshold set for this channel. (See <c>TrySetChannelConfidenceThresholds</c>)
+        /// </summary>
+        /// <param name="screenX">Horizontal coordinate in screen space.</param>
+        /// <param name="screenY">Vertical coordinate in screen space.</param>
+        /// <param name="channelIndex">Index of the semantic class to look for in the ChannelNames list.</param>
+        /// <returns>True if the semantic class exists at the given coordinates.</returns>
+        public bool DoesChannelExistAt(int screenX, int screenY, int channelIndex)
+        {
+            var channelIndices = GetSemantics(screenX, screenY);
+            return (channelIndices & (1 << (31 - channelIndex))) != 0;
         }
 
         /// <summary>
@@ -422,22 +574,6 @@ namespace Niantic.Lightship.AR.ARFoundation
         public bool TrySetChannelConfidenceThresholds(Dictionary<string,float> channelConfidenceThresholds)
         {
             return subsystem.TrySetChannelConfidenceThresholds(channelConfidenceThresholds);
-        }
-
-        /// <summary>
-        /// Alert subscribers that the semantic segmentation model is ready.
-        /// </summary>
-        void InvokeModelIsReady()
-        {
-            if (null == SemanticModelIsReady)
-                return;
-
-            Debug.Assert(SemanticChannelNames.Count > 0, "The list of semantic channel names is " +
-                "expected to be non-empty if the model is ready.");
-
-            ARSemanticModelReadyEventArgs args = new ARSemanticModelReadyEventArgs { SemanticChannelNames = _semanticChannelNames };
-
-            SemanticModelIsReady(args);
         }
     }
 }

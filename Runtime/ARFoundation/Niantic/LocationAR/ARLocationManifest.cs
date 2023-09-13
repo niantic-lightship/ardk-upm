@@ -146,6 +146,11 @@ namespace Niantic.Lightship.AR.Subsystems
             }
         }
 
+        public string AnchorPayload
+        {
+            get => _meshOriginAnchorPayload;
+        }
+
         internal string NodeIdentifier
         {
             get => _nodeIdentifier;
