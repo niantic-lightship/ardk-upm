@@ -3,7 +3,7 @@
 using System;
 using UnityEngine.SubsystemsImplementation;
 
-namespace Niantic.Lightship.AR.Subsystems
+namespace Niantic.Lightship.AR.XRSubsystems
 {
     public class
         XRScanningSubsystemDescriptor : SubsystemDescriptorWithProvider<XRScanningSubsystem,

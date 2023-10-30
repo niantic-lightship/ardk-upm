@@ -1,3 +1,4 @@
+// Copyright 2023 Niantic, Inc. All Rights Reserved.
 // Restrict inclusion to iOS builds to avoid symbol resolution error
 
 #if UNITY_IOS || UNITY_EDITOR
@@ -6,8 +7,10 @@
 #define NIANTIC_LIGHTSHIP_ARKIT_LOADER_ENABLED
 #endif
 
-using Niantic.Lightship.AR.Playback;
 using Niantic.Lightship.AR.Subsystems;
+using Niantic.Lightship.AR.Subsystems.Playback;
+using Niantic.Lightship.AR.Utilities.Log;
+using Niantic.Lightship.AR.XRSubsystems;
 using UnityEngine.XR.ARKit;
 using UnityEngine.XR.ARSubsystems;
 
@@ -58,7 +61,12 @@ namespace Niantic.Lightship.AR.Loader
 #if NIANTIC_LIGHTSHIP_ARKIT_LOADER_ENABLED
             bool initializationSuccess;
 
-            if (settings.DevicePlaybackEnabled)
+            if (settings.OverrideLoggingLevel)
+            {
+                Log.LogLevel = settings.LogLevel;
+            }
+
+            if (settings.UsePlayback)
             {
                 // Initialize Playback subsystems instead of initializing ARKit subsystems
                 // (for those features that aren't added/supplanted by Lightship),
@@ -84,7 +92,7 @@ namespace Niantic.Lightship.AR.Loader
 
             // Determine if device supports LiDAR only during the window where AFTER arf loader initializes but BEFORE
             // lightship loader initializes as non-playback relies on checking the existence of ARF meshing subsystem
-            var isLidarSupported = settings.DevicePlaybackEnabled
+            var isLidarSupported = settings.UsePlayback
                 ? _playbackHelper.DatasetReader.GetIsLidarAvailable()
                 : _nativeHelper.DetermineIfDeviceSupportsLidar();
 

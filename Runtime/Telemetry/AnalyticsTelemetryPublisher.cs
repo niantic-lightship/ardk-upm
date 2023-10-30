@@ -1,4 +1,6 @@
+// Copyright 2023 Niantic, Inc. All Rights Reserved.
 using System;
+using Niantic.Lightship.AR.Utilities.Log;
 using Niantic.Lightship.AR.Protobuf;
 using Niantic.Platform.Analytics.Telemetry;
 using Niantic.Platform.Analytics.Telemetry.Logging;
@@ -27,24 +29,24 @@ namespace Niantic.Lightship.AR.Telemetry
                 debugOptions.LogOptions = LogOptions.All;
 
                 builder.SetDebugOptions(debugOptions);
-                Debug.Log("Registering logger for telemetry.");
+                // Log.Info("Registering logger for telemetry.");
             }
 
             _ardkPublisher = builder.Build();
-            Debug.Log("Successfully created the ardk publisher.");
+            // Log.Info("Successfully created the ardk publisher.");
         }
 
         public void RecordEvent(ArdkNextTelemetryOmniProto telemetryEvent)
         {
             try
-            {   
+            {
                 _ardkPublisher.RecordEvent(telemetryEvent);
             }
             catch (Exception)
             {
                 // fail silently
                 // enable for debugging
-                // Debug.LogWarning($"Posting telemetry failed with the following exception: {ex}");
+                // Log.Warning($"Posting telemetry failed with the following exception: {ex}");
             }
         }
 
@@ -57,21 +59,21 @@ namespace Niantic.Lightship.AR.Telemetry
                     case LogLevel.Verbose:
                     case LogLevel.Info:
 
-                        Debug.Log(message);
+                        Log.Info(message);
                         break;
 
                     case LogLevel.Warning:
-                        Debug.LogWarning(message);
+                        Log.Warning(message);
                         break;
 
                     case LogLevel.Error:
                     case LogLevel.Fatal:
 
-                        Debug.LogError(message);
+                        Log.Error(message);
                         break;
 
                     default:
-                        Debug.Log(message);
+                        Log.Info(message);
                         break;
                 }
             }

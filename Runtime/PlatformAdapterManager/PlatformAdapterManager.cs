@@ -1,13 +1,18 @@
+// Copyright 2023 Niantic, Inc. All Rights Reserved.
 // Copyright 2023 Niantic Labs. All rights reserved.
 
 using System;
-using Niantic.Lightship.AR.ARFoundation.Occlusion;
+using System.Collections.Generic;
+using System.Linq;
+using Niantic.Lightship.AR.Utilities.Log;
+using Niantic.Lightship.AR.Core;
 using Niantic.Lightship.AR.Loader;
+using Niantic.Lightship.AR.Occlusion;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 using UnityEngine.XR.ARSubsystems;
-using Niantic.Lightship.AR.Playback;
+using Niantic.Lightship.AR.Subsystems.Playback;
 using Niantic.Lightship.AR.Utilities;
 using Niantic.Lightship.AR.Utilities.Profiling;
 using Matrix4x4 = UnityEngine.Matrix4x4;
@@ -17,7 +22,7 @@ namespace Niantic.Lightship.AR.PAM
     // TODO [AR-15859]:
     //  Temporarily implemented _IPlaybackDatasetIngester to pass the dataset reader to the
     //  SubsystemDataAcquirer until pose input is implemented via playback. Remove once ticket is resolved.
-    internal class PlatformAdapterManager : IDisposable, IPlaybackDatasetUser
+    internal class PlatformAdapterManager : IDisposable
     {
         public Action<PamEventArgs> SentData;
         private readonly FrameData _currentFrameData;
@@ -38,7 +43,7 @@ namespace Niantic.Lightship.AR.PAM
             CPU,
             GPU
         }
-        
+
         private readonly AbstractTexturesSetter _abstractTexturesSetter;
 
         private const string TraceCategory = "PlatformAdapterManager";
@@ -88,7 +93,7 @@ namespace Niantic.Lightship.AR.PAM
                     new GpuTexturesSetter(_platformDataAcquirer, _currentFrameData);
             }
 
-            Debug.Log
+            Log.Info
             (
                 $"{nameof(PlatformAdapterManager)}>{_api.GetType()}, <{_platformDataAcquirer.GetType()}> was created " +
                 $"with nativeHandle ({_nativeHandle})"
@@ -103,15 +108,9 @@ namespace Niantic.Lightship.AR.PAM
             Dispose(false);
         }
 
-        public void SetPlaybackDatasetReader(PlaybackDatasetReader reader)
-        {
-            if (_platformDataAcquirer is IPlaybackDatasetUser datasetUser)
-                datasetUser.SetPlaybackDatasetReader(reader);
-        }
-
         public void Dispose()
         {
-            Debug.Log($"{nameof(PlatformAdapterManager)} was disposed.");
+            Log.Info($"{nameof(PlatformAdapterManager)} was disposed.");
 
             GC.SuppressFinalize(this);
             Dispose(true);
@@ -364,21 +363,64 @@ namespace Niantic.Lightship.AR.PAM
 
             ProfilerUtility.EventEnd(TraceCategory, name);
 
+            if (SentData != null)
+            {
+                DataFormat[] sentDataFormats = CollateSentDataFormats();
+                SentData?.Invoke(new PamEventArgs(sentDataFormats));
+            }
+
             // Invalidate the data lengths so that SAH won't pick them up in the next frame.
             InvalidateFrameData();
             _abstractTexturesSetter.InvalidateCachedTextures();
-
-            if (SentData != null)
-            {
-                DataFormat[] sentDataFormats = new DataFormat[readyDataFormatsSize];
-                Array.Copy(_readyDataFormats.ToArray(), sentDataFormats, readyDataFormatsSize);
-                SentData?.Invoke(new PamEventArgs(sentDataFormats));
-            }
         }
 
         private void OnBeforeRender()
         {
             ProfilerUtility.EventInstance("Rendering", "FrameUpdate");
+        }
+
+        // Returns only the data formats that were actually sent to SAH
+        private DataFormat[] CollateSentDataFormats()
+        {
+            List<DataFormat> sentDataFormats = new();
+            foreach (var dataFormat in _readyDataFormats)
+            {
+                switch (dataFormat)
+                {
+                    case DataFormat.kCpuRgba_256_144_Uint8:
+                        if (_currentFrameData._frameCStruct.CpuRgba256x144ImageDataLength > 0)
+                            sentDataFormats.Add(DataFormat.kCpuRgba_256_144_Uint8);
+                        break;
+
+                    case DataFormat.kJpeg_720_540_Uint8:
+                        if (_currentFrameData._frameCStruct.CpuJpeg720x540ImageDataLength > 0)
+                            sentDataFormats.Add(DataFormat.kJpeg_720_540_Uint8);
+                        break;
+
+                    case DataFormat.kGpsLocation:
+                        if (_currentFrameData._frameCStruct.GpsLocationLength > 0)
+                            sentDataFormats.Add(DataFormat.kGpsLocation);
+                        break;
+
+                    case DataFormat.kCompass:
+                        if (_currentFrameData._frameCStruct.CompassDataLength > 0)
+                            sentDataFormats.Add(DataFormat.kCompass);
+                        break;
+
+
+                    case DataFormat.kJpeg_full_res_Uint8:
+                        if (_currentFrameData._frameCStruct.CpuJpegFullResImageDataLength > 0)
+                            sentDataFormats.Add(DataFormat.kJpeg_full_res_Uint8);
+                        break;
+
+                    case DataFormat.kPlatform_depth:
+                        if (_currentFrameData._frameCStruct.PlatformDepthDataLength > 0)
+                            sentDataFormats.Add(DataFormat.kPlatform_depth);
+                        break;
+                }
+            }
+
+            return sentDataFormats.ToArray();
         }
     }
 

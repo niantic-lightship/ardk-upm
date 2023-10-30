@@ -1,6 +1,7 @@
 // Copyright 2023 Niantic, Inc. All Rights Reserved.
 
 using System;
+using Niantic.Lightship.AR.Utilities.Log;
 using UnityEngine;
 
 namespace Niantic.Lightship.AR
@@ -14,7 +15,7 @@ namespace Niantic.Lightship.AR
 
             // With AR-15672 upgrade, won't need to explicitly ifdef here
 #if NIANTIC_LIGHTSHIP_DEVELOPMENT
-            Debug.LogWarning("Attempted to call native API with an invalid handle.");
+            Log.Warning("Attempted to call native API with an invalid handle.");
 #endif
 
             return false;

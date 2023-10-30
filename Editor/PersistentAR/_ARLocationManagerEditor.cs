@@ -1,16 +1,48 @@
+// Copyright 2023 Niantic, Inc. All Rights Reserved.
 #if UNITY_EDITOR
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Niantic.Lightship.AR.Utilities.Log;
+using Niantic.Lightship.AR.LocationAR;
 using Niantic.Lightship.AR.Subsystems;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using Niantic.Lightship.AR.Loader;
 
 [CustomEditor(typeof(ARLocationManager))]
+[InitializeOnLoad]
 internal class _ARLocationManagerEditor : Editor
 {
     private ARLocation[] _arLocations;
+    private string[] _arLocationNames;
+
+    private int _selectedLocationIndex = 0;
+
+    static _ARLocationManagerEditor()
+    {
+        EditorApplication.playModeStateChanged += HandleOnPlayModeChanged;
+        SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+
+    static class Contents
+    {
+        public static readonly GUIContent locationSelectorLabel =
+            new GUIContent
+            (
+                "AR Location",
+                $"Currently selected {nameof(ARLocation)} object. Manages the active states of all in the scene."
+            );
+
+        public static readonly GUIContent addLocationButtonLabel =
+            new GUIContent
+            (
+                "Add AR Location",
+                $"Creates a new child {nameof(ARLocation)} object and selects it."
+            );
+    }
 
     private void Awake()
     {
@@ -18,10 +50,10 @@ internal class _ARLocationManagerEditor : Editor
         {
             return;
         }
+
         var arLocationManager = (ARLocationManager)target;
-        _arLocations = arLocationManager.GetComponentsInChildren<ARLocation>(true);
         ValidateARLocationManager(arLocationManager);
-        ValidateARLocations();
+        ValidateARLocations(arLocationManager);
     }
 
     public override void OnInspectorGUI()
@@ -31,8 +63,9 @@ internal class _ARLocationManagerEditor : Editor
         {
             return;
         }
+
         LayOutLocationSelector();
-        if (GUILayout.Button($"Add AR Location"))
+        if (GUILayout.Button(Contents.addLocationButtonLabel))
         {
             AddARLocation();
         }
@@ -40,97 +73,203 @@ internal class _ARLocationManagerEditor : Editor
 
     private void ValidateARLocationManager(ARLocationManager arLocationManager)
     {
-        if (arLocationManager.transform.position != Vector3.zero || arLocationManager.transform.rotation != Quaternion.identity)
+        if (arLocationManager.transform.position != Vector3.zero ||
+            arLocationManager.transform.rotation != Quaternion.identity)
         {
             arLocationManager.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
-            Debug.LogWarning($"The AR Location Manager must remain at the origin (0,0,0).", arLocationManager.gameObject);
+            Log.Warning
+            (
+                $"The AR Location Manager must remain at the origin (0,0,0)." +
+                arLocationManager.gameObject
+            );
         }
     }
 
-    private void ValidateARLocations()
+    private void ValidateARLocations(ARLocationManager arLocationManager)
     {
-        if (_arLocations.Length > 0)
+        _arLocations = arLocationManager.GetComponentsInChildren<ARLocation>(true).Prepend(null).ToArray();
+        _arLocationNames = _arLocations.Select(r => r != null ? r.name : "None").ToArray();
+
+        // Check for non-null and active locations
+        List<int> activeLocationIndices = new List<int>();
+        int lastNonNull = 0;
+        for (int i = 0; i < _arLocations.Length; i++)
         {
-            var activeRoots = _arLocations.Where(r => r.gameObject.activeSelf).ToArray();
-            if (activeRoots.Length == 0) //If no roots are active, activate the first one
+            if (_arLocations[i] != null)
             {
-                _arLocations[0].gameObject.SetActive(true);
-            }
-            else if (activeRoots.Length > 1) //If multiple roots are active, deactivate all but one
-            {
-                for (int i = 0; i < activeRoots.Length; i++)
+                lastNonNull = i;
+                if (_arLocations[i].gameObject.activeSelf)
                 {
-                    bool active = i == 0;
-                    activeRoots[i].gameObject.SetActive(active);
+                    activeLocationIndices.Add(i);
                 }
             }
         }
 
-        //Check for duplicate locations
+        // Select the appropriate location and validate there is only one active
+        switch (activeLocationIndices.Count)
+        {
+            case 0: // No active locations, select the last non-null location (or "None" if there are none)
+                SelectLocationIndex(lastNonNull);
+                break;
+            case 1: // One active location, select it
+                SelectLocationIndex(activeLocationIndices[0]);
+                break;
+            case > 1: // Multiple active locations, deactivate all but the last one
+                for (int i = 0; i < activeLocationIndices.Count - 1; ++i)
+                {
+                    Log.Warning($"Multiple active {nameof(ARLocation)}s detected, deactivating all but one.");
+                    ARLocation extraActiveLocation = _arLocations[activeLocationIndices[i]];
+                    extraActiveLocation.gameObject.SetActive(false);
+                    EditorUtility.SetDirty(extraActiveLocation);
+                }
+
+                SelectLocationIndex(activeLocationIndices[^1]);
+                break;
+        }
+
+        // Check for duplicate locations
         for (int i = 0; i < _arLocations.Length - 1; i++)
         {
-            for (int j = 1; j < _arLocations.Length; j++)
+            for (int j = i + 1; j < _arLocations.Length; j++)
             {
-                if (_arLocations[i] == _arLocations[j])
+                if (_arLocations[i] == null || _arLocations[j] == null || _arLocations[i] == _arLocations[j])
                 {
                     continue;
                 }
 
                 if (_arLocations[i].Payload == _arLocations[j].Payload)
                 {
-                    Debug.LogError($"Duplicate AR Locations in the same scene ({_arLocations[i].name}) are not supported.", _arLocations[i].gameObject);
+                    Log.Error
+                    (
+                        $"Duplicate AR Locations in the same scene ({_arLocations[i].name} and {_arLocations[j].name}) are not supported." +
+                        _arLocations[i].gameObject
+                    );
                 }
+            }
+        }
+
+        // Unity dropdowns filter out identical strings (and remove trailing spaces)
+        // To handle the case where a user names two locations the same, we add n tab characters to the nth location name.
+        // This ensures every entry is unique, allowing the dropdown to display all locations.
+        // The tab characters aren't rendered in the dropdown, so the entries will appear normal.
+        for (int i = 0; i < _arLocationNames.Length; ++i)
+        {
+            for (int j = 0; j < i; ++j)
+            {
+                _arLocationNames[i] += '\t';
             }
         }
     }
 
     private void LayOutLocationSelector()
     {
-        var locationNames = new List<string>();
-        locationNames.Add("None");
-        locationNames.AddRange(_arLocations.Select(r => r.name));
-        var selectedARLocation = _arLocations.FirstOrDefault(r => r.gameObject.activeSelf);
-        if (selectedARLocation)
-        {
-            int previousSelectedLocation = Array.IndexOf(_arLocations, selectedARLocation) + 1;
-            int selectedLocation = EditorGUILayout.Popup("AR Location", previousSelectedLocation, locationNames.ToArray());
-            if (previousSelectedLocation != selectedLocation)
-            {
-                _arLocations[previousSelectedLocation - 1].gameObject.SetActive(false);
-                EditorUtility.SetDirty(_arLocations[previousSelectedLocation - 1]);
-                if (selectedLocation > 0)
-                {
-                    _arLocations[selectedLocation - 1].gameObject.SetActive(true);
-                    EditorUtility.SetDirty(_arLocations[selectedLocation - 1]);
-                }
-            }
-        }
-        else
-        {
-            int selectedLocation = EditorGUILayout.Popup("AR Location", 0, locationNames.ToArray());
-            if (selectedLocation > 0)
-            {
-                _arLocations[selectedLocation - 1].gameObject.SetActive(true);
-                EditorUtility.SetDirty(_arLocations[selectedLocation - 1]);
-            }
-        }
+        SelectLocationIndex
+        (
+            EditorGUILayout.Popup
+            (
+                Contents.locationSelectorLabel,
+                _selectedLocationIndex,
+                _arLocationNames
+            )
+        );
     }
 
     private void AddARLocation()
     {
         var arLocationManager = (ARLocationManager)target;
-        var selectedARLocation = _arLocations.FirstOrDefault(r => r.gameObject.activeSelf);
-        if (selectedARLocation)
-        {
-            selectedARLocation.gameObject.SetActive(false);
-        }
-        var arLocationGameObject =
-            new GameObject("AR Location", typeof(ARLocation));
+
+        var arLocationGameObject = new GameObject(ARLocationEditor.DefaultARLocationName);
+        var arLocationComponent = arLocationGameObject.AddComponent<ARLocation>();
         GameObjectUtility.SetParentAndAlign(arLocationGameObject, arLocationManager.gameObject);
-        Undo.RegisterCreatedObjectUndo(arLocationGameObject,
-            "Create " + arLocationGameObject.name);
+        GameObjectUtility.EnsureUniqueNameForSibling(arLocationGameObject);
+        ValidateARLocations(arLocationManager);
+        SelectLocation(arLocationComponent);
+
+        Undo.RegisterCreatedObjectUndo
+        (
+            arLocationGameObject,
+            "Create " + arLocationGameObject.name
+        );
         Selection.activeObject = arLocationGameObject;
-        arLocationGameObject.SetActive(true);
+    }
+
+    private void SelectLocation(ARLocation location)
+    {
+        for (int i = 0; i < _arLocations.Length; i++)
+        {
+            if (_arLocations[i] == location)
+            {
+                SelectLocationIndex(i);
+                return;
+            }
+        }
+    }
+
+    private void SelectLocationIndex(int value)
+    {
+        if (value == _selectedLocationIndex) return;
+
+        // Deactivate the previously selected location
+        ARLocation previousLocation = _arLocations[_selectedLocationIndex];
+        if (previousLocation != null)
+        {
+            bool wasActive = previousLocation.gameObject.activeSelf;
+            previousLocation.gameObject.SetActive(false);
+            if (wasActive)
+            {
+                EditorUtility.SetDirty(previousLocation);
+            }
+        }
+
+        if (value > _arLocations.Length) return;
+
+        // Activate the newly selected location
+        ARLocation selectedLocation = _arLocations[value];
+        if (selectedLocation != null)
+        {
+            bool wasInactive = selectedLocation.gameObject.activeSelf == false;
+            selectedLocation.gameObject.SetActive(true);
+            if (wasInactive)
+            {
+                EditorUtility.SetDirty(selectedLocation);
+            }
+        }
+
+        _selectedLocationIndex = value;
+    }
+
+    private static void HandleOnPlayModeChanged(PlayModeStateChange state)
+    {
+        if (state == PlayModeStateChange.EnteredPlayMode)
+        {
+            HandleMeshVisibility();
+        }
+    }
+
+    private static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        HandleMeshVisibility();
+    }
+
+    private static void HandleMeshVisibility()
+    {
+        if (!LightshipSettings.Instance.UsePlayback)
+            return;
+
+        // Because we hide the object right as we enter play mode, the de-activated state
+        // does not get serialized to the scene. Meaning Unity automatically handles restoring
+        // the active flag to it's previous state when exiting play mode.
+        var allManagers = UnityEngine.Object.FindObjectsOfType<ARLocationManager>();
+        foreach (var locationManager in allManagers)
+        {
+            foreach (var arLocation in locationManager.ARLocations)
+            {
+                if (!arLocation.IncludeMeshInBuild && arLocation.MeshContainer != null)
+                {
+                    arLocation.MeshContainer.SetActive(false);
+                }
+            }
+        }
     }
 }
 #endif

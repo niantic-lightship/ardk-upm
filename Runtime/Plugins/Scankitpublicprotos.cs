@@ -26,40 +26,40 @@ namespace Niantic.ARDK.AR.Protobuf {
             "S2l0UHVibGljUHJvdG9zLnByb3RvIoEBCgtGcmFtZXNQcm90bxIKCgJpZBgB",
             "IAEoCRIbCgZmcmFtZXMYBSADKAsyCy5GcmFtZVByb3RvEiYKB2FuY2hvcnMY",
             "DSADKAsyFS5BZmZpbmVUcmFuc2Zvcm1Qcm90bxIhCglsb2NhdGlvbnMYAiAD",
-            "KAsyDi5Mb2NhdGlvblByb3RvIvkBCgpGcmFtZVByb3RvEgoKAmlkGAEgASgF",
+            "KAsyDi5Mb2NhdGlvblByb3RvIpECCgpGcmFtZVByb3RvEgoKAmlkGAEgASgF",
             "Eg4KBmFuY2hvchgCIAEoBRIRCgl0aW1lc3RhbXAYAyABKAESIgoGY2FtZXJh",
             "GAQgASgLMhIuQ2FtZXJhUGFyYW1zUHJvdG8SKAoJdHJhbnNmb3JtGAUgASgL",
             "MhUuQWZmaW5lVHJhbnNmb3JtUHJvdG8SJAoIZXhwb3N1cmUYBiABKAsyEi5F",
             "eHBvc3VyZUluZm9Qcm90bxIfCgVyYW5nZRgHIAEoCzIQLkRlcHRoUmFuZ2VQ",
             "cm90bxIPCgdxdWFsaXR5GAggASgCEhYKDmlzX2xhcmdlX2ltYWdlGAkgASgI",
-            "IuYCChFTY2FuTWV0YWRhdGFQcm90bxIKCgJpZBgBIAEoCRIkCgppbWFnZV9z",
-            "aXplGAIgASgLMhAuUmFzdGVyU2l6ZVByb3RvEiQKCmRlcHRoX3NpemUYAyAB",
-            "KAsyEC5SYXN0ZXJTaXplUHJvdG8SFwoPc3RhcnRfdGltZXN0YW1wGAQgASgB",
-            "EhcKD3RpbWV6b25lX29mZnNldBgPIAEoBRIQCghhcHBfbmFtZRgFIAEoCRIV",
-            "Cg1wbGF0Zm9ybV9uYW1lGAYgASgJEhIKCm1vZGVsX25hbWUYByABKAkSGQoR",
-            "bWFudWZhY3R1cmVyX25hbWUYCCABKAkSCwoDcG9pGAkgASgJEhAKCHJlY29y",
-            "ZGVyGAogASgJEhEKCXVzZXJfanNvbhgLIAEoCRIUCgxuYXRpdmVfZGVwdGgY",
-            "DCABKAgSDgoGb3JpZ2luGA0gAygCEhcKD2dsb2JhbF9yb3RhdGlvbhgOIAMo",
-            "AiJgChFDYW1lcmFQYXJhbXNQcm90bxINCgV3aWR0aBgBIAEoBRIOCgZoZWln",
-            "aHQYAiABKAUSCQoBZhgDIAEoAhIKCgJweBgEIAEoAhIKCgJweRgFIAEoAhIJ",
-            "CgFrGAYgASgCIj0KFEFmZmluZVRyYW5zZm9ybVByb3RvEhAKCHJvdGF0aW9u",
-            "GAEgAygCEhMKC3RyYW5zbGF0aW9uGAIgAygCIsIBCg1Mb2NhdGlvblByb3Rv",
-            "EhEKCXRpbWVzdGFtcBgBIAEoARIQCghsYXRpdHVkZRgCIAEoARIRCglsb25n",
-            "aXR1ZGUYAyABKAESEAoIYWNjdXJhY3kYBCABKAISGAoQZWxldmF0aW9uX21l",
-            "dGVycxgFIAEoAhIaChJlbGV2YXRpb25fYWNjdXJhY3kYBiABKAISFwoPaGVh",
-            "ZGluZ19kZWdyZWVzGAcgASgCEhgKEGhlYWRpbmdfYWNjdXJhY3kYCCABKAIi",
-            "NAoRRXhwb3N1cmVJbmZvUHJvdG8SDwoHc2h1dHRlchgBIAEoAhIOCgZvZmZz",
-            "ZXQYAiABKAIiLAoPRGVwdGhSYW5nZVByb3RvEgwKBG5lYXIYASABKAISCwoD",
-            "ZmFyGAIgASgCIjAKD1Jhc3RlclNpemVQcm90bxINCgV3aWR0aBgBIAEoBRIO",
-            "CgZoZWlnaHQYAiABKAUiZgoQQm91bmRpbmdCb3hQcm90bxIMCgRsb194GAEg",
-            "ASgCEgwKBGxvX3kYAiABKAISDAoEbG9fehgDIAEoAhIMCgRoaV94GAQgASgC",
-            "EgwKBGhpX3kYBSABKAISDAoEaGlfehgGIAEoAkIbqgIYTmlhbnRpYy5BUkRL",
-            "LkFSLlByb3RvYnVmYgZwcm90bzM="));
+            "EhYKDnRyYWNraW5nX3N0YXRlGAogASgFIuYCChFTY2FuTWV0YWRhdGFQcm90",
+            "bxIKCgJpZBgBIAEoCRIkCgppbWFnZV9zaXplGAIgASgLMhAuUmFzdGVyU2l6",
+            "ZVByb3RvEiQKCmRlcHRoX3NpemUYAyABKAsyEC5SYXN0ZXJTaXplUHJvdG8S",
+            "FwoPc3RhcnRfdGltZXN0YW1wGAQgASgBEhcKD3RpbWV6b25lX29mZnNldBgP",
+            "IAEoBRIQCghhcHBfbmFtZRgFIAEoCRIVCg1wbGF0Zm9ybV9uYW1lGAYgASgJ",
+            "EhIKCm1vZGVsX25hbWUYByABKAkSGQoRbWFudWZhY3R1cmVyX25hbWUYCCAB",
+            "KAkSCwoDcG9pGAkgASgJEhAKCHJlY29yZGVyGAogASgJEhEKCXVzZXJfanNv",
+            "bhgLIAEoCRIUCgxuYXRpdmVfZGVwdGgYDCABKAgSDgoGb3JpZ2luGA0gAygC",
+            "EhcKD2dsb2JhbF9yb3RhdGlvbhgOIAMoAiJgChFDYW1lcmFQYXJhbXNQcm90",
+            "bxINCgV3aWR0aBgBIAEoBRIOCgZoZWlnaHQYAiABKAUSCQoBZhgDIAEoAhIK",
+            "CgJweBgEIAEoAhIKCgJweRgFIAEoAhIJCgFrGAYgASgCIj0KFEFmZmluZVRy",
+            "YW5zZm9ybVByb3RvEhAKCHJvdGF0aW9uGAEgAygCEhMKC3RyYW5zbGF0aW9u",
+            "GAIgAygCIsIBCg1Mb2NhdGlvblByb3RvEhEKCXRpbWVzdGFtcBgBIAEoARIQ",
+            "CghsYXRpdHVkZRgCIAEoARIRCglsb25naXR1ZGUYAyABKAESEAoIYWNjdXJh",
+            "Y3kYBCABKAISGAoQZWxldmF0aW9uX21ldGVycxgFIAEoAhIaChJlbGV2YXRp",
+            "b25fYWNjdXJhY3kYBiABKAISFwoPaGVhZGluZ19kZWdyZWVzGAcgASgCEhgK",
+            "EGhlYWRpbmdfYWNjdXJhY3kYCCABKAIiNAoRRXhwb3N1cmVJbmZvUHJvdG8S",
+            "DwoHc2h1dHRlchgBIAEoAhIOCgZvZmZzZXQYAiABKAIiLAoPRGVwdGhSYW5n",
+            "ZVByb3RvEgwKBG5lYXIYASABKAISCwoDZmFyGAIgASgCIjAKD1Jhc3RlclNp",
+            "emVQcm90bxINCgV3aWR0aBgBIAEoBRIOCgZoZWlnaHQYAiABKAUiZgoQQm91",
+            "bmRpbmdCb3hQcm90bxIMCgRsb194GAEgASgCEgwKBGxvX3kYAiABKAISDAoE",
+            "bG9fehgDIAEoAhIMCgRoaV94GAQgASgCEgwKBGhpX3kYBSABKAISDAoEaGlf",
+            "ehgGIAEoAkIbqgIYTmlhbnRpYy5BUkRLLkFSLlByb3RvYnVmYgZwcm90bzM="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(null, new pbr::GeneratedClrTypeInfo[] {
             new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.ARDK.AR.Protobuf.FramesProto), global::Niantic.ARDK.AR.Protobuf.FramesProto.Parser, new[]{ "Id", "Frames", "Anchors", "Locations" }, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.ARDK.AR.Protobuf.FrameProto), global::Niantic.ARDK.AR.Protobuf.FrameProto.Parser, new[]{ "Id", "Anchor", "Timestamp", "Camera", "Transform", "Exposure", "Range", "Quality", "IsLargeImage" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.ARDK.AR.Protobuf.FrameProto), global::Niantic.ARDK.AR.Protobuf.FrameProto.Parser, new[]{ "Id", "Anchor", "Timestamp", "Camera", "Transform", "Exposure", "Range", "Quality", "IsLargeImage", "TrackingState" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.ARDK.AR.Protobuf.ScanMetadataProto), global::Niantic.ARDK.AR.Protobuf.ScanMetadataProto.Parser, new[]{ "Id", "ImageSize", "DepthSize", "StartTimestamp", "TimezoneOffset", "AppName", "PlatformName", "ModelName", "ManufacturerName", "Poi", "Recorder", "UserJson", "NativeDepth", "Origin", "GlobalRotation" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.ARDK.AR.Protobuf.CameraParamsProto), global::Niantic.ARDK.AR.Protobuf.CameraParamsProto.Parser, new[]{ "Width", "Height", "F", "Px", "Py", "K" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.ARDK.AR.Protobuf.AffineTransformProto), global::Niantic.ARDK.AR.Protobuf.AffineTransformProto.Parser, new[]{ "Rotation", "Translation" }, null, null, null),
@@ -302,6 +302,7 @@ namespace Niantic.ARDK.AR.Protobuf {
       Range = other.range_ != null ? other.Range.Clone() : null;
       quality_ = other.quality_;
       isLargeImage_ = other.isLargeImage_;
+      trackingState_ = other.trackingState_;
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -436,6 +437,21 @@ namespace Niantic.ARDK.AR.Protobuf {
       }
     }
 
+    /// <summary>Field number for the "tracking_state" field.</summary>
+    public const int TrackingStateFieldNumber = 10;
+    private int trackingState_;
+    /// <summary>
+    ///  Tracking state of the current frame.
+    ///  0 is unset, 1 is no tracking, 2 is poor tracking, and 3 is good tracking.
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public int TrackingState {
+      get { return trackingState_; }
+      set {
+        trackingState_ = value;
+      }
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public override bool Equals(object other) {
       return Equals(other as FrameProto);
@@ -458,6 +474,7 @@ namespace Niantic.ARDK.AR.Protobuf {
       if (!object.Equals(Range, other.Range)) return false;
       if (Quality != other.Quality) return false;
       if (IsLargeImage != other.IsLargeImage) return false;
+      if (TrackingState != other.TrackingState) return false;
       return true;
     }
 
@@ -473,6 +490,7 @@ namespace Niantic.ARDK.AR.Protobuf {
       if (range_ != null) hash ^= Range.GetHashCode();
       if (Quality != 0F) hash ^= Quality.GetHashCode();
       if (IsLargeImage != false) hash ^= IsLargeImage.GetHashCode();
+      if (TrackingState != 0) hash ^= TrackingState.GetHashCode();
       return hash;
     }
 
@@ -519,6 +537,10 @@ namespace Niantic.ARDK.AR.Protobuf {
         output.WriteRawTag(72);
         output.WriteBool(IsLargeImage);
       }
+      if (TrackingState != 0) {
+        output.WriteRawTag(80);
+        output.WriteInt32(TrackingState);
+      }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -550,6 +572,9 @@ namespace Niantic.ARDK.AR.Protobuf {
       }
       if (IsLargeImage != false) {
         size += 1 + 1;
+      }
+      if (TrackingState != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeInt32Size(TrackingState);
       }
       return size;
     }
@@ -597,6 +622,9 @@ namespace Niantic.ARDK.AR.Protobuf {
       }
       if (other.IsLargeImage != false) {
         IsLargeImage = other.IsLargeImage;
+      }
+      if (other.TrackingState != 0) {
+        TrackingState = other.TrackingState;
       }
     }
 
@@ -654,6 +682,10 @@ namespace Niantic.ARDK.AR.Protobuf {
           }
           case 72: {
             IsLargeImage = input.ReadBool();
+            break;
+          }
+          case 80: {
+            TrackingState = input.ReadInt32();
             break;
           }
         }

@@ -1,6 +1,10 @@
+// Copyright 2023 Niantic, Inc. All Rights Reserved.
 using System;
 using System.Collections.Generic;
+using Niantic.Lightship.AR.Utilities.Log;
+using Niantic.Lightship.AR.Subsystems.Occlusion;
 using Niantic.Lightship.AR.Utilities;
+using Niantic.Lightship.AR.Utilities.Textures;
 using Unity.Collections;
 using UnityEngine;
 using UnityEngine.XR;
@@ -84,7 +88,7 @@ namespace Niantic.Lightship.AR.PAM
 
         private void OnInputDeviceConnected(InputDevice device)
         {
-            Debug.Log($"Input device detected with name {device.name}");
+            Log.Info($"Input device detected with name {device.name}");
             CheckConnectedDevice(device);
         }
 
@@ -100,7 +104,7 @@ namespace Niantic.Lightship.AR.PAM
                     _cameraSubsystem = loader.GetLoadedSubsystem<XRCameraSubsystem>();
                     _sessionSubsystem = loader.GetLoadedSubsystem<XRSessionSubsystem>();
                     _occlusionSubsystem = loader.GetLoadedSubsystem<XROcclusionSubsystem>();
-                    _usingLightshipOcclusion = _occlusionSubsystem is Niantic.Lightship.AR.LightshipOcclusionSubsystem;
+                    _usingLightshipOcclusion = _occlusionSubsystem is Niantic.Lightship.AR.Subsystems.Occlusion.LightshipOcclusionSubsystem;
 
                     List<InputDevice> devices = new List<InputDevice>();
                     InputDevices.GetDevicesWithCharacteristics(InputDeviceCharacteristics.TrackedDevice, devices);
@@ -135,7 +139,12 @@ namespace Niantic.Lightship.AR.PAM
 
         protected virtual ScreenOrientation GetScreenOrientation()
         {
+#if NIANTIC_LIGHTSHIP_SPACES_ENABLED
+            //TODO: fix this properly to account for head tilt
+            return ScreenOrientation.LandscapeLeft;
+#else
             return Screen.orientation;
+#endif
         }
 
         public override bool TryGetCameraFrame(out XRCameraFrame frame)
@@ -229,7 +238,7 @@ namespace Niantic.Lightship.AR.PAM
                 }
                 else if (displayWarning)
                 {
-                    Debug.LogWarning
+                    Log.Warning
                     (
                         $"An input device {device.name} with the TrackedDevice characteristic was registered but " +
                         $"the {nameof(SubsystemsDataAcquirer)} is already consuming data from {InputDevice.Value.name}."
@@ -473,7 +482,7 @@ namespace Niantic.Lightship.AR.PAM
                 Permission.RequestUserPermission(Permission.FineLocation);
 #endif
                 _locationServiceNeedsToStart = true;
-                // We will try to start Location Service in TryStartLocationService() 
+                // We will try to start Location Service in TryStartLocationService()
                 return;
             }
 

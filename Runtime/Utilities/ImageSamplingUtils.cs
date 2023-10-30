@@ -1,7 +1,9 @@
+// Copyright 2023 Niantic, Inc. All Rights Reserved.
 using System;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
+using static Niantic.Lightship.AR.Utilities.Log.Log;
 using UnityEngine.XR.ARSubsystems;
 
 namespace Niantic.Lightship.AR.Utilities
@@ -62,7 +64,7 @@ namespace Niantic.Lightship.AR.Utilities
             }
             catch (Exception)
             {
-                Debug.LogError($"Could not retrieve image plane: {plane} during sampling.");
+                Error($"Could not retrieve image plane: {plane} during sampling.");
                 throw;
             }
 

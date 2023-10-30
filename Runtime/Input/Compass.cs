@@ -1,8 +1,9 @@
 // Copyright 2023 Niantic, Inc. All Rights Reserved.
 
 using System;
+using Niantic.Lightship.AR.Utilities.Log;
 using Niantic.Lightship.AR.Loader;
-using Niantic.Lightship.AR.Playback;
+using Niantic.Lightship.AR.Subsystems.Playback;
 using UnityEditor;
 using UnityEngine;
 
@@ -68,9 +69,7 @@ namespace Niantic.Lightship.AR
         // because we need to account for when this method is invoked without XR having been initialized.
         private void CreateProvider()
         {
-            var nextIsPlayback =
-                _lightshipSettings != null &&
-                (_lightshipSettings.EditorPlaybackEnabled || _lightshipSettings.DevicePlaybackEnabled);
+            var nextIsPlayback = _lightshipSettings != null && _lightshipSettings.UsePlayback;
 
             if (_provider == null)
             {
@@ -138,7 +137,7 @@ namespace Niantic.Lightship.AR
                     {
                         if (!_provider.IsHeadingUpdatesEnabled())
                         {
-                            Debug.LogWarning
+                            Log.Warning
                             (
                                 "Compass service implementation was reinitialized to now be provided by the device." +
                                 "There will be a short disruption in service while it initializes."
@@ -155,7 +154,7 @@ namespace Niantic.Lightship.AR
                     {
                         // Log is specifically about switching from the Playback --> Mock implementation, because
                         // switching from the Unity --> Mock implementation is not expected to ever happen.
-                        Debug.LogWarning
+                        Log.Warning
                         (
                             "Because XR was deinitialized, there is no Playback dataset for Input.compass to draw " +
                             "data updates from. While the compass will continue to be enabled, data " +
@@ -183,7 +182,7 @@ namespace Niantic.Lightship.AR
             {
                 if (_provider is PlaybackCompassProvider)
                 {
-                    Debug.LogError
+                    Log.Error
                     (
                         "Cannot set the PlaybackDatasetReader of an active PlaybackCompassProvider to null."
                     );
@@ -286,7 +285,7 @@ namespace Niantic.Lightship.AR
                 }
             }
 
-            private bool CanReturnValidValues => _enabled && _datasetReader != null && _datasetReader.CurrFrame != null;
+            private bool CanReturnValidValues => _enabled && _datasetReader?.CurrFrame?.LocationInfo != null;
 
             public bool IsHeadingUpdatesEnabled() => _enabled && _datasetReader.GetCompassEnabled();
 

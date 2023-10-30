@@ -4,9 +4,10 @@ using System;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
+using Niantic.Lightship.AR.Utilities.Log;
 using UnityEngine;
 
-namespace Niantic.Lightship.AR.Subsystems
+namespace Niantic.Lightship.AR.XRSubsystems
 {
     /// <summary>
     /// Configuration for scanning.
@@ -23,7 +24,7 @@ namespace Niantic.Lightship.AR.Subsystems
         private const bool DEFAULT_FULL_RESOLUTION_ENABLED = false;
         private const float DEFAULT_MAX_SCANNING_DISTANCE = 5.0f;
         private const int MIN_FRAMERATE = 1;
-        private const int MAX_FRAMERATE = 15;
+        private const int MAX_FRAMERATE = 30;
         private const int MIN_RAYCASTER_VIS_RESOLUTION = 10;
         private const int MAX_RAYCASTER_VIS_RESOLUTION = 1024;
         private const float MIN_MAX_SCANNING_DISTANCE = 0.1f;
@@ -48,7 +49,7 @@ namespace Niantic.Lightship.AR.Subsystems
             {
                 if (value < MIN_FRAMERATE || value > MAX_FRAMERATE)
                 {
-                    Debug.LogWarning($"Scan record FPS must be between 1 and 15, but got: {value}");
+                    Log.Warning($"Scan record FPS must be between 1 and 30, but got: {value}");
                 }
 
                 _framerate = Mathf.Clamp(value, MIN_FRAMERATE, MAX_FRAMERATE);
@@ -86,7 +87,7 @@ namespace Niantic.Lightship.AR.Subsystems
                     value.y < MIN_RAYCASTER_VIS_RESOLUTION ||
                     value.y > MAX_RAYCASTER_VIS_RESOLUTION)
                 {
-                    Debug.LogWarning(
+                    Log.Warning(
                         $"Scan raycaster resolution width and height are within 10 and 1024, but got: [{value.x}, {value.y}]");
                 }
 
@@ -110,7 +111,7 @@ namespace Niantic.Lightship.AR.Subsystems
             {
                 if (value > MAX_MAX_SCANNING_DISTANCE || value < MIN_MAX_SCANNING_DISTANCE)
                 {
-                    Debug.LogWarning($"Scan max distance must be between 0.1f and 5.0f, but got: {value}");
+                    Log.Warning($"Scan max distance must be between 0.1f and 5.0f, but got: {value}");
                 }
 
                 _maxScanningDistance = Mathf.Clamp(

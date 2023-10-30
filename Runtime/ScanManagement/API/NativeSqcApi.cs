@@ -1,7 +1,8 @@
+// Copyright 2023 Niantic, Inc. All Rights Reserved.
 using System;
 using System.Runtime.InteropServices;
-using Unity.Collections;
-using Unity.Collections.LowLevel.Unsafe;
+using Niantic.Lightship.AR.Utilities.Log;
+using Niantic.Lightship.AR.Core;
 using UnityEngine;
 
 namespace Niantic.Lightship.AR.Scanning
@@ -44,7 +45,7 @@ namespace Niantic.Lightship.AR.Scanning
             scoresSize = (int)(size);
 
             if (scoresSize < 0)
-                Debug.Log($"Integer overflow error? Value of variable \"{nameof(scoresSize)}\" is {scoresSize}");
+                Log.Info($"Integer overflow error? Value of variable \"{nameof(scoresSize)}\" is {scoresSize}");
         }
 
         private static class Native
@@ -73,8 +74,8 @@ namespace Niantic.Lightship.AR.Scanning
             (
                 IntPtr handle,
                 string scanPath,
-                IntPtr out_scores,
-                out UInt32 out_size
+                IntPtr outScores,
+                out UInt32 outSize
             );
         }
     }

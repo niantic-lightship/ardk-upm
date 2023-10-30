@@ -2,6 +2,7 @@
 
 using System.Collections.Generic;
 using UnityEngine;
+using Niantic.Lightship.AR.Utilities.Log;
 using UnityEngine.XR;
 
 namespace Niantic.Lightship.AR
@@ -44,7 +45,7 @@ namespace Niantic.Lightship.AR
         {
             if (!Reinitialize())
             {
-                Debug.LogError("Static pose provider could not locate an appropriate tracking device.");
+                Log.Error("Static pose provider could not locate an appropriate tracking device.");
             }
         }
 
@@ -85,7 +86,7 @@ namespace Niantic.Lightship.AR
                 if (!Reinitialize())
                 {
                     result = Matrix4x4.identity;
-                    Debug.LogError("Static pose provider couldn't acquire the current device pose.");
+                    Log.Error("Static pose provider couldn't acquire the current device pose.");
                     return false;
                 }
             }

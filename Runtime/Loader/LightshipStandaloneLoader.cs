@@ -1,5 +1,8 @@
-using Niantic.Lightship.AR.Playback;
-using Niantic.Lightship.AR.Subsystems;
+// Copyright 2023 Niantic, Inc. All Rights Reserved.
+using System;
+using Niantic.Lightship.AR.Subsystems.Playback;
+using Niantic.Lightship.AR.Utilities.Log;
+using Niantic.Lightship.AR.XRSubsystems;
 using UnityEngine.XR;
 using UnityEngine.XR.ARSubsystems;
 using UnityEngine.XR.Management;
@@ -32,7 +35,7 @@ namespace Niantic.Lightship.AR.Loader
         /// <summary>
         /// The `XRMeshingSubsystem` whose lifecycle is managed by this loader.
         /// </summary>
-        public XRMeshSubsystem lightshipMeshSubsystem => GetLoadedSubsystem<XRMeshSubsystem>();
+        public XRMeshSubsystem LightshipMeshSubsystem => GetLoadedSubsystem<XRMeshSubsystem>();
 
         /// <summary>
         /// Initializes the loader.
@@ -51,7 +54,12 @@ namespace Niantic.Lightship.AR.Loader
         bool ILightshipLoader.InitializeWithSettings(LightshipSettings settings, bool isTest)
         {
 #if NIANTIC_LIGHTSHIP_AR_LOADER_ENABLED
-            if (settings.EditorPlaybackSettings.UsePlayback)
+            if (settings.OverrideLoggingLevel)
+            {
+                Log.LogLevel = settings.LogLevel;
+            }
+
+            if (settings.UsePlayback)
             {
                 _playbackHelper = new PlaybackLoaderHelper();
                 if (!_playbackHelper.Initialize(this, settings))

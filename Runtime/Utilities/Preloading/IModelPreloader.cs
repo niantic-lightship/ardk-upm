@@ -10,15 +10,16 @@ namespace Niantic.Lightship.AR.Utilities.Preloading
     ///   AR session configured to use those features is run.
     /// Each awareness feature has one or more modes on a performance-to-quality curve, and each mode corresponds to a
     ///   different model file. See Feature.cs in Niantic.Lightship.AR.Utilities.Preloading.
+    [PublicAPI]
     public abstract class IModelPreloader: IDisposable
     {
         /// Begins downloading the requested model file to the cache if not already present. The request status can be
         ///   polled with CurrentProgress or ExistsInCache.
         /// @returns
-        ///   Returns a PreloaderStatusCode indicating the status of the request. The final result of the request may be
-        ///   deferred due to asynchronous network operations, so if this request returns Success or RequestInProgress,
-        ///   the user should query CurrentProgress and ExistsInCache to confirm that the network request completes
-        ///   successfully.
+        ///   Returns a PreloaderStatusCode indicating the initial status of the request. The final result of the request
+        ///   may be deferred due to asynchronous network operations, so if this request returns Success or
+        ///   RequestInProgress, the user should continue to query CurrentProgress every frame to confirm that the
+        ///   network request completes successfully.
         public abstract PreloaderStatusCode DownloadModel(DepthMode depthMode);
         public abstract PreloaderStatusCode DownloadModel(SemanticsMode semanticsMode);
 
@@ -30,12 +31,17 @@ namespace Niantic.Lightship.AR.Utilities.Preloading
         public abstract PreloaderStatusCode RegisterModel(DepthMode depthMode, string filepath);
         public abstract PreloaderStatusCode RegisterModel(SemanticsMode semanticsMode, string filepath);
 
-        /// @returns
+        /// Read the current status of a mode file request, if a request was previously made. The result of
+        ///   DownloadModel is asynchronous, so the caller must poll CurrentProgress for the status of the request to
+        ///   ensure that the HTTP request completed successfully.
+        /// @param progress
         ///   A value in the range of [0.0, 1.0] representing how much progress has been made downloading the model
         ///   file of the specified feature mode. A progress of 1.0 means the file is present in the cache. The download
         ///   progress value is server dependent and may not always support incremental progress updates.
-        public abstract float CurrentProgress(DepthMode depthMode);
-        public abstract float CurrentProgress(SemanticsMode semanticsMode);
+        /// @returns
+        ///   Returns a PreloaderStatusCode indicating the status of the request.
+        public abstract PreloaderStatusCode CurrentProgress(DepthMode depthMode, out float progress);
+        public abstract PreloaderStatusCode CurrentProgress(SemanticsMode semanticsMode, out float progress);
 
         /// @returns
         ///   True if the specified feature was found in the application's cache.
@@ -64,6 +70,9 @@ namespace Niantic.Lightship.AR.Utilities.Preloading
 
         [Description("Failure")] Failure,
         [Description("The specified file is not accessible by the program")] FileNotAccessible,
+        [Description("A preloader request for this model file was not found")] RequestNotFound,
         [Description("One or more invalid arguments were provided")] InvalidArguments,
+        [Description("An HTTP error occurred and the request failed")] HttpError,
+        [Description("The HTTP request timed out")] HttpTimeout,
     }
 }

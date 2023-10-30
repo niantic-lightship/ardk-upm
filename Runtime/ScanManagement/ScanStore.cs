@@ -1,3 +1,4 @@
+// Copyright 2023 Niantic, Inc. All Rights Reserved.
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
@@ -10,6 +11,10 @@ namespace Niantic.ARDK.AR.Scanning
     {
         private string _scanBasePath;
 
+        public string ScanBasePath
+        {
+            get => _scanBasePath;
+        }
         /// <summary>
         /// Create a ScanStore given the base path for all your scans.
         /// The path should match the ScanBasePath of XRScanningConfiguration.

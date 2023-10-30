@@ -1,29 +1,32 @@
+// Copyright 2023 Niantic, Inc. All Rights Reserved.
 using System;
 using System.Runtime.InteropServices;
 using System.Text;
+using Niantic.Lightship.AR.Utilities.Log;
+using Niantic.Lightship.AR.Core;
 using UnityEngine;
 
 namespace Niantic.Lightship.AR.Scanning
 {
     internal class NativeScanArchiveBuilderApi : IScanArchiveBuilderApi
     {
-        public IntPtr Create(string scanPath, string scanId, string userDataStr)
+        public IntPtr Create(IntPtr unityContext, string scanPath, string scanId, string userDataStr)
         {
             if (string.IsNullOrEmpty(scanPath) || string.IsNullOrEmpty(scanId))
             {
-                Debug.LogError("basePath and or scanId is null, can't create ScanArchiveBuilder");
+                Log.Error("basePath and or scanId is null, can't create ScanArchiveBuilder");
                 return IntPtr.Zero;
             }
 
-            return Native.Lightship_ARDK_Unity_Scanning_Archive_Builder_Create(scanPath, scanId,
-                userDataStr);
+            return Native.Lightship_ARDK_Unity_Scanning_Archive_Builder_Create(
+                unityContext, scanPath, scanId, userDataStr);
         }
 
         public void Release(IntPtr handle)
         {
             if (handle == IntPtr.Zero)
             {
-                Debug.LogError("handle is nullptr, lightship is disabled");
+                Log.Error("handle is nullptr, lightship is disabled");
                 return;
             }
 
@@ -34,7 +37,7 @@ namespace Niantic.Lightship.AR.Scanning
         {
             if (handle == IntPtr.Zero)
             {
-                Debug.LogError("handle is nullptr, lightship is disabled");
+                Log.Error("handle is nullptr, lightship is disabled");
                 return false;
             }
 
@@ -45,7 +48,7 @@ namespace Niantic.Lightship.AR.Scanning
         {
             if (handle == IntPtr.Zero)
             {
-                Debug.LogError("handle is nullptr, lightship is disabled");
+                Log.Error("handle is nullptr, lightship is disabled");
                 return false;
             }
 
@@ -56,7 +59,7 @@ namespace Niantic.Lightship.AR.Scanning
         {
             if (handle == IntPtr.Zero)
             {
-                Debug.LogError("handle is nullptr, lightship is disabled");
+                Log.Error("handle is nullptr, lightship is disabled");
                 return "";
             }
 
@@ -69,7 +72,7 @@ namespace Niantic.Lightship.AR.Scanning
         {
             if (handle == IntPtr.Zero)
             {
-                Debug.LogError("handle is nullptr, lightship is disabled");
+                Log.Error("handle is nullptr, lightship is disabled");
                 return "";
             }
 
@@ -82,7 +85,7 @@ namespace Niantic.Lightship.AR.Scanning
         {
             if (handle == IntPtr.Zero)
             {
-                Debug.LogError("handle is nullptr, lightship is disabled");
+                Log.Error("handle is nullptr, lightship is disabled");
                 return "";
             }
 
@@ -95,7 +98,7 @@ namespace Niantic.Lightship.AR.Scanning
         {
             if (handle == IntPtr.Zero)
             {
-                Debug.LogError("handle is nullptr, lightship is disabled");
+                Log.Error("handle is nullptr, lightship is disabled");
                 return;
             }
 
@@ -106,7 +109,7 @@ namespace Niantic.Lightship.AR.Scanning
         {
             [DllImport(LightshipPlugin.Name)]
             public static extern IntPtr Lightship_ARDK_Unity_Scanning_Archive_Builder_Create(
-                string scanPath, string scanId, string userDataStr);
+                IntPtr unityContext, string scanPath, string scanId, string userDataStr);
 
             [DllImport(LightshipPlugin.Name)]
             public static extern void Lightship_ARDK_Unity_Scanning_Archive_Builder_Release(IntPtr handle);

@@ -1,12 +1,15 @@
+// Copyright 2023 Niantic, Inc. All Rights Reserved.
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Text.RegularExpressions;
 
-using Niantic.Lightship.AR.Utilities.UnityAsset;
-using Niantic.Lightship.AR.Subsystems;
+using Niantic.Lightship.AR.Utilities.Log;
+using Niantic.Lightship.AR.LocationAR;
 using Niantic.Lightship.AR.Utilities;
+using Niantic.Lightship.AR.Utilities.UnityAssets;
 using UnityEditor;
 
 using UnityEngine;
@@ -16,66 +19,6 @@ namespace Niantic.Lightship.AR.Editor
 {
     internal class ARLocationAssetProcessor : AssetPostprocessor
     {
-        [Serializable]
-        private struct LocationData
-        {
-            public string NodeIdentifier;
-            public string DefaultAnchorPayload;
-            public string AnchorPayload;
-            public string LocalizationTargetName;
-            public string LocalizationTargetID;
-            public EdgeRepresentation LocalToSpace;
-        }
-
-        [Serializable]
-        private struct MeshData
-        {
-            public Mesh GeneratedMesh;
-            public string NodeIdentifier;
-            public Vector3 TranslationToTarget;
-            public Quaternion RotationToTarget;
-            public Texture2D Texture;
-        }
-
-        [Serializable]
-        private struct NodeRepresentation
-        {
-            public string identifier;
-        }
-
-        [Serializable]
-        private struct EdgeRepresentation
-        {
-            public string source;
-            public string destination;
-            public TransformRepresentation sourceToDestination;
-        }
-
-        [Serializable]
-        private struct TransformRepresentation
-        {
-            public Translation translation;
-            public Rotation rotation;
-            public float scale;
-        }
-
-        [Serializable]
-        private struct Translation
-        {
-            public float x;
-            public float y;
-            public float z;
-        }
-
-        [Serializable]
-        private struct Rotation
-        {
-            public float x;
-            public float y;
-            public float z;
-            public float w;
-        }
-
         private static void OnPostprocessAllAssets
         (
             string[] importedAssets,
@@ -130,6 +73,8 @@ namespace Niantic.Lightship.AR.Editor
             }
         }
 
+        private static string InvalidFileCharacters = "[\"*/:<>?\\|]";
+
         private static bool TryCreateLocationManifest(string zipPath, out ARLocationManifest manifest)
         {
             manifest = null;
@@ -138,8 +83,10 @@ namespace Niantic.Lightship.AR.Editor
                 FindArchivedFiles
                 (
                     zipPath,
-                    out LocationData locationData,
-                    out List<MeshData> meshDataList
+                    out GsbFileRepresentation.LocationData locationData,
+                    out List<GsbFileRepresentation.MeshData> meshDataList,
+                    out Quaternion originToDefaultRotation,
+                    out Vector3 originToDefaultTranslation
                 );
 
             if (!isValidZip)
@@ -149,7 +96,7 @@ namespace Niantic.Lightship.AR.Editor
                 return false;
             }
 
-            Debug.Log("Importing: " + zipPath);
+            Log.Info("Importing: " + zipPath);
 
             var dir = Path.GetDirectoryName(zipPath);
 
@@ -157,6 +104,16 @@ namespace Niantic.Lightship.AR.Editor
             if (string.IsNullOrEmpty(locationName))
             {
                 locationName = "Unnamed";
+            }
+            else
+            {
+                // Remove characters that Unity does not allow in asset paths
+                locationName = Regex.Replace(locationName, InvalidFileCharacters, string.Empty);
+                locationName = locationName.Trim();
+                if (string.IsNullOrEmpty(locationName))
+                {
+                    locationName = "Unnamed";
+                }
             }
 
             var manifestPath = ProjectBrowserUtilities.BuildAssetPath
@@ -169,7 +126,7 @@ namespace Niantic.Lightship.AR.Editor
                 AssetDatabase.StartAssetEditing();
 
                 // Need to create a copy in order to organize as sub-asset of the manifest
-                var meshCopy = GenerateMeshAsset(meshDataList);
+                var meshCopy = GenerateMeshAsset(meshDataList, originToDefaultRotation, originToDefaultTranslation);
                 AssetDatabase.AddObjectToAsset(meshCopy, manifest);
 
                 // Does a second enumeration for textures and materials, but this is cleaner
@@ -226,16 +183,41 @@ namespace Niantic.Lightship.AR.Editor
             return isValidZip;
         }
 
+        // GSB zips contain one or more meshes, each with a corresponding texture and edge data
+        // The top level mesh is the default mesh of the space, which is the largest mesh
+        // All additional meshes will be nested zip files, which contain a mesh, texture, and edge data
+        //
+        // For example, a fused mesh zip folder looks like:
+        // GSB.zip
+        //  - Default.fbx
+        //  - Default.jpeg
+        //  - Default.json
+        //  - AdditionalMesh1.zip
+        //      - AdditionalMesh1.fbx
+        //      - AdditionalMesh1.jpeg
+        //      - AdditionalMesh1.json
+        //  - AdditionalMesh2.zip
+        //      ...
+        //
+        // The default mesh is not necessarily the origin mesh, so we need to apply the inverse transform
+        // to place it at the origin. This information can be found within Default.json, which contains
+        // a LocalToSpace field if there is a transform to apply.
+        // The inverted transform must be applied to the default mesh, and all additional meshes for localization
+        // to work correctly.
         private static bool FindArchivedFiles
         (
             string zipPath,
-            out LocationData locationData,
-            out List<MeshData> meshData
+            out GsbFileRepresentation.LocationData locationData,
+            out List<GsbFileRepresentation.MeshData> meshData,
+            out Quaternion originToDefaultRotation,
+            out Vector3 originToDefaultTranslation
         )
         {
             Texture2D tex = null;
-            locationData = new LocationData();
-            meshData = new List<MeshData>();
+            locationData = new GsbFileRepresentation.LocationData();
+            meshData = new List<GsbFileRepresentation.MeshData>();
+            originToDefaultRotation = Quaternion.identity;
+            originToDefaultTranslation = Vector3.zero;
 
             using (var file = File.OpenRead(zipPath))
             {
@@ -264,7 +246,7 @@ namespace Niantic.Lightship.AR.Editor
                     if (texEntries.Any())
                         tex = ImportTexture(texEntries.First());
 
-                    var initialMeshData = new MeshData()
+                    var initialMeshData = new GsbFileRepresentation.MeshData()
                     {
                         GeneratedMesh = mesh,
                         NodeIdentifier = locationData.NodeIdentifier,
@@ -273,6 +255,17 @@ namespace Niantic.Lightship.AR.Editor
                         Texture = tex
                     };
 
+                    // If the default mesh is not the origin mesh, invert the transform to make it the origin 
+                    // This is the inverse of the default -> origin transform
+                    if (!string.IsNullOrEmpty(locationData.LocalToSpace.destination))
+                    {
+                        // Doing SO3 transform inverse
+                        var defaultToOriginRotation = initialMeshData.RotationToTarget;
+                        var defaultToOriginTranslation = initialMeshData.TranslationToTarget;
+                        originToDefaultRotation = Quaternion.Inverse(defaultToOriginRotation);
+                        originToDefaultTranslation = originToDefaultRotation * defaultToOriginTranslation * -1;
+                    }
+                    
                     meshData = UnpackAdditionalMeshes(additionalMeshes);
                     meshData.Insert(0, initialMeshData);
 
@@ -282,9 +275,9 @@ namespace Niantic.Lightship.AR.Editor
             }
         }
 
-        private static List<MeshData> UnpackAdditionalMeshes(IEnumerable<ZipArchiveEntry> zippedEntries)
+        private static List<GsbFileRepresentation.MeshData> UnpackAdditionalMeshes(IEnumerable<ZipArchiveEntry> zippedEntries)
         {
-            var ret = new List<MeshData>();
+            var ret = new List<GsbFileRepresentation.MeshData>();
 
             foreach (var entry in zippedEntries)
             {
@@ -307,7 +300,7 @@ namespace Niantic.Lightship.AR.Editor
                     var strippedName = mesh.Name.Split('.')[0];
                     var imported = ImportMesh(mesh, $"ARTempMesh{strippedName}.fbx");
 
-                    var meshData = new MeshData()
+                    var meshData = new GsbFileRepresentation.MeshData()
                     {
                         GeneratedMesh = imported,
                         NodeIdentifier = strippedName,
@@ -323,7 +316,7 @@ namespace Niantic.Lightship.AR.Editor
             return ret;
         }
 
-        private static Vector3 TranslationFromEdge(EdgeRepresentation edgeData)
+        private static Vector3 TranslationFromEdge(GsbFileRepresentation.EdgeRepresentation edgeData)
         {
             var transform = edgeData.sourceToDestination;
 
@@ -337,7 +330,7 @@ namespace Niantic.Lightship.AR.Editor
             return translation;
         }
 
-        private static Quaternion RotationFromEdge(EdgeRepresentation edgeData)
+        private static Quaternion RotationFromEdge(GsbFileRepresentation.EdgeRepresentation edgeData)
         {
             var transform = edgeData.sourceToDestination;
 
@@ -375,8 +368,15 @@ namespace Niantic.Lightship.AR.Editor
             return false;
         }
 
-        // Generates a mesh
-        private static Mesh GenerateMeshAsset(List<MeshData> meshData)
+        // Generates a mesh from the given list of meshes
+        // The mesh transforms provided in the GSB zip are in the origin mesh's space, so we need to apply
+        // an additional origin to default transform
+        private static Mesh GenerateMeshAsset
+        (
+            List<GsbFileRepresentation.MeshData> meshData,
+            Quaternion originToDefaultRotation,
+            Vector3 originToDefaultTranslation
+        )
         {
             var newMesh = new Mesh();
             newMesh.indexFormat = IndexFormat.UInt32;
@@ -386,6 +386,14 @@ namespace Niantic.Lightship.AR.Editor
             var combineInstances = new CombineInstance[meshData.Count];
             var meshes = new Mesh[meshData.Count];
             var matrices = new Matrix4x4[meshData.Count];
+            
+            // Apply the origin to default transform to all meshes
+            var originToDefault = Matrix4x4.TRS
+            (
+                originToDefaultTranslation,
+                originToDefaultRotation,
+                Vector3.one
+            );
 
             foreach (var mesh in meshData)
             {
@@ -393,15 +401,20 @@ namespace Niantic.Lightship.AR.Editor
                 meshCopy.name = $"{mesh.NodeIdentifier}";
                 meshes[count] = meshCopy;
 
-                var trs = Matrix4x4.TRS
+                // This is the original transform that must be applied to each mesh to place it
+                // in the origin mesh's space
+                var meshToOrigin = Matrix4x4.TRS
                 (
                     mesh.TranslationToTarget,
                     mesh.RotationToTarget,
                     Vector3.one
                 );
+                
+                // Apply the origin to default transform to each mesh to place it in the default space
+                var meshToDefault =  originToDefault * meshToOrigin;
 
                 // GSB meshes are in NAR space, convert to Unity space
-                var convertedTRS = trs.FromArdkToUnity();
+                var convertedTRS = meshToDefault.FromArdkToUnity();
                 matrices[count] = convertedTRS;
 
                 var combineInstance = new CombineInstance()
@@ -420,14 +433,14 @@ namespace Niantic.Lightship.AR.Editor
             return newMesh;
         }
 
-        private static LocationData ParseLocationData(ZipArchiveEntry entry)
+        private static GsbFileRepresentation.LocationData ParseLocationData(ZipArchiveEntry entry)
         {
             using (var stream = entry.Open())
             {
                 using (var reader = new StreamReader(stream))
                 {
                     var anchorFileText = reader.ReadToEnd();
-                    var locationData = JsonUtility.FromJson<LocationData>(anchorFileText);
+                    var locationData = JsonUtility.FromJson<GsbFileRepresentation.LocationData>(anchorFileText);
 
                     // For backwards compatibility, if there is no DefaultAnchorPayload but an AnchorPayload,
                     //  copy over the data
@@ -504,13 +517,15 @@ namespace Niantic.Lightship.AR.Editor
             modelImporter.bakeAxisConversion = true;
         }
 
-        private static ARLocationManifest CreateManifest(LocationData locationData, string assetPath)
+        private static ARLocationManifest CreateManifest(GsbFileRepresentation.LocationData locationData, string assetPath)
         {
             var manifest = ScriptableObject.CreateInstance<ARLocationManifest>();
             manifest.NodeIdentifier = locationData.NodeIdentifier;
             manifest.MeshOriginAnchorPayload = locationData.DefaultAnchorPayload;
             manifest.LocalizationTargetId = locationData.LocalizationTargetID;
             manifest.LocationName = Path.GetFileNameWithoutExtension(assetPath);
+            manifest.LocationLatitude = locationData.GpsLocation.latitude;
+            manifest.LocationLongitude = locationData.GpsLocation.longitude;
 
             AssetDatabase.CreateAsset(manifest, assetPath);
 
@@ -520,7 +535,7 @@ namespace Niantic.Lightship.AR.Editor
         private static void CleanupCreatedAssets
         (
             string zipPath,
-            List<MeshData> generatedMeshes,
+            List<GsbFileRepresentation.MeshData> generatedMeshes,
             bool deleteZip = true
         )
         {

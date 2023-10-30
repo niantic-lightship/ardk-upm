@@ -1,8 +1,8 @@
-// Copyright 2022 Niantic, Inc. All Rights Reserved.
+// Copyright 2023 Niantic, Inc. All Rights Reserved.
 
 using Niantic.Lightship.AR.Utilities;
 
-namespace Niantic.Lightship.AR
+namespace Niantic.Lightship.AR.VpsCoverage
 {
     /// <summary>
     /// The AreaTarget struct is a wrapper struct that contains correlated VPS coverage area

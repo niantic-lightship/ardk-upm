@@ -1,7 +1,8 @@
+// Copyright 2023 Niantic, Inc. All Rights Reserved.
 using System;
 using UnityEngine.SubsystemsImplementation;
 
-namespace Niantic.Lightship.AR.Subsystems
+namespace Niantic.Lightship.AR.XRSubsystems
 {
     public class XRPersistentAnchorSubsystemDescriptor : SubsystemDescriptorWithProvider<XRPersistentAnchorSubsystem,
         XRPersistentAnchorSubsystem.Provider>

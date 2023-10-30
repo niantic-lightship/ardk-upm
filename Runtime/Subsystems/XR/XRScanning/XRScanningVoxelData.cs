@@ -7,7 +7,7 @@ using UnityEngine;
 using UnityEngine.SubsystemsImplementation;
 using UnityEngine.XR.ARSubsystems;
 
-namespace Niantic.Lightship.AR.Subsystems
+namespace Niantic.Lightship.AR.XRSubsystems
 {
     /// <summary>
     /// Contains a native voxel buffers for positions and colors.
@@ -54,7 +54,7 @@ namespace Niantic.Lightship.AR.Subsystems
 
             this.nativeHandle = nativeHandle;
         }
-        
+
         public bool Equals(XRScanningVoxelData other)
         {
             return Positions.Equals(other.Positions) && Colors.Equals(other.Colors)

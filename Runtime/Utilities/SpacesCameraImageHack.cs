@@ -17,7 +17,11 @@ namespace Niantic.Lightship.Spaces
         {
             return latestPixelData;
         }
-        
+
+        public static void ImageUtilsConvertCameraImage_Added(IntPtr destination720X540)
+        {
+            latestPixelData = destination720X540;
+        }
         public static void ImageUtilsConvertCameraImage(IntPtr source1280X720, IntPtr destination720X540)
         {
             NativeArray<UInt32> srcNativeArray;
@@ -32,7 +36,7 @@ namespace Niantic.Lightship.Spaces
                     (void*)destination720X540, 720 * 540, Allocator.None);
 
             }
-            
+
             var vScale = 720.0f / 540.0f;
             var hScale = 960.0f / 720.0f;
             for (int row = 0; row < 540; row++)
@@ -41,11 +45,11 @@ namespace Niantic.Lightship.Spaces
                 {
                     var x = Mathf.RoundToInt((col) * hScale) + 160;
                     var y = Mathf.RoundToInt(row * vScale);
-                    
+
                     dstNativeArray[(row * 720) + col] = srcNativeArray[(y * 1280) + x];
                 }
             }
-           
+
 
             latestPixelData = destination720X540;
 

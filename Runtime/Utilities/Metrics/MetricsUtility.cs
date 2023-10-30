@@ -1,5 +1,7 @@
+// Copyright 2023 Niantic, Inc. All Rights Reserved.
 using System;
 using System.Runtime.InteropServices;
+using Niantic.Lightship.AR.Core;
 
 namespace Niantic.Lightship.AR.Utilities.Metrics
 {

@@ -1,6 +1,8 @@
+// Copyright 2023 Niantic, Inc. All Rights Reserved.
 using System.Collections.Generic;
+using Niantic.Lightship.AR.Utilities.Log;
 using Niantic.Lightship.AR.Loader;
-using Niantic.Lightship.AR.Playback;
+using Niantic.Lightship.AR.Subsystems.Playback;
 using UnityEngine;
 using UnityEngine.XR.ARSubsystems;
 using UnityEngine.XR.Management;
@@ -21,35 +23,21 @@ namespace Niantic.Lightship.AR
         /// <returns>`True` if the session subsystems were successfully created, otherwise `false`.</returns>
         public bool Initialize(XRLoaderHelper loader, LightshipSettings settings)
         {
-            Debug.Log("Initialize Playback subsystems");
+            Log.Info("Initialize Playback subsystems");
 
-#if UNITY_EDITOR
-            var dataset = PlaybackDatasetLoader.Load(settings.EditorPlaybackSettings.PlaybackDatasetPath);
-#else
-            var dataset = PlaybackDatasetLoader.Load(settings.DevicePlaybackSettings.PlaybackDatasetPath);
-#endif
+            var dataset = PlaybackDatasetLoader.Load(settings.PlaybackDatasetPath);
 
             if (dataset == null)
             {
-                Debug.LogError("Failed to initialize Playback subsystems because no dataset was loaded.");
+                Log.Error("Failed to initialize Playback subsystems because no dataset was loaded.");
                 return false;
             }
 
-#if UNITY_EDITOR
             DatasetReader = new PlaybackDatasetReader
             (
                 dataset,
-                settings.EditorPlaybackSettings.NumberOfIterations,
-                settings.EditorPlaybackSettings.LoopInfinitely
+                settings.LoopInfinitely
             );
-#else
-           DatasetReader = new PlaybackDatasetReader
-            (
-                dataset,
-                settings.DevicePlaybackSettings.NumberOfIterations,
-                settings.DevicePlaybackSettings.LoopInfinitely
-            );
-#endif
 
             loader.CreateSubsystem<XRSessionSubsystemDescriptor, XRSessionSubsystem>
             (
@@ -72,7 +60,7 @@ namespace Niantic.Lightship.AR
             if (sessionSubsystem == null)
             {
                 // Subsystems can only be loaded in Play Mode
-                Debug.LogError("Failed to load subsystem.");
+                Log.Error("Failed to load subsystem.");
                 return false;
             }
 
@@ -82,7 +70,7 @@ namespace Niantic.Lightship.AR
             {
                 loader.DestroySubsystem<XROcclusionSubsystem>();
 
-                Debug.Log("Creating " + nameof(LightshipPlaybackOcclusionSubsystem));
+                Log.Info("Creating " + nameof(LightshipPlaybackOcclusionSubsystem));
                 loader.CreateSubsystem<XROcclusionSubsystemDescriptor, XROcclusionSubsystem>
                 (
                     _occlusionSubsystemDescriptors,
@@ -104,7 +92,7 @@ namespace Niantic.Lightship.AR
         /// <returns>Always returns `true`.</returns>
         public bool Deinitialize(XRLoaderHelper loader)
         {
-            Debug.Log("Deinitialize playback subsystems");
+            Log.Info("Deinitialize playback subsystems");
             loader.DestroySubsystem<XRSessionSubsystem>();
             loader.DestroySubsystem<XRCameraSubsystem>();
 

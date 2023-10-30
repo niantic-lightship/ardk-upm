@@ -1,8 +1,10 @@
+// Copyright 2023 Niantic, Inc. All Rights Reserved.
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using static Niantic.Lightship.AR.Utilities.Log.Log;
 
 namespace Niantic.Lightship.AR.Utilities
 {
@@ -23,6 +25,7 @@ namespace Niantic.Lightship.AR.Utilities
 
         public static readonly PrioritizingEvent Updating = new ();
         public static readonly PrioritizingEvent LateUpdating = new ();
+        public static readonly PrioritizingEvent OnApplicationFocusLost = new ();
 
         private static Thread s_mainThread;
         private static readonly bool s_staticConstructorWasInvoked;
@@ -91,6 +94,14 @@ namespace Niantic.Lightship.AR.Utilities
             Updating.InvokeListeners();
         }
 
+        private void OnApplicationFocus(bool focused)
+        {
+            if (!focused)
+            {
+                OnApplicationFocusLost.InvokeListeners();
+            }
+        }
+
         private void OnDestroy()
         {
             Updating.Clear();
@@ -129,7 +140,7 @@ namespace Niantic.Lightship.AR.Utilities
                 // so it's allowed
                 if (s_mainThread != null && Thread.CurrentThread != s_mainThread)
                 {
-                    Debug.LogError("AddListener can only be called from the main thread.");
+                    Error("AddListener can only be called from the main thread.");
                     return;
                 }
 
@@ -158,7 +169,7 @@ namespace Niantic.Lightship.AR.Utilities
             {
                 if (s_mainThread != null && Thread.CurrentThread != s_mainThread)
                 {
-                    Debug.LogError("RemoveListener can only be called from the main thread.");
+                    Error("RemoveListener can only be called from the main thread.");
                     return;
                 }
 
@@ -188,7 +199,7 @@ namespace Niantic.Lightship.AR.Utilities
             {
                 if (s_mainThread != null && Thread.CurrentThread != s_mainThread)
                 {
-                    Debug.LogError("InvokeListeners can only be called from the main thread.");
+                    Error("InvokeListeners can only be called from the main thread.");
                     return;
                 }
 

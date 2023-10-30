@@ -1,11 +1,11 @@
-// Copyright 2022 Niantic, Inc. All Rights Reserved.
+// Copyright 2023 Niantic, Inc. All Rights Reserved.
 
 using System;
 using System.Linq;
 using Niantic.Lightship.AR.Utilities;
 using UnityEngine;
 
-namespace Niantic.Lightship.AR
+namespace Niantic.Lightship.AR.VpsCoverage
 {
     /// <summary>
     /// The CoverageArea struct represents a calculated area representing a cluster of localization targets within
@@ -30,7 +30,7 @@ namespace Niantic.Lightship.AR
 
         [SerializeField] private Localizability _localizabilityQuality;
 
-        internal CoverageArea(_CoverageAreasResponse.VpsCoverageArea location)
+        internal CoverageArea(CoverageAreasResponse.VpsCoverageArea location)
             : this(location.vps_localization_target_id, location.shape.polygon.loop[0].vertex, location.localizability)
         {
         }

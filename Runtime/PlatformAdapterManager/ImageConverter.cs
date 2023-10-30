@@ -1,8 +1,11 @@
+// Copyright 2023 Niantic, Inc. All Rights Reserved.
 
 using System;
 using System.Runtime.InteropServices;
+using Niantic.Lightship.AR.Utilities.Log;
 using Niantic.Lightship.AR.Utilities;
 using Niantic.Lightship.AR.Utilities.Profiling;
+using Niantic.Lightship.AR.Utilities.Textures;
 using Niantic.Lightship.Spaces;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
@@ -26,8 +29,7 @@ namespace Niantic.Lightship.AR.PAM
             this XRCpuImage image,
             Vector2Int outputResolution,
             IntPtr destinationPointer,
-            TextureFormat outputFormat = TextureFormat.RGBA32,
-            XRCpuImage.Transformation transformation = XRCpuImage.Transformation.None
+            TextureFormat outputFormat = TextureFormat.RGBA32
         )
         {
             if (!image.valid)
@@ -42,13 +44,13 @@ namespace Niantic.Lightship.AR.PAM
             var yMin = 0;
             var yMax = image.height;
 
-            float inputRatio = (float) image.width / image.height;
-            float outputRatio = (float) outputResolution.x / outputResolution.y;
+            float inputRatio = (float)image.width / image.height;
+            float outputRatio = (float)outputResolution.x / outputResolution.y;
 
             if (inputRatio > outputRatio)
             {
                 // We need to crop along the X axis
-                var scale = (outputResolution.x * (float) image.height / outputResolution.y) / image.width;
+                var scale = (outputResolution.x * (float)image.height / outputResolution.y) / image.width;
                 var translate = (1.0f - scale) * 0.5f;
                 xMin = Mathf.FloorToInt(translate * image.width);
                 xMax = Mathf.FloorToInt((translate + scale) * image.width);
@@ -56,7 +58,7 @@ namespace Niantic.Lightship.AR.PAM
             else
             {
                 // We need to crop along the Y axis
-                var scale = (outputResolution.y * (float) image.width / outputResolution.x) / image.height;
+                var scale = (outputResolution.y * (float)image.width / outputResolution.x) / image.height;
                 var translate = (1.0f - scale) * 0.5f;
                 yMin = Mathf.FloorToInt(translate * image.height);
                 yMax = Mathf.FloorToInt((translate + scale) * image.height);
@@ -68,31 +70,17 @@ namespace Niantic.Lightship.AR.PAM
                 inputRect = new RectInt(xMin, yMin, xMax - xMin, yMax - yMin),
                 outputDimensions = outputResolution,
                 outputFormat = outputFormat,
-                transformation = transformation
+                transformation = XRCpuImage.Transformation.None,
             };
 
 
 #if NIANTIC_LIGHTSHIP_SPACES_ENABLED
-            var intermediateBuffer =
-                new NativeArray<byte>
-                (
-                    1280 * 720 * 4,
-                    Allocator.Temp
-                );
-
-            IntPtr intermediatePointer;
-            unsafe
-            {
-                intermediatePointer = (IntPtr)intermediateBuffer.GetUnsafePtr();
-            }
-            
-            // Apply conversion - TODO: in the case of Spaces, it does not conform to the conversion params so we hack it for now
-            var hackconversionParams = new XRCpuImage.ConversionParams(image, TextureFormat.RGBA32);
-
-            image.Convert(hackconversionParams, intermediatePointer, 1280*720*4);
-
-            SpacesCameraImageHack.ImageUtilsConvertCameraImage(intermediatePointer, destinationPointer);
-#else 
+            // Spaces by default has it upside down, which in this context requires a MirrorX to correct.
+            conversionParams.transformation = XRCpuImage.Transformation.MirrorX;
+            image.Convert(conversionParams, destinationPointer, image.GetConvertedDataSize(conversionParams));
+            //debug display - TODO: remove when Spaces verified to work with all features
+            SpacesCameraImageHack.ImageUtilsConvertCameraImage_Added(destinationPointer);
+#else
             // Apply conversion
             image.Convert(conversionParams, destinationPointer, image.GetConvertedDataSize(conversionParams));
 #endif
@@ -117,7 +105,7 @@ namespace Niantic.Lightship.AR.PAM
                 var lightshipImageConversionShader = Shader.Find("Unlit/LightshipImageConversion");
                 if (lightshipImageConversionShader == null)
                 {
-                    Debug.LogError("Could not locate Unlit/LightshipImageConversion shader");
+                    Log.Error("Could not locate Unlit/LightshipImageConversion shader");
                     return;
                 }
                 s_material = new Material(lightshipImageConversionShader);

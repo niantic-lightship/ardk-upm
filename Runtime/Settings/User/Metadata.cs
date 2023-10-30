@@ -5,19 +5,26 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text;
 using Google.Protobuf;
+using JetBrains.Annotations;
+using Niantic.Lightship.AR.Utilities.Log;
 using Niantic.ARDK.AR.Protobuf;
+using Niantic.Lightship.AR.Core;
 using Niantic.Lightship.AR.Loader;
 using Niantic.Lightship.AR.Utilities.Device;
 using UnityEngine;
 
-namespace Niantic.Lightship.AR.Settings.User
+namespace Niantic.Lightship.AR.Settings
 {
-    internal static class Metadata
+    /// <summary>
+    /// Contains metadata and properties regarding the current instance of Ardk
+    /// </summary>
+    [PublicAPI]
+    public static class Metadata
     {
-        private const string ArdkVersion = "3.0.0-beta-4.230912170042";
-        
+        private const string ArdkVersion = "3.0.0-231026145955";
+
         private const string AuthorizationHeaderKey = "Authorization";
-        public const string ApplicationIdHeaderKey = "x-ardk-application-id";
+        private const string ApplicationIdHeaderKey = "x-ardk-application-id";
         private const string UserIdHeaderKey = "x-ardk-userid";
         private const string ClientIdHeaderKey = "x-ardk-clientid";
         private const string ArClientEnvelopeHeaderKey = "x-ardk-clientenvelope";
@@ -44,17 +51,22 @@ namespace Niantic.Lightship.AR.Settings.User
             };
         }
 
-        public static string ApplicationId { get; }
-        public static string Platform { get; }
-        public static string Manufacturer { get; }
-        public static string ClientId { get; }
-        public static string DeviceModel { get; }
+        /// <summary>
+        /// Returns the ardk version that you are using
+        /// </summary>
+        [PublicAPI]
         public static string Version { get; }
-        public static string AppInstanceId { get; }
-        public static string UserId { get; private set; }
-        public static ARClientEnvelope.Types.AgeLevel AgeLevel { get; private set; }
 
-        public static Dictionary<string, string> GetApiGatewayHeaders(string requestId = null)
+        internal static string ApplicationId { get; }
+        internal static string Platform { get; }
+        internal static string Manufacturer { get; }
+        internal static string ClientId { get; }
+        internal static string DeviceModel { get; }
+        internal static string AppInstanceId { get; }
+        internal static string UserId { get; private set; }
+        internal static ARClientEnvelope.Types.AgeLevel AgeLevel { get; private set; }
+
+        internal static Dictionary<string, string> GetApiGatewayHeaders(string requestId = null)
         {
             requestId ??= string.Empty;
             var gatewayHeaders = new Dictionary<string, string>();
@@ -69,8 +81,8 @@ namespace Niantic.Lightship.AR.Settings.User
 
             return gatewayHeaders;
         }
-        
-        public static ARCommonMetadata GetArCommonMetadata(string requestId)
+
+        internal static ARCommonMetadata GetArCommonMetadata(string requestId)
         {
             ARCommonMetadata commonMetadata = new ARCommonMetadata()
             {
@@ -88,7 +100,7 @@ namespace Niantic.Lightship.AR.Settings.User
             return commonMetadata;
         }
 
-        public static string GetArClientEnvelopeAsJson(string requestId)
+        internal static string GetArClientEnvelopeAsJson(string requestId)
         {
             requestId ??= string.Empty;
 
@@ -101,7 +113,7 @@ namespace Niantic.Lightship.AR.Settings.User
             return JsonFormatter.Default.Format(clientEnvelope);
         }
 
-        public static void SetUserId(string userId)
+        internal static void SetUserId(string userId)
         {
 #if NIANTIC_LIGHTSHIP_AR_LOADER_ENABLED
             RunUnityContextCheck();
@@ -113,7 +125,7 @@ namespace Niantic.Lightship.AR.Settings.User
 #endif
         }
 
-        public static void ClearUserId()
+        internal static void ClearUserId()
         {
             SetUserId(string.Empty);
         }
@@ -139,12 +151,12 @@ namespace Niantic.Lightship.AR.Settings.User
             var clientId = clientIdFileTracker.ReadData();
             if (!string.IsNullOrWhiteSpace(clientId))
             {
-                Debug.Log($"Retrieved ClientId = {clientId}");
+                Log.Info($"Retrieved ClientId = {clientId}");
                 return clientId;
             }
 
             clientId = Guid.NewGuid().ToString();
-            Debug.Log($"Creating new clientId: {clientId}");
+            Log.Info($"Creating new clientId: {clientId}");
             clientIdFileTracker.WriteData(clientId);
             return clientId;
         }
@@ -181,12 +193,12 @@ namespace Niantic.Lightship.AR.Settings.User
             // Other
             return Application.platform.ToString();
         }
-        
+
         private static string ConvertToBase64(string stringToConvert)
         {
             return System.Convert.ToBase64String(Encoding.UTF8.GetBytes(stringToConvert));
         }
-        
+
         /// <summary>
         /// INTERNAL FOR TESTING ONLY. DO NOT USE DIRECTLY.
         /// </summary>
@@ -259,20 +271,20 @@ namespace Niantic.Lightship.AR.Settings.User
             return androidManufacturer;
         }
 
-        private static bool IsEditor()
+        internal static bool IsEditor()
         {
             return Application.platform == RuntimePlatform.LinuxEditor
                 || Application.platform == RuntimePlatform.OSXEditor
                 || Application.platform == RuntimePlatform.WindowsEditor;
         }
 
-        private static bool IsIphone()
+        internal static bool IsIphone()
         {
             // SystemInfo.operatingSystemFamily = Other for iphones.
             return Application.platform == RuntimePlatform.IPhonePlayer;
         }
 
-        private static bool IsAndroid()
+        internal static bool IsAndroid()
         {
             // SystemInfo.operatingSystemFamily = Other for android.
             return Application.platform == RuntimePlatform.Android;

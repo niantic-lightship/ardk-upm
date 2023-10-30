@@ -1,9 +1,10 @@
+// Copyright 2023 Niantic, Inc. All Rights Reserved.
 using System;
 using System.Runtime.InteropServices;
 using UnityEngine;
 using UnityEngine.XR.ARSubsystems;
 
-namespace Niantic.Lightship.AR.Subsystems
+namespace Niantic.Lightship.AR.XRSubsystems
 {
     /// <summary>
     /// Describes session-relative data for an anchor.

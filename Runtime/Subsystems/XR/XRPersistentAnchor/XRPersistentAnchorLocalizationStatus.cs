@@ -2,7 +2,7 @@
 
 using System;
 
-namespace Niantic.Lightship.AR.Subsystems
+namespace Niantic.Lightship.AR.XRSubsystems
 {
     public enum LocalizationStatus : byte
     {

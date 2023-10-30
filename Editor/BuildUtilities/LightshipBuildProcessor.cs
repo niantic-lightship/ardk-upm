@@ -1,14 +1,19 @@
+// Copyright 2023 Niantic, Inc. All Rights Reserved.
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using Niantic.Lightship.AR.ARFoundation;
+using System.Runtime.InteropServices;
+using System.Text;
+using Niantic.Lightship.AR.Utilities.Log;
 using Niantic.Lightship.AR.Loader;
-using Niantic.Lightship.AR.Playback;
+using Niantic.Lightship.AR.Occlusion;
+using Niantic.Lightship.AR.Subsystems.Playback;
 using Unity.EditorCoroutines.Editor;
 using UnityEditor;
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
+using UnityEditor.Callbacks;
 
 #if UNITY_IOS
 using UnityEditor.iOS.Xcode;
@@ -43,7 +48,7 @@ namespace Niantic.Lightship.AR.Editor
 
             private void PostprocessBuild(BuildReport report)
             {
-                foreach (string shaderName in LightshipPlaybackCameraSubsystem.backgroundShaderNames)
+                foreach (string shaderName in LightshipPlaybackCameraSubsystem.BackgroundShaderNames)
                 {
                     BuildHelper.RemoveShaderFromProject(shaderName);
                 }
@@ -71,12 +76,41 @@ namespace Niantic.Lightship.AR.Editor
                 }
             }
 
+            [DllImport("libc")] //https://man7.org/linux/man-pages/man3/realpath.3.html
+            static extern IntPtr realpath([In, MarshalAs(UnmanagedType.LPUTF8Str)] string path, [Out] byte[] buf);
+            private static void ReplaceFrameworksSymlinks(string directoryPath)
+            {
+                foreach (string filePath in Directory.GetFiles(directoryPath)) {
+                    if (IsSymlink(new FileInfo(filePath))) {
+                        string targetPath = SymlinkRealPath(filePath);
+                        if (!string.IsNullOrEmpty(targetPath)) {
+                            File.Delete(filePath);
+                            File.Copy(targetPath, filePath);
+                        }
+                    }
+                }
+
+                foreach (string subdirectoryPath in Directory.GetDirectories(directoryPath))
+                    ReplaceFrameworksSymlinks(subdirectoryPath);
+            }
+
+            private static bool IsSymlink(FileInfo pathInfo) => pathInfo.Attributes.HasFlag(FileAttributes.ReparsePoint);
+
+            private static string SymlinkRealPath(string path)
+            {
+                var buffer = new byte[4096];
+                var result = realpath(path, buffer);
+                if (result == IntPtr.Zero) throw new Exception($"Failed to call realpath for {path}");
+                return Encoding.UTF8.GetString(buffer, 0, Array.IndexOf(buffer, (byte)0));
+            }
+
             private static void PostProcessIosBuild(string buildPath)
             {
 #if UNITY_IOS
-                Debug.Log($"Running {nameof(PostProcessIosBuild)}");
+                Log.Info($"Running {nameof(PostProcessIosBuild)}");
 
                 string projectPath = PBXProject.GetPBXProjectPath(buildPath);
+                ReplaceFrameworksSymlinks(Path.Combine(buildPath, "Frameworks"));
                 var project = new PBXProject();
                 project.ReadFromFile(projectPath);
 
@@ -129,7 +163,7 @@ namespace Niantic.Lightship.AR.Editor
             private void ProcessShader(Shader shader, ShaderSnippetData snippet, IList<ShaderCompilerData> data)
             {
                 // Remove shader variants for the camera background shader that will fail compilation because of package dependencies.
-                foreach (string backgroundShaderName in LightshipPlaybackCameraSubsystem.backgroundShaderNames)
+                foreach (string backgroundShaderName in LightshipPlaybackCameraSubsystem.BackgroundShaderNames)
                 {
                     if (backgroundShaderName.Equals(shader.name))
                     {
@@ -153,7 +187,7 @@ namespace Niantic.Lightship.AR.Editor
 
             private void PreprocessBuild(BuildReport report)
             {
-                foreach (string backgroundShaderName in LightshipPlaybackCameraSubsystem.backgroundShaderNames)
+                foreach (string backgroundShaderName in LightshipPlaybackCameraSubsystem.BackgroundShaderNames)
                 {
                     BuildHelper.AddBackgroundShaderToProject(backgroundShaderName);
                 }

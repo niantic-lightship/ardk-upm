@@ -1,7 +1,9 @@
+// Copyright 2023 Niantic, Inc. All Rights Reserved.
 using System;
 using System.Runtime.InteropServices;
 using Unity.Collections;
 using UnityEngine;
+using Niantic.Lightship.AR.Utilities.Log;
 using Random = UnityEngine.Random;
 
 namespace Niantic.Lightship.AR.PAM
@@ -37,7 +39,7 @@ namespace Niantic.Lightship.AR.PAM
         {
             if (handle == _handle)
             {
-                Debug.Log("Forwarded frame data");
+                Log.Info("Forwarded frame data");
             }
         }
 

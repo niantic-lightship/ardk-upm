@@ -1,9 +1,12 @@
+// Copyright 2023 Niantic, Inc. All Rights Reserved.
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Niantic.Lightship.AR.Utilities.Log;
 using Niantic.Lightship.AR.Scanning;
 using System.Runtime.InteropServices;
 using Niantic.Lightship.AR;
+using Niantic.Lightship.AR.Core;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 
@@ -62,7 +65,7 @@ namespace Niantic.ARDK.AR.Scanning
         {
             if (framerate < 0 || framerate > 60)
             {
-                Debug.LogError("Invalid framerate");
+                Log.Error("Invalid framerate");
                 return false;
             }
 

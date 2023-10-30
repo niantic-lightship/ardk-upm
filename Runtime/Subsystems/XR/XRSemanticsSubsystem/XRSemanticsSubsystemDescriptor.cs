@@ -1,8 +1,9 @@
+// Copyright 2023 Niantic, Inc. All Rights Reserved.
 using System;
 using UnityEngine.SubsystemsImplementation;
 using UnityEngine.XR.ARSubsystems;
 
-namespace Niantic.Lightship.AR.Subsystems
+namespace Niantic.Lightship.AR.XRSubsystems
 {
     /// <summary>
     /// Constructor parameters for the <see cref="XRSemanticsSubsystemDescriptor"/>.

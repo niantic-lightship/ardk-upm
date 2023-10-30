@@ -1,15 +1,19 @@
+// Copyright 2023 Niantic, Inc. All Rights Reserved.
 using System;
 using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Google.Protobuf;
+using Niantic.Lightship.AR.Utilities.Log;
 using Niantic.ARDK.AR.Protobuf;
+using Niantic.Lightship.AR.Core;
 using Niantic.Lightship.AR.Protobuf;
-using Niantic.Lightship.AR.Settings.User;
+using Niantic.Lightship.AR.Settings;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
+using Niantic.Lightship.AR.Utilities;
 
 namespace Niantic.Lightship.AR.Telemetry
 {
@@ -43,6 +47,7 @@ namespace Niantic.Lightship.AR.Telemetry
                     Lightship_ARDK_Unity_Telemetry_GetTelemetryServiceHandle(lightshipUnityContext);
             }
 
+            MonoBehaviourEventDispatcher.OnApplicationFocusLost.AddListener(FlushTelemetry);
             _cancellationTokenSource = new CancellationTokenSource();
             // TODO: Once the dependency trees are better, use the Map SDKs async lib
             Task.Run(async () => await TimedPublish(_publishLoopDelay, _cancellationTokenSource.Token));
@@ -62,9 +67,7 @@ namespace Niantic.Lightship.AR.Telemetry
                 }
                 catch (Exception)
                 {
-                    // fail silently for users
-                    // for local debugging only.
-                    // Debug.LogError($"Encountered exception: {e} while running the timed telemetry native poller");
+                    // Log.Error($"Encountered exception: {e} while running the timed telemetry native poller");
                 }
             }
         }
@@ -170,9 +173,7 @@ namespace Niantic.Lightship.AR.Telemetry
             }
             catch (Exception)
             {
-                // fail silently for users
-                // for local debugging only.
-                // Debug.LogError($"Encountered exception: {e} while running the GetArray call");
+                // Log.Error($"Encountered exception: {e} while running the GetArray call");
             }
             finally
             {
@@ -185,10 +186,7 @@ namespace Niantic.Lightship.AR.Telemetry
                             eventLengthsArrayPtr, eventCount);
                     }
                 }
-                catch
-                {
-                    // swallow and fail quietly
-                }
+                catch {}
             }
         }
 
@@ -201,9 +199,7 @@ namespace Niantic.Lightship.AR.Telemetry
             }
             catch (Exception)
             {
-                // fail silently
-                // uncomment for debugging
-                // Debug.LogError($"Error while parsing event: {e}");
+                // Log.Error($"Error while parsing event: {e}");
             }
 
             ardkNextTelemetryOmniProto = null;
@@ -217,23 +213,26 @@ namespace Niantic.Lightship.AR.Telemetry
             {
                 try
                 {
-                    while (!s_messagesToBeSent.IsEmpty)
-                    {
-                        if (s_messagesToBeSent.TryDequeue(out var eventToPublish))
-                        {
-                            eventToPublish.DeveloperKey = _apiKey;
-                            _telemetryPublisher.RecordEvent(eventToPublish);
-                        }
-                    }
+                    PublishQueuedEvents();
 
                     // will throw exception on cancellation. But otherwise, it will delay process termination by polling time delay.
                     await Task.Delay(ts, cancellationToken);
                 }
                 catch (Exception)
                 {
-                    // fail silently
-                    // for local debugging only.
-                    // Debug.LogError($"Encountered exception: {e} while running the timed telemetry loop");
+                    // Log.Error($"Encountered exception: {e} while running the timed telemetry loop");
+                }
+            }
+        }
+
+        private void PublishQueuedEvents()
+        {
+            while (!s_messagesToBeSent.IsEmpty)
+            {
+                if (s_messagesToBeSent.TryDequeue(out var eventToPublish))
+                {
+                    eventToPublish.DeveloperKey = _apiKey;
+                    _telemetryPublisher.RecordEvent(eventToPublish);
                 }
             }
         }
@@ -245,6 +244,8 @@ namespace Niantic.Lightship.AR.Telemetry
 
         public void Dispose()
         {
+            MonoBehaviourEventDispatcher.OnApplicationFocusLost.RemoveListener(FlushTelemetry);
+
             // stop async tasks
             _cancellationTokenSource?.Cancel();
             _cancellationTokenSource?.Dispose();
@@ -257,9 +258,14 @@ namespace Niantic.Lightship.AR.Telemetry
 
             if (!s_messagesToBeSent.IsEmpty)
             {
-                // for local debugging only.
-                // Debug.LogWarning($"Events to be dropped: {s_messagesToBeSent.Count}");
+                // Log.Warning($"Events to be dropped: {s_messagesToBeSent.Count}");
             }
+        }
+
+        private void FlushTelemetry()
+        {
+            EnqueueNativeEvents();
+            PublishQueuedEvents();
         }
 
         // returns the service handle for the telemetry service

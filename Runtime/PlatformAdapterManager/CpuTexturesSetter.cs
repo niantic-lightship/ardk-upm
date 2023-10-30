@@ -1,6 +1,9 @@
 // Copyright 2023 Niantic, Inc. All Rights Reserved.
 
 using System;
+using System.Runtime.InteropServices;
+using Niantic.Lightship.AR.Utilities.Log;
+using Niantic.Lightship.AR.Core;
 using Niantic.Lightship.AR.Utilities.Profiling;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
@@ -24,10 +27,20 @@ namespace Niantic.Lightship.AR.PAM
 
         private NativeArray<byte> _fullResJpegDataHolder;
         private IntPtr _fullResJpegDataHolderPtr;
+        private IntPtr _nativeJpegHandle;
 
         private const int SecondToMillisecondFactor = 1000;
 
         private const string TraceCategory = "CpuTexturesSetter";
+
+        private void EnsureJpegInitialized()
+        {
+            if (_nativeJpegHandle != IntPtr.Zero) {
+                return;
+            }
+            _nativeJpegHandle = Native.Lightship_ARDK_Unity_CreateJpeg();
+
+        }
 
         public CpuTexturesSetter(PlatformDataAcquirer dataAcquirer, FrameData frameData) : base(dataAcquirer, frameData)
         {
@@ -51,6 +64,12 @@ namespace Niantic.Lightship.AR.PAM
 
             if (_fullResJpegDataHolder.IsCreated)
                 _fullResJpegDataHolder.Dispose();
+
+            if (_nativeJpegHandle != IntPtr.Zero)
+            {
+                Native.Lightship_ARDK_Unity_ReleaseJpeg(_nativeJpegHandle);
+                _nativeJpegHandle = IntPtr.Zero;
+            }
         }
 
         public override void InvalidateCachedTextures()
@@ -67,7 +86,7 @@ namespace Niantic.Lightship.AR.PAM
         {
             if (_currTimestampMs == 0)
             {
-                base.GetCurrentTimestampMs();
+                return base.GetCurrentTimestampMs();
             }
 
             return _currTimestampMs;
@@ -104,6 +123,8 @@ namespace Niantic.Lightship.AR.PAM
 
         public override void SetJpeg720x540Image()
         {
+            EnsureJpegInitialized();
+
             const string traceEvent = "SetJpeg720x540Image (CPU)";
             ProfilerUtility.EventBegin(TraceCategory,traceEvent);
 
@@ -113,7 +134,7 @@ namespace Niantic.Lightship.AR.PAM
                 if (_cpuImage.width < DataFormatConstants.Jpeg_720_540_ImgWidth ||
                     _cpuImage.height < DataFormatConstants.Jpeg_720_540_ImgHeight)
                 {
-                    Debug.LogWarning
+                    Log.Warning
                     (
                         $"XR camera image resolution ({_cpuImage.width}x{_cpuImage.height}) is too small to support " +
                         "all enabled Lightship features. Resolution must be at least " +
@@ -126,34 +147,24 @@ namespace Niantic.Lightship.AR.PAM
                 {
                     ProfilerUtility.EventStep(TraceCategory, traceEvent, "ConvertOnCpuAndWriteToMemory");
 
-                    // Unity's EncodeToJPG method expects as input texture data formatted in Unity convention (first pixel
-                    // bottom left), whereas the raw data of AR textures are in first pixel top left convention.
-                    // Thus we invert the pixels in this step, so they are output correctly oriented in the encoding step.
+                    // With Lightship's jpeg encoding, Unity's default pixel coordinate convention
+                    // (first pixel bottom left) can be passed straight to the Native code.
                     _cpuImage.ConvertOnCpuAndWriteToMemory
                     (
                         CurrentFrameData.Jpeg720x540ImageResolution,
-                        _resizedJpegDataHolderPtr,
-                        transformation: XRCpuImage.Transformation.MirrorX
+                        _resizedJpegDataHolderPtr
                     );
 
                     ProfilerUtility.EventStep(TraceCategory, traceEvent, "EncodeNativeArrayToJPG");
-                    var jpegHolder =
-                        ImageConversion.EncodeNativeArrayToJPG
-                        (
-                            _resizedJpegDataHolder,
-                            GraphicsFormat.R8G8B8A8_UNorm,
-                            DataFormatConstants.Jpeg_720_540_ImgWidth,
-                            DataFormatConstants.Jpeg_720_540_ImgHeight,
-                            0,
-                            DataFormatConstants.JpegQuality
-                        );
+                    UInt32 outSize;
+                    unsafe
+                    {
+                        Native.Lightship_ARDK_Unity_CompressJpegRgba(_nativeJpegHandle, _resizedJpegDataHolderPtr,
+                            DataFormatConstants.Jpeg_720_540_ImgWidth , DataFormatConstants.Jpeg_720_540_ImgHeight, DataFormatConstants.JpegQuality,
+                            (IntPtr)CurrentFrameData.CpuJpeg720x540ImageData.GetUnsafePtr(), out outSize);
+                    }
+                    CurrentFrameData.CpuJpeg720x540ImageDataLength = outSize;
 
-                    // Copy the JPEG byte array to the shared buffer in FrameCStruct
-                    ProfilerUtility.EventStep(TraceCategory, traceEvent, "Copy JPG to frame mem");
-                    jpegHolder.CopyTo(CurrentFrameData.CpuJpeg720x540ImageData);
-                    jpegHolder.Dispose();
-
-                    CurrentFrameData.CpuJpeg720x540ImageDataLength = (uint)jpegHolder.Length;
                     _currTimestampMs = _cpuImage.timestamp * SecondToMillisecondFactor;
                 }
             }
@@ -219,6 +230,8 @@ namespace Niantic.Lightship.AR.PAM
             if (!ReinitializeJpegFullResDataIfNeeded())
                 return;
 
+            EnsureJpegInitialized();
+
             const string traceEvent = "SetJpegFullResImage (CPU)";
             ProfilerUtility.EventBegin(TraceCategory, traceEvent);
 
@@ -228,7 +241,7 @@ namespace Niantic.Lightship.AR.PAM
                 if (_cpuImage.width != CurrentFrameData.JpegFullResImageResolution.x ||
                     _cpuImage.height != CurrentFrameData.JpegFullResImageResolution.y)
                 {
-                    Debug.LogError
+                    Log.Error
                     (
                         $"XR camera image resolution ({_cpuImage.width}x{_cpuImage.height}) " +
                         " do not match _currentFrameData's resolution " +
@@ -243,35 +256,23 @@ namespace Niantic.Lightship.AR.PAM
                 {
                     // Buffer to hold the downscaled image (pre-JPEG formatting)
                     ProfilerUtility.EventStep(TraceCategory, traceEvent, "ConvertOnCpuAndWriteToMemory");
-                    // TODO(sxian): Any other way to do the mirroring more efficiently?
+
                     _cpuImage.ConvertOnCpuAndWriteToMemory
                     (
                         CurrentFrameData.JpegFullResImageResolution,
                         _fullResJpegDataHolderPtr,
-                        TextureFormat.RGBA32,
-                        // Need to MirrorX because C++ expects image with (0,0) in top left corner,
-                        // while Unity has (0,0) in the bottom left corner.
-                        XRCpuImage.Transformation.MirrorX
+                        TextureFormat.RGBA32
                     );
 
                     ProfilerUtility.EventStep(TraceCategory, traceEvent, "EncodeNativeArrayToJPG");
-                    var jpegHolder =
-                        ImageConversion.EncodeNativeArrayToJPG
-                        (
-                            _fullResJpegDataHolder,
-                            GraphicsFormat.R8G8B8A8_UNorm,
-                            (UInt32)CurrentFrameData.JpegFullResImageResolution.x,
-                            (UInt32)CurrentFrameData.JpegFullResImageResolution.y,
-                            0,
-                            DataFormatConstants.JpegQuality
-                        );
-
-                    // Copy the JPEG byte array to the shared buffer in FrameCStruct
-                    ProfilerUtility.EventStep(TraceCategory, traceEvent, "Copy JPG to mem");
-                    jpegHolder.CopyTo(CurrentFrameData.CpuJpegFullResImageData);
-                    jpegHolder.Dispose();
-
-                    CurrentFrameData.CpuJpegFullResImageDataLength = (uint)jpegHolder.Length;
+                    UInt32 outSize;
+                    unsafe
+                    {
+                        Native.Lightship_ARDK_Unity_CompressJpegRgba(_nativeJpegHandle, _resizedJpegDataHolderPtr,
+                            (UInt32)_cpuImage.width, (UInt32)_cpuImage.height, DataFormatConstants.JpegQuality,
+                            (IntPtr)CurrentFrameData.CpuJpeg720x540ImageData.GetUnsafePtr(), out outSize);
+                    }
+                    CurrentFrameData.CpuJpeg720x540ImageDataLength = outSize;
                     _currTimestampMs = _cpuImage.timestamp * SecondToMillisecondFactor;
                 }
             }
@@ -318,6 +319,21 @@ namespace Niantic.Lightship.AR.PAM
             }
 
             ProfilerUtility.EventEnd(TraceCategory, traceEvent);
+        }
+
+        private static class Native
+        {
+            [DllImport(LightshipPlugin.Name)]
+            public static extern IntPtr Lightship_ARDK_Unity_CreateJpeg();
+
+            [DllImport(LightshipPlugin.Name)]
+            public static extern void Lightship_ARDK_Unity_ReleaseJpeg(IntPtr handle);
+
+            [DllImport(LightshipPlugin.Name)]
+            public static extern bool Lightship_ARDK_Unity_CompressJpegRgba(
+                IntPtr handle, IntPtr data, UInt32 width, UInt32 height, int quality,
+                IntPtr out_data, out UInt32 out_size);
+
         }
     }
 }

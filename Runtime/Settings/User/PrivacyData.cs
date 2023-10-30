@@ -2,12 +2,15 @@
 
 using UnityEngine;
 using UnityEngine.XR.ARFoundation;
+using JetBrains.Annotations;
+using Niantic.Lightship.AR.Utilities.Log;
 
-namespace Niantic.Lightship.AR.Settings.User
+namespace Niantic.Lightship.AR.Settings
 {
     /// <summary>
     /// This class contains all the data required for data management requests.
     /// </summary>
+    [PublicAPI]
     public static partial class PrivacyData
     {
         // using this to avoid re-subscribing to event in case of domain reloads.
@@ -21,6 +24,7 @@ namespace Niantic.Lightship.AR.Settings.User
         /// For your game users, it is a random Guid. In case of no userId, you have to record it.
         /// It changes if the ios/android app is uninstalled and reinstalled. It remains the same over app upgrades
         /// </summary>
+        [PublicAPI]
         public static string ClientId
         {
             get => Metadata.ClientId;
@@ -29,6 +33,7 @@ namespace Niantic.Lightship.AR.Settings.User
         /// <summary>
         /// This is the user Id that identifies each individual end user so that their data can be identified.
         /// </summary>
+        [PublicAPI]
         public static string UserId
         {
             get => Metadata.UserId;
@@ -39,6 +44,7 @@ namespace Niantic.Lightship.AR.Settings.User
         /// Sets the userId of the user when the user logs in.
         /// </summary>
         /// <param name="userId">the userId of the user </param>
+        [PublicAPI]
         public static void SetUserId(string userId)
         {
             Metadata.SetUserId(userId);
@@ -47,6 +53,7 @@ namespace Niantic.Lightship.AR.Settings.User
         /// <summary>
         /// Clears the userId when the user logs out so that we can dissociate the data from that user.
         /// </summary>
+        [PublicAPI]
         public static void ClearUserId()
         {
             Metadata.ClearUserId();
@@ -72,13 +79,13 @@ namespace Niantic.Lightship.AR.Settings.User
             {
                 if (string.IsNullOrWhiteSpace(Metadata.UserId))
                 {
-                    Debug.LogWarningFormat("UserId is missing. Please set a unique Id using {0}.{1} for data management purposes. (Please see documentation for more details)", nameof(PrivacyData), nameof(UserId));
+                    Log.Warning("UserId is missing. Please set a unique Id using {0}.{1} for data management purposes. (Please see documentation for more details)" + nameof(PrivacyData) + nameof(UserId));
                 }
 
                 ARSession.stateChanged -= WarnUserOnMissingUserId;
             }
         }
 # endif
-        
+
     }
 }

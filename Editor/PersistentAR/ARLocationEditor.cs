@@ -1,6 +1,11 @@
+// Copyright 2023 Niantic, Inc. All Rights Reserved.
 #if UNITY_EDITOR
 using System;
+using Niantic.Lightship.AR.Utilities.Log;
+using Niantic.Lightship.AR.LocationAR;
+using Niantic.Lightship.AR.PersistentAnchors;
 using Niantic.Lightship.AR.Subsystems;
+using Niantic.Lightship.AR.VpsCoverage;
 using UnityEditor;
 using UnityEngine;
 
@@ -10,7 +15,54 @@ internal class ARLocationEditor : Editor
     private bool _previousIncludeInBuildState;
     private const string _arMeshContainerNameString = "MeshContainer";
     private ARLocationManifest _manifest;
-    private const string _defaultARLocationName = "AR Location";
+    internal const string DefaultARLocationName = "AR Location";
+
+    static class Contents
+    {
+        public static readonly GUIContent includeMeshInBuildLabel =
+            new GUIContent
+            (
+                "Include Mesh in Build",
+                "Determines whether the location mesh should be included in builds," +
+                "by setting its tag to \"Untagged\" or \"EditorOnly\""
+            );
+
+        public static readonly GUIContent arLocationManifestLabel =
+            new GUIContent
+            (
+                "AR Location Manifest",
+                $"The {nameof(ARLocationManifest)} ScriptableObject asset associated with this {nameof(ARLocation)}"
+            );
+
+        public static readonly GUIContent payloadFromManifestLabel =
+            new GUIContent
+            (
+                "Payload",
+                $"The base 64 string representation of the {nameof(ARPersistentAnchorPayload)} from the provided manifest"
+            );
+
+        public static readonly GUIContent payloadFromUserLabel =
+            new GUIContent
+            (
+                "Payload",
+                $"The base 64 string from which to create an {nameof(ARPersistentAnchorPayload)}." +
+                $"Overriden by the {nameof(ARLocationManifest)}'s payload if one is set."
+            );
+
+        public static readonly GUIContent latitudeLabel =
+            new GUIContent
+            (
+                "Gps Latitude",
+                "The latitude of the location, as defined by the manifest"
+            );
+
+        public static readonly GUIContent longitudeLabel =
+            new GUIContent
+            (
+                "Gps Longitude",
+                "The longitude of the location, as defined by the manifest"
+            );
+    }
 
     private void Awake()
     {
@@ -24,12 +76,25 @@ internal class ARLocationEditor : Editor
         LayOutIncludeMeshInBuild(arLocation);
         LayOutARLocationManifest(arLocation);
         LayOutPayload(arLocation);
+        LayOutGpsLocation(arLocation);
         UpdateARLocation(arLocation);
+    }
+
+    private void LayOutGpsLocation(ARLocation arLocation)
+    {
+        var location = arLocation.GpsLocation;
+        EditorGUILayout.LabelField(Contents.latitudeLabel, new GUIContent($"{location.Latitude:0.000000}"));
+        EditorGUILayout.LabelField(Contents.longitudeLabel, new GUIContent($"{location.Longitude:0.000000}"));
     }
 
     private void LayOutIncludeMeshInBuild(ARLocation arLocation)
     {
-         arLocation.IncludeMeshInBuild = EditorGUILayout.Toggle("Include Mesh in Build", arLocation.IncludeMeshInBuild);
+        arLocation.IncludeMeshInBuild =
+            EditorGUILayout.Toggle
+            (
+                Contents.includeMeshInBuildLabel,
+                arLocation.IncludeMeshInBuild
+            );
     }
 
     private void LayOutARLocationManifest(ARLocation arLocation)
@@ -40,18 +105,25 @@ internal class ARLocationEditor : Editor
             _manifest = LoadManifestFromGuid(arLocation.AssetGuid);
             if (!_manifest)
             {
-                Debug.LogError($"Could not load ARLocationManifest for {arLocation.name}");
+                Log.Error($"Could not load ARLocationManifest for {arLocation.name}");
             }
         }
 
-        var updatedManifest = (ARLocationManifest)EditorGUILayout.ObjectField("AR Location Manifest",
-            _manifest, typeof(ARLocationManifest), false);
+        var updatedManifest =
+            (ARLocationManifest)EditorGUILayout.ObjectField
+            (
+                Contents.arLocationManifestLabel,
+                _manifest,
+                typeof(ARLocationManifest),
+                false
+            );
 
         if (updatedManifest != _manifest)
         {
+            string previousManifestName = _manifest ? _manifest.LocationName : null;
             _manifest = updatedManifest;
             arLocation.AssetGuid = GetAssetGuidFromManifest(_manifest);
-            
+
             arLocation.Payload = _manifest
                 ? new ARPersistentAnchorPayload(_manifest.MeshOriginAnchorPayload)
                 : null;
@@ -63,16 +135,32 @@ internal class ARLocationEditor : Editor
 
             if (_manifest)
             {
-                arLocation.name = _manifest.LocationName;
+                // If the name is managed by us, rename it. Otherwise don't touch it
+                if ((previousManifestName != null && arLocation.name.StartsWith(previousManifestName)) ||
+                    arLocation.name.StartsWith(DefaultARLocationName))
+                {
+                    arLocation.name = _manifest.LocationName;
+                    GameObjectUtility.EnsureUniqueNameForSibling(arLocation.gameObject);
+                }
+
                 arLocation.MeshContainer = Instantiate(_manifest.MockAsset, arLocation.transform);
                 arLocation.MeshContainer.name = _arMeshContainerNameString;
                 arLocation.MeshContainer.tag = arLocation.IncludeMeshInBuild ? "Untagged" : "EditorOnly";
+                arLocation.GpsLocation = new LatLng
+                    (_manifest.LocationLatitude, _manifest.LocationLongitude);
             }
             else
             {
-                arLocation.name = _defaultARLocationName;
+                if ((previousManifestName != null && arLocation.name.StartsWith(previousManifestName)) ||
+                    arLocation.name.StartsWith(DefaultARLocationName))
+                {
+                    arLocation.name = DefaultARLocationName;
+                    GameObjectUtility.EnsureUniqueNameForSibling(arLocation.gameObject);
+                }
+
                 arLocation.MeshContainer = null;
             }
+
             EditorUtility.SetDirty(target);
         }
     }
@@ -99,7 +187,7 @@ internal class ARLocationEditor : Editor
         var assetPath = AssetDatabase.GUIDToAssetPath(assetGuid);
         if (string.IsNullOrEmpty(assetPath))
         {
-            Debug.LogError($"Could not load ARLocationManifest {assetGuid}");
+            Log.Error($"Could not load ARLocationManifest {assetGuid}");
             return null;
         }
 
@@ -119,7 +207,7 @@ internal class ARLocationEditor : Editor
         var guid = AssetDatabase.AssetPathToGUID(assetPath);
         if (string.IsNullOrEmpty(guid))
         {
-            Debug.LogError($"Could not get guid at path {assetPath}");
+            Log.Error($"Could not get guid at path {assetPath}");
             return null;
         }
 
@@ -130,18 +218,26 @@ internal class ARLocationEditor : Editor
     {
         if (_manifest)
         {
-            EditorGUILayout.LabelField("Payload", arLocation.Payload?.ToBase64());
+            EditorGUILayout.LabelField
+            (
+                Contents.payloadFromManifestLabel,
+                new GUIContent(arLocation.Payload?.ToBase64())
+            );
         }
         else
         {
-            string payload = EditorGUILayout.TextField("Payload", arLocation.Payload?.ToBase64());
+            string payload = EditorGUILayout.DelayedTextField
+            (
+                Contents.payloadFromUserLabel,
+                arLocation.Payload?.ToBase64()
+            );
             if (payload != arLocation.Payload?.ToBase64())
             {
                 var bytes = new Span<byte>(new byte[payload.Length]);
                 bool valid = Convert.TryFromBase64String(payload, bytes, out int bytesWritten);
                 if (!valid)
                 {
-                    Debug.LogError("Not a valid ARPersistentAnchorPayload");
+                    Log.Error("Not a valid base 64 string");
                 }
 
                 arLocation.Payload = valid ? new ARPersistentAnchorPayload(payload) : null;
@@ -159,7 +255,7 @@ internal class ARLocationEditor : Editor
             {
                 arLocation.MeshContainer.tag =
                     arLocation.IncludeMeshInBuild ? "Untagged" : "EditorOnly";
-                
+
                 EditorUtility.SetDirty(target);
             }
         }

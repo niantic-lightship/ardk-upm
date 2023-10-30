@@ -1,13 +1,13 @@
-// Copyright 2022 Niantic, Inc. All Rights Reserved.
+// Copyright 2023 Niantic, Inc. All Rights Reserved.
 
 using System.Collections.Generic;
 
-namespace Niantic.Lightship.AR
+namespace Niantic.Lightship.AR.VpsCoverage
 {
     /// Received result from server request for LocalizationTargets.
     public class LocalizationTargetsResult
     {
-        internal LocalizationTargetsResult(_HttpResponse<_LocalizationTargetsResponse> response)
+        internal LocalizationTargetsResult(HttpResponse<LocalizationTargetsResponse> response)
         {
             Status = response.Status;
 

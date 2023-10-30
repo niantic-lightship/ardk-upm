@@ -1,6 +1,7 @@
+// Copyright 2023 Niantic, Inc. All Rights Reserved.
 using System;
 
-namespace Niantic.Lightship.AR.Subsystems
+namespace Niantic.Lightship.AR.XRSubsystems
 {
     /// <summary>
     /// Represents the payload for a persistent anchor.

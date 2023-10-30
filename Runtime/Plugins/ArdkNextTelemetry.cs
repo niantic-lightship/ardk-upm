@@ -24,65 +24,97 @@ namespace Niantic.Lightship.AR.Protobuf {
           string.Concat(
             "Cjdhcmdlby9hcmRrLW5leHQvY29tbW9uL3Byb3Rvcy9hcmRrX25leHRfdGVs",
             "ZW1ldHJ5LnByb3RvEg5hcmRrLnRlbGVtZXRyeRo2YXJnZW8vYXJkay1uZXh0",
-            "L2NvbW1vbi9wcm90b3MvYXJfY29tbW9uX21ldGFkYXRhLnByb3RvIuEBChpB",
+            "L2NvbW1vbi9wcm90b3MvYXJfY29tbW9uX21ldGFkYXRhLnByb3RvIrkIChpB",
             "cmRrTmV4dFRlbGVtZXRyeU9tbmlQcm90bxJDChRpbml0aWFsaXphdGlvbl9l",
             "dmVudBgBIAEoCzIjLmFyZGsudGVsZW1ldHJ5LkluaXRpYWxpemF0aW9uRXZl",
-            "bnRIABI8ChJhcl9jb21tb25fbWV0YWRhdGEY6AcgASgLMh8ubmFyLnRlbGVt",
-            "ZXRyeS5BUkNvbW1vbk1ldGFkYXRhEhYKDWRldmVsb3Blcl9rZXkY6QcgASgJ",
-            "EhUKDHRpbWVzdGFtcF9tcxjqByABKANCEQoPdGVsZW1ldHJ5X2V2ZW50IisK",
-            "E0luaXRpYWxpemF0aW9uRXZlbnQSFAoMaW5zdGFsbF9tb2RlGAEgASgJIoUC",
-            "ChZTY2FuUmVjb3JkZXJTdGFydEV2ZW50EhAKCGZlYXR1cmVzGAEgASgJEg8K",
-            "B3NjYW5faWQYAiABKAkSSAoMZGVwdGhfc291cmNlGAMgASgOMjIuYXJkay50",
-            "ZWxlbWV0cnkuU2NhblJlY29yZGVyU3RhcnRFdmVudC5EZXB0aFNvdXJjZRIR",
-            "CglmcmFtZXJhdGUYBCABKA0SGAoQaXNfdm94ZWxfZW5hYmxlZBgFIAEoCBIa",
-            "ChJpc19yYXljYXN0X2VuYWJsZWQYBiABKAgiNQoLRGVwdGhTb3VyY2USCwoH",
-            "VU5LTk9XThAAEgkKBUxJREFSEAESDgoKTVVMVElERVBUSBACIkIKFVNjYW5S",
-            "ZWNvcmRlclN0b3BFdmVudBIPCgdzY2FuX2lkGAEgASgJEhgKEHNjYW5fZHVy",
-            "YXRpb25fbXMYAiABKA0iRAoYU2NhblJlY29yZGVyRGlzY2FyZEV2ZW50Eg8K",
-            "B3NjYW5faWQYASABKAkSFwoPc2Nhbl9kdXJhdGlvbl9zGAIgASgNImIKFVNj",
-            "YW5SZWNvcmRlclNhdmVFdmVudBIPCgdzY2FuX2lkGAEgASgJEhcKD3NjYW5f",
-            "ZHVyYXRpb25fcxgCIAEoDRIfChdudW1lcl9vZl9mcmFtZXNfaW5fc2NhbhgD",
-            "IAEoDSIiCg9TY2FuU1FDUnVuRXZlbnQSDwoHc2Nhbl9pZBgBIAEoCSK4AwoQ",
-            "U2NhblNRQ0RvbmVFdmVudBIPCgdzY2FuX2lkGAEgASgJEhUKDW92ZXJhbGxf",
-            "c2NvcmUYAiABKAISFgoOdGltZV9lbGFwc2VfbXMYAyABKA0STAoOZmFpbGVk",
-            "X3JlYXNvbnMYBCADKAsyNC5hcmRrLnRlbGVtZXRyeS5TY2FuU1FDRG9uZUV2",
-            "ZW50LlNjYW5TUUNGYWlsZWRSZWFzb24alQIKE1NjYW5TUUNGYWlsZWRSZWFz",
-            "b24SWAoNZmFpbGVkX3JlYXNvbhgBIAEoDjJBLmFyZGsudGVsZW1ldHJ5LlNj",
-            "YW5TUUNEb25lRXZlbnQuU2NhblNRQ0ZhaWxlZFJlYXNvbi5GYWlsZWRSZWFz",
-            "b24SDQoFc2NvcmUYAiABKAIilAEKDEZhaWxlZFJlYXNvbhIKCgZCTFVSUlkQ",
-            "ABIJCgVEQVJESxABEg8KC0JBRF9RVUFMSVRZEAISEgoOR1JPVU5EX09SX0ZF",
-            "RVQQAxISCg5JTkRPT1JfVU5DTEVBUhAEEgwKCEZST01fQ0FSEAUSDgoKT0JT",
-            "VFJVQ1RFRBAGEhYKElRBUkdFVF9OT1RfVklTSUJMRRAHIrQCCg5TY2FuRXJy",
-            "b3JFdmVudBIPCgdzY2FuX2lkGAEgASgJEjgKCmVycm9yX2NvZGUYAiABKA4y",
-            "JC5hcmRrLnRlbGVtZXRyeS5TY2FuRXJyb3JFdmVudC5FcnJvchIVCg1lcnJv",
-            "cl9tZXNzYWdlGAMgASgJIr8BCgVFcnJvchILCgdVbmtub3duEAASEQoNU1FD",
-            "X05PVF9SRUFEWRABEhEKDVNRQ19CQURfSU5QVVQQAhIRCg1TUUNfQkFEX01P",
-            "REVMEAMSFwoTU1FDX01PREVMX1JFQURfRkFJTBAEEhQKEFNRQ19ERUNSWVBU",
-            "X0ZBSUwQBRITCg9TUUNfVU5QQUNLX0ZBSUwQBhIXChNTUUNfTk9fSU5QVVRf",
-            "RlJBTUVTEAcSEwoPU1FDX0lOVEVSUlVQVEVEEAgiLwocU2NhbkFyY2hpdmVC",
-            "dWlsZGVyU3RhcnRFdmVudBIPCgdzY2FuX2lkGAEgASgJIngKG1NjYW5BcmNo",
-            "aXZlQnVpbGRlckRvbmVFdmVudBIPCgdzY2FuX2lkGAEgASgJEhYKDnNjYW5f",
-            "ZmlsZV9zaXplGAIgASgEEhgKEG51bWJlcl9vZl9jaHVua3MYAyABKA0SFgoO",
-            "dGltZV9lbGFwc2VfbXMYBCABKA0iSAodU2NhbkFyY2hpdmVCdWlsZGVyQ2Fu",
-            "Y2VsRXZlbnQSDwoHc2Nhbl9pZBgBIAEoCRIWCg5zY2FuX2ZpbGVfc2l6ZRgC",
-            "IAEoBEJiCh5jb20ubmlhbnRpY2xhYnMuYXJkay50ZWxlbWV0cnlaIG5pYW50",
-            "aWMvbGlnaHRzaGlwL2FyZGsvdGVsZW1ldHJ5qgIdTmlhbnRpYy5MaWdodHNo",
-            "aXAuQVIuUHJvdG9idWZiBnByb3RvMw=="));
+            "bnRIABJLChlzY2FuX3JlY29yZGVyX3N0YXJ0X2V2ZW50GAIgASgLMiYuYXJk",
+            "ay50ZWxlbWV0cnkuU2NhblJlY29yZGVyU3RhcnRFdmVudEgAEkkKGHNjYW5f",
+            "cmVjb3JkZXJfc3RvcF9ldmVudBgDIAEoCzIlLmFyZGsudGVsZW1ldHJ5LlNj",
+            "YW5SZWNvcmRlclN0b3BFdmVudEgAEj0KEnNjYW5fc3FjX3J1bl9ldmVudBgE",
+            "IAEoCzIfLmFyZGsudGVsZW1ldHJ5LlNjYW5TUUNSdW5FdmVudEgAEj8KE3Nj",
+            "YW5fc3FjX2RvbmVfZXZlbnQYBSABKAsyIC5hcmRrLnRlbGVtZXRyeS5TY2Fu",
+            "U1FDRG9uZUV2ZW50SAASOgoQc2Nhbl9lcnJvcl9ldmVudBgGIAEoCzIeLmFy",
+            "ZGsudGVsZW1ldHJ5LlNjYW5FcnJvckV2ZW50SAASaAopc2Nhbl9hcmNoaXZl",
+            "X2J1aWxkZXJfZ2V0X25leHRfY2h1bmtfZXZlbnQYByABKAsyMy5hcmRrLnRl",
+            "bGVtZXRyeS5TY2FuQXJjaGl2ZUJ1aWxkZXJHZXROZXh0Q2h1bmtFdmVudEgA",
+            "EloKIXNjYW5fYXJjaGl2ZV9idWlsZGVyX2NhbmNlbF9ldmVudBgIIAEoCzIt",
+            "LmFyZGsudGVsZW1ldHJ5LlNjYW5BcmNoaXZlQnVpbGRlckNhbmNlbEV2ZW50",
+            "SAASVQoednBzX2xvY2FsaXphdGlvbl9zdGFydGVkX2V2ZW50GAkgASgLMisu",
+            "YXJkay50ZWxlbWV0cnkuVnBzTG9jYWxpemF0aW9uU3RhcnRlZEV2ZW50SAAS",
+            "VQoednBzX2xvY2FsaXphdGlvbl9zdWNjZXNzX2V2ZW50GAogASgLMisuYXJk",
+            "ay50ZWxlbWV0cnkuVnBzTG9jYWxpemF0aW9uU3VjY2Vzc0V2ZW50SAASRwoX",
+            "dnBzX3Nlc3Npb25fZW5kZWRfZXZlbnQYCyABKAsyJC5hcmRrLnRlbGVtZXRy",
+            "eS5WcHNTZXNzaW9uRW5kZWRFdmVudEgAEkUKFmFyX3Nlc3Npb25fc3RhcnRf",
+            "ZXZlbnQYDCABKAsyIy5hcmRrLnRlbGVtZXRyeS5BclNlc3Npb25TdGFydEV2",
+            "ZW50SAASPAoSYXJfY29tbW9uX21ldGFkYXRhGOgHIAEoCzIfLm5hci50ZWxl",
+            "bWV0cnkuQVJDb21tb25NZXRhZGF0YRIWCg1kZXZlbG9wZXJfa2V5GOkHIAEo",
+            "CRIVCgx0aW1lc3RhbXBfbXMY6gcgASgDQhEKD3RlbGVtZXRyeV9ldmVudCI+",
+            "ChNJbml0aWFsaXphdGlvbkV2ZW50EhQKDGluc3RhbGxfbW9kZRgBIAEoCRIR",
+            "Cglwcm9jZXNzb3IYAiABKAkiVgobVnBzTG9jYWxpemF0aW9uU3RhcnRlZEV2",
+            "ZW50Eh8KF2xvY2FsaXphdGlvbl90YXJnZXRfaWRzGAEgAygJEhYKDnZwc19z",
+            "ZXNzaW9uX2lkGAIgASgJIo8BChtWcHNMb2NhbGl6YXRpb25TdWNjZXNzRXZl",
+            "bnQSHgoWbG9jYWxpemF0aW9uX3RhcmdldF9pZBgBIAEoCRIWCg52cHNfc2Vz",
+            "c2lvbl9pZBgCIAEoCRIbChN0aW1lX3RvX2xvY2FsaXplX21zGAMgASgDEhsK",
+            "E251bV9zZXJ2ZXJfcmVxdWVzdHMYBCABKAUilwIKFFZwc1Nlc3Npb25FbmRl",
+            "ZEV2ZW50EhYKDnZwc19zZXNzaW9uX2lkGAEgASgJEhsKE251bV9zZXJ2ZXJf",
+            "cmVxdWVzdHMYAiABKAUSFwoPdGltZV90cmFja2VkX21zGAMgASgDEh0KFXRv",
+            "dGFsX3Nlc3Npb25fdGltZV9tcxgEIAEoAxJYChNuZXR3b3JrX2Vycm9yX2Nv",
+            "ZGVzGAUgAygLMjsuYXJkay50ZWxlbWV0cnkuVnBzU2Vzc2lvbkVuZGVkRXZl",
+            "bnQuTmV0d29ya0Vycm9yQ29kZXNFbnRyeRo4ChZOZXR3b3JrRXJyb3JDb2Rl",
+            "c0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoBToCOAEigQIKFlNj",
+            "YW5SZWNvcmRlclN0YXJ0RXZlbnQSDwoHc2Nhbl9pZBgBIAEoCRJICgxkZXB0",
+            "aF9zb3VyY2UYAiABKA4yMi5hcmRrLnRlbGVtZXRyeS5TY2FuUmVjb3JkZXJT",
+            "dGFydEV2ZW50LkRlcHRoU291cmNlEhEKCWZyYW1lcmF0ZRgDIAEoDRIYChBp",
+            "c192b3hlbF9lbmFibGVkGAQgASgIEhoKEmlzX3JheWNhc3RfZW5hYmxlZBgF",
+            "IAEoCCJDCgtEZXB0aFNvdXJjZRILCgdVTktOT1dOEAASCQoFTElEQVIQARIO",
+            "CgpNVUxUSURFUFRIEAISDAoITk9fREVQVEgQAyLLAQoVU2NhblJlY29yZGVy",
+            "U3RvcEV2ZW50Eg8KB3NjYW5faWQYASABKAkSQgoJb3BlcmF0aW9uGAIgASgO",
+            "Mi8uYXJkay50ZWxlbWV0cnkuU2NhblJlY29yZGVyU3RvcEV2ZW50Lk9wZXJh",
+            "dGlvbhIYChBzY2FuX2R1cmF0aW9uX21zGAMgASgNEh8KF251bWVyX29mX2Zy",
+            "YW1lc19pbl9zY2FuGAQgASgNIiIKCU9wZXJhdGlvbhIICgRTQVZFEAASCwoH",
+            "RElTQ0FSRBABIiIKD1NjYW5TUUNSdW5FdmVudBIPCgdzY2FuX2lkGAEgASgJ",
+            "IrgDChBTY2FuU1FDRG9uZUV2ZW50Eg8KB3NjYW5faWQYASABKAkSFQoNb3Zl",
+            "cmFsbF9zY29yZRgCIAEoAhIWCg50aW1lX2VsYXBzZV9tcxgDIAEoDRJMCg5m",
+            "YWlsZWRfcmVhc29ucxgEIAMoCzI0LmFyZGsudGVsZW1ldHJ5LlNjYW5TUUNE",
+            "b25lRXZlbnQuU2NhblNRQ0ZhaWxlZFJlYXNvbhqVAgoTU2NhblNRQ0ZhaWxl",
+            "ZFJlYXNvbhJYCg1mYWlsZWRfcmVhc29uGAEgASgOMkEuYXJkay50ZWxlbWV0",
+            "cnkuU2NhblNRQ0RvbmVFdmVudC5TY2FuU1FDRmFpbGVkUmVhc29uLkZhaWxl",
+            "ZFJlYXNvbhINCgVzY29yZRgCIAEoAiKUAQoMRmFpbGVkUmVhc29uEgoKBkJM",
+            "VVJSWRAAEgkKBURBUkRLEAESDwoLQkFEX1FVQUxJVFkQAhISCg5HUk9VTkRf",
+            "T1JfRkVFVBADEhIKDklORE9PUl9VTkNMRUFSEAQSDAoIRlJPTV9DQVIQBRIO",
+            "CgpPQlNUUlVDVEVEEAYSFgoSVEFSR0VUX05PVF9WSVNJQkxFEAcitAIKDlNj",
+            "YW5FcnJvckV2ZW50Eg8KB3NjYW5faWQYASABKAkSOAoKZXJyb3JfY29kZRgC",
+            "IAEoDjIkLmFyZGsudGVsZW1ldHJ5LlNjYW5FcnJvckV2ZW50LkVycm9yEhUK",
+            "DWVycm9yX21lc3NhZ2UYAyABKAkivwEKBUVycm9yEgsKB1VOS05PV04QABIR",
+            "Cg1TUUNfTk9UX1JFQURZEAESEQoNU1FDX0JBRF9JTlBVVBACEhEKDVNRQ19C",
+            "QURfTU9ERUwQAxIXChNTUUNfTU9ERUxfUkVBRF9GQUlMEAQSFAoQU1FDX0RF",
+            "Q1JZUFRfRkFJTBAFEhMKD1NRQ19VTlBBQ0tfRkFJTBAGEhcKE1NRQ19OT19J",
+            "TlBVVF9GUkFNRVMQBxITCg9TUUNfSU5URVJSVVBURUQQCCKCAQojU2NhbkFy",
+            "Y2hpdmVCdWlsZGVyR2V0TmV4dENodW5rRXZlbnQSDwoHc2Nhbl9pZBgBIAEo",
+            "CRIgChhjaHVua19maWxlX3NpemVfaW5fYnl0ZXMYAiABKAQSEAoIY2h1bmtf",
+            "aWQYAyABKA0SFgoOdGltZV9lbGFwc2VfbXMYBCABKA0iWgodU2NhbkFyY2hp",
+            "dmVCdWlsZGVyQ2FuY2VsRXZlbnQSDwoHc2Nhbl9pZBgBIAEoCRIQCghjaHVu",
+            "a19pZBgCIAEoDRIWCg50aW1lX2VsYXBzZV9tcxgDIAEoDSIqChNBclNlc3Np",
+            "b25TdGFydEV2ZW50EhMKC2VtcHR5X2ZpZWxkGGMgASgIQmIKHmNvbS5uaWFu",
+            "dGljbGFicy5hcmRrLnRlbGVtZXRyeVogbmlhbnRpYy9saWdodHNoaXAvYXJk",
+            "ay90ZWxlbWV0cnmqAh1OaWFudGljLkxpZ2h0c2hpcC5BUi5Qcm90b2J1ZmIG",
+            "cHJvdG8z"));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Niantic.ARDK.AR.Protobuf.ArCommonMetadataReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.Lightship.AR.Protobuf.ArdkNextTelemetryOmniProto), global::Niantic.Lightship.AR.Protobuf.ArdkNextTelemetryOmniProto.Parser, new[]{ "InitializationEvent", "ArCommonMetadata", "DeveloperKey", "TimestampMs" }, new[]{ "TelemetryEvent" }, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.Lightship.AR.Protobuf.InitializationEvent), global::Niantic.Lightship.AR.Protobuf.InitializationEvent.Parser, new[]{ "InstallMode" }, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.Lightship.AR.Protobuf.ScanRecorderStartEvent), global::Niantic.Lightship.AR.Protobuf.ScanRecorderStartEvent.Parser, new[]{ "Features", "ScanId", "DepthSource", "Framerate", "IsVoxelEnabled", "IsRaycastEnabled" }, null, new[]{ typeof(global::Niantic.Lightship.AR.Protobuf.ScanRecorderStartEvent.Types.DepthSource) }, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.Lightship.AR.Protobuf.ScanRecorderStopEvent), global::Niantic.Lightship.AR.Protobuf.ScanRecorderStopEvent.Parser, new[]{ "ScanId", "ScanDurationMs" }, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.Lightship.AR.Protobuf.ScanRecorderDiscardEvent), global::Niantic.Lightship.AR.Protobuf.ScanRecorderDiscardEvent.Parser, new[]{ "ScanId", "ScanDurationS" }, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.Lightship.AR.Protobuf.ScanRecorderSaveEvent), global::Niantic.Lightship.AR.Protobuf.ScanRecorderSaveEvent.Parser, new[]{ "ScanId", "ScanDurationS", "NumerOfFramesInScan" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.Lightship.AR.Protobuf.ArdkNextTelemetryOmniProto), global::Niantic.Lightship.AR.Protobuf.ArdkNextTelemetryOmniProto.Parser, new[]{ "InitializationEvent", "ScanRecorderStartEvent", "ScanRecorderStopEvent", "ScanSqcRunEvent", "ScanSqcDoneEvent", "ScanErrorEvent", "ScanArchiveBuilderGetNextChunkEvent", "ScanArchiveBuilderCancelEvent", "VpsLocalizationStartedEvent", "VpsLocalizationSuccessEvent", "VpsSessionEndedEvent", "ArSessionStartEvent", "ArCommonMetadata", "DeveloperKey", "TimestampMs" }, new[]{ "TelemetryEvent" }, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.Lightship.AR.Protobuf.InitializationEvent), global::Niantic.Lightship.AR.Protobuf.InitializationEvent.Parser, new[]{ "InstallMode", "Processor" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.Lightship.AR.Protobuf.VpsLocalizationStartedEvent), global::Niantic.Lightship.AR.Protobuf.VpsLocalizationStartedEvent.Parser, new[]{ "LocalizationTargetIds", "VpsSessionId" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.Lightship.AR.Protobuf.VpsLocalizationSuccessEvent), global::Niantic.Lightship.AR.Protobuf.VpsLocalizationSuccessEvent.Parser, new[]{ "LocalizationTargetId", "VpsSessionId", "TimeToLocalizeMs", "NumServerRequests" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.Lightship.AR.Protobuf.VpsSessionEndedEvent), global::Niantic.Lightship.AR.Protobuf.VpsSessionEndedEvent.Parser, new[]{ "VpsSessionId", "NumServerRequests", "TimeTrackedMs", "TotalSessionTimeMs", "NetworkErrorCodes" }, null, null, new pbr::GeneratedClrTypeInfo[] { null, }),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.Lightship.AR.Protobuf.ScanRecorderStartEvent), global::Niantic.Lightship.AR.Protobuf.ScanRecorderStartEvent.Parser, new[]{ "ScanId", "DepthSource", "Framerate", "IsVoxelEnabled", "IsRaycastEnabled" }, null, new[]{ typeof(global::Niantic.Lightship.AR.Protobuf.ScanRecorderStartEvent.Types.DepthSource) }, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.Lightship.AR.Protobuf.ScanRecorderStopEvent), global::Niantic.Lightship.AR.Protobuf.ScanRecorderStopEvent.Parser, new[]{ "ScanId", "Operation", "ScanDurationMs", "NumerOfFramesInScan" }, null, new[]{ typeof(global::Niantic.Lightship.AR.Protobuf.ScanRecorderStopEvent.Types.Operation) }, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.Lightship.AR.Protobuf.ScanSQCRunEvent), global::Niantic.Lightship.AR.Protobuf.ScanSQCRunEvent.Parser, new[]{ "ScanId" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.Lightship.AR.Protobuf.ScanSQCDoneEvent), global::Niantic.Lightship.AR.Protobuf.ScanSQCDoneEvent.Parser, new[]{ "ScanId", "OverallScore", "TimeElapseMs", "FailedReasons" }, null, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.Lightship.AR.Protobuf.ScanSQCDoneEvent.Types.ScanSQCFailedReason), global::Niantic.Lightship.AR.Protobuf.ScanSQCDoneEvent.Types.ScanSQCFailedReason.Parser, new[]{ "FailedReason", "Score" }, null, new[]{ typeof(global::Niantic.Lightship.AR.Protobuf.ScanSQCDoneEvent.Types.ScanSQCFailedReason.Types.FailedReason) }, null)}),
             new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.Lightship.AR.Protobuf.ScanErrorEvent), global::Niantic.Lightship.AR.Protobuf.ScanErrorEvent.Parser, new[]{ "ScanId", "ErrorCode", "ErrorMessage" }, null, new[]{ typeof(global::Niantic.Lightship.AR.Protobuf.ScanErrorEvent.Types.Error) }, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.Lightship.AR.Protobuf.ScanArchiveBuilderStartEvent), global::Niantic.Lightship.AR.Protobuf.ScanArchiveBuilderStartEvent.Parser, new[]{ "ScanId" }, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.Lightship.AR.Protobuf.ScanArchiveBuilderDoneEvent), global::Niantic.Lightship.AR.Protobuf.ScanArchiveBuilderDoneEvent.Parser, new[]{ "ScanId", "ScanFileSize", "NumberOfChunks", "TimeElapseMs" }, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.Lightship.AR.Protobuf.ScanArchiveBuilderCancelEvent), global::Niantic.Lightship.AR.Protobuf.ScanArchiveBuilderCancelEvent.Parser, new[]{ "ScanId", "ScanFileSize" }, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.Lightship.AR.Protobuf.ScanArchiveBuilderGetNextChunkEvent), global::Niantic.Lightship.AR.Protobuf.ScanArchiveBuilderGetNextChunkEvent.Parser, new[]{ "ScanId", "ChunkFileSizeInBytes", "ChunkId", "TimeElapseMs" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.Lightship.AR.Protobuf.ScanArchiveBuilderCancelEvent), global::Niantic.Lightship.AR.Protobuf.ScanArchiveBuilderCancelEvent.Parser, new[]{ "ScanId", "ChunkId", "TimeElapseMs" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.Lightship.AR.Protobuf.ArSessionStartEvent), global::Niantic.Lightship.AR.Protobuf.ArSessionStartEvent.Parser, new[]{ "EmptyField" }, null, null, null)
           }));
     }
     #endregion
@@ -123,6 +155,39 @@ namespace Niantic.Lightship.AR.Protobuf {
         case TelemetryEventOneofCase.InitializationEvent:
           InitializationEvent = other.InitializationEvent.Clone();
           break;
+        case TelemetryEventOneofCase.ScanRecorderStartEvent:
+          ScanRecorderStartEvent = other.ScanRecorderStartEvent.Clone();
+          break;
+        case TelemetryEventOneofCase.ScanRecorderStopEvent:
+          ScanRecorderStopEvent = other.ScanRecorderStopEvent.Clone();
+          break;
+        case TelemetryEventOneofCase.ScanSqcRunEvent:
+          ScanSqcRunEvent = other.ScanSqcRunEvent.Clone();
+          break;
+        case TelemetryEventOneofCase.ScanSqcDoneEvent:
+          ScanSqcDoneEvent = other.ScanSqcDoneEvent.Clone();
+          break;
+        case TelemetryEventOneofCase.ScanErrorEvent:
+          ScanErrorEvent = other.ScanErrorEvent.Clone();
+          break;
+        case TelemetryEventOneofCase.ScanArchiveBuilderGetNextChunkEvent:
+          ScanArchiveBuilderGetNextChunkEvent = other.ScanArchiveBuilderGetNextChunkEvent.Clone();
+          break;
+        case TelemetryEventOneofCase.ScanArchiveBuilderCancelEvent:
+          ScanArchiveBuilderCancelEvent = other.ScanArchiveBuilderCancelEvent.Clone();
+          break;
+        case TelemetryEventOneofCase.VpsLocalizationStartedEvent:
+          VpsLocalizationStartedEvent = other.VpsLocalizationStartedEvent.Clone();
+          break;
+        case TelemetryEventOneofCase.VpsLocalizationSuccessEvent:
+          VpsLocalizationSuccessEvent = other.VpsLocalizationSuccessEvent.Clone();
+          break;
+        case TelemetryEventOneofCase.VpsSessionEndedEvent:
+          VpsSessionEndedEvent = other.VpsSessionEndedEvent.Clone();
+          break;
+        case TelemetryEventOneofCase.ArSessionStartEvent:
+          ArSessionStartEvent = other.ArSessionStartEvent.Clone();
+          break;
       }
 
     }
@@ -140,6 +205,127 @@ namespace Niantic.Lightship.AR.Protobuf {
       set {
         telemetryEvent_ = value;
         telemetryEventCase_ = value == null ? TelemetryEventOneofCase.None : TelemetryEventOneofCase.InitializationEvent;
+      }
+    }
+
+    /// <summary>Field number for the "scan_recorder_start_event" field.</summary>
+    public const int ScanRecorderStartEventFieldNumber = 2;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public global::Niantic.Lightship.AR.Protobuf.ScanRecorderStartEvent ScanRecorderStartEvent {
+      get { return telemetryEventCase_ == TelemetryEventOneofCase.ScanRecorderStartEvent ? (global::Niantic.Lightship.AR.Protobuf.ScanRecorderStartEvent) telemetryEvent_ : null; }
+      set {
+        telemetryEvent_ = value;
+        telemetryEventCase_ = value == null ? TelemetryEventOneofCase.None : TelemetryEventOneofCase.ScanRecorderStartEvent;
+      }
+    }
+
+    /// <summary>Field number for the "scan_recorder_stop_event" field.</summary>
+    public const int ScanRecorderStopEventFieldNumber = 3;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public global::Niantic.Lightship.AR.Protobuf.ScanRecorderStopEvent ScanRecorderStopEvent {
+      get { return telemetryEventCase_ == TelemetryEventOneofCase.ScanRecorderStopEvent ? (global::Niantic.Lightship.AR.Protobuf.ScanRecorderStopEvent) telemetryEvent_ : null; }
+      set {
+        telemetryEvent_ = value;
+        telemetryEventCase_ = value == null ? TelemetryEventOneofCase.None : TelemetryEventOneofCase.ScanRecorderStopEvent;
+      }
+    }
+
+    /// <summary>Field number for the "scan_sqc_run_event" field.</summary>
+    public const int ScanSqcRunEventFieldNumber = 4;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public global::Niantic.Lightship.AR.Protobuf.ScanSQCRunEvent ScanSqcRunEvent {
+      get { return telemetryEventCase_ == TelemetryEventOneofCase.ScanSqcRunEvent ? (global::Niantic.Lightship.AR.Protobuf.ScanSQCRunEvent) telemetryEvent_ : null; }
+      set {
+        telemetryEvent_ = value;
+        telemetryEventCase_ = value == null ? TelemetryEventOneofCase.None : TelemetryEventOneofCase.ScanSqcRunEvent;
+      }
+    }
+
+    /// <summary>Field number for the "scan_sqc_done_event" field.</summary>
+    public const int ScanSqcDoneEventFieldNumber = 5;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public global::Niantic.Lightship.AR.Protobuf.ScanSQCDoneEvent ScanSqcDoneEvent {
+      get { return telemetryEventCase_ == TelemetryEventOneofCase.ScanSqcDoneEvent ? (global::Niantic.Lightship.AR.Protobuf.ScanSQCDoneEvent) telemetryEvent_ : null; }
+      set {
+        telemetryEvent_ = value;
+        telemetryEventCase_ = value == null ? TelemetryEventOneofCase.None : TelemetryEventOneofCase.ScanSqcDoneEvent;
+      }
+    }
+
+    /// <summary>Field number for the "scan_error_event" field.</summary>
+    public const int ScanErrorEventFieldNumber = 6;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public global::Niantic.Lightship.AR.Protobuf.ScanErrorEvent ScanErrorEvent {
+      get { return telemetryEventCase_ == TelemetryEventOneofCase.ScanErrorEvent ? (global::Niantic.Lightship.AR.Protobuf.ScanErrorEvent) telemetryEvent_ : null; }
+      set {
+        telemetryEvent_ = value;
+        telemetryEventCase_ = value == null ? TelemetryEventOneofCase.None : TelemetryEventOneofCase.ScanErrorEvent;
+      }
+    }
+
+    /// <summary>Field number for the "scan_archive_builder_get_next_chunk_event" field.</summary>
+    public const int ScanArchiveBuilderGetNextChunkEventFieldNumber = 7;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public global::Niantic.Lightship.AR.Protobuf.ScanArchiveBuilderGetNextChunkEvent ScanArchiveBuilderGetNextChunkEvent {
+      get { return telemetryEventCase_ == TelemetryEventOneofCase.ScanArchiveBuilderGetNextChunkEvent ? (global::Niantic.Lightship.AR.Protobuf.ScanArchiveBuilderGetNextChunkEvent) telemetryEvent_ : null; }
+      set {
+        telemetryEvent_ = value;
+        telemetryEventCase_ = value == null ? TelemetryEventOneofCase.None : TelemetryEventOneofCase.ScanArchiveBuilderGetNextChunkEvent;
+      }
+    }
+
+    /// <summary>Field number for the "scan_archive_builder_cancel_event" field.</summary>
+    public const int ScanArchiveBuilderCancelEventFieldNumber = 8;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public global::Niantic.Lightship.AR.Protobuf.ScanArchiveBuilderCancelEvent ScanArchiveBuilderCancelEvent {
+      get { return telemetryEventCase_ == TelemetryEventOneofCase.ScanArchiveBuilderCancelEvent ? (global::Niantic.Lightship.AR.Protobuf.ScanArchiveBuilderCancelEvent) telemetryEvent_ : null; }
+      set {
+        telemetryEvent_ = value;
+        telemetryEventCase_ = value == null ? TelemetryEventOneofCase.None : TelemetryEventOneofCase.ScanArchiveBuilderCancelEvent;
+      }
+    }
+
+    /// <summary>Field number for the "vps_localization_started_event" field.</summary>
+    public const int VpsLocalizationStartedEventFieldNumber = 9;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public global::Niantic.Lightship.AR.Protobuf.VpsLocalizationStartedEvent VpsLocalizationStartedEvent {
+      get { return telemetryEventCase_ == TelemetryEventOneofCase.VpsLocalizationStartedEvent ? (global::Niantic.Lightship.AR.Protobuf.VpsLocalizationStartedEvent) telemetryEvent_ : null; }
+      set {
+        telemetryEvent_ = value;
+        telemetryEventCase_ = value == null ? TelemetryEventOneofCase.None : TelemetryEventOneofCase.VpsLocalizationStartedEvent;
+      }
+    }
+
+    /// <summary>Field number for the "vps_localization_success_event" field.</summary>
+    public const int VpsLocalizationSuccessEventFieldNumber = 10;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public global::Niantic.Lightship.AR.Protobuf.VpsLocalizationSuccessEvent VpsLocalizationSuccessEvent {
+      get { return telemetryEventCase_ == TelemetryEventOneofCase.VpsLocalizationSuccessEvent ? (global::Niantic.Lightship.AR.Protobuf.VpsLocalizationSuccessEvent) telemetryEvent_ : null; }
+      set {
+        telemetryEvent_ = value;
+        telemetryEventCase_ = value == null ? TelemetryEventOneofCase.None : TelemetryEventOneofCase.VpsLocalizationSuccessEvent;
+      }
+    }
+
+    /// <summary>Field number for the "vps_session_ended_event" field.</summary>
+    public const int VpsSessionEndedEventFieldNumber = 11;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public global::Niantic.Lightship.AR.Protobuf.VpsSessionEndedEvent VpsSessionEndedEvent {
+      get { return telemetryEventCase_ == TelemetryEventOneofCase.VpsSessionEndedEvent ? (global::Niantic.Lightship.AR.Protobuf.VpsSessionEndedEvent) telemetryEvent_ : null; }
+      set {
+        telemetryEvent_ = value;
+        telemetryEventCase_ = value == null ? TelemetryEventOneofCase.None : TelemetryEventOneofCase.VpsSessionEndedEvent;
+      }
+    }
+
+    /// <summary>Field number for the "ar_session_start_event" field.</summary>
+    public const int ArSessionStartEventFieldNumber = 12;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public global::Niantic.Lightship.AR.Protobuf.ArSessionStartEvent ArSessionStartEvent {
+      get { return telemetryEventCase_ == TelemetryEventOneofCase.ArSessionStartEvent ? (global::Niantic.Lightship.AR.Protobuf.ArSessionStartEvent) telemetryEvent_ : null; }
+      set {
+        telemetryEvent_ = value;
+        telemetryEventCase_ = value == null ? TelemetryEventOneofCase.None : TelemetryEventOneofCase.ArSessionStartEvent;
       }
     }
 
@@ -190,6 +376,17 @@ namespace Niantic.Lightship.AR.Protobuf {
     public enum TelemetryEventOneofCase {
       None = 0,
       InitializationEvent = 1,
+      ScanRecorderStartEvent = 2,
+      ScanRecorderStopEvent = 3,
+      ScanSqcRunEvent = 4,
+      ScanSqcDoneEvent = 5,
+      ScanErrorEvent = 6,
+      ScanArchiveBuilderGetNextChunkEvent = 7,
+      ScanArchiveBuilderCancelEvent = 8,
+      VpsLocalizationStartedEvent = 9,
+      VpsLocalizationSuccessEvent = 10,
+      VpsSessionEndedEvent = 11,
+      ArSessionStartEvent = 12,
     }
     private TelemetryEventOneofCase telemetryEventCase_ = TelemetryEventOneofCase.None;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -217,6 +414,17 @@ namespace Niantic.Lightship.AR.Protobuf {
         return true;
       }
       if (!object.Equals(InitializationEvent, other.InitializationEvent)) return false;
+      if (!object.Equals(ScanRecorderStartEvent, other.ScanRecorderStartEvent)) return false;
+      if (!object.Equals(ScanRecorderStopEvent, other.ScanRecorderStopEvent)) return false;
+      if (!object.Equals(ScanSqcRunEvent, other.ScanSqcRunEvent)) return false;
+      if (!object.Equals(ScanSqcDoneEvent, other.ScanSqcDoneEvent)) return false;
+      if (!object.Equals(ScanErrorEvent, other.ScanErrorEvent)) return false;
+      if (!object.Equals(ScanArchiveBuilderGetNextChunkEvent, other.ScanArchiveBuilderGetNextChunkEvent)) return false;
+      if (!object.Equals(ScanArchiveBuilderCancelEvent, other.ScanArchiveBuilderCancelEvent)) return false;
+      if (!object.Equals(VpsLocalizationStartedEvent, other.VpsLocalizationStartedEvent)) return false;
+      if (!object.Equals(VpsLocalizationSuccessEvent, other.VpsLocalizationSuccessEvent)) return false;
+      if (!object.Equals(VpsSessionEndedEvent, other.VpsSessionEndedEvent)) return false;
+      if (!object.Equals(ArSessionStartEvent, other.ArSessionStartEvent)) return false;
       if (!object.Equals(ArCommonMetadata, other.ArCommonMetadata)) return false;
       if (DeveloperKey != other.DeveloperKey) return false;
       if (TimestampMs != other.TimestampMs) return false;
@@ -228,6 +436,17 @@ namespace Niantic.Lightship.AR.Protobuf {
     public override int GetHashCode() {
       int hash = 1;
       if (telemetryEventCase_ == TelemetryEventOneofCase.InitializationEvent) hash ^= InitializationEvent.GetHashCode();
+      if (telemetryEventCase_ == TelemetryEventOneofCase.ScanRecorderStartEvent) hash ^= ScanRecorderStartEvent.GetHashCode();
+      if (telemetryEventCase_ == TelemetryEventOneofCase.ScanRecorderStopEvent) hash ^= ScanRecorderStopEvent.GetHashCode();
+      if (telemetryEventCase_ == TelemetryEventOneofCase.ScanSqcRunEvent) hash ^= ScanSqcRunEvent.GetHashCode();
+      if (telemetryEventCase_ == TelemetryEventOneofCase.ScanSqcDoneEvent) hash ^= ScanSqcDoneEvent.GetHashCode();
+      if (telemetryEventCase_ == TelemetryEventOneofCase.ScanErrorEvent) hash ^= ScanErrorEvent.GetHashCode();
+      if (telemetryEventCase_ == TelemetryEventOneofCase.ScanArchiveBuilderGetNextChunkEvent) hash ^= ScanArchiveBuilderGetNextChunkEvent.GetHashCode();
+      if (telemetryEventCase_ == TelemetryEventOneofCase.ScanArchiveBuilderCancelEvent) hash ^= ScanArchiveBuilderCancelEvent.GetHashCode();
+      if (telemetryEventCase_ == TelemetryEventOneofCase.VpsLocalizationStartedEvent) hash ^= VpsLocalizationStartedEvent.GetHashCode();
+      if (telemetryEventCase_ == TelemetryEventOneofCase.VpsLocalizationSuccessEvent) hash ^= VpsLocalizationSuccessEvent.GetHashCode();
+      if (telemetryEventCase_ == TelemetryEventOneofCase.VpsSessionEndedEvent) hash ^= VpsSessionEndedEvent.GetHashCode();
+      if (telemetryEventCase_ == TelemetryEventOneofCase.ArSessionStartEvent) hash ^= ArSessionStartEvent.GetHashCode();
       if (arCommonMetadata_ != null) hash ^= ArCommonMetadata.GetHashCode();
       if (DeveloperKey.Length != 0) hash ^= DeveloperKey.GetHashCode();
       if (TimestampMs != 0L) hash ^= TimestampMs.GetHashCode();
@@ -245,6 +464,50 @@ namespace Niantic.Lightship.AR.Protobuf {
       if (telemetryEventCase_ == TelemetryEventOneofCase.InitializationEvent) {
         output.WriteRawTag(10);
         output.WriteMessage(InitializationEvent);
+      }
+      if (telemetryEventCase_ == TelemetryEventOneofCase.ScanRecorderStartEvent) {
+        output.WriteRawTag(18);
+        output.WriteMessage(ScanRecorderStartEvent);
+      }
+      if (telemetryEventCase_ == TelemetryEventOneofCase.ScanRecorderStopEvent) {
+        output.WriteRawTag(26);
+        output.WriteMessage(ScanRecorderStopEvent);
+      }
+      if (telemetryEventCase_ == TelemetryEventOneofCase.ScanSqcRunEvent) {
+        output.WriteRawTag(34);
+        output.WriteMessage(ScanSqcRunEvent);
+      }
+      if (telemetryEventCase_ == TelemetryEventOneofCase.ScanSqcDoneEvent) {
+        output.WriteRawTag(42);
+        output.WriteMessage(ScanSqcDoneEvent);
+      }
+      if (telemetryEventCase_ == TelemetryEventOneofCase.ScanErrorEvent) {
+        output.WriteRawTag(50);
+        output.WriteMessage(ScanErrorEvent);
+      }
+      if (telemetryEventCase_ == TelemetryEventOneofCase.ScanArchiveBuilderGetNextChunkEvent) {
+        output.WriteRawTag(58);
+        output.WriteMessage(ScanArchiveBuilderGetNextChunkEvent);
+      }
+      if (telemetryEventCase_ == TelemetryEventOneofCase.ScanArchiveBuilderCancelEvent) {
+        output.WriteRawTag(66);
+        output.WriteMessage(ScanArchiveBuilderCancelEvent);
+      }
+      if (telemetryEventCase_ == TelemetryEventOneofCase.VpsLocalizationStartedEvent) {
+        output.WriteRawTag(74);
+        output.WriteMessage(VpsLocalizationStartedEvent);
+      }
+      if (telemetryEventCase_ == TelemetryEventOneofCase.VpsLocalizationSuccessEvent) {
+        output.WriteRawTag(82);
+        output.WriteMessage(VpsLocalizationSuccessEvent);
+      }
+      if (telemetryEventCase_ == TelemetryEventOneofCase.VpsSessionEndedEvent) {
+        output.WriteRawTag(90);
+        output.WriteMessage(VpsSessionEndedEvent);
+      }
+      if (telemetryEventCase_ == TelemetryEventOneofCase.ArSessionStartEvent) {
+        output.WriteRawTag(98);
+        output.WriteMessage(ArSessionStartEvent);
       }
       if (arCommonMetadata_ != null) {
         output.WriteRawTag(194, 62);
@@ -265,6 +528,39 @@ namespace Niantic.Lightship.AR.Protobuf {
       int size = 0;
       if (telemetryEventCase_ == TelemetryEventOneofCase.InitializationEvent) {
         size += 1 + pb::CodedOutputStream.ComputeMessageSize(InitializationEvent);
+      }
+      if (telemetryEventCase_ == TelemetryEventOneofCase.ScanRecorderStartEvent) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(ScanRecorderStartEvent);
+      }
+      if (telemetryEventCase_ == TelemetryEventOneofCase.ScanRecorderStopEvent) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(ScanRecorderStopEvent);
+      }
+      if (telemetryEventCase_ == TelemetryEventOneofCase.ScanSqcRunEvent) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(ScanSqcRunEvent);
+      }
+      if (telemetryEventCase_ == TelemetryEventOneofCase.ScanSqcDoneEvent) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(ScanSqcDoneEvent);
+      }
+      if (telemetryEventCase_ == TelemetryEventOneofCase.ScanErrorEvent) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(ScanErrorEvent);
+      }
+      if (telemetryEventCase_ == TelemetryEventOneofCase.ScanArchiveBuilderGetNextChunkEvent) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(ScanArchiveBuilderGetNextChunkEvent);
+      }
+      if (telemetryEventCase_ == TelemetryEventOneofCase.ScanArchiveBuilderCancelEvent) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(ScanArchiveBuilderCancelEvent);
+      }
+      if (telemetryEventCase_ == TelemetryEventOneofCase.VpsLocalizationStartedEvent) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(VpsLocalizationStartedEvent);
+      }
+      if (telemetryEventCase_ == TelemetryEventOneofCase.VpsLocalizationSuccessEvent) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(VpsLocalizationSuccessEvent);
+      }
+      if (telemetryEventCase_ == TelemetryEventOneofCase.VpsSessionEndedEvent) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(VpsSessionEndedEvent);
+      }
+      if (telemetryEventCase_ == TelemetryEventOneofCase.ArSessionStartEvent) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(ArSessionStartEvent);
       }
       if (arCommonMetadata_ != null) {
         size += 2 + pb::CodedOutputStream.ComputeMessageSize(ArCommonMetadata);
@@ -299,6 +595,39 @@ namespace Niantic.Lightship.AR.Protobuf {
         case TelemetryEventOneofCase.InitializationEvent:
           InitializationEvent = other.InitializationEvent;
           break;
+        case TelemetryEventOneofCase.ScanRecorderStartEvent:
+          ScanRecorderStartEvent = other.ScanRecorderStartEvent;
+          break;
+        case TelemetryEventOneofCase.ScanRecorderStopEvent:
+          ScanRecorderStopEvent = other.ScanRecorderStopEvent;
+          break;
+        case TelemetryEventOneofCase.ScanSqcRunEvent:
+          ScanSqcRunEvent = other.ScanSqcRunEvent;
+          break;
+        case TelemetryEventOneofCase.ScanSqcDoneEvent:
+          ScanSqcDoneEvent = other.ScanSqcDoneEvent;
+          break;
+        case TelemetryEventOneofCase.ScanErrorEvent:
+          ScanErrorEvent = other.ScanErrorEvent;
+          break;
+        case TelemetryEventOneofCase.ScanArchiveBuilderGetNextChunkEvent:
+          ScanArchiveBuilderGetNextChunkEvent = other.ScanArchiveBuilderGetNextChunkEvent;
+          break;
+        case TelemetryEventOneofCase.ScanArchiveBuilderCancelEvent:
+          ScanArchiveBuilderCancelEvent = other.ScanArchiveBuilderCancelEvent;
+          break;
+        case TelemetryEventOneofCase.VpsLocalizationStartedEvent:
+          VpsLocalizationStartedEvent = other.VpsLocalizationStartedEvent;
+          break;
+        case TelemetryEventOneofCase.VpsLocalizationSuccessEvent:
+          VpsLocalizationSuccessEvent = other.VpsLocalizationSuccessEvent;
+          break;
+        case TelemetryEventOneofCase.VpsSessionEndedEvent:
+          VpsSessionEndedEvent = other.VpsSessionEndedEvent;
+          break;
+        case TelemetryEventOneofCase.ArSessionStartEvent:
+          ArSessionStartEvent = other.ArSessionStartEvent;
+          break;
       }
 
     }
@@ -318,6 +647,105 @@ namespace Niantic.Lightship.AR.Protobuf {
             }
             input.ReadMessage(subBuilder);
             InitializationEvent = subBuilder;
+            break;
+          }
+          case 18: {
+            global::Niantic.Lightship.AR.Protobuf.ScanRecorderStartEvent subBuilder = new global::Niantic.Lightship.AR.Protobuf.ScanRecorderStartEvent();
+            if (telemetryEventCase_ == TelemetryEventOneofCase.ScanRecorderStartEvent) {
+              subBuilder.MergeFrom(ScanRecorderStartEvent);
+            }
+            input.ReadMessage(subBuilder);
+            ScanRecorderStartEvent = subBuilder;
+            break;
+          }
+          case 26: {
+            global::Niantic.Lightship.AR.Protobuf.ScanRecorderStopEvent subBuilder = new global::Niantic.Lightship.AR.Protobuf.ScanRecorderStopEvent();
+            if (telemetryEventCase_ == TelemetryEventOneofCase.ScanRecorderStopEvent) {
+              subBuilder.MergeFrom(ScanRecorderStopEvent);
+            }
+            input.ReadMessage(subBuilder);
+            ScanRecorderStopEvent = subBuilder;
+            break;
+          }
+          case 34: {
+            global::Niantic.Lightship.AR.Protobuf.ScanSQCRunEvent subBuilder = new global::Niantic.Lightship.AR.Protobuf.ScanSQCRunEvent();
+            if (telemetryEventCase_ == TelemetryEventOneofCase.ScanSqcRunEvent) {
+              subBuilder.MergeFrom(ScanSqcRunEvent);
+            }
+            input.ReadMessage(subBuilder);
+            ScanSqcRunEvent = subBuilder;
+            break;
+          }
+          case 42: {
+            global::Niantic.Lightship.AR.Protobuf.ScanSQCDoneEvent subBuilder = new global::Niantic.Lightship.AR.Protobuf.ScanSQCDoneEvent();
+            if (telemetryEventCase_ == TelemetryEventOneofCase.ScanSqcDoneEvent) {
+              subBuilder.MergeFrom(ScanSqcDoneEvent);
+            }
+            input.ReadMessage(subBuilder);
+            ScanSqcDoneEvent = subBuilder;
+            break;
+          }
+          case 50: {
+            global::Niantic.Lightship.AR.Protobuf.ScanErrorEvent subBuilder = new global::Niantic.Lightship.AR.Protobuf.ScanErrorEvent();
+            if (telemetryEventCase_ == TelemetryEventOneofCase.ScanErrorEvent) {
+              subBuilder.MergeFrom(ScanErrorEvent);
+            }
+            input.ReadMessage(subBuilder);
+            ScanErrorEvent = subBuilder;
+            break;
+          }
+          case 58: {
+            global::Niantic.Lightship.AR.Protobuf.ScanArchiveBuilderGetNextChunkEvent subBuilder = new global::Niantic.Lightship.AR.Protobuf.ScanArchiveBuilderGetNextChunkEvent();
+            if (telemetryEventCase_ == TelemetryEventOneofCase.ScanArchiveBuilderGetNextChunkEvent) {
+              subBuilder.MergeFrom(ScanArchiveBuilderGetNextChunkEvent);
+            }
+            input.ReadMessage(subBuilder);
+            ScanArchiveBuilderGetNextChunkEvent = subBuilder;
+            break;
+          }
+          case 66: {
+            global::Niantic.Lightship.AR.Protobuf.ScanArchiveBuilderCancelEvent subBuilder = new global::Niantic.Lightship.AR.Protobuf.ScanArchiveBuilderCancelEvent();
+            if (telemetryEventCase_ == TelemetryEventOneofCase.ScanArchiveBuilderCancelEvent) {
+              subBuilder.MergeFrom(ScanArchiveBuilderCancelEvent);
+            }
+            input.ReadMessage(subBuilder);
+            ScanArchiveBuilderCancelEvent = subBuilder;
+            break;
+          }
+          case 74: {
+            global::Niantic.Lightship.AR.Protobuf.VpsLocalizationStartedEvent subBuilder = new global::Niantic.Lightship.AR.Protobuf.VpsLocalizationStartedEvent();
+            if (telemetryEventCase_ == TelemetryEventOneofCase.VpsLocalizationStartedEvent) {
+              subBuilder.MergeFrom(VpsLocalizationStartedEvent);
+            }
+            input.ReadMessage(subBuilder);
+            VpsLocalizationStartedEvent = subBuilder;
+            break;
+          }
+          case 82: {
+            global::Niantic.Lightship.AR.Protobuf.VpsLocalizationSuccessEvent subBuilder = new global::Niantic.Lightship.AR.Protobuf.VpsLocalizationSuccessEvent();
+            if (telemetryEventCase_ == TelemetryEventOneofCase.VpsLocalizationSuccessEvent) {
+              subBuilder.MergeFrom(VpsLocalizationSuccessEvent);
+            }
+            input.ReadMessage(subBuilder);
+            VpsLocalizationSuccessEvent = subBuilder;
+            break;
+          }
+          case 90: {
+            global::Niantic.Lightship.AR.Protobuf.VpsSessionEndedEvent subBuilder = new global::Niantic.Lightship.AR.Protobuf.VpsSessionEndedEvent();
+            if (telemetryEventCase_ == TelemetryEventOneofCase.VpsSessionEndedEvent) {
+              subBuilder.MergeFrom(VpsSessionEndedEvent);
+            }
+            input.ReadMessage(subBuilder);
+            VpsSessionEndedEvent = subBuilder;
+            break;
+          }
+          case 98: {
+            global::Niantic.Lightship.AR.Protobuf.ArSessionStartEvent subBuilder = new global::Niantic.Lightship.AR.Protobuf.ArSessionStartEvent();
+            if (telemetryEventCase_ == TelemetryEventOneofCase.ArSessionStartEvent) {
+              subBuilder.MergeFrom(ArSessionStartEvent);
+            }
+            input.ReadMessage(subBuilder);
+            ArSessionStartEvent = subBuilder;
             break;
           }
           case 8002: {
@@ -342,7 +770,7 @@ namespace Niantic.Lightship.AR.Protobuf {
   }
 
   /// <summary>
-  ///  Used to calculate DAUs and DADs
+  ///  Used to calculate DAUs and DADs. Also used to figure out the dev's processor (M1 vs Intel)
   ///  Usage: When a developer presses Play on Unity/App is launched on ios/android
   /// </summary>
   public sealed partial class InitializationEvent : pb::IMessage<InitializationEvent> {
@@ -370,6 +798,7 @@ namespace Niantic.Lightship.AR.Protobuf {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public InitializationEvent(InitializationEvent other) : this() {
       installMode_ = other.installMode_;
+      processor_ = other.processor_;
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -388,6 +817,17 @@ namespace Niantic.Lightship.AR.Protobuf {
       }
     }
 
+    /// <summary>Field number for the "processor" field.</summary>
+    public const int ProcessorFieldNumber = 2;
+    private string processor_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public string Processor {
+      get { return processor_; }
+      set {
+        processor_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public override bool Equals(object other) {
       return Equals(other as InitializationEvent);
@@ -402,6 +842,7 @@ namespace Niantic.Lightship.AR.Protobuf {
         return true;
       }
       if (InstallMode != other.InstallMode) return false;
+      if (Processor != other.Processor) return false;
       return true;
     }
 
@@ -409,6 +850,7 @@ namespace Niantic.Lightship.AR.Protobuf {
     public override int GetHashCode() {
       int hash = 1;
       if (InstallMode.Length != 0) hash ^= InstallMode.GetHashCode();
+      if (Processor.Length != 0) hash ^= Processor.GetHashCode();
       return hash;
     }
 
@@ -423,6 +865,10 @@ namespace Niantic.Lightship.AR.Protobuf {
         output.WriteRawTag(10);
         output.WriteString(InstallMode);
       }
+      if (Processor.Length != 0) {
+        output.WriteRawTag(18);
+        output.WriteString(Processor);
+      }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -430,6 +876,9 @@ namespace Niantic.Lightship.AR.Protobuf {
       int size = 0;
       if (InstallMode.Length != 0) {
         size += 1 + pb::CodedOutputStream.ComputeStringSize(InstallMode);
+      }
+      if (Processor.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(Processor);
       }
       return size;
     }
@@ -441,6 +890,9 @@ namespace Niantic.Lightship.AR.Protobuf {
       }
       if (other.InstallMode.Length != 0) {
         InstallMode = other.InstallMode;
+      }
+      if (other.Processor.Length != 0) {
+        Processor = other.Processor;
       }
     }
 
@@ -456,6 +908,602 @@ namespace Niantic.Lightship.AR.Protobuf {
             InstallMode = input.ReadString();
             break;
           }
+          case 18: {
+            Processor = input.ReadString();
+            break;
+          }
+        }
+      }
+    }
+
+  }
+
+  public sealed partial class VpsLocalizationStartedEvent : pb::IMessage<VpsLocalizationStartedEvent> {
+    private static readonly pb::MessageParser<VpsLocalizationStartedEvent> _parser = new pb::MessageParser<VpsLocalizationStartedEvent>(() => new VpsLocalizationStartedEvent());
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public static pb::MessageParser<VpsLocalizationStartedEvent> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Niantic.Lightship.AR.Protobuf.ArdkNextTelemetryReflection.Descriptor.MessageTypes[2]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public VpsLocalizationStartedEvent() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public VpsLocalizationStartedEvent(VpsLocalizationStartedEvent other) : this() {
+      localizationTargetIds_ = other.localizationTargetIds_.Clone();
+      vpsSessionId_ = other.vpsSessionId_;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public VpsLocalizationStartedEvent Clone() {
+      return new VpsLocalizationStartedEvent(this);
+    }
+
+    /// <summary>Field number for the "localization_target_ids" field.</summary>
+    public const int LocalizationTargetIdsFieldNumber = 1;
+    private static readonly pb::FieldCodec<string> _repeated_localizationTargetIds_codec
+        = pb::FieldCodec.ForString(10);
+    private readonly pbc::RepeatedField<string> localizationTargetIds_ = new pbc::RepeatedField<string>();
+    /// <summary>
+    ///  List of one or more target IDs that are being targeted for VPS loclization
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public pbc::RepeatedField<string> LocalizationTargetIds {
+      get { return localizationTargetIds_; }
+    }
+
+    /// <summary>Field number for the "vps_session_id" field.</summary>
+    public const int VpsSessionIdFieldNumber = 2;
+    private string vpsSessionId_ = "";
+    /// <summary>
+    ///  Same string that is sent to the VPS Server as the session id
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public string VpsSessionId {
+      get { return vpsSessionId_; }
+      set {
+        vpsSessionId_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override bool Equals(object other) {
+      return Equals(other as VpsLocalizationStartedEvent);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public bool Equals(VpsLocalizationStartedEvent other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if(!localizationTargetIds_.Equals(other.localizationTargetIds_)) return false;
+      if (VpsSessionId != other.VpsSessionId) return false;
+      return true;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override int GetHashCode() {
+      int hash = 1;
+      hash ^= localizationTargetIds_.GetHashCode();
+      if (VpsSessionId.Length != 0) hash ^= VpsSessionId.GetHashCode();
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void WriteTo(pb::CodedOutputStream output) {
+      localizationTargetIds_.WriteTo(output, _repeated_localizationTargetIds_codec);
+      if (VpsSessionId.Length != 0) {
+        output.WriteRawTag(18);
+        output.WriteString(VpsSessionId);
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public int CalculateSize() {
+      int size = 0;
+      size += localizationTargetIds_.CalculateSize(_repeated_localizationTargetIds_codec);
+      if (VpsSessionId.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(VpsSessionId);
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void MergeFrom(VpsLocalizationStartedEvent other) {
+      if (other == null) {
+        return;
+      }
+      localizationTargetIds_.Add(other.localizationTargetIds_);
+      if (other.VpsSessionId.Length != 0) {
+        VpsSessionId = other.VpsSessionId;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void MergeFrom(pb::CodedInputStream input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            input.SkipLastField();
+            break;
+          case 10: {
+            localizationTargetIds_.AddEntriesFrom(input, _repeated_localizationTargetIds_codec);
+            break;
+          }
+          case 18: {
+            VpsSessionId = input.ReadString();
+            break;
+          }
+        }
+      }
+    }
+
+  }
+
+  public sealed partial class VpsLocalizationSuccessEvent : pb::IMessage<VpsLocalizationSuccessEvent> {
+    private static readonly pb::MessageParser<VpsLocalizationSuccessEvent> _parser = new pb::MessageParser<VpsLocalizationSuccessEvent>(() => new VpsLocalizationSuccessEvent());
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public static pb::MessageParser<VpsLocalizationSuccessEvent> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Niantic.Lightship.AR.Protobuf.ArdkNextTelemetryReflection.Descriptor.MessageTypes[3]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public VpsLocalizationSuccessEvent() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public VpsLocalizationSuccessEvent(VpsLocalizationSuccessEvent other) : this() {
+      localizationTargetId_ = other.localizationTargetId_;
+      vpsSessionId_ = other.vpsSessionId_;
+      timeToLocalizeMs_ = other.timeToLocalizeMs_;
+      numServerRequests_ = other.numServerRequests_;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public VpsLocalizationSuccessEvent Clone() {
+      return new VpsLocalizationSuccessEvent(this);
+    }
+
+    /// <summary>Field number for the "localization_target_id" field.</summary>
+    public const int LocalizationTargetIdFieldNumber = 1;
+    private string localizationTargetId_ = "";
+    /// <summary>
+    ///  The localization target that was successfully localized for this event
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public string LocalizationTargetId {
+      get { return localizationTargetId_; }
+      set {
+        localizationTargetId_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
+    /// <summary>Field number for the "vps_session_id" field.</summary>
+    public const int VpsSessionIdFieldNumber = 2;
+    private string vpsSessionId_ = "";
+    /// <summary>
+    ///  Same string that is sent to the VPS Server as the session id
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public string VpsSessionId {
+      get { return vpsSessionId_; }
+      set {
+        vpsSessionId_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
+    /// <summary>Field number for the "time_to_localize_ms" field.</summary>
+    public const int TimeToLocalizeMsFieldNumber = 3;
+    private long timeToLocalizeMs_;
+    /// <summary>
+    ///  Client E2E loop time between starting localization and localization success
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public long TimeToLocalizeMs {
+      get { return timeToLocalizeMs_; }
+      set {
+        timeToLocalizeMs_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "num_server_requests" field.</summary>
+    public const int NumServerRequestsFieldNumber = 4;
+    private int numServerRequests_;
+    /// <summary>
+    ///  Total number of server requests sent before localization success
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public int NumServerRequests {
+      get { return numServerRequests_; }
+      set {
+        numServerRequests_ = value;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override bool Equals(object other) {
+      return Equals(other as VpsLocalizationSuccessEvent);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public bool Equals(VpsLocalizationSuccessEvent other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (LocalizationTargetId != other.LocalizationTargetId) return false;
+      if (VpsSessionId != other.VpsSessionId) return false;
+      if (TimeToLocalizeMs != other.TimeToLocalizeMs) return false;
+      if (NumServerRequests != other.NumServerRequests) return false;
+      return true;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (LocalizationTargetId.Length != 0) hash ^= LocalizationTargetId.GetHashCode();
+      if (VpsSessionId.Length != 0) hash ^= VpsSessionId.GetHashCode();
+      if (TimeToLocalizeMs != 0L) hash ^= TimeToLocalizeMs.GetHashCode();
+      if (NumServerRequests != 0) hash ^= NumServerRequests.GetHashCode();
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void WriteTo(pb::CodedOutputStream output) {
+      if (LocalizationTargetId.Length != 0) {
+        output.WriteRawTag(10);
+        output.WriteString(LocalizationTargetId);
+      }
+      if (VpsSessionId.Length != 0) {
+        output.WriteRawTag(18);
+        output.WriteString(VpsSessionId);
+      }
+      if (TimeToLocalizeMs != 0L) {
+        output.WriteRawTag(24);
+        output.WriteInt64(TimeToLocalizeMs);
+      }
+      if (NumServerRequests != 0) {
+        output.WriteRawTag(32);
+        output.WriteInt32(NumServerRequests);
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public int CalculateSize() {
+      int size = 0;
+      if (LocalizationTargetId.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(LocalizationTargetId);
+      }
+      if (VpsSessionId.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(VpsSessionId);
+      }
+      if (TimeToLocalizeMs != 0L) {
+        size += 1 + pb::CodedOutputStream.ComputeInt64Size(TimeToLocalizeMs);
+      }
+      if (NumServerRequests != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeInt32Size(NumServerRequests);
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void MergeFrom(VpsLocalizationSuccessEvent other) {
+      if (other == null) {
+        return;
+      }
+      if (other.LocalizationTargetId.Length != 0) {
+        LocalizationTargetId = other.LocalizationTargetId;
+      }
+      if (other.VpsSessionId.Length != 0) {
+        VpsSessionId = other.VpsSessionId;
+      }
+      if (other.TimeToLocalizeMs != 0L) {
+        TimeToLocalizeMs = other.TimeToLocalizeMs;
+      }
+      if (other.NumServerRequests != 0) {
+        NumServerRequests = other.NumServerRequests;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void MergeFrom(pb::CodedInputStream input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            input.SkipLastField();
+            break;
+          case 10: {
+            LocalizationTargetId = input.ReadString();
+            break;
+          }
+          case 18: {
+            VpsSessionId = input.ReadString();
+            break;
+          }
+          case 24: {
+            TimeToLocalizeMs = input.ReadInt64();
+            break;
+          }
+          case 32: {
+            NumServerRequests = input.ReadInt32();
+            break;
+          }
+        }
+      }
+    }
+
+  }
+
+  public sealed partial class VpsSessionEndedEvent : pb::IMessage<VpsSessionEndedEvent> {
+    private static readonly pb::MessageParser<VpsSessionEndedEvent> _parser = new pb::MessageParser<VpsSessionEndedEvent>(() => new VpsSessionEndedEvent());
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public static pb::MessageParser<VpsSessionEndedEvent> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Niantic.Lightship.AR.Protobuf.ArdkNextTelemetryReflection.Descriptor.MessageTypes[4]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public VpsSessionEndedEvent() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public VpsSessionEndedEvent(VpsSessionEndedEvent other) : this() {
+      vpsSessionId_ = other.vpsSessionId_;
+      numServerRequests_ = other.numServerRequests_;
+      timeTrackedMs_ = other.timeTrackedMs_;
+      totalSessionTimeMs_ = other.totalSessionTimeMs_;
+      networkErrorCodes_ = other.networkErrorCodes_.Clone();
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public VpsSessionEndedEvent Clone() {
+      return new VpsSessionEndedEvent(this);
+    }
+
+    /// <summary>Field number for the "vps_session_id" field.</summary>
+    public const int VpsSessionIdFieldNumber = 1;
+    private string vpsSessionId_ = "";
+    /// <summary>
+    ///  Same string that is sent to the VPS Server as the session id
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public string VpsSessionId {
+      get { return vpsSessionId_; }
+      set {
+        vpsSessionId_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
+    /// <summary>Field number for the "num_server_requests" field.</summary>
+    public const int NumServerRequestsFieldNumber = 2;
+    private int numServerRequests_;
+    /// <summary>
+    ///  Total number of server requests sent in this session
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public int NumServerRequests {
+      get { return numServerRequests_; }
+      set {
+        numServerRequests_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "time_tracked_ms" field.</summary>
+    public const int TimeTrackedMsFieldNumber = 3;
+    private long timeTrackedMs_;
+    /// <summary>
+    ///  Time spent in a Vps Tracked state (Localization Success + AR Tracking)
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public long TimeTrackedMs {
+      get { return timeTrackedMs_; }
+      set {
+        timeTrackedMs_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "total_session_time_ms" field.</summary>
+    public const int TotalSessionTimeMsFieldNumber = 4;
+    private long totalSessionTimeMs_;
+    /// <summary>
+    ///  Total time spent between session start and end
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public long TotalSessionTimeMs {
+      get { return totalSessionTimeMs_; }
+      set {
+        totalSessionTimeMs_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "network_error_codes" field.</summary>
+    public const int NetworkErrorCodesFieldNumber = 5;
+    private static readonly pbc::MapField<string, int>.Codec _map_networkErrorCodes_codec
+        = new pbc::MapField<string, int>.Codec(pb::FieldCodec.ForString(10), pb::FieldCodec.ForInt32(16), 42);
+    private readonly pbc::MapField<string, int> networkErrorCodes_ = new pbc::MapField<string, int>();
+    /// <summary>
+    ///  Report the count of all network message error codes
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public pbc::MapField<string, int> NetworkErrorCodes {
+      get { return networkErrorCodes_; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override bool Equals(object other) {
+      return Equals(other as VpsSessionEndedEvent);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public bool Equals(VpsSessionEndedEvent other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (VpsSessionId != other.VpsSessionId) return false;
+      if (NumServerRequests != other.NumServerRequests) return false;
+      if (TimeTrackedMs != other.TimeTrackedMs) return false;
+      if (TotalSessionTimeMs != other.TotalSessionTimeMs) return false;
+      if (!NetworkErrorCodes.Equals(other.NetworkErrorCodes)) return false;
+      return true;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (VpsSessionId.Length != 0) hash ^= VpsSessionId.GetHashCode();
+      if (NumServerRequests != 0) hash ^= NumServerRequests.GetHashCode();
+      if (TimeTrackedMs != 0L) hash ^= TimeTrackedMs.GetHashCode();
+      if (TotalSessionTimeMs != 0L) hash ^= TotalSessionTimeMs.GetHashCode();
+      hash ^= NetworkErrorCodes.GetHashCode();
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void WriteTo(pb::CodedOutputStream output) {
+      if (VpsSessionId.Length != 0) {
+        output.WriteRawTag(10);
+        output.WriteString(VpsSessionId);
+      }
+      if (NumServerRequests != 0) {
+        output.WriteRawTag(16);
+        output.WriteInt32(NumServerRequests);
+      }
+      if (TimeTrackedMs != 0L) {
+        output.WriteRawTag(24);
+        output.WriteInt64(TimeTrackedMs);
+      }
+      if (TotalSessionTimeMs != 0L) {
+        output.WriteRawTag(32);
+        output.WriteInt64(TotalSessionTimeMs);
+      }
+      networkErrorCodes_.WriteTo(output, _map_networkErrorCodes_codec);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public int CalculateSize() {
+      int size = 0;
+      if (VpsSessionId.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(VpsSessionId);
+      }
+      if (NumServerRequests != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeInt32Size(NumServerRequests);
+      }
+      if (TimeTrackedMs != 0L) {
+        size += 1 + pb::CodedOutputStream.ComputeInt64Size(TimeTrackedMs);
+      }
+      if (TotalSessionTimeMs != 0L) {
+        size += 1 + pb::CodedOutputStream.ComputeInt64Size(TotalSessionTimeMs);
+      }
+      size += networkErrorCodes_.CalculateSize(_map_networkErrorCodes_codec);
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void MergeFrom(VpsSessionEndedEvent other) {
+      if (other == null) {
+        return;
+      }
+      if (other.VpsSessionId.Length != 0) {
+        VpsSessionId = other.VpsSessionId;
+      }
+      if (other.NumServerRequests != 0) {
+        NumServerRequests = other.NumServerRequests;
+      }
+      if (other.TimeTrackedMs != 0L) {
+        TimeTrackedMs = other.TimeTrackedMs;
+      }
+      if (other.TotalSessionTimeMs != 0L) {
+        TotalSessionTimeMs = other.TotalSessionTimeMs;
+      }
+      networkErrorCodes_.Add(other.networkErrorCodes_);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void MergeFrom(pb::CodedInputStream input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            input.SkipLastField();
+            break;
+          case 10: {
+            VpsSessionId = input.ReadString();
+            break;
+          }
+          case 16: {
+            NumServerRequests = input.ReadInt32();
+            break;
+          }
+          case 24: {
+            TimeTrackedMs = input.ReadInt64();
+            break;
+          }
+          case 32: {
+            TotalSessionTimeMs = input.ReadInt64();
+            break;
+          }
+          case 42: {
+            networkErrorCodes_.AddEntriesFrom(input, _map_networkErrorCodes_codec);
+            break;
+          }
         }
       }
     }
@@ -469,7 +1517,7 @@ namespace Niantic.Lightship.AR.Protobuf {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Niantic.Lightship.AR.Protobuf.ArdkNextTelemetryReflection.Descriptor.MessageTypes[2]; }
+      get { return global::Niantic.Lightship.AR.Protobuf.ArdkNextTelemetryReflection.Descriptor.MessageTypes[5]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -486,7 +1534,6 @@ namespace Niantic.Lightship.AR.Protobuf {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public ScanRecorderStartEvent(ScanRecorderStartEvent other) : this() {
-      features_ = other.features_;
       scanId_ = other.scanId_;
       depthSource_ = other.depthSource_;
       framerate_ = other.framerate_;
@@ -499,19 +1546,8 @@ namespace Niantic.Lightship.AR.Protobuf {
       return new ScanRecorderStartEvent(this);
     }
 
-    /// <summary>Field number for the "features" field.</summary>
-    public const int FeaturesFieldNumber = 1;
-    private string features_ = "";
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    public string Features {
-      get { return features_; }
-      set {
-        features_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
-      }
-    }
-
     /// <summary>Field number for the "scan_id" field.</summary>
-    public const int ScanIdFieldNumber = 2;
+    public const int ScanIdFieldNumber = 1;
     private string scanId_ = "";
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public string ScanId {
@@ -522,7 +1558,7 @@ namespace Niantic.Lightship.AR.Protobuf {
     }
 
     /// <summary>Field number for the "depth_source" field.</summary>
-    public const int DepthSourceFieldNumber = 3;
+    public const int DepthSourceFieldNumber = 2;
     private global::Niantic.Lightship.AR.Protobuf.ScanRecorderStartEvent.Types.DepthSource depthSource_ = 0;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public global::Niantic.Lightship.AR.Protobuf.ScanRecorderStartEvent.Types.DepthSource DepthSource {
@@ -533,7 +1569,7 @@ namespace Niantic.Lightship.AR.Protobuf {
     }
 
     /// <summary>Field number for the "framerate" field.</summary>
-    public const int FramerateFieldNumber = 4;
+    public const int FramerateFieldNumber = 3;
     private uint framerate_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public uint Framerate {
@@ -544,7 +1580,7 @@ namespace Niantic.Lightship.AR.Protobuf {
     }
 
     /// <summary>Field number for the "is_voxel_enabled" field.</summary>
-    public const int IsVoxelEnabledFieldNumber = 5;
+    public const int IsVoxelEnabledFieldNumber = 4;
     private bool isVoxelEnabled_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public bool IsVoxelEnabled {
@@ -555,7 +1591,7 @@ namespace Niantic.Lightship.AR.Protobuf {
     }
 
     /// <summary>Field number for the "is_raycast_enabled" field.</summary>
-    public const int IsRaycastEnabledFieldNumber = 6;
+    public const int IsRaycastEnabledFieldNumber = 5;
     private bool isRaycastEnabled_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public bool IsRaycastEnabled {
@@ -578,7 +1614,6 @@ namespace Niantic.Lightship.AR.Protobuf {
       if (ReferenceEquals(other, this)) {
         return true;
       }
-      if (Features != other.Features) return false;
       if (ScanId != other.ScanId) return false;
       if (DepthSource != other.DepthSource) return false;
       if (Framerate != other.Framerate) return false;
@@ -590,7 +1625,6 @@ namespace Niantic.Lightship.AR.Protobuf {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public override int GetHashCode() {
       int hash = 1;
-      if (Features.Length != 0) hash ^= Features.GetHashCode();
       if (ScanId.Length != 0) hash ^= ScanId.GetHashCode();
       if (DepthSource != 0) hash ^= DepthSource.GetHashCode();
       if (Framerate != 0) hash ^= Framerate.GetHashCode();
@@ -606,28 +1640,24 @@ namespace Niantic.Lightship.AR.Protobuf {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public void WriteTo(pb::CodedOutputStream output) {
-      if (Features.Length != 0) {
-        output.WriteRawTag(10);
-        output.WriteString(Features);
-      }
       if (ScanId.Length != 0) {
-        output.WriteRawTag(18);
+        output.WriteRawTag(10);
         output.WriteString(ScanId);
       }
       if (DepthSource != 0) {
-        output.WriteRawTag(24);
+        output.WriteRawTag(16);
         output.WriteEnum((int) DepthSource);
       }
       if (Framerate != 0) {
-        output.WriteRawTag(32);
+        output.WriteRawTag(24);
         output.WriteUInt32(Framerate);
       }
       if (IsVoxelEnabled != false) {
-        output.WriteRawTag(40);
+        output.WriteRawTag(32);
         output.WriteBool(IsVoxelEnabled);
       }
       if (IsRaycastEnabled != false) {
-        output.WriteRawTag(48);
+        output.WriteRawTag(40);
         output.WriteBool(IsRaycastEnabled);
       }
     }
@@ -635,9 +1665,6 @@ namespace Niantic.Lightship.AR.Protobuf {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public int CalculateSize() {
       int size = 0;
-      if (Features.Length != 0) {
-        size += 1 + pb::CodedOutputStream.ComputeStringSize(Features);
-      }
       if (ScanId.Length != 0) {
         size += 1 + pb::CodedOutputStream.ComputeStringSize(ScanId);
       }
@@ -660,9 +1687,6 @@ namespace Niantic.Lightship.AR.Protobuf {
     public void MergeFrom(ScanRecorderStartEvent other) {
       if (other == null) {
         return;
-      }
-      if (other.Features.Length != 0) {
-        Features = other.Features;
       }
       if (other.ScanId.Length != 0) {
         ScanId = other.ScanId;
@@ -690,26 +1714,22 @@ namespace Niantic.Lightship.AR.Protobuf {
             input.SkipLastField();
             break;
           case 10: {
-            Features = input.ReadString();
-            break;
-          }
-          case 18: {
             ScanId = input.ReadString();
             break;
           }
-          case 24: {
+          case 16: {
             depthSource_ = (global::Niantic.Lightship.AR.Protobuf.ScanRecorderStartEvent.Types.DepthSource) input.ReadEnum();
             break;
           }
-          case 32: {
+          case 24: {
             Framerate = input.ReadUInt32();
             break;
           }
-          case 40: {
+          case 32: {
             IsVoxelEnabled = input.ReadBool();
             break;
           }
-          case 48: {
+          case 40: {
             IsRaycastEnabled = input.ReadBool();
             break;
           }
@@ -725,6 +1745,7 @@ namespace Niantic.Lightship.AR.Protobuf {
         [pbr::OriginalName("UNKNOWN")] Unknown = 0,
         [pbr::OriginalName("LIDAR")] Lidar = 1,
         [pbr::OriginalName("MULTIDEPTH")] Multidepth = 2,
+        [pbr::OriginalName("NO_DEPTH")] NoDepth = 3,
       }
 
     }
@@ -739,7 +1760,7 @@ namespace Niantic.Lightship.AR.Protobuf {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Niantic.Lightship.AR.Protobuf.ArdkNextTelemetryReflection.Descriptor.MessageTypes[3]; }
+      get { return global::Niantic.Lightship.AR.Protobuf.ArdkNextTelemetryReflection.Descriptor.MessageTypes[6]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -757,7 +1778,9 @@ namespace Niantic.Lightship.AR.Protobuf {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public ScanRecorderStopEvent(ScanRecorderStopEvent other) : this() {
       scanId_ = other.scanId_;
+      operation_ = other.operation_;
       scanDurationMs_ = other.scanDurationMs_;
+      numerOfFramesInScan_ = other.numerOfFramesInScan_;
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -776,14 +1799,36 @@ namespace Niantic.Lightship.AR.Protobuf {
       }
     }
 
+    /// <summary>Field number for the "operation" field.</summary>
+    public const int OperationFieldNumber = 2;
+    private global::Niantic.Lightship.AR.Protobuf.ScanRecorderStopEvent.Types.Operation operation_ = 0;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public global::Niantic.Lightship.AR.Protobuf.ScanRecorderStopEvent.Types.Operation Operation {
+      get { return operation_; }
+      set {
+        operation_ = value;
+      }
+    }
+
     /// <summary>Field number for the "scan_duration_ms" field.</summary>
-    public const int ScanDurationMsFieldNumber = 2;
+    public const int ScanDurationMsFieldNumber = 3;
     private uint scanDurationMs_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public uint ScanDurationMs {
       get { return scanDurationMs_; }
       set {
         scanDurationMs_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "numer_of_frames_in_scan" field.</summary>
+    public const int NumerOfFramesInScanFieldNumber = 4;
+    private uint numerOfFramesInScan_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public uint NumerOfFramesInScan {
+      get { return numerOfFramesInScan_; }
+      set {
+        numerOfFramesInScan_ = value;
       }
     }
 
@@ -801,309 +1846,8 @@ namespace Niantic.Lightship.AR.Protobuf {
         return true;
       }
       if (ScanId != other.ScanId) return false;
+      if (Operation != other.Operation) return false;
       if (ScanDurationMs != other.ScanDurationMs) return false;
-      return true;
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    public override int GetHashCode() {
-      int hash = 1;
-      if (ScanId.Length != 0) hash ^= ScanId.GetHashCode();
-      if (ScanDurationMs != 0) hash ^= ScanDurationMs.GetHashCode();
-      return hash;
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    public override string ToString() {
-      return pb::JsonFormatter.ToDiagnosticString(this);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    public void WriteTo(pb::CodedOutputStream output) {
-      if (ScanId.Length != 0) {
-        output.WriteRawTag(10);
-        output.WriteString(ScanId);
-      }
-      if (ScanDurationMs != 0) {
-        output.WriteRawTag(16);
-        output.WriteUInt32(ScanDurationMs);
-      }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    public int CalculateSize() {
-      int size = 0;
-      if (ScanId.Length != 0) {
-        size += 1 + pb::CodedOutputStream.ComputeStringSize(ScanId);
-      }
-      if (ScanDurationMs != 0) {
-        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(ScanDurationMs);
-      }
-      return size;
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    public void MergeFrom(ScanRecorderStopEvent other) {
-      if (other == null) {
-        return;
-      }
-      if (other.ScanId.Length != 0) {
-        ScanId = other.ScanId;
-      }
-      if (other.ScanDurationMs != 0) {
-        ScanDurationMs = other.ScanDurationMs;
-      }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    public void MergeFrom(pb::CodedInputStream input) {
-      uint tag;
-      while ((tag = input.ReadTag()) != 0) {
-        switch(tag) {
-          default:
-            input.SkipLastField();
-            break;
-          case 10: {
-            ScanId = input.ReadString();
-            break;
-          }
-          case 16: {
-            ScanDurationMs = input.ReadUInt32();
-            break;
-          }
-        }
-      }
-    }
-
-  }
-
-  public sealed partial class ScanRecorderDiscardEvent : pb::IMessage<ScanRecorderDiscardEvent> {
-    private static readonly pb::MessageParser<ScanRecorderDiscardEvent> _parser = new pb::MessageParser<ScanRecorderDiscardEvent>(() => new ScanRecorderDiscardEvent());
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    public static pb::MessageParser<ScanRecorderDiscardEvent> Parser { get { return _parser; } }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    public static pbr::MessageDescriptor Descriptor {
-      get { return global::Niantic.Lightship.AR.Protobuf.ArdkNextTelemetryReflection.Descriptor.MessageTypes[4]; }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    pbr::MessageDescriptor pb::IMessage.Descriptor {
-      get { return Descriptor; }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    public ScanRecorderDiscardEvent() {
-      OnConstruction();
-    }
-
-    partial void OnConstruction();
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    public ScanRecorderDiscardEvent(ScanRecorderDiscardEvent other) : this() {
-      scanId_ = other.scanId_;
-      scanDurationS_ = other.scanDurationS_;
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    public ScanRecorderDiscardEvent Clone() {
-      return new ScanRecorderDiscardEvent(this);
-    }
-
-    /// <summary>Field number for the "scan_id" field.</summary>
-    public const int ScanIdFieldNumber = 1;
-    private string scanId_ = "";
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    public string ScanId {
-      get { return scanId_; }
-      set {
-        scanId_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
-      }
-    }
-
-    /// <summary>Field number for the "scan_duration_s" field.</summary>
-    public const int ScanDurationSFieldNumber = 2;
-    private uint scanDurationS_;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    public uint ScanDurationS {
-      get { return scanDurationS_; }
-      set {
-        scanDurationS_ = value;
-      }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    public override bool Equals(object other) {
-      return Equals(other as ScanRecorderDiscardEvent);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    public bool Equals(ScanRecorderDiscardEvent other) {
-      if (ReferenceEquals(other, null)) {
-        return false;
-      }
-      if (ReferenceEquals(other, this)) {
-        return true;
-      }
-      if (ScanId != other.ScanId) return false;
-      if (ScanDurationS != other.ScanDurationS) return false;
-      return true;
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    public override int GetHashCode() {
-      int hash = 1;
-      if (ScanId.Length != 0) hash ^= ScanId.GetHashCode();
-      if (ScanDurationS != 0) hash ^= ScanDurationS.GetHashCode();
-      return hash;
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    public override string ToString() {
-      return pb::JsonFormatter.ToDiagnosticString(this);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    public void WriteTo(pb::CodedOutputStream output) {
-      if (ScanId.Length != 0) {
-        output.WriteRawTag(10);
-        output.WriteString(ScanId);
-      }
-      if (ScanDurationS != 0) {
-        output.WriteRawTag(16);
-        output.WriteUInt32(ScanDurationS);
-      }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    public int CalculateSize() {
-      int size = 0;
-      if (ScanId.Length != 0) {
-        size += 1 + pb::CodedOutputStream.ComputeStringSize(ScanId);
-      }
-      if (ScanDurationS != 0) {
-        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(ScanDurationS);
-      }
-      return size;
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    public void MergeFrom(ScanRecorderDiscardEvent other) {
-      if (other == null) {
-        return;
-      }
-      if (other.ScanId.Length != 0) {
-        ScanId = other.ScanId;
-      }
-      if (other.ScanDurationS != 0) {
-        ScanDurationS = other.ScanDurationS;
-      }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    public void MergeFrom(pb::CodedInputStream input) {
-      uint tag;
-      while ((tag = input.ReadTag()) != 0) {
-        switch(tag) {
-          default:
-            input.SkipLastField();
-            break;
-          case 10: {
-            ScanId = input.ReadString();
-            break;
-          }
-          case 16: {
-            ScanDurationS = input.ReadUInt32();
-            break;
-          }
-        }
-      }
-    }
-
-  }
-
-  public sealed partial class ScanRecorderSaveEvent : pb::IMessage<ScanRecorderSaveEvent> {
-    private static readonly pb::MessageParser<ScanRecorderSaveEvent> _parser = new pb::MessageParser<ScanRecorderSaveEvent>(() => new ScanRecorderSaveEvent());
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    public static pb::MessageParser<ScanRecorderSaveEvent> Parser { get { return _parser; } }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    public static pbr::MessageDescriptor Descriptor {
-      get { return global::Niantic.Lightship.AR.Protobuf.ArdkNextTelemetryReflection.Descriptor.MessageTypes[5]; }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    pbr::MessageDescriptor pb::IMessage.Descriptor {
-      get { return Descriptor; }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    public ScanRecorderSaveEvent() {
-      OnConstruction();
-    }
-
-    partial void OnConstruction();
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    public ScanRecorderSaveEvent(ScanRecorderSaveEvent other) : this() {
-      scanId_ = other.scanId_;
-      scanDurationS_ = other.scanDurationS_;
-      numerOfFramesInScan_ = other.numerOfFramesInScan_;
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    public ScanRecorderSaveEvent Clone() {
-      return new ScanRecorderSaveEvent(this);
-    }
-
-    /// <summary>Field number for the "scan_id" field.</summary>
-    public const int ScanIdFieldNumber = 1;
-    private string scanId_ = "";
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    public string ScanId {
-      get { return scanId_; }
-      set {
-        scanId_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
-      }
-    }
-
-    /// <summary>Field number for the "scan_duration_s" field.</summary>
-    public const int ScanDurationSFieldNumber = 2;
-    private uint scanDurationS_;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    public uint ScanDurationS {
-      get { return scanDurationS_; }
-      set {
-        scanDurationS_ = value;
-      }
-    }
-
-    /// <summary>Field number for the "numer_of_frames_in_scan" field.</summary>
-    public const int NumerOfFramesInScanFieldNumber = 3;
-    private uint numerOfFramesInScan_;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    public uint NumerOfFramesInScan {
-      get { return numerOfFramesInScan_; }
-      set {
-        numerOfFramesInScan_ = value;
-      }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    public override bool Equals(object other) {
-      return Equals(other as ScanRecorderSaveEvent);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    public bool Equals(ScanRecorderSaveEvent other) {
-      if (ReferenceEquals(other, null)) {
-        return false;
-      }
-      if (ReferenceEquals(other, this)) {
-        return true;
-      }
-      if (ScanId != other.ScanId) return false;
-      if (ScanDurationS != other.ScanDurationS) return false;
       if (NumerOfFramesInScan != other.NumerOfFramesInScan) return false;
       return true;
     }
@@ -1112,7 +1856,8 @@ namespace Niantic.Lightship.AR.Protobuf {
     public override int GetHashCode() {
       int hash = 1;
       if (ScanId.Length != 0) hash ^= ScanId.GetHashCode();
-      if (ScanDurationS != 0) hash ^= ScanDurationS.GetHashCode();
+      if (Operation != 0) hash ^= Operation.GetHashCode();
+      if (ScanDurationMs != 0) hash ^= ScanDurationMs.GetHashCode();
       if (NumerOfFramesInScan != 0) hash ^= NumerOfFramesInScan.GetHashCode();
       return hash;
     }
@@ -1128,12 +1873,16 @@ namespace Niantic.Lightship.AR.Protobuf {
         output.WriteRawTag(10);
         output.WriteString(ScanId);
       }
-      if (ScanDurationS != 0) {
+      if (Operation != 0) {
         output.WriteRawTag(16);
-        output.WriteUInt32(ScanDurationS);
+        output.WriteEnum((int) Operation);
+      }
+      if (ScanDurationMs != 0) {
+        output.WriteRawTag(24);
+        output.WriteUInt32(ScanDurationMs);
       }
       if (NumerOfFramesInScan != 0) {
-        output.WriteRawTag(24);
+        output.WriteRawTag(32);
         output.WriteUInt32(NumerOfFramesInScan);
       }
     }
@@ -1144,8 +1893,11 @@ namespace Niantic.Lightship.AR.Protobuf {
       if (ScanId.Length != 0) {
         size += 1 + pb::CodedOutputStream.ComputeStringSize(ScanId);
       }
-      if (ScanDurationS != 0) {
-        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(ScanDurationS);
+      if (Operation != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeEnumSize((int) Operation);
+      }
+      if (ScanDurationMs != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(ScanDurationMs);
       }
       if (NumerOfFramesInScan != 0) {
         size += 1 + pb::CodedOutputStream.ComputeUInt32Size(NumerOfFramesInScan);
@@ -1154,15 +1906,18 @@ namespace Niantic.Lightship.AR.Protobuf {
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    public void MergeFrom(ScanRecorderSaveEvent other) {
+    public void MergeFrom(ScanRecorderStopEvent other) {
       if (other == null) {
         return;
       }
       if (other.ScanId.Length != 0) {
         ScanId = other.ScanId;
       }
-      if (other.ScanDurationS != 0) {
-        ScanDurationS = other.ScanDurationS;
+      if (other.Operation != 0) {
+        Operation = other.Operation;
+      }
+      if (other.ScanDurationMs != 0) {
+        ScanDurationMs = other.ScanDurationMs;
       }
       if (other.NumerOfFramesInScan != 0) {
         NumerOfFramesInScan = other.NumerOfFramesInScan;
@@ -1182,16 +1937,32 @@ namespace Niantic.Lightship.AR.Protobuf {
             break;
           }
           case 16: {
-            ScanDurationS = input.ReadUInt32();
+            operation_ = (global::Niantic.Lightship.AR.Protobuf.ScanRecorderStopEvent.Types.Operation) input.ReadEnum();
             break;
           }
           case 24: {
+            ScanDurationMs = input.ReadUInt32();
+            break;
+          }
+          case 32: {
             NumerOfFramesInScan = input.ReadUInt32();
             break;
           }
         }
       }
     }
+
+    #region Nested types
+    /// <summary>Container for nested types declared in the ScanRecorderStopEvent message type.</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public static partial class Types {
+      public enum Operation {
+        [pbr::OriginalName("SAVE")] Save = 0,
+        [pbr::OriginalName("DISCARD")] Discard = 1,
+      }
+
+    }
+    #endregion
 
   }
 
@@ -1202,7 +1973,7 @@ namespace Niantic.Lightship.AR.Protobuf {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Niantic.Lightship.AR.Protobuf.ArdkNextTelemetryReflection.Descriptor.MessageTypes[6]; }
+      get { return global::Niantic.Lightship.AR.Protobuf.ArdkNextTelemetryReflection.Descriptor.MessageTypes[7]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -1319,7 +2090,7 @@ namespace Niantic.Lightship.AR.Protobuf {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Niantic.Lightship.AR.Protobuf.ArdkNextTelemetryReflection.Descriptor.MessageTypes[7]; }
+      get { return global::Niantic.Lightship.AR.Protobuf.ArdkNextTelemetryReflection.Descriptor.MessageTypes[8]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -1682,7 +2453,7 @@ namespace Niantic.Lightship.AR.Protobuf {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Niantic.Lightship.AR.Protobuf.ArdkNextTelemetryReflection.Descriptor.MessageTypes[8]; }
+      get { return global::Niantic.Lightship.AR.Protobuf.ArdkNextTelemetryReflection.Descriptor.MessageTypes[9]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -1851,7 +2622,7 @@ namespace Niantic.Lightship.AR.Protobuf {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public static partial class Types {
       public enum Error {
-        [pbr::OriginalName("Unknown")] Unknown = 0,
+        [pbr::OriginalName("UNKNOWN")] Unknown = 0,
         [pbr::OriginalName("SQC_NOT_READY")] SqcNotReady = 1,
         [pbr::OriginalName("SQC_BAD_INPUT")] SqcBadInput = 2,
         [pbr::OriginalName("SQC_BAD_MODEL")] SqcBadModel = 3,
@@ -1870,127 +2641,10 @@ namespace Niantic.Lightship.AR.Protobuf {
 
   }
 
-  public sealed partial class ScanArchiveBuilderStartEvent : pb::IMessage<ScanArchiveBuilderStartEvent> {
-    private static readonly pb::MessageParser<ScanArchiveBuilderStartEvent> _parser = new pb::MessageParser<ScanArchiveBuilderStartEvent>(() => new ScanArchiveBuilderStartEvent());
+  public sealed partial class ScanArchiveBuilderGetNextChunkEvent : pb::IMessage<ScanArchiveBuilderGetNextChunkEvent> {
+    private static readonly pb::MessageParser<ScanArchiveBuilderGetNextChunkEvent> _parser = new pb::MessageParser<ScanArchiveBuilderGetNextChunkEvent>(() => new ScanArchiveBuilderGetNextChunkEvent());
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    public static pb::MessageParser<ScanArchiveBuilderStartEvent> Parser { get { return _parser; } }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    public static pbr::MessageDescriptor Descriptor {
-      get { return global::Niantic.Lightship.AR.Protobuf.ArdkNextTelemetryReflection.Descriptor.MessageTypes[9]; }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    pbr::MessageDescriptor pb::IMessage.Descriptor {
-      get { return Descriptor; }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    public ScanArchiveBuilderStartEvent() {
-      OnConstruction();
-    }
-
-    partial void OnConstruction();
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    public ScanArchiveBuilderStartEvent(ScanArchiveBuilderStartEvent other) : this() {
-      scanId_ = other.scanId_;
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    public ScanArchiveBuilderStartEvent Clone() {
-      return new ScanArchiveBuilderStartEvent(this);
-    }
-
-    /// <summary>Field number for the "scan_id" field.</summary>
-    public const int ScanIdFieldNumber = 1;
-    private string scanId_ = "";
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    public string ScanId {
-      get { return scanId_; }
-      set {
-        scanId_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
-      }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    public override bool Equals(object other) {
-      return Equals(other as ScanArchiveBuilderStartEvent);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    public bool Equals(ScanArchiveBuilderStartEvent other) {
-      if (ReferenceEquals(other, null)) {
-        return false;
-      }
-      if (ReferenceEquals(other, this)) {
-        return true;
-      }
-      if (ScanId != other.ScanId) return false;
-      return true;
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    public override int GetHashCode() {
-      int hash = 1;
-      if (ScanId.Length != 0) hash ^= ScanId.GetHashCode();
-      return hash;
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    public override string ToString() {
-      return pb::JsonFormatter.ToDiagnosticString(this);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    public void WriteTo(pb::CodedOutputStream output) {
-      if (ScanId.Length != 0) {
-        output.WriteRawTag(10);
-        output.WriteString(ScanId);
-      }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    public int CalculateSize() {
-      int size = 0;
-      if (ScanId.Length != 0) {
-        size += 1 + pb::CodedOutputStream.ComputeStringSize(ScanId);
-      }
-      return size;
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    public void MergeFrom(ScanArchiveBuilderStartEvent other) {
-      if (other == null) {
-        return;
-      }
-      if (other.ScanId.Length != 0) {
-        ScanId = other.ScanId;
-      }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    public void MergeFrom(pb::CodedInputStream input) {
-      uint tag;
-      while ((tag = input.ReadTag()) != 0) {
-        switch(tag) {
-          default:
-            input.SkipLastField();
-            break;
-          case 10: {
-            ScanId = input.ReadString();
-            break;
-          }
-        }
-      }
-    }
-
-  }
-
-  public sealed partial class ScanArchiveBuilderDoneEvent : pb::IMessage<ScanArchiveBuilderDoneEvent> {
-    private static readonly pb::MessageParser<ScanArchiveBuilderDoneEvent> _parser = new pb::MessageParser<ScanArchiveBuilderDoneEvent>(() => new ScanArchiveBuilderDoneEvent());
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    public static pb::MessageParser<ScanArchiveBuilderDoneEvent> Parser { get { return _parser; } }
+    public static pb::MessageParser<ScanArchiveBuilderGetNextChunkEvent> Parser { get { return _parser; } }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public static pbr::MessageDescriptor Descriptor {
@@ -2003,23 +2657,23 @@ namespace Niantic.Lightship.AR.Protobuf {
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    public ScanArchiveBuilderDoneEvent() {
+    public ScanArchiveBuilderGetNextChunkEvent() {
       OnConstruction();
     }
 
     partial void OnConstruction();
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    public ScanArchiveBuilderDoneEvent(ScanArchiveBuilderDoneEvent other) : this() {
+    public ScanArchiveBuilderGetNextChunkEvent(ScanArchiveBuilderGetNextChunkEvent other) : this() {
       scanId_ = other.scanId_;
-      scanFileSize_ = other.scanFileSize_;
-      numberOfChunks_ = other.numberOfChunks_;
+      chunkFileSizeInBytes_ = other.chunkFileSizeInBytes_;
+      chunkId_ = other.chunkId_;
       timeElapseMs_ = other.timeElapseMs_;
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    public ScanArchiveBuilderDoneEvent Clone() {
-      return new ScanArchiveBuilderDoneEvent(this);
+    public ScanArchiveBuilderGetNextChunkEvent Clone() {
+      return new ScanArchiveBuilderGetNextChunkEvent(this);
     }
 
     /// <summary>Field number for the "scan_id" field.</summary>
@@ -2033,25 +2687,25 @@ namespace Niantic.Lightship.AR.Protobuf {
       }
     }
 
-    /// <summary>Field number for the "scan_file_size" field.</summary>
-    public const int ScanFileSizeFieldNumber = 2;
-    private ulong scanFileSize_;
+    /// <summary>Field number for the "chunk_file_size_in_bytes" field.</summary>
+    public const int ChunkFileSizeInBytesFieldNumber = 2;
+    private ulong chunkFileSizeInBytes_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    public ulong ScanFileSize {
-      get { return scanFileSize_; }
+    public ulong ChunkFileSizeInBytes {
+      get { return chunkFileSizeInBytes_; }
       set {
-        scanFileSize_ = value;
+        chunkFileSizeInBytes_ = value;
       }
     }
 
-    /// <summary>Field number for the "number_of_chunks" field.</summary>
-    public const int NumberOfChunksFieldNumber = 3;
-    private uint numberOfChunks_;
+    /// <summary>Field number for the "chunk_id" field.</summary>
+    public const int ChunkIdFieldNumber = 3;
+    private uint chunkId_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    public uint NumberOfChunks {
-      get { return numberOfChunks_; }
+    public uint ChunkId {
+      get { return chunkId_; }
       set {
-        numberOfChunks_ = value;
+        chunkId_ = value;
       }
     }
 
@@ -2068,11 +2722,11 @@ namespace Niantic.Lightship.AR.Protobuf {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public override bool Equals(object other) {
-      return Equals(other as ScanArchiveBuilderDoneEvent);
+      return Equals(other as ScanArchiveBuilderGetNextChunkEvent);
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    public bool Equals(ScanArchiveBuilderDoneEvent other) {
+    public bool Equals(ScanArchiveBuilderGetNextChunkEvent other) {
       if (ReferenceEquals(other, null)) {
         return false;
       }
@@ -2080,8 +2734,8 @@ namespace Niantic.Lightship.AR.Protobuf {
         return true;
       }
       if (ScanId != other.ScanId) return false;
-      if (ScanFileSize != other.ScanFileSize) return false;
-      if (NumberOfChunks != other.NumberOfChunks) return false;
+      if (ChunkFileSizeInBytes != other.ChunkFileSizeInBytes) return false;
+      if (ChunkId != other.ChunkId) return false;
       if (TimeElapseMs != other.TimeElapseMs) return false;
       return true;
     }
@@ -2090,8 +2744,8 @@ namespace Niantic.Lightship.AR.Protobuf {
     public override int GetHashCode() {
       int hash = 1;
       if (ScanId.Length != 0) hash ^= ScanId.GetHashCode();
-      if (ScanFileSize != 0UL) hash ^= ScanFileSize.GetHashCode();
-      if (NumberOfChunks != 0) hash ^= NumberOfChunks.GetHashCode();
+      if (ChunkFileSizeInBytes != 0UL) hash ^= ChunkFileSizeInBytes.GetHashCode();
+      if (ChunkId != 0) hash ^= ChunkId.GetHashCode();
       if (TimeElapseMs != 0) hash ^= TimeElapseMs.GetHashCode();
       return hash;
     }
@@ -2107,13 +2761,13 @@ namespace Niantic.Lightship.AR.Protobuf {
         output.WriteRawTag(10);
         output.WriteString(ScanId);
       }
-      if (ScanFileSize != 0UL) {
+      if (ChunkFileSizeInBytes != 0UL) {
         output.WriteRawTag(16);
-        output.WriteUInt64(ScanFileSize);
+        output.WriteUInt64(ChunkFileSizeInBytes);
       }
-      if (NumberOfChunks != 0) {
+      if (ChunkId != 0) {
         output.WriteRawTag(24);
-        output.WriteUInt32(NumberOfChunks);
+        output.WriteUInt32(ChunkId);
       }
       if (TimeElapseMs != 0) {
         output.WriteRawTag(32);
@@ -2127,11 +2781,11 @@ namespace Niantic.Lightship.AR.Protobuf {
       if (ScanId.Length != 0) {
         size += 1 + pb::CodedOutputStream.ComputeStringSize(ScanId);
       }
-      if (ScanFileSize != 0UL) {
-        size += 1 + pb::CodedOutputStream.ComputeUInt64Size(ScanFileSize);
+      if (ChunkFileSizeInBytes != 0UL) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt64Size(ChunkFileSizeInBytes);
       }
-      if (NumberOfChunks != 0) {
-        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(NumberOfChunks);
+      if (ChunkId != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(ChunkId);
       }
       if (TimeElapseMs != 0) {
         size += 1 + pb::CodedOutputStream.ComputeUInt32Size(TimeElapseMs);
@@ -2140,18 +2794,18 @@ namespace Niantic.Lightship.AR.Protobuf {
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    public void MergeFrom(ScanArchiveBuilderDoneEvent other) {
+    public void MergeFrom(ScanArchiveBuilderGetNextChunkEvent other) {
       if (other == null) {
         return;
       }
       if (other.ScanId.Length != 0) {
         ScanId = other.ScanId;
       }
-      if (other.ScanFileSize != 0UL) {
-        ScanFileSize = other.ScanFileSize;
+      if (other.ChunkFileSizeInBytes != 0UL) {
+        ChunkFileSizeInBytes = other.ChunkFileSizeInBytes;
       }
-      if (other.NumberOfChunks != 0) {
-        NumberOfChunks = other.NumberOfChunks;
+      if (other.ChunkId != 0) {
+        ChunkId = other.ChunkId;
       }
       if (other.TimeElapseMs != 0) {
         TimeElapseMs = other.TimeElapseMs;
@@ -2171,11 +2825,11 @@ namespace Niantic.Lightship.AR.Protobuf {
             break;
           }
           case 16: {
-            ScanFileSize = input.ReadUInt64();
+            ChunkFileSizeInBytes = input.ReadUInt64();
             break;
           }
           case 24: {
-            NumberOfChunks = input.ReadUInt32();
+            ChunkId = input.ReadUInt32();
             break;
           }
           case 32: {
@@ -2213,7 +2867,8 @@ namespace Niantic.Lightship.AR.Protobuf {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public ScanArchiveBuilderCancelEvent(ScanArchiveBuilderCancelEvent other) : this() {
       scanId_ = other.scanId_;
-      scanFileSize_ = other.scanFileSize_;
+      chunkId_ = other.chunkId_;
+      timeElapseMs_ = other.timeElapseMs_;
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -2232,14 +2887,25 @@ namespace Niantic.Lightship.AR.Protobuf {
       }
     }
 
-    /// <summary>Field number for the "scan_file_size" field.</summary>
-    public const int ScanFileSizeFieldNumber = 2;
-    private ulong scanFileSize_;
+    /// <summary>Field number for the "chunk_id" field.</summary>
+    public const int ChunkIdFieldNumber = 2;
+    private uint chunkId_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    public ulong ScanFileSize {
-      get { return scanFileSize_; }
+    public uint ChunkId {
+      get { return chunkId_; }
       set {
-        scanFileSize_ = value;
+        chunkId_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "time_elapse_ms" field.</summary>
+    public const int TimeElapseMsFieldNumber = 3;
+    private uint timeElapseMs_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public uint TimeElapseMs {
+      get { return timeElapseMs_; }
+      set {
+        timeElapseMs_ = value;
       }
     }
 
@@ -2257,7 +2923,8 @@ namespace Niantic.Lightship.AR.Protobuf {
         return true;
       }
       if (ScanId != other.ScanId) return false;
-      if (ScanFileSize != other.ScanFileSize) return false;
+      if (ChunkId != other.ChunkId) return false;
+      if (TimeElapseMs != other.TimeElapseMs) return false;
       return true;
     }
 
@@ -2265,7 +2932,8 @@ namespace Niantic.Lightship.AR.Protobuf {
     public override int GetHashCode() {
       int hash = 1;
       if (ScanId.Length != 0) hash ^= ScanId.GetHashCode();
-      if (ScanFileSize != 0UL) hash ^= ScanFileSize.GetHashCode();
+      if (ChunkId != 0) hash ^= ChunkId.GetHashCode();
+      if (TimeElapseMs != 0) hash ^= TimeElapseMs.GetHashCode();
       return hash;
     }
 
@@ -2280,9 +2948,13 @@ namespace Niantic.Lightship.AR.Protobuf {
         output.WriteRawTag(10);
         output.WriteString(ScanId);
       }
-      if (ScanFileSize != 0UL) {
+      if (ChunkId != 0) {
         output.WriteRawTag(16);
-        output.WriteUInt64(ScanFileSize);
+        output.WriteUInt32(ChunkId);
+      }
+      if (TimeElapseMs != 0) {
+        output.WriteRawTag(24);
+        output.WriteUInt32(TimeElapseMs);
       }
     }
 
@@ -2292,8 +2964,11 @@ namespace Niantic.Lightship.AR.Protobuf {
       if (ScanId.Length != 0) {
         size += 1 + pb::CodedOutputStream.ComputeStringSize(ScanId);
       }
-      if (ScanFileSize != 0UL) {
-        size += 1 + pb::CodedOutputStream.ComputeUInt64Size(ScanFileSize);
+      if (ChunkId != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(ChunkId);
+      }
+      if (TimeElapseMs != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(TimeElapseMs);
       }
       return size;
     }
@@ -2306,8 +2981,11 @@ namespace Niantic.Lightship.AR.Protobuf {
       if (other.ScanId.Length != 0) {
         ScanId = other.ScanId;
       }
-      if (other.ScanFileSize != 0UL) {
-        ScanFileSize = other.ScanFileSize;
+      if (other.ChunkId != 0) {
+        ChunkId = other.ChunkId;
+      }
+      if (other.TimeElapseMs != 0) {
+        TimeElapseMs = other.TimeElapseMs;
       }
     }
 
@@ -2324,7 +3002,135 @@ namespace Niantic.Lightship.AR.Protobuf {
             break;
           }
           case 16: {
-            ScanFileSize = input.ReadUInt64();
+            ChunkId = input.ReadUInt32();
+            break;
+          }
+          case 24: {
+            TimeElapseMs = input.ReadUInt32();
+            break;
+          }
+        }
+      }
+    }
+
+  }
+
+  /// <summary>
+  ///  Usage: To Get the ARSessionCount.
+  ///  Yes. It is intended to be empty. We do not need more info here.
+  /// </summary>
+  public sealed partial class ArSessionStartEvent : pb::IMessage<ArSessionStartEvent> {
+    private static readonly pb::MessageParser<ArSessionStartEvent> _parser = new pb::MessageParser<ArSessionStartEvent>(() => new ArSessionStartEvent());
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public static pb::MessageParser<ArSessionStartEvent> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Niantic.Lightship.AR.Protobuf.ArdkNextTelemetryReflection.Descriptor.MessageTypes[12]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public ArSessionStartEvent() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public ArSessionStartEvent(ArSessionStartEvent other) : this() {
+      emptyField_ = other.emptyField_;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public ArSessionStartEvent Clone() {
+      return new ArSessionStartEvent(this);
+    }
+
+    /// <summary>Field number for the "empty_field" field.</summary>
+    public const int EmptyFieldFieldNumber = 99;
+    private bool emptyField_;
+    /// <summary>
+    ///  Dummy payload to prevent empty messages from being omitted.
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public bool EmptyField {
+      get { return emptyField_; }
+      set {
+        emptyField_ = value;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override bool Equals(object other) {
+      return Equals(other as ArSessionStartEvent);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public bool Equals(ArSessionStartEvent other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (EmptyField != other.EmptyField) return false;
+      return true;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (EmptyField != false) hash ^= EmptyField.GetHashCode();
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void WriteTo(pb::CodedOutputStream output) {
+      if (EmptyField != false) {
+        output.WriteRawTag(152, 6);
+        output.WriteBool(EmptyField);
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public int CalculateSize() {
+      int size = 0;
+      if (EmptyField != false) {
+        size += 2 + 1;
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void MergeFrom(ArSessionStartEvent other) {
+      if (other == null) {
+        return;
+      }
+      if (other.EmptyField != false) {
+        EmptyField = other.EmptyField;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void MergeFrom(pb::CodedInputStream input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            input.SkipLastField();
+            break;
+          case 792: {
+            EmptyField = input.ReadBool();
             break;
           }
         }

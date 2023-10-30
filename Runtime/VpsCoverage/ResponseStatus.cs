@@ -1,6 +1,6 @@
-// Copyright 2022 Niantic, Inc. All Rights Reserved.
+// Copyright 2023 Niantic, Inc. All Rights Reserved.
 
-namespace Niantic.Lightship.AR
+namespace Niantic.Lightship.AR.VpsCoverage
 {
     /// Status of a response from the VPS Coverage server.
     public enum ResponseStatus

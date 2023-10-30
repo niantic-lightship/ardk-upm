@@ -1,7 +1,9 @@
+// Copyright 2023 Niantic, Inc. All Rights Reserved.
 using System;
 using System.Reflection;
+using Niantic.Lightship.AR.Utilities.Log;
 using Niantic.Lightship.AR.Loader;
-using Niantic.Lightship.AR.Playback;
+using Niantic.Lightship.AR.Subsystems.Playback;
 using Niantic.Lightship.AR.Utilities;
 using UnityEngine;
 using UnityEditor;
@@ -91,9 +93,7 @@ namespace Niantic.Lightship.AR
         // because we need to account for when this method is invoked without XR having been initialized.
         private void CreateProvider()
         {
-            var nextIsPlayback =
-                _lightshipSettings != null &&
-                (_lightshipSettings.EditorPlaybackEnabled || _lightshipSettings.DevicePlaybackEnabled);
+            var nextIsPlayback = _lightshipSettings != null && _lightshipSettings.UsePlayback;
 
             if (_provider == null)
             {
@@ -165,7 +165,7 @@ namespace Niantic.Lightship.AR
                     {
                         if (_provider.status != LocationServiceStatus.Running)
                         {
-                            Debug.LogWarning
+                            Log.Warning
                             (
                                 "Location service implementation was reinitialized to now be provided by the device." +
                                 "There will be a short disruption in service while it initializes."
@@ -183,7 +183,7 @@ namespace Niantic.Lightship.AR
                     {
                         // Log is specifically about switching from the Playback --> Mock implementation, because
                         // switching from the Unity --> Mock implementation is not expected to ever happen.
-                        Debug.LogWarning
+                        Log.Warning
                         (
                             "Because XR was deinitialized, there is no Playback dataset for Input.location to draw " +
                             "data updates from. While the location service status will continue to be Running, data " +
@@ -218,7 +218,7 @@ namespace Niantic.Lightship.AR
             {
                 if (_provider is PlaybackLocationServiceProvider)
                 {
-                    Debug.LogError
+                    Log.Error
                     (
                         "Cannot set the PlaybackDatasetReader of an active PlaybackLocationServiceProvider to null."
                     );
@@ -291,7 +291,7 @@ namespace Niantic.Lightship.AR
                 {
                     if (status != LocationServiceStatus.Running)
                     {
-                        Debug.Log
+                        Log.Info
                         (
                             "Location service updates are not enabled. " +
                             "Check LocationService.status before querying last location."
@@ -325,7 +325,7 @@ namespace Niantic.Lightship.AR
                 if (Math.Abs(desiredAccuracyInMeters - k_DefaultAccuracyInMeters) > 0.001 ||
                     Math.Abs(updateDistanceInMeters - k_DefaultUpdateDistanceInMeters) > 0.001)
                 {
-                    Debug.LogWarning
+                    Log.Warning
                     (
                         "Customizing the location service's accuracy or update distance is not supported " +
                         "while using Lightship Playback."
@@ -343,7 +343,7 @@ namespace Niantic.Lightship.AR
                 _started = false;
             }
 
-            private UnityEngine.LocationInfo ConvertToUnity(Playback.PlaybackDataset.LocationInfo info)
+            private UnityEngine.LocationInfo ConvertToUnity(PlaybackDataset.LocationInfo info)
             {
                 if (info == null)
                     return default;
@@ -393,7 +393,7 @@ namespace Niantic.Lightship.AR
                 {
                     if (status != LocationServiceStatus.Running)
                     {
-                        Debug.Log
+                        Log.Info
                         (
                             "Location service updates are not enabled. " +
                             "Check LocationService.status before querying last location."

@@ -1,5 +1,6 @@
+// Copyright 2023 Niantic, Inc. All Rights Reserved.
 using System;
-using Niantic.Lightship.AR.Utilities;
+using Niantic.Lightship.AR.Utilities.Textures;
 using Unity.XR.CoreUtils;
 using UnityEngine;
 using UnityEngine.XR.ARSubsystems;
@@ -9,6 +10,7 @@ using UnityObject = UnityEngine.Object;
 namespace Niantic.Lightship.AR.ARFoundation
 {
     /// <summary>
+    /// COPY PASTED FROM UNITY
     /// Container that packages a <see cref="UnityEngine.XR.ARSubsystems.XRTextureDescriptor"/> wrapping a native texture
     /// object with a <c>Texture</c> that is created for the native texture object and a sampler matrix.
     /// </summary>

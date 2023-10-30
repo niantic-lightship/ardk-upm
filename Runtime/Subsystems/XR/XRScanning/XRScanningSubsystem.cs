@@ -4,7 +4,7 @@ using System;
 using UnityEngine.SubsystemsImplementation;
 using UnityEngine.XR.ARSubsystems;
 
-namespace Niantic.Lightship.AR.Subsystems
+namespace Niantic.Lightship.AR.XRSubsystems
 {
     /// <summary>
     /// Base class for a scanning subsystem.

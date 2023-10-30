@@ -1,10 +1,10 @@
-// Copyright 2022 Niantic, Inc. All Rights Reserved.
+// Copyright 2023 Niantic, Inc. All Rights Reserved.
 
 using System;
 using Niantic.Lightship.AR.Utilities;
 using UnityEngine;
 
-namespace Niantic.Lightship.AR
+namespace Niantic.Lightship.AR.VpsCoverage
 {
     /// <summary>
     /// The LatLng struct represents a Latitude and Longitude pair and provides functionality for comparing LatLng

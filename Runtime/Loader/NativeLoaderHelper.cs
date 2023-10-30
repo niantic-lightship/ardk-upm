@@ -1,6 +1,13 @@
+// Copyright 2023 Niantic, Inc. All Rights Reserved.
 using System.Collections.Generic;
-using Niantic.Lightship.AR.Playback;
-using Niantic.Lightship.AR.Subsystems;
+using Niantic.Lightship.AR.Utilities.Log;
+using Niantic.Lightship.AR.Core;
+using Niantic.Lightship.AR.Subsystems.Meshing;
+using Niantic.Lightship.AR.Subsystems.Scanning;
+using Niantic.Lightship.AR.Subsystems.Semantics;
+using Niantic.Lightship.AR.Subsystems.PersistentAnchor;
+using Niantic.Lightship.AR.Subsystems.Playback;
+using Niantic.Lightship.AR.XRSubsystems;
 using UnityEngine;
 using UnityEngine.XR;
 using UnityEngine.XR.ARSubsystems;
@@ -22,7 +29,7 @@ namespace Niantic.Lightship.AR.Loader
         {
             LightshipUnityContext.Initialize(settings, isLidarSupported, isTest);
 
-            Debug.Log("Initialize native subsystems");
+            Log.Info("Initialize native subsystems");
 
             // Create Lightship Occlusion subsystem
             if (settings.UseLightshipDepth && (!settings.PreferLidarIfAvailable || !isLidarSupported))
@@ -41,7 +48,7 @@ namespace Niantic.Lightship.AR.Loader
             // Create Lightship Persistent Anchor subsystem
             if (settings.UseLightshipPersistentAnchor)
             {
-                Debug.Log("Creating " + nameof(LightshipPersistentAnchorSubsystem));
+                Log.Info("Creating " + nameof(LightshipPersistentAnchorSubsystem));
                 loader.CreateSubsystem<XRPersistentAnchorSubsystemDescriptor, XRPersistentAnchorSubsystem>
                 (
                     _persistentAnchorSubsystemDescriptors,
@@ -52,7 +59,7 @@ namespace Niantic.Lightship.AR.Loader
             // Create Lightship Semantics subsystem
             if (settings.UseLightshipSemanticSegmentation)
             {
-                Debug.Log("Creating " + nameof(LightshipSemanticsSubsystem));
+                Log.Info("Creating " + nameof(LightshipSemanticsSubsystem));
                 loader.CreateSubsystem<XRSemanticsSubsystemDescriptor, XRSemanticsSubsystem>
                 (
                     _semanticsSubsystemDescriptors,
@@ -63,7 +70,7 @@ namespace Niantic.Lightship.AR.Loader
             // Create Lightship Scanning subsystem
             if (settings.UseLightshipScanning)
             {
-                Debug.Log("Creating " + nameof(LightshipScanningSubsystem));
+                Log.Info("Creating " + nameof(LightshipScanningSubsystem));
                 loader.CreateSubsystem<XRScanningSubsystemDescriptor, XRScanningSubsystem>
                 (
                     _scanningSubsystemDescriptors,
@@ -72,16 +79,14 @@ namespace Niantic.Lightship.AR.Loader
             }
 
             // Create Lightship Playback subsystem
-            if ((settings.EditorPlaybackSettings.UsePlayback && Application.isEditor) ||
-                (settings.DevicePlaybackSettings.UsePlayback && !Application.isEditor))
+            if (settings.UsePlayback)
             {
-                Debug.Log("Setting up PAM for Playback");
+                Log.Info("Setting up PAM for Playback");
                 var reader = ((ILightshipLoader)loader).PlaybackDatasetReader;
-                LightshipUnityContext.PlatformAdapterManager.SetPlaybackDatasetReader(reader);
 
                 // Input is an integrated subsystem that must be created after the LightshipUnityContext is initialized,
                 // which is why it's done here instead of in the PlaybackLoaderHelper
-                Debug.Log("Creating " + nameof(LightshipPlaybackInputProvider));
+                Log.Info("Creating " + nameof(LightshipPlaybackInputProvider));
                 _inputProvider = new LightshipPlaybackInputProvider();
                 _inputProvider.SetPlaybackDatasetReader(reader);
 
@@ -112,7 +117,7 @@ namespace Niantic.Lightship.AR.Loader
         /// <returns>Always returns `true`.</returns>
         public bool Deinitialize(XRLoaderHelper loader)
         {
-            Debug.Log("Destroying lightship subsystems");
+            Log.Info("Destroying lightship subsystems");
 
             // Destroy subsystem does a null check, so will just no-op if these subsystems were not created or already destroyed
             loader.DestroySubsystem<XRSemanticsSubsystem>();

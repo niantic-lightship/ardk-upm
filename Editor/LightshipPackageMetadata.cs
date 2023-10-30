@@ -1,4 +1,6 @@
+// Copyright 2023 Niantic, Inc. All Rights Reserved.
 using System.Collections.Generic;
+using Niantic.Lightship.AR.Utilities.Log;
 using Niantic.Lightship.AR.Loader;
 using UnityEngine;
 using UnityEditor;
@@ -38,13 +40,13 @@ namespace Niantic.Lightship.AR.Editor
                 },
                 new LightshipLoaderMetadata()
                 {
-                    loaderName = "Niantic Lightship SDK",
+                    loaderName = "Niantic Lightship SDK + Google ARCore",
                     loaderType = typeof(LightshipARCoreLoader).FullName,
                     supportedBuildTargets = new List<BuildTargetGroup>() { BuildTargetGroup.Android, }
                 },
                 new LightshipLoaderMetadata()
                 {
-                    loaderName = "Niantic Lightship SDK",
+                    loaderName = "Niantic Lightship SDK + Apple ARKit",
                     loaderType = typeof(LightshipARKitLoader).FullName,
                     supportedBuildTargets = new List<BuildTargetGroup>() { BuildTargetGroup.iOS, }
                 }
@@ -62,7 +64,7 @@ namespace Niantic.Lightship.AR.Editor
             }
             catch (System.Exception ex)
             {
-                Debug.Log($"Error adding new Lightship Settings object to build settings.\n{ex.Message}");
+                Log.Info($"Error adding new Lightship Settings object to build settings.\n{ex.Message}");
             }
 
             return false;

@@ -1,10 +1,12 @@
 // Copyright 2023 Niantic, Inc. All Rights Reserved.
 
 using System;
+using Niantic.Lightship.AR.Core;
 using UnityEngine;
 
 namespace Niantic.Lightship.AR.Utilities.Preloading
 {
+    [PublicAPI]
     public class ModelPreloaderFactory
     {
         public static IModelPreloader Create()

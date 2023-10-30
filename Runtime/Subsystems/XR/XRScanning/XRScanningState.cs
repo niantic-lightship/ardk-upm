@@ -1,6 +1,6 @@
 // Copyright 2023 Niantic, Inc. All Rights Reserved.
 
-namespace Niantic.Lightship.AR.Subsystems
+namespace Niantic.Lightship.AR.XRSubsystems
 {
     public enum XRScanningState
     {

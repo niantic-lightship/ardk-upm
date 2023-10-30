@@ -8,7 +8,9 @@
         "Unity.XR.ARFoundation",
         "Unity.XR.ARCore",
         "Unity.XR.ARKit",
-        "Unity.InputSystem"
+        "Unity.InputSystem",
+        "Unity.RenderPipelines.Universal.Runtime",
+        "Unity.RenderPipelines.Core.Runtime"
     ],
     "includePlatforms": [
         "Android",
@@ -26,6 +28,12 @@
     ],
     "autoReferenced": true,
     "defineConstraints": [],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.render-pipelines.universal",
+            "expression": "7.0.0",
+            "define": "MODULE_URP_ENABLED"
+        }
+    ],
     "noEngineReferences": false
 }

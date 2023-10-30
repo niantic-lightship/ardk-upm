@@ -1,0 +1,38 @@
+// Copyright 2023 Niantic, Inc. All Rights Reserved.
+namespace Niantic.Lightship.AR.Common
+{
+    /// <summary>
+    /// The update order for <c>MonoBehaviour</c>s in Lightship.
+    /// </summary>
+    public static class LightshipARUpdateOrder
+    {
+        /// <summary>
+        /// The <see cref="ARSession"/>'s update order. Should come first.
+        /// </summary>
+        public const int Session = UnityEngine.XR.ARFoundation.ARUpdateOrder.k_Session;
+
+        /// <summary>
+        /// The <see cref="ARPersistentAnchorManager"/>'s update order.
+        /// Should come after the <see cref="ARSession"/>.
+        /// </summary>
+        public const int PersistentAnchorManager = Session + 1;
+
+        /// <summary>
+        /// The <see cref="ARPersistentAnchor"/>'s update order.
+        /// Should come after the <see cref="ARPersistentAnchorManager"/>.
+        /// </summary>
+        public const int PersistentAnchor = PersistentAnchorManager + 1;
+
+        /// <summary>
+        /// The <see cref="ARScanningManager"/>'s update order.
+        /// Should come after the <see cref="ARSession"/>.
+        /// </summary>
+        public const int ScanningManager = Session + 1;
+
+        /// <summary>
+        /// The <see cref="ARSemanticSegmentationManager"/>'s update order.
+        /// Should come after the <see cref="ARSession"/>.
+        /// </summary>
+        public const int SemanticSegmentationManager = Session + 1;
+    }
+}

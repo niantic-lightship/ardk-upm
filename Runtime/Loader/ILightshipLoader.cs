@@ -1,4 +1,5 @@
-using Niantic.Lightship.AR.Playback;
+// Copyright 2023 Niantic, Inc. All Rights Reserved.
+using Niantic.Lightship.AR.Subsystems.Playback;
 
 namespace Niantic.Lightship.AR.Loader
 {

@@ -1,13 +1,13 @@
-﻿// Copyright 2022 Niantic, Inc. All Rights Reserved.
-
+// Copyright 2023 Niantic, Inc. All Rights Reserved.
+﻿
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Niantic.Lightship.AR.Loader;
-using Niantic.Lightship.AR.Settings.User;
+using Niantic.Lightship.AR.Settings;
 using UnityEngine;
 
-namespace Niantic.Lightship.AR
+namespace Niantic.Lightship.AR.VpsCoverage
 {
     public class CoverageClient
     {
@@ -18,7 +18,7 @@ namespace Niantic.Lightship.AR
 
         private readonly string _coverageAreasEndpoint;
         private readonly string _localizationTargetsEndpoint;
-        
+
         public CoverageClient(LightshipSettings lightshipSettings)
         {
             _coverageAreasEndpoint = lightshipSettings.VpsCoverageEndpoint + BasePath + CoverageAreasMethodName;
@@ -27,7 +27,7 @@ namespace Niantic.Lightship.AR
 
         private async Task<CoverageAreasResult> RequestCoverageAreasAsync(LatLng queryLocation, int queryRadius)
         {
-            _CoverageAreasRequest request;
+            CoverageAreasRequest request;
 
             // Server side we use radius == 0 then use max radius, radius < 0 then set radius to 0.
             // Client side we want a to use radius == 0 then radius = 0, radius < 0 then use max radius.
@@ -47,15 +47,15 @@ namespace Niantic.Lightship.AR
             if (Input.location.status == LocationServiceStatus.Running)
             {
                 var distanceToQuery = (int)queryLocation.Distance(new LatLng(Input.location.lastData));
-                request = new _CoverageAreasRequest(queryLocation, queryRadius, distanceToQuery, metadata);
+                request = new CoverageAreasRequest(queryLocation, queryRadius, distanceToQuery, metadata);
             }
             else
             {
-                request = new _CoverageAreasRequest(queryLocation, queryRadius, metadata);
+                request = new CoverageAreasRequest(queryLocation, queryRadius, metadata);
             }
 
             var response =
-                await _HttpClient.SendPostAsync<_CoverageAreasRequest, _CoverageAreasResponse>
+                await HttpClient.SendPostAsync<CoverageAreasRequest, CoverageAreasResponse>
                 (
                     _coverageAreasEndpoint,
                     request,
@@ -64,7 +64,7 @@ namespace Niantic.Lightship.AR
 
             if (response.Status == ResponseStatus.Success)
             {
-                response.Status = _ResponseStatusTranslator.FromString(response.Data.status);
+                response.Status = ResponseStatusTranslator.FromString(response.Data.status);
             }
 
             var result = new CoverageAreasResult(response);
@@ -78,10 +78,10 @@ namespace Niantic.Lightship.AR
             var metadata = LegacyMetadataHelper.GetCommonDataEnvelopeWithRequestIdAsStruct(requestId);
             var requestHeaders = Metadata.GetApiGatewayHeaders(requestId);
 
-            var request = new _LocalizationTargetsRequest(targetIdentifiers, metadata);
+            var request = new LocalizationTargetsRequest(targetIdentifiers, metadata);
 
             var response =
-                await _HttpClient.SendPostAsync<_LocalizationTargetsRequest, _LocalizationTargetsResponse>
+                await HttpClient.SendPostAsync<LocalizationTargetsRequest, LocalizationTargetsResponse>
                 (
                     _localizationTargetsEndpoint,
                     request,
@@ -90,7 +90,7 @@ namespace Niantic.Lightship.AR
 
             if (response.Status == ResponseStatus.Success)
             {
-                response.Status = _ResponseStatusTranslator.FromString(response.Data.status);
+                response.Status = ResponseStatusTranslator.FromString(response.Data.status);
             }
 
             var result = new LocalizationTargetsResult(response);
@@ -143,7 +143,7 @@ namespace Niantic.Lightship.AR
         /// texture is returned as null.
         public async Task<Texture> TryGetImageFromUrl(string imageUrl)
         {
-            var image = await _HttpClient.DownloadImageAsync(imageUrl);
+            var image = await HttpClient.DownloadImageAsync(imageUrl);
             return image;
         }
 
@@ -152,7 +152,7 @@ namespace Niantic.Lightship.AR
         /// texture is returned as null.
         public async void TryGetImageFromUrl(string imageUrl, Action<Texture> onImageDownloaded)
         {
-            var image = await _HttpClient.DownloadImageAsync(imageUrl);
+            var image = await HttpClient.DownloadImageAsync(imageUrl);
             onImageDownloaded?.Invoke(image);
         }
 
@@ -166,7 +166,7 @@ namespace Niantic.Lightship.AR
         /// texture is returned as null.
         public async Task<Texture> TryGetImageFromUrl(string imageUrl, int width, int height)
         {
-            var image = await _HttpClient.DownloadImageAsync(imageUrl + "=w" + width + "-h" + height + "-c");
+            var image = await HttpClient.DownloadImageAsync(imageUrl + "=w" + width + "-h" + height + "-c");
             return image;
         }
 
@@ -180,7 +180,7 @@ namespace Niantic.Lightship.AR
         /// texture is returned as null.
         public async void TryGetImageFromUrl(string imageUrl, int width, int height, Action<Texture> onImageDownloaded)
         {
-            var image = await _HttpClient.DownloadImageAsync(imageUrl + "=w" + width + "-h" + height + "-c");
+            var image = await HttpClient.DownloadImageAsync(imageUrl + "=w" + width + "-h" + height + "-c");
             onImageDownloaded?.Invoke(image);
         }
     }

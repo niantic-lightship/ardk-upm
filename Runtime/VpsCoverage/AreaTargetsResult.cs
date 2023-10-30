@@ -1,7 +1,9 @@
+// Copyright 2023 Niantic, Inc. All Rights Reserved.
 using System;
 using System.Collections.Generic;
+using Niantic.Lightship.AR.VpsCoverage;
 
-namespace Niantic.Lightship.AR
+namespace Niantic.Lightship.AR.VpsCoverage
 {
     public class AreaTargetsResult
     {
@@ -31,8 +33,12 @@ namespace Niantic.Lightship.AR
                 {
                     if (localizationTargets.ContainsKey(targetIdentifier))
                     {
-                        var areaTarget = new AreaTarget(area, localizationTargets[targetIdentifier]);
-                        AreaTargets.Add(areaTarget);
+                        AreaTarget areaTarget = new AreaTarget(area, localizationTargets[targetIdentifier]);
+                        // Filter out any locations that do not have a default anchor.
+                        if (!string.IsNullOrEmpty(areaTarget.Target.DefaultAnchor))
+                        {
+                            AreaTargets.Add(areaTarget);
+                        }
                     }
                 }
             }

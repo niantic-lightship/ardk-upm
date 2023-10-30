@@ -1,9 +1,9 @@
-// Copyright 2022 Niantic, Inc. All Rights Reserved.
+// Copyright 2023 Niantic, Inc. All Rights Reserved.
 
 using System;
 using System.Collections;
 using System.Threading.Tasks;
-
+using Niantic.Lightship.AR.LocationAR;
 using Niantic.Lightship.AR.Subsystems;
 using Niantic.Lightship.AR.Utilities;
 using UnityEngine;
@@ -11,7 +11,7 @@ using UnityEngine;
 using UnityEngine.Android;
 #endif
 
-namespace Niantic.Lightship.AR
+namespace Niantic.Lightship.AR.VpsCoverage
 {
     /// <summary>
     /// The CoverageClientManager component provides the ability to query VPS coverage area and localization target

@@ -1,3 +1,4 @@
+// Copyright 2023 Niantic, Inc. All Rights Reserved.
 using System;
 using Unity.Collections;
 
@@ -5,7 +6,7 @@ namespace Niantic.Lightship.AR.Scanning
 {
     internal interface IScanArchiveBuilderApi
     {
-        public IntPtr Create(string basePath, string scanId, string userDataStr);
+        public IntPtr Create(IntPtr unityContext, string basePath, string scanId, string userDataStr);
 
         public void Release(IntPtr handle);
 

@@ -1,6 +1,7 @@
+// Copyright 2023 Niantic, Inc. All Rights Reserved.
 using System.Collections.Generic;
-using Niantic.Lightship.AR.Subsystems;
-
+using Niantic.Lightship.AR.LocationAR;
+using Niantic.Lightship.AR.VpsCoverage;
 using UnityEditor;
 using UnityEngine;
 
@@ -24,6 +25,10 @@ namespace Niantic.Lightship.AR.Editor.Inspectors
 
         private LocalizationTarget[] CreateLocalizationTargets(ARLocationManifest[] locationManifests)
         {
+            if (locationManifests == null)
+            {
+                return null;
+            }
             List<LocalizationTarget> localizationTargets = new List<LocalizationTarget>();
             for (int i = 0; i < locationManifests.Length; i++)
             {
@@ -31,7 +36,9 @@ namespace Niantic.Lightship.AR.Editor.Inspectors
                 {
                     var localizationTarget = new LocalizationTarget(
                         locationManifests[i].NodeIdentifier,
-                        new LatLng(locationManifests[i].LocationLatitude, locationManifests[i].LocationLongitude),
+                        // Adding the full namespace here because without it, pgo does not compile due to conflicting classes.
+                        new Niantic.Lightship.AR.VpsCoverage.LatLng(locationManifests[i].LocationLatitude,
+                            locationManifests[i].LocationLongitude),
                         locationManifests[i].LocationName,
                         string.Empty,
                         locationManifests[i].MeshOriginAnchorPayload);

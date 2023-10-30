@@ -2,7 +2,7 @@
 
 using System;
 
-namespace Niantic.Lightship.AR.Settings.User
+namespace Niantic.Lightship.AR.Settings
 {
     internal class LegacyMetadataHelper
     {
@@ -27,7 +27,7 @@ namespace Niantic.Lightship.AR.Settings.User
             );
             return metadata;
         }
-        
+
         [Serializable]
         internal struct ARCommonMetadataStruct
         {

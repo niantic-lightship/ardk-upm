@@ -1,10 +1,12 @@
+// Copyright 2023 Niantic, Inc. All Rights Reserved.
 using System;
 using System.Collections.Generic;
+using Niantic.Lightship.AR.Subsystems.Common;
 using UnityEngine;
 using UnityEngine.SubsystemsImplementation;
 using UnityEngine.XR.ARSubsystems;
 
-namespace Niantic.Lightship.AR.Subsystems
+namespace Niantic.Lightship.AR.XRSubsystems
 {
     /// <summary>
     /// Defines an interface for interacting with semantic segmentation functionality.
@@ -19,89 +21,63 @@ namespace Niantic.Lightship.AR.Subsystems
         public XRSemanticsSubsystem() { }
 
         /// <summary>
-        /// If the semantic segmentation model is ready, prepare the subsystem's data structures.
-        /// </summary>
-        /// <returns>
-        /// <c>true</c> if the semantic segmentation model is ready and the subsystem has prepared its data structures. Otherwise,
-        /// <c>false</c>.
-        /// </returns>
-        public bool TryPrepareSubsystem()
-            => provider.TryPrepareSubsystem();
-
-        /// <summary>
         /// Gets a semantics channel texture descriptor and a matrix used to fit the texture to the viewport.
         /// </summary>
         /// <param name="channelName">The string description of the semantics channel that is needed.</param>
-        /// <param name="cameraParams">Describes the viewport.</param>
         /// <param name="semanticsChannelDescriptor">The semantics channel texture descriptor to be populated, if
         /// available from the provider.</param>
         /// <param name="samplerMatrix">Converts from normalized viewport coordinates to normalized texture coordinates.</param>
+        /// <param name="cameraParams">Describes the viewport.</param>
         /// <returns>
         /// <c>true</c> if the semantics channel texture descriptor is available and is returned. Otherwise,
         /// <c>false</c>.
         /// </returns>
         /// <exception cref="System.NotSupportedException">Thrown if the implementation does not support semantics channel
         /// texture.</exception>
-        public bool TryGetSemanticChannel(string channelName, XRCameraParams? cameraParams, out XRTextureDescriptor semanticsChannelDescriptor, out Matrix4x4 samplerMatrix)
-            => provider.TryGetSemanticChannel(channelName, cameraParams, out semanticsChannelDescriptor, out samplerMatrix);
+        public bool TryGetSemanticChannel(string channelName, out XRTextureDescriptor semanticsChannelDescriptor, out Matrix4x4 samplerMatrix, XRCameraParams? cameraParams = null)
+            => provider.TryGetSemanticChannel(channelName, out semanticsChannelDescriptor, out samplerMatrix, cameraParams);
 
         /// <summary>
-        /// Tries to acquire the latest semantics channel CPU image.
+        /// Tries to acquire the latest semantics channel XRCpuImage.
         /// </summary>
         /// <param name="channelName">The string description of the semantics channel that is needed.</param>
-        /// <param name="cpuBuffer">If this method returns `true`, an acquired <see cref="LightshipCpuBuffer"/>. The CPU buffer
+        /// <param name="cpuImage">If this method returns `true`, an acquired <see cref="XRCpuImage"/>. The XRCpuImage
         /// must be disposed by the caller.</param>
-        /// <returns>Returns `true` if an <see cref="LightshipCpuBuffer"/> was successfully acquired.
+        /// <param name="samplerMatrix">A matrix that converts from viewport to texture coordinates.</param>
+        /// <param name="cameraParams">Params of the viewport to sample with</param>
+        /// <returns>Returns `true` if an <see cref="XRCpuImage"/> was successfully acquired.
         /// Returns `false` otherwise.</returns>
-        public bool TryAcquireSemanticChannelCPUImage(string channelName, out LightshipCpuBuffer cpuBuffer)
-            => provider.TryAcquireSemanticChannelCPUImage(channelName, out cpuBuffer);
-
-        /// <summary>
-        /// Calculates a transformation that
-        /// - aligns the image as if it was taken from the latest camera pose, and
-        /// - fits the image to the specified viewport resolution and orientation.
-        /// </summary>
-        /// <param name="cpuBuffer">CPU buffer for a semantic image.</param>
-        /// <param name="cameraParams">Describes the viewport.</param>
-        /// <param name="result">The 4x4 transformation matrix that when applied to the image, translates its pixels
-        /// such that the image will appear as if it was taken from the latest camera pose.</param>
-        /// <returns>True if the transform could be calculated, false if the buffer was invalid or it does not
-        /// represent a semantic image.</returns>
-        /// <exception cref="NotSupportedException">Thrown if the implementation does not support fitting the image using a transformation.</exception>
-        public bool TryCalculateSamplerMatrix(LightshipCpuBuffer cpuBuffer, XRCameraParams cameraParams, out Matrix4x4 result) =>
-            provider.TryCalculateSamplerMatrix(cpuBuffer, cameraParams, out result);
-
-        /// <summary>
-        /// Once a <see cref="LightshipCpuBuffer"/> is acquired by using one of the other methods, you have to dispose
-        /// of it once you are done with it as it holds on to a native resource (the memory for the buffer).
-        /// </summary>
-        /// <param name="cpuBuffer"> The <see cref="LightshipCpuBuffer"/> you want to dispose of </param>
-        public void DisposeCPUImage(LightshipCpuBuffer cpuBuffer) => provider.DisposeCPUImage(cpuBuffer);
+        public bool TryAcquireSemanticChannelCpuImage(string channelName, out XRCpuImage cpuImage, out Matrix4x4 samplerMatrix, XRCameraParams? cameraParams = null)
+        {
+            return provider.TryAcquireSemanticChannelCpuImage(channelName, out cpuImage, out samplerMatrix, cameraParams);
+        }
 
         /// <summary>
         /// Gets a packed semantics texture descriptor.
         /// </summary>
-        /// <param name="cameraParams">Describes the viewport.</param>
         /// <param name="packedSemanticsDescriptor">The packed semantics texture descriptor to be populated, if
         /// available from the provider.</param>
         /// <param name="samplerMatrix">A matrix that converts from viewport to texture coordinates.</param>
+        /// <param name="cameraParams">Describes the viewport.</param>
         /// <returns>
         /// <c>true</c> if the packed semantics texture descriptor is available and is returned. Otherwise,
         /// <c>false</c>.
         /// </returns>
         /// <exception cref="System.NotSupportedException">Thrown if the implementation does not support packed semantics
         /// texture.</exception>
-        public bool TryGetPackedSemanticChannels(XRCameraParams? cameraParams, out XRTextureDescriptor packedSemanticsDescriptor, out Matrix4x4 samplerMatrix)
-            => provider.TryGetPackedSemanticChannels(cameraParams, out packedSemanticsDescriptor, out samplerMatrix);
+        public bool TryGetPackedSemanticChannels(out XRTextureDescriptor packedSemanticsDescriptor, out Matrix4x4 samplerMatrix, XRCameraParams? cameraParams = null)
+            => provider.TryGetPackedSemanticChannels(out packedSemanticsDescriptor, out samplerMatrix, cameraParams);
 
         /// <summary>
         /// Tries to acquire the latest packed semantic channels CPU image.
         /// </summary>
-        /// <param name="cpuBuffer">If this method returns `true`, an acquired <see cref="LightshipCpuBuffer"/>. The CPU buffer
+        /// <param name="cpuImage">If this method returns `true`, an acquired <see cref="XRCpuImage"/>. The XRCpuImage
         /// must be disposed by the caller.</param>
+        /// <param name="samplerMatrix">A matrix that converts from viewport to texture coordinates.</param>
+        /// <param name="cameraParams">Describes the viewport.</param>
         /// <returns></returns>
-        public bool TryAcquirePackedSemanticChannelsCPUImage(out LightshipCpuBuffer cpuBuffer)
-            => provider.TryAcquirePackedSemanticChannelsCPUImage(out cpuBuffer);
+        public bool TryAcquirePackedSemanticChannelsCpuImage(out XRCpuImage cpuImage, out Matrix4x4 samplerMatrix, XRCameraParams? cameraParams = null)
+            => provider.TryAcquirePackedSemanticChannelsCpuImage(out cpuImage, out samplerMatrix, cameraParams);
 
         /// <summary>
         /// Register the descriptor for the semantics subsystem implementation.
@@ -133,14 +109,38 @@ namespace Niantic.Lightship.AR.Subsystems
         }
 
         /// <summary>
+        /// Returns the frame id of the most recent semantic segmentation prediction.
+        /// </summary>
+        /// <value>
+        /// The frame id.
+        /// </value>
+        /// <exception cref="System.NotSupportedException">Thrown if getting frame id is not supported.
+        /// </exception>
+        public uint? LatestFrameId
+        {
+            get
+            {
+                return provider.LatestFrameId;
+            }
+        }
+
+        public bool IsMetadataAvailable
+        {
+            get
+            {
+                return provider.IsMetadataAvailable;
+            }
+        }
+
+        /// <summary>
         /// Get a list of the semantic channel names for the current semantic model.
         /// </summary>
         /// <returns>
-        /// A list of semantic category labels. The list will be empty if the model has not completed loading.
+        /// A list of semantic category labels. The list will be empty if metadata has not yet become available.
         /// </returns>
         /// <exception cref="System.NotSupportedException">Thrown when reading the channel names is not supported
         /// by the implementation.</exception>
-        public List<string> GetChannelNames() => provider.GetChannelNames();
+        public bool TryGetChannelNames(out IReadOnlyList<string> names) => provider.TryGetChannelNames(out names);
 
         /// <summary>
         /// Sets the confidence thresholds used for including the specified semantic channels in the packed semantic
@@ -182,81 +182,61 @@ namespace Niantic.Lightship.AR.Subsystems
             /// and a matrix that converts from viewport to the texture's coordinate space.
             /// </summary>
             /// <param name="channelName">The string description of the semantics channel that is needed.</param>
-            /// <param name="cameraParams">Describes the viewport.</param>
             /// <param name="semanticChannelDescriptor">The semantic channel texture descriptor to be populated, if
             /// available.</param>
             /// <param name="samplerMatrix">Converts normalized coordinates from viewport to texture.</param>
+            /// <param name="cameraParams">Describes the viewport.</param>
             /// <returns>
             /// <c>true</c> if the semantic channel texture descriptor is available and is returned. Otherwise,
             /// <c>false</c>.
             /// </returns>
             /// <exception cref="System.NotSupportedException">Thrown if the implementation does not support semantic
             /// channel texture.</exception>
-            public virtual bool TryGetSemanticChannel(string channelName, XRCameraParams? cameraParams, out XRTextureDescriptor semanticChannelDescriptor, out Matrix4x4 samplerMatrix)
+            public virtual bool TryGetSemanticChannel(string channelName, out XRTextureDescriptor semanticChannelDescriptor, out Matrix4x4 samplerMatrix, XRCameraParams? cameraParams = null)
                 => throw new NotSupportedException("Semantic channel texture is not supported by this implementation");
 
             /// <summary>
             /// Tries to acquire the latest semantic channel CPU image.
             /// </summary>
-            /// <param name="channelName"></param>
-            /// <param name="cpuBuffer">If this method returns `true`, this should be populated with construction
-            /// information for an <see cref="LightshipCpuBuffer"/>.</param>
+            /// <param name="channelName">The string description of the semantics channel that is needed.</param>
+            /// <param name="cpuImage">If this method returns `true`, an acquired <see cref="XRCpuImage"/>. The XRCpuImage
+            /// must be disposed by the caller.</param>
+            /// <param name="samplerMatrix">Matrix to sample in pixel coordinates with, composed of display and warp matrix</param>
+            /// <param name="cameraParams">Params of the viewport to sample with</param>
+            /// <returns>Returns `true` if an <see cref="XRCpuImage"/> was successfully acquired.
             /// <returns>Returns `true` if the semantic channel CPU image was acquired.
             /// Returns `false` otherwise.</returns>
             /// <exception cref="System.NotSupportedException">Thrown if the implementation does not support semantic channels
             /// CPU images.</exception>
-            public virtual bool TryAcquireSemanticChannelCPUImage(string channelName, out LightshipCpuBuffer cpuBuffer)
+            public virtual bool TryAcquireSemanticChannelCpuImage(string channelName, out XRCpuImage cpuImage,  out Matrix4x4 samplerMatrix, XRCameraParams? cameraParams = null)
                 => throw new NotSupportedException("Semantic channel CPU images are not supported by this implementation.");
-
-            /// <summary>
-            /// Calculates a transformation that
-            /// - aligns the image as if it was taken from the latest camera pose, and
-            /// - fits the image to the specified viewport resolution and orientation.
-            /// </summary>
-            /// <param name="buffer">CPU buffer for a semantic image.</param>
-            /// <param name="cameraParams">Describes the viewport.</param>
-            /// <param name="result">The 4x4 transformation matrix that when applied to the image, translates its pixels
-            /// such that the image will appear as if it was taken from the latest camera pose.</param>
-            /// <returns>True if the transform could be calculated, false if the buffer was invalid or it does not
-            /// represent a semantic image.</returns>
-            /// <exception cref="NotSupportedException">Thrown if the implementation does not support fitting the image using a transformation.</exception>
-            public virtual bool TryCalculateSamplerMatrix(LightshipCpuBuffer buffer, XRCameraParams cameraParams, out Matrix4x4 result) =>
-                throw new NotSupportedException("Semantic image transforms are not supported by this implementation.");
-
-            /// <summary>
-            /// Once a <see cref="LightshipCpuBuffer"/> is acquired by using one of the other methods, you have to dispose
-            /// of it once you are done with it as it holds on to a native resource (the memory for the buffer).
-            /// </summary>
-            /// <param name="cpuBuffer"> The <see cref="LightshipCpuBuffer"/> you want to dispose</param>
-            /// <exception cref="System.NotSupportedException">Thrown if the implementation does not support disposing
-            /// CPU buffers.</exception>
-            public virtual void DisposeCPUImage(LightshipCpuBuffer cpuBuffer)
-                => throw new NotSupportedException("Semantic channel CPU images are not supported by this implementation");
 
             /// <summary>
             /// Gets a packed semantics texture descriptor.
             /// </summary>
-            /// <param name="cameraParams">Describes the viewport.</param>
             /// <param name="packedSemanticsDescriptor">The packed semantics texture descriptor to be populated, if
             /// available from the provider.</param>
             /// <param name="samplerMatrix">A matrix that converts from viewport to texture coordinates.</param>
+            /// <param name="cameraParams">Describes the viewport.</param>
             /// <returns>
             /// <c>true</c> if the packed semantics texture descriptor is available and is returned. Otherwise,
             /// <c>false</c>.
             /// </returns>
             /// <exception cref="System.NotSupportedException">Thrown if the implementation does not support packed semantics
             /// texture.</exception>
-            public virtual bool TryGetPackedSemanticChannels(XRCameraParams? cameraParams, out XRTextureDescriptor packedSemanticsDescriptor, out Matrix4x4 samplerMatrix)
+            public virtual bool TryGetPackedSemanticChannels(out XRTextureDescriptor packedSemanticsDescriptor, out Matrix4x4 samplerMatrix, XRCameraParams? cameraParams = null)
                 => throw new NotSupportedException("Packed Semantic channels texture is not supported by this implementation");
 
             /// <summary>
-            ///  Tries to acquire the latest packed semantic channels CPU image.
+            ///  Tries to acquire the latest packed semantic channels XRCpuImage.
             /// </summary>
-            /// <param name="cpuBuffer">If this method returns `true`, an acquired <see cref="LightshipCpuBuffer"/>. The CPU buffer
+            /// <param name="cpuImage">If this method returns `true`, an acquired <see cref="XRCpuImage"/>. The XRCpuImage
             /// must be disposed by the caller.</param>
+            /// <param name="samplerMatrix">A matrix that converts from viewport to texture coordinates.</param>
+            /// <param name="cameraParams">Describes the viewport.</param>
             /// <returns></returns>
-            public virtual bool TryAcquirePackedSemanticChannelsCPUImage(out LightshipCpuBuffer cpuBuffer)
-                => throw new NotSupportedException("Packed Semantic channels cpu buffer is not supported by this implementation");
+            public virtual bool TryAcquirePackedSemanticChannelsCpuImage(out XRCpuImage cpuImage, out Matrix4x4 samplerMatrix, XRCameraParams? cameraParams = null)
+                => throw new NotSupportedException("Packed Semantic channels cpu image is not supported by this implementation");
 
             /// <summary>
             /// Property to be implemented by the provider to get or set the frame rate for the platform's semantic
@@ -277,16 +257,21 @@ namespace Niantic.Lightship.AR.Subsystems
                 }
             }
 
+            public virtual uint? LatestFrameId
+                => throw new NotSupportedException("Getting the latest frame id is not supported by this implementation");
+
+            public virtual bool IsMetadataAvailable
+                => throw new NotSupportedException("Getting if metadata is available is not supported by this implementation");
+
             /// <summary>
-            /// Property to be implemented by the provider to get a list of the semantic channel names for the current
+            /// Method to be implemented by the provider to get a list of the semantic channel names for the current
             /// semantic model.
             /// </summary>
-            /// <value>
-            /// A list of semantic category labels.
-            /// </value>
+            /// <param name="names">A list of semantic category labels. It will be empty if the method returns false.</param>
+            /// <returns>True if channel names are available. False if not.</returns>
             /// <exception cref="System.NotSupportedException">Thrown when reading the channel names is not supported
             /// by the implementation.</exception>
-            public virtual List<string> GetChannelNames()
+            public virtual bool TryGetChannelNames(out IReadOnlyList<string> names)
                 => throw new NotSupportedException("Getting semantic segmentation channel names is not "
                     + "supported by this implementation");
 

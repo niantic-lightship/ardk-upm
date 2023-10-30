@@ -1,3 +1,4 @@
+// Copyright 2023 Niantic, Inc. All Rights Reserved.
 using UnityEngine;
 using Matrix4x4 = UnityEngine.Matrix4x4;
 

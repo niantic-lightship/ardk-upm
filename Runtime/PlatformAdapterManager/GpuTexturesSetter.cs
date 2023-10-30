@@ -1,8 +1,8 @@
 // Copyright 2023 Niantic, Inc. All Rights Reserved.
 
 using System;
-using Niantic.Lightship.AR.Utilities;
 using Niantic.Lightship.AR.Utilities.Profiling;
+using Niantic.Lightship.AR.Utilities.Textures;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 using UnityEngine.XR.ARSubsystems;

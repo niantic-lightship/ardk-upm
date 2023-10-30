@@ -1,8 +1,8 @@
-// Copyright 2022 Niantic, Inc. All Rights Reserved.
+// Copyright 2023 Niantic, Inc. All Rights Reserved.
 
 using Niantic.Lightship.AR.Loader;
 
-namespace Niantic.Lightship.AR
+namespace Niantic.Lightship.AR.VpsCoverage
 {
     /// Factory to create CoverageClient instances.
     public static class CoverageClientFactory

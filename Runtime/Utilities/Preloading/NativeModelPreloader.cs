@@ -3,6 +3,7 @@
 using System;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
+using Niantic.Lightship.AR.Core;
 
 namespace Niantic.Lightship.AR.Utilities.Preloading
 {
@@ -55,8 +56,7 @@ namespace Niantic.Lightship.AR.Utilities.Preloading
                 return PreloaderStatusCode.Failure;
             }
 
-            var statusCode = Native.DownloadModel(_nativeHandle, (byte) feature, mode);
-            return (PreloaderStatusCode) statusCode;
+            return Native.DownloadModel(_nativeHandle, (byte) feature, mode);
         }
 
         public override PreloaderStatusCode RegisterModel(DepthMode depthMode, string filepath)
@@ -76,28 +76,28 @@ namespace Niantic.Lightship.AR.Utilities.Preloading
                 return PreloaderStatusCode.Failure;
             }
 
-            var statusCode = Native.RegisterModel(_nativeHandle, (byte) feature, mode, filepath);
-            return (PreloaderStatusCode) statusCode;
+            return Native.RegisterModel(_nativeHandle, (byte) feature, mode, filepath);
         }
 
-        public override float CurrentProgress(DepthMode depthMode)
+        public override PreloaderStatusCode CurrentProgress(DepthMode depthMode, out float progress)
         {
-            return CurrentProgress(Feature.Depth, (byte) depthMode);
+            return CurrentProgress(Feature.Depth, (byte) depthMode, out progress);
         }
 
-        public override float CurrentProgress(SemanticsMode semanticsMode)
+        public override PreloaderStatusCode CurrentProgress(SemanticsMode semanticsMode, out float progress)
         {
-            return CurrentProgress(Feature.Semantics, (byte) semanticsMode);
+            return CurrentProgress(Feature.Semantics, (byte) semanticsMode, out progress);
         }
 
-        private float CurrentProgress(Feature feature, byte mode)
+        private PreloaderStatusCode CurrentProgress(Feature feature, byte mode, out float progress)
         {
             if (!_nativeHandle.IsValidHandle())
             {
-                return 0;
+                progress = 0;
+                return PreloaderStatusCode.Failure;
             }
 
-            return Native.CurrentProgress(_nativeHandle, (byte) feature, mode);
+            return Native.CurrentProgress(_nativeHandle, (byte) feature, mode, out progress);
         }
 
         public override bool ExistsInCache(DepthMode depthMode)
@@ -149,13 +149,13 @@ namespace Niantic.Lightship.AR.Utilities.Preloading
             public static extern void Release(IntPtr preloaderHandle);
 
             [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_Preloader_DownloadModel")]
-            public static extern int DownloadModel(IntPtr preloaderHandle, byte feature, byte mode);
+            public static extern PreloaderStatusCode DownloadModel(IntPtr preloaderHandle, byte feature, byte mode);
 
             [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_Preloader_RegisterModel")]
-            public static extern int RegisterModel(IntPtr preloaderHandle, byte feature, byte mode, string filepath);
+            public static extern PreloaderStatusCode RegisterModel(IntPtr preloaderHandle, byte feature, byte mode, string filepath);
 
             [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_Preloader_CurrentProgress")]
-            public static extern float CurrentProgress(IntPtr preloaderHandle, byte feature, byte mode);
+            public static extern PreloaderStatusCode CurrentProgress(IntPtr preloaderHandle, byte feature, byte mode, out float progress);
 
             [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_Preloader_ExistsInCache")]
             public static extern bool ExistsInCache(IntPtr preloaderHandle, byte feature, byte mode);

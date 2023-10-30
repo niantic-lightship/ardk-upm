@@ -3,7 +3,9 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Niantic.Lightship.AR.Utilities.Log;
 using Niantic.Lightship.AR;
+using Niantic.Lightship.AR.Core;
 using Niantic.Lightship.AR.Scanning;
 using UnityEngine;
 
@@ -35,7 +37,7 @@ namespace Niantic.ARDK.AR.Scanning
         {
             _api = new NativeScanArchiveBuilderApi();
 #if NIANTIC_LIGHTSHIP_AR_LOADER_ENABLED
-            _nativeHandle = _api.Create(scan.ScanPath, scan.ScanId, JsonUtility.ToJson(uploadUserInfo));
+            _nativeHandle = _api.Create(LightshipUnityContext.UnityContextHandle, scan.ScanPath, scan.ScanId, JsonUtility.ToJson(uploadUserInfo));
 #endif
         }
 
@@ -43,7 +45,7 @@ namespace Niantic.ARDK.AR.Scanning
         {
             if (_nativeHandle != IntPtr.Zero)
             {
-                Debug.LogError("A Scan Archive Builder was not disposed, native resources will leak");
+                Log.Error("A Scan Archive Builder was not disposed, native resources will leak");
             }
 
             Dispose(false);

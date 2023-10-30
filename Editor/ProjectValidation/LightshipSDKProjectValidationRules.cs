@@ -1,126 +1,175 @@
 // Copyright 2023 Niantic, Inc. All Rights Reserved.
 using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Niantic.Lightship.AR.Loader;
 using Unity.XR.CoreUtils.Editor;
 using UnityEditor;
 using UnityEditor.XR.Management;
-using UnityEditor.XR.Management.Metadata;
 using UnityEngine;
+using UnityEngine.Rendering;
 using UnityEngine.XR.ARKit;
+using JetBrains.Annotations;
+using System.Text.RegularExpressions;
 
 namespace Niantic.Lightship.AR.Editor
 {
     static class LightshipSDKProjectValidationRules
     {
-        private const string kCategory = "Niantic Lightship SDK";
         private static readonly LightshipSettings s_settings = LightshipSettings.Instance;
         private static readonly Version s_minGradleVersion = new(6,7,1);
-        private const string OculusLoader = "Unity.XR.Oculus.OculusLoader";
-        private const string MockHmdLoader = "Unity.XR.MockHMD.MockHMDLoader";
-        private const string OpenXRLoader = "UnityEngine.XR.OpenXR.OpenXRLoader";
+        private static readonly Version s_minUnityVersion = new(2021,1);
+
+        private const string XRPlugInManagementPath = "Project/XR Plug-in Management";
+        private const string NianticLightshipSDKPath = XRPlugInManagementPath + "/Niantic Lightship SDK";
+        private const string PreferencesExternalToolsPath = "Preferences/External Tools";
+        private const string Category = "Niantic Lightship SDK";
+        private const string PlaybackDatasetMetaFilename = "capture.json";
         private const string UnityDownloadsPage = "https://unity.com/download";
         private const string CreateAPIKeyHelpLink = "https://lightship.dev/docs/beta/ardk/install/#adding-your-api-key-to-your-unity-project";
         private const string UpdateGradleVersionHelpLink = "https://lightship.dev/docs/beta/ardk/install/#installing-gradle-for-android";
 
         [InitializeOnLoadMethod]
-        static void AddLightshipSDKValidationRules()
+        private static void AddLightshipSDKValidationRules()
         {
-            //iostargetvers, ioslocusasgedesc, androidtargetsdk
-            var iOSTargetVersion = OSVersion.Parse(PlayerSettings.iOS.targetOSVersionString);
-            var iOSLocUsageDesc = PlayerSettings.iOS.locationUsageDescription;
-            var androidTargetVersion = PlayerSettings.Android.targetSdkVersion;
+            var iosGlobalRules = CreateGlobalRules(
+                s_settings,
+                "StreamingAssets",
+                GetIosIsLightshipPluginEnabled,
+                GetUnityVersion);
+            var iosRules = CreateIOSRules(
+                s_settings,
+                GetIosIsLightshipPluginEnabled,
+                GetIosTargetOsVersionString,
+                GetIosLocationUsageDescription);
+            var androidGlobalRules = CreateGlobalRules(
+                s_settings,
+                "StreamingAssets",
+                GetAndroidIsLightshipPluginEnabled,
+                GetUnityVersion);
+            var androidRules = CreateAndroidRules(
+                GetAndroidIsLightshipPluginEnabled,
+                GetAndroidTargetSdkVersion,
+                GetAndroidGradleVersion,
+                GetActiveBuildTarget);
+            var standaloneGlobalRules = CreateGlobalRules(
+                s_settings,
+                "StreamingAssets",
+                GetStandaloneIsLightshipPluginEnabled,
+                GetUnityVersion);
+            var standaloneRules = CreateStandaloneRules(
+                GetStandaloneIsLightshipPluginEnabled);
 
-            var globalRules = CreateGlobalRules(s_settings);
-
-            var iOSRules = CreateiOSRules(s_settings, iOSTargetVersion, iOSLocUsageDesc, false);
-
-            var androidRules = CreateAndroidRules(androidTargetVersion, false);
-
-            var standaloneRules = CreateStandaloneRules();
-            // Only want the Unity Editor version and Editor Playback rules
-            var globalRulesForStandalone = new BuildValidationRule[] {globalRules[0], globalRules[3]};
-
-            BuildValidator.AddRules(BuildTargetGroup.iOS, iOSRules);
-            BuildValidator.AddRules(BuildTargetGroup.iOS, globalRules);
-
+            BuildValidator.AddRules(BuildTargetGroup.iOS, iosRules);
+            BuildValidator.AddRules(BuildTargetGroup.iOS, new[]
+            {
+                iosGlobalRules[0],
+                iosGlobalRules[1],
+                iosGlobalRules[2]
+            });
             BuildValidator.AddRules(BuildTargetGroup.Android, androidRules);
-            BuildValidator.AddRules(BuildTargetGroup.Android, globalRules);
-
-            BuildValidator.AddRules(BuildTargetGroup.Standalone, globalRulesForStandalone);
+            BuildValidator.AddRules(BuildTargetGroup.Android, new[]
+            {
+                androidGlobalRules[0],
+                androidGlobalRules[1],
+                androidGlobalRules[2]
+            });
             BuildValidator.AddRules(BuildTargetGroup.Standalone, standaloneRules);
+            BuildValidator.AddRules(BuildTargetGroup.Standalone, new[]
+            {
+                standaloneGlobalRules[0],
+                standaloneGlobalRules[1],
+                standaloneGlobalRules[3]
+            });
         }
 
-        internal static BuildValidationRule[] CreateGlobalRules(LightshipSettings lightshipSettings)
+        internal static BuildValidationRule[] CreateGlobalRules(
+            LightshipSettings lightshipSettings,
+            string datasetContainingDirectory,
+            [NotNull] Func<bool> getIsLightshipPluginEnabled,
+            [NotNull] Func<string> getUnityVersion)
         {
             var globalRules = new[]
             {
                 new BuildValidationRule
                 {
-                    Category = kCategory,
-                    Message = "Lightship SDK is officially supported on Unity version 2021+ LTS",
-                    CheckPredicate = () =>
-                    {
-#if !UNITY_2021_1_OR_NEWER
-                        return false;
-#endif
-                        return true;
-                    },
-                    FixItMessage = "Please update your Unity Editor version to 2021+ LTS",
+                    Category = Category,
+                    Message = "If using Lightship ARDK, it is recommended to use Unity version 2021.1 LTS or higher.",
+                    CheckPredicate = () => new Version(getUnityVersion.Invoke()) >= s_minUnityVersion,
+                    IsRuleEnabled = getIsLightshipPluginEnabled.Invoke,
+                    FixItMessage = "Open the Unity project in Unity version 2021.1 LTS or higher.",
                     FixItAutomatic = false,
-
                     HelpLink = UnityDownloadsPage
                 },
                 new BuildValidationRule
                 {
-                    Category = kCategory,
-                    Message = "An API Key is needed to access network features like VPS and Scanning",
-                    CheckPredicate = () => !string.IsNullOrEmpty(lightshipSettings.ApiKey),
-
-                    IsRuleEnabled =
-                        () => lightshipSettings.UseLightshipScanning || lightshipSettings.UseLightshipPersistentAnchor,
-
-                    FixIt = () =>
-                        SettingsService.OpenProjectSettings("Project/XR Plug-in Management/Niantic Lightship SDK"),
-
-                    FixItMessage = "Please generate an API Key in the Projects tab in your Lightship Account Dashboard and set it in Lightship Settings",
+                    Category = Category,
+                    Message = "If using Lightship ARDK VPS or Scanning features, set the Lightship API Key provided by the Lightship Portal.",
+                    CheckPredicate = () =>
+                        !string.IsNullOrWhiteSpace(lightshipSettings.ApiKey) &&
+                        lightshipSettings.ApiKey.Length <= 512,
+                    IsRuleEnabled = () =>
+                        getIsLightshipPluginEnabled.Invoke() &&
+                        (lightshipSettings.UseLightshipPersistentAnchor ||
+                        lightshipSettings.UseLightshipScanning),
+                    FixIt = () => SettingsService.OpenProjectSettings(NianticLightshipSDKPath),
+                    FixItMessage = "Open `Project Settings` > `XR Plug-in Management` > `Niantic Lightship SDK` and set the Lightship API Key provided by the Lightship Portal.",
+                    HelpText = "For further assistance, follow the instructions in the Lightship SDK docs.",
                     HelpLink = CreateAPIKeyHelpLink,
                     FixItAutomatic = false,
                     Error = true
                 },
                 new BuildValidationRule
                 {
-                    Category = kCategory,
-                    Message = "A dataset path inside the project's Streaming Assets folder must be specified for playback on device.",
+                    Category = Category,
+                    Message = "If using Lightship ARDK Device Playback feature, set the device playback dataset path to a valid dataset directory path in the StreamingAssets directory.",
                     CheckPredicate = () =>
                     {
                         var datasetPath = lightshipSettings.DevicePlaybackSettings.PlaybackDatasetPath;
-                        var hasDatasetPath = !string.IsNullOrEmpty(datasetPath);
-                        if (!hasDatasetPath)
+                        if (string.IsNullOrEmpty(datasetPath) || string.IsNullOrEmpty(datasetContainingDirectory))
+                        {
                             return false;
-
-                        var isInStreamingAssets =
-                            datasetPath.StartsWith(Application.dataPath + "/StreamingAssets");
-                        return isInStreamingAssets;
+                        }
+                        var isInStreamingAssets = datasetPath.StartsWith(Path.Combine(Application.dataPath, datasetContainingDirectory));
+                        var doesFolderExist = Directory.Exists(datasetPath);
+                        var doesMetafileExist = File.Exists(Path.Combine(datasetPath, PlaybackDatasetMetaFilename));
+                        return isInStreamingAssets && doesFolderExist && doesMetafileExist;
                     },
-                    IsRuleEnabled = () => lightshipSettings.DevicePlaybackSettings.UsePlayback,
+                    IsRuleEnabled = () =>
+                        getIsLightshipPluginEnabled.Invoke() &&
+                        lightshipSettings.DevicePlaybackSettings.UsePlayback,
                     FixIt = () =>
                     {
-                        SettingsService.OpenProjectSettings("Project/XR Plug-in Management/Niantic Lightship SDK");
+                        SettingsService.OpenProjectSettings(NianticLightshipSDKPath);
                     },
-                    FixItMessage = "Please go to Lightship Settings > Playback > Device and set a dataset path. Make sure for device playback, the file is inside StreamingAssets.",
+                    FixItMessage = "Open `Project Settings` > `XR Plug-in Management` > `Niantic Lightship SDK` > `Device` and set the device playback dataset path to a valid dataset directory path in the StreamingAssets directory.",
                     FixItAutomatic = false,
                     Error = true
                 },
                 new BuildValidationRule
                 {
-                    Category = kCategory,
-                    Message = "A dataset path must be specified for playback in Editor.",
-                    CheckPredicate = () => !string.IsNullOrEmpty(lightshipSettings.EditorPlaybackSettings.PlaybackDatasetPath),
-                    IsRuleEnabled = () => lightshipSettings.EditorPlaybackSettings.UsePlayback,
+                    Category = Category,
+                    Message = "If using Lightship ARDK Editor Playback feature, set the editor playback dataset path to a valid dataset directory path.",
+                    CheckPredicate = () =>
+                    {
+                        var datasetPath = lightshipSettings.EditorPlaybackSettings.PlaybackDatasetPath;
+                        if (string.IsNullOrEmpty(datasetPath))
+                        {
+                            return false;
+                        }
+                        var doesFolderExist = Directory.Exists(datasetPath);
+                        var doesMetafileExist = File.Exists(Path.Combine(datasetPath, PlaybackDatasetMetaFilename));
+                        return doesFolderExist && doesMetafileExist;
+                    },
+                    IsRuleEnabled = () =>
+                        getIsLightshipPluginEnabled.Invoke() &&
+                        lightshipSettings.EditorPlaybackSettings.UsePlayback,
                     FixIt = () =>
-                        SettingsService.OpenProjectSettings("Project/XR Plug-in Management/Niantic Lightship SDK"),
-                    FixItMessage = "Please go to Lightship Settings > Playback > Editor and set a dataset path.",
+                    {
+                        SettingsService.OpenProjectSettings(NianticLightshipSDKPath);
+                    },
+                    FixItMessage = "Open `Project Settings` > `XR Plug-in Management` > `Niantic Lightship SDK` > `Editor` and set the editor playback dataset path to a valid dataset directory path.",
                     FixItAutomatic = false,
                     Error = true
                 }
@@ -128,89 +177,89 @@ namespace Niantic.Lightship.AR.Editor
             return globalRules;
         }
 
-        internal static BuildValidationRule[] CreateiOSRules(LightshipSettings lightshipSettings, OSVersion iOSTargetVersion, string iOSLocUsageDesc, bool testFlag)
+        internal static BuildValidationRule[] CreateIOSRules(
+            LightshipSettings lightshipSettings,
+            [NotNull] Func<bool> getIosIsLightshipPluginEnabled,
+            [NotNull] Func<string> getIosTargetOsVersionString,
+            [NotNull] Func<string> getIosLocationUsageDescription)
         {
             var iOSRules = new[]
             {
                 new BuildValidationRule
                 {
-                    Category = kCategory,
-                    Message = "Please enable the 'Niantic Lightship SDK' plugin in 'XR Plug-in Management'.",
-                    CheckPredicate = IsLightshipPluginEnablediOS,
-                    FixItMessage = "Open Project Setting > XR Plug-in Management > iOS tab and enable `Niantic Lightship SDK`.",
+                    Category = Category,
+                    Message = "If using Lightship ARDK for iOS, enable the 'Niantic Lightship SDK' plug-in.",
+                    CheckPredicate = getIosIsLightshipPluginEnabled.Invoke,
+                    FixItMessage = "Open `Project Settings` > `XR Plug-in Management` > `iOS settings` and enable the 'Niantic Lightship SDK' plug-in.",
                     FixIt = () =>
                     {
-                        var generalSettings = XRGeneralSettingsPerBuildTarget.XRGeneralSettingsForBuildTarget(BuildTargetGroup.iOS);
-
-                        XRPackageMetadataStore.RemoveLoader(generalSettings.AssignedSettings,
-                            typeof(UnityEngine.XR.ARKit.ARKitLoader).FullName, BuildTargetGroup.iOS);
-
-                        XRPackageMetadataStore.AssignLoader(generalSettings.AssignedSettings,
-                            typeof(LightshipARKitLoader).FullName, BuildTargetGroup.iOS);
+                        SettingsService.OpenProjectSettings(XRPlugInManagementPath);
                     },
                     Error = false,
-                    FixItAutomatic = true
+                    FixItAutomatic = false
                 },
                 new BuildValidationRule
                 {
-                    Category = kCategory,
-                    Message = "A minimum iOS version of 13.0 is needed when Depth, Meshing, or Semantics are enabled",
-                    Error = true,
-                    CheckPredicate = () =>
-                    {
-                        if (testFlag)
-                        {
-                            return iOSTargetVersion >= new OSVersion(13);
-                        }
-                        var userSetTargetVersion = OSVersion.Parse(PlayerSettings.iOS.targetOSVersionString);
-                        return userSetTargetVersion >= new OSVersion(13);
-                    },
+                    Category = Category,
+                    Message = "If using Lightship ARDK Depth, Meshing, or Semantics features for iOS, set the target iOS version to 13.0 or higher.",
+                    CheckPredicate = () => OSVersion.Parse(getIosTargetOsVersionString.Invoke()) >= new OSVersion(13),
                     IsRuleEnabled = () =>
                     {
-                        if (lightshipSettings.UseLightshipDepth || lightshipSettings.UseLightshipMeshing
-                            || lightshipSettings.UseLightshipSemanticSegmentation)
-                            return true;
-                        return false;
+                        var isFeatureEnabled =
+                            lightshipSettings.UseLightshipDepth ||
+                            lightshipSettings.UseLightshipMeshing ||
+                            lightshipSettings.UseLightshipSemanticSegmentation;
+                        return
+                            getIosIsLightshipPluginEnabled.Invoke() &&
+                            isFeatureEnabled;
                     },
                     FixIt = () =>
                     {
                         PlayerSettings.iOS.targetOSVersionString = "13.0";
                     },
-                    FixItMessage = "Please open Project Settings > Player > iOS > Other Settings to change target iOS version",
-                    FixItAutomatic = true
+                    FixItMessage = "Open `Project Settings` > `Player` > `iOS settings` > `Other Settings` and set the target iOS version to 13.0 or higher.",
+                    FixItAutomatic = true,
+                    Error = true
                 },
                 new BuildValidationRule
                 {
-                    Category = kCategory,
-                    Message = "Scanning requires iOS version 14.0 or higher",
-                    CheckPredicate = () =>
+                    Category = Category,
+                    Message = "If using Lightship ARDK Scanning feature for iOS, set the target iOS version to 14.0 or higher.",
+                    CheckPredicate = () => OSVersion.Parse(getIosTargetOsVersionString.Invoke()) >= new OSVersion(14),
+                    IsRuleEnabled = () =>
                     {
-                        var userSetTargetVersion = OSVersion.Parse(PlayerSettings.iOS.targetOSVersionString);
-                        return userSetTargetVersion >= new OSVersion(14);
+                        var isFeatureEnabled = lightshipSettings.UseLightshipScanning;
+                        return
+                            getIosIsLightshipPluginEnabled.Invoke() &&
+                            isFeatureEnabled;
                     },
-                    IsRuleEnabled = () => lightshipSettings.UseLightshipScanning,
-                    FixIt = () => { PlayerSettings.iOS.targetOSVersionString = "14.0"; },
-                    FixItMessage = "Please open Project Settings > Player > iOS > Other Settings to change target iOS version",
-                    FixItAutomatic = true
+                    FixIt = () =>
+                    {
+                        PlayerSettings.iOS.targetOSVersionString = "14.0";
+                    },
+                    FixItMessage = "Open `Project Settings` > `Player` > `iOS settings` > `Other Settings` and set the target iOS version to 14.0 or higher.",
+                    FixItAutomatic = true,
+                    Error = true
                 },
                 new BuildValidationRule
                 {
-                    Category = kCategory,
-                    Message = "A location usage description must be provided when using location services with VPS",
-                    CheckPredicate = () =>
+                    Category = Category,
+                    Message = "If using Lightship ARDK VPS or Scanning features for iOS, set the location usage description.",
+                    CheckPredicate = () => !string.IsNullOrEmpty(getIosLocationUsageDescription.Invoke()),
+                    IsRuleEnabled = () =>
                     {
-                        if (testFlag)
-                        {
-                            return !string.IsNullOrEmpty(iOSLocUsageDesc);
-                        }
-                        return !string.IsNullOrEmpty(PlayerSettings.iOS.locationUsageDescription);
+                        var isFeatureEnabled =
+                            lightshipSettings.UseLightshipScanning ||
+                            lightshipSettings.UseLightshipPersistentAnchor;
+                        return
+                            getIosIsLightshipPluginEnabled.Invoke() &&
+                            isFeatureEnabled;
                     },
-                    IsRuleEnabled = () => lightshipSettings.UseLightshipPersistentAnchor,
                     FixIt = () =>
                     {
                         PlayerSettings.iOS.locationUsageDescription = "Lightship VPS needs access to your location.";
                     },
-                    FixItMessage = "Please go to Project Settings > Player > iOS > Other Settings and provide a location usage description.",
+                    FixItMessage = "Open 'Project Settings' > 'Player' > 'iOS Settings' > `Other Settings` and set the location usage description.",
                     FixItAutomatic = true,
                     Error = true
                 }
@@ -218,149 +267,171 @@ namespace Niantic.Lightship.AR.Editor
             return iOSRules;
         }
 
-        internal static BuildValidationRule[] CreateAndroidRules(AndroidSdkVersions androidTargetVersion, bool testFlag)
+        internal static BuildValidationRule[] CreateAndroidRules(
+            [NotNull] Func<bool> getAndroidIsLightshipPluginEnabled,
+            [NotNull] Func<int> getAndroidTargetSdkVersion,
+            [NotNull] Func<string> getAndroidGradleVersion,
+            [NotNull] Func<BuildTarget> getActiveBuildTarget)
         {
             var androidRules = new[]
             {
                 new BuildValidationRule
                 {
-                    Category = kCategory,
-                    Message = "Please enable the 'Niantic Lightship SDK' plugin in 'XR Plug-in Management'.",
-                    CheckPredicate = IsLightshipPluginEnabledAndroid,
-                    FixItMessage = "Open Project Setting > XR Plug-in Management > Android tab and enable `Niantic Lightship SDK`.",
+                    Category = Category,
+                    Message = "If using Lightship ARDK for Android, enable the 'Niantic Lightship SDK' plug-in.",
+                    CheckPredicate = getAndroidIsLightshipPluginEnabled.Invoke,
                     FixIt = () =>
                     {
-                        var generalSettings = XRGeneralSettingsPerBuildTarget.XRGeneralSettingsForBuildTarget(BuildTargetGroup.Android);
-
-                        XRPackageMetadataStore.RemoveLoader(generalSettings.AssignedSettings,
-                            typeof(UnityEngine.XR.ARCore.ARCoreLoader).FullName, BuildTargetGroup.Android);
-                        XRPackageMetadataStore.RemoveLoader(generalSettings.AssignedSettings,
-                            OculusLoader, BuildTargetGroup.Android);
-                        XRPackageMetadataStore.RemoveLoader(generalSettings.AssignedSettings,
-                            MockHmdLoader, BuildTargetGroup.Android);
-
-                        XRPackageMetadataStore.AssignLoader(generalSettings.AssignedSettings,
-                            typeof(LightshipARCoreLoader).FullName, BuildTargetGroup.Android);
+                        SettingsService.OpenProjectSettings(XRPlugInManagementPath);
                     },
+                    FixItMessage = "Open `Project Settings` > `XR Plug-in Management` > `Android settings` and enable the 'Niantic Lightship SDK' plug-in.",
+                    FixItAutomatic = false,
                     Error = false,
-                    FixItAutomatic = true
                 },
                 new BuildValidationRule
                 {
-                    Category = kCategory,
-                    Message = "Android target version must be API level 33 or higher to publish app on Google Play",
+                    Category = Category,
+                    Message = $"If using Lightship ARDK for Android, set the Android Gradle path to that of a Gradle of version {s_minGradleVersion} or higher.",
+                    CheckPredicate = () => new Version(getAndroidGradleVersion.Invoke()) >= s_minGradleVersion,
+                    IsRuleEnabled = () =>
+                        getAndroidIsLightshipPluginEnabled.Invoke() &&
+                        getActiveBuildTarget.Invoke() == BuildTarget.Android,
+                    FixIt = () =>
+                    {
+                        SettingsService.OpenUserPreferences(PreferencesExternalToolsPath);
+                    },
+                    FixItMessage = $"Open `Preferences` > `External Tools` and set the Android Gradle path to that of a Gradle of version {s_minGradleVersion} or higher.",
+                    FixItAutomatic = false,
+                    HelpText = "For further assistance, follow the instructions in the Lightship SDK docs.",
+                    HelpLink = UpdateGradleVersionHelpLink,
+                    Error = true
+                },
+                new BuildValidationRule
+                {
+                    Category = Category,
+                    Message = "If using Lightship ARDK for Android, set the graphics API to OpenGLES3.",
+                    IsRuleEnabled = getAndroidIsLightshipPluginEnabled.Invoke,
                     CheckPredicate = () =>
                     {
-                        if (testFlag)
-                        {
-                            return (int)androidTargetVersion >= 33;
-                        }
-                        return (int)PlayerSettings.Android.targetSdkVersion >= 33;
+                        var graphicsApis = PlayerSettings.GetGraphicsAPIs(BuildTarget.Android);
+                        return graphicsApis.Length > 0 && graphicsApis[0] == GraphicsDeviceType.OpenGLES3;
                     },
-                    FixItMessage = "Please go to Project Settings > Player > Android > Other Settings and change target API level to 33",
+                    FixItMessage = "Open `Project Settings` > `Player` > `Android setting` and disable 'Auto Graphics API' then set the graphics API to OpenGLES3",
                     FixIt = () =>
                     {
-#if UNITY_2023_1_OR_NEWER
-                        PlayerSettings.Android.minSdkVersion = AndroidSdkVersions.AndroidApiLevel33;
-#else
-                        SettingsService.OpenProjectSettings("Project/Player");
-#endif
+                        PlayerSettings.SetUseDefaultGraphicsAPIs(BuildTarget.Android, false);
+                        var currentGraphicsApis = PlayerSettings.GetGraphicsAPIs(BuildTarget.Android);
+                        GraphicsDeviceType[] correctGraphicsApis;
+                        if (currentGraphicsApis.Length == 0)
+                        {
+                            correctGraphicsApis = new[]
+                            {
+                                GraphicsDeviceType.OpenGLES3
+                            };
+                        }
+                        else
+                        {
+                            var graphicApis = new List<GraphicsDeviceType>(currentGraphicsApis.Length);
+                            graphicApis.Add(GraphicsDeviceType.OpenGLES3);
+                            foreach (var graphicsApi in currentGraphicsApis)
+                            {
+                                if (graphicsApi != GraphicsDeviceType.OpenGLES3)
+                                {
+                                    graphicApis.Add(graphicsApi);
+                                }
+                            }
+                            correctGraphicsApis = graphicApis.ToArray();
+                        }
+                        PlayerSettings.SetGraphicsAPIs(BuildTarget.Android, correctGraphicsApis);
                     },
-#if UNITY_2023_1_OR_NEWER
-                    FixItAutomatic = true,
-#else
-                    FixItAutomatic = false,
-#endif
-                    Error = false
+                    Error = true
                 },
+#if !UNITY_2022_1_OR_NEWER
+                // This rule is only enabled on Unity versions 2022 or lower since Unity 2022 no longer has
+                // a means to programatically set the android sdk version to 33 as it expects the
+                // "highest installed version" option to be used
                 new BuildValidationRule
                 {
-                    Category = kCategory,
-                    Message = $"Lightship SDK requires at least Gradle version {s_minGradleVersion}. Make sure to set correct gradle path in Preferences > External Tools",
-                    CheckPredicate = () => GetGradleVersion() >= s_minGradleVersion,
-                    FixIt = () => { SettingsService.OpenUserPreferences("Preferences/External Tools");},
-                    IsRuleEnabled = () => EditorUserBuildSettings.activeBuildTarget == BuildTarget.Android,
-                    HelpText = "Follow the instructions in the Lightship SDK docs for building for Android apps with OpenCL",
-                    HelpLink = UpdateGradleVersionHelpLink,
-                    FixItMessage = "Please go to Preferences > External Tools and manually update your gradle version to 6.7.1 or greater.",
-                    FixItAutomatic = false,
+                    Category = Category,
+                    Message = $"If using Lightship ARDK for Android, set the target Android SDK version to 33 or higher.",
+                    CheckPredicate = () => getAndroidTargetSdkVersion.Invoke() >= 33,
+                    IsRuleEnabled = getAndroidIsLightshipPluginEnabled.Invoke,
+                    FixIt = () => PlayerSettings.Android.targetSdkVersion = AndroidSdkVersions.AndroidApiLevel33,
+                    FixItMessage = $"Open `Project Settings` > `Player` > 'Android settings' > `Other Settings` and set the target Android SDK version to 33 or higher.",
+                    FixItAutomatic = true,
                     Error = true
                 }
+#endif
             };
             return androidRules;
         }
 
-        internal static BuildValidationRule[] CreateStandaloneRules()
+        internal static BuildValidationRule[] CreateStandaloneRules(
+            [NotNull] Func<bool> getStandaloneIsLightshipPluginEnabled)
         {
             var standaloneRules = new[]
             {
                 new BuildValidationRule
                 {
-                    Category = kCategory,
-                    Message = "Please enable the 'Niantic Lightship SDK' plugin in 'XR Plug-in Management'.",
-                    CheckPredicate = IsLightshipPluginEnabledStandalone,
-                    FixItMessage =
-                        "Open Project Setting > XR Plug-in Management > Standalone tab and enable `Niantic Lightship SDK`.",
+                    Category = Category,
+                    Message = "If using Lightship ARDK for Standalone, enable the 'Niantic Lightship SDK' plug-in.",
+                    CheckPredicate = getStandaloneIsLightshipPluginEnabled.Invoke,
                     FixIt = () =>
                     {
-                        var generalSettings =
-                            XRGeneralSettingsPerBuildTarget.XRGeneralSettingsForBuildTarget(BuildTargetGroup.Standalone);
-
-                        XRPackageMetadataStore.RemoveLoader(generalSettings.AssignedSettings,
-                            typeof(UnityEngine.XR.Simulation.SimulationLoader).FullName, BuildTargetGroup.Standalone);
-                        XRPackageMetadataStore.RemoveLoader(generalSettings.AssignedSettings,
-                            OculusLoader, BuildTargetGroup.Standalone);
-                        XRPackageMetadataStore.RemoveLoader(generalSettings.AssignedSettings,
-                            OpenXRLoader, BuildTargetGroup.Standalone);
-                        XRPackageMetadataStore.RemoveLoader(generalSettings.AssignedSettings,
-                            MockHmdLoader, BuildTargetGroup.Standalone);
-
-                        XRPackageMetadataStore.AssignLoader(generalSettings.AssignedSettings,
-                            typeof(LightshipStandaloneLoader).FullName, BuildTargetGroup.Standalone);
+                        SettingsService.OpenProjectSettings(XRPlugInManagementPath);
                     },
+                    FixItMessage = "Open `Project Settings` > `XR Plug-in Management` > `Standalone settings` and enable the 'Niantic Lightship SDK' plug-in.",
+                    FixItAutomatic = false,
                     Error = false,
-                    FixItAutomatic = true
-                }
+                },
             };
             return standaloneRules;
         }
 
-        static bool IsLightshipPluginEnablediOS()
+        private static bool GetIosIsLightshipPluginEnabled()
         {
-            var generalSettings = XRGeneralSettingsPerBuildTarget.XRGeneralSettingsForBuildTarget(BuildTargetGroup.iOS);
-            if (generalSettings == null)
-                return false;
-
-            var managerSettings = generalSettings.AssignedSettings;
-
-            return managerSettings != null && managerSettings.activeLoaders.Any(loader => loader is LightshipARKitLoader);
+            return LightshipEditorUtilities.GetIosIsLightshipPluginEnabled();
         }
 
-        static bool IsLightshipPluginEnabledAndroid()
+        private static bool GetAndroidIsLightshipPluginEnabled()
         {
-            var generalSettings = XRGeneralSettingsPerBuildTarget.XRGeneralSettingsForBuildTarget(BuildTargetGroup.Android);
-            if (generalSettings == null)
-                return false;
-
-            var managerSettings = generalSettings.AssignedSettings;
-
-            return managerSettings != null && managerSettings.activeLoaders.Any(loader => loader is LightshipARCoreLoader);
+            return LightshipEditorUtilities.GetAndroidIsLightshipPluginEnabled();
         }
 
-        static bool IsLightshipPluginEnabledStandalone()
+        private static bool GetStandaloneIsLightshipPluginEnabled()
         {
-            var generalSettings = XRGeneralSettingsPerBuildTarget.XRGeneralSettingsForBuildTarget(BuildTargetGroup.Standalone);
-            if (generalSettings == null)
-                return false;
-
-            var managerSettings = generalSettings.AssignedSettings;
-
-            return managerSettings != null && managerSettings.activeLoaders.Any(loader => loader is LightshipStandaloneLoader);
+            return LightshipEditorUtilities.GetStandaloneIsLightshipPluginEnabled();
         }
 
-        static Version GetGradleVersion()
+        private static string GetAndroidGradleVersion()
         {
-            return Gradle.TryGetVersion(out var gradleVersion, out var _) ? gradleVersion : new Version(0, 0);
+            // Note: This Gradle API call only works if the target platform is set to Android before making this call
+            return Gradle.TryGetVersion(out var gradleVersion, out var message) ? gradleVersion.ToString() : new Version(0, 0).ToString();
+        }
+
+        private static string GetUnityVersion()
+        {
+            return Regex.Replace(Application.unityVersion, "[A-Za-z ]", "");
+        }
+
+        private static BuildTarget GetActiveBuildTarget()
+        {
+            return EditorUserBuildSettings.activeBuildTarget;
+        }
+
+        private static string GetIosTargetOsVersionString()
+        {
+            return PlayerSettings.iOS.targetOSVersionString;
+        }
+
+        private static string GetIosLocationUsageDescription()
+        {
+            return PlayerSettings.iOS.locationUsageDescription;
+        }
+
+        private static int GetAndroidTargetSdkVersion()
+        {
+            return (int)PlayerSettings.Android.targetSdkVersion;
         }
     }
 }

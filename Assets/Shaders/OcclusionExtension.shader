@@ -3,7 +3,9 @@ Shader "Lightship/OcclusionExtension"
     Properties
     {
         _Depth ("DepthTexture", 2D) = "black" {}
+        _FusedDepth("FusedDepthTexture", 2D) = "black" {}
         _Semantics ("SemanticsTexture", 2D) = "black" {}
+        _StabilizationThreshold ("Stabilization Threshold", Range(0.0, 1.0)) = 0.5
     }
     SubShader
     {
@@ -29,6 +31,9 @@ Shader "Lightship/OcclusionExtension"
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
+            #pragma multi_compile_local __ FEATURE_SUPPRESSION
+            #pragma multi_compile_local __ FEATURE_STABILIZATION
+            #pragma multi_compile_local __ FEATURE_DEBUG
 
             #include "UnityCG.cginc"
 
@@ -41,12 +46,20 @@ Shader "Lightship/OcclusionExtension"
             struct v2f
             {
               float4 vertex : SV_POSITION;
-              float3 semantics_uv : TEXCOORD0;
-              float2 depth_uv : TEXCOORD1;
+              float2 depth_uv : TEXCOORD0;
+
+#ifdef FEATURE_SUPPRESSION
+              float3 semantics_uv : TEXCOORD1;
+#endif
+
+#ifdef FEATURE_STABILIZATION
+              float2 vertex_uv : TEXCOORD2;
+#endif
             };
 
             // Samplers for depth and semantics textures
             sampler2D _Depth;
+            sampler2D _FusedDepth;
             sampler2D _Semantics;
 
             // The semantics texture is raw and it requires a full affine and warp transform
@@ -55,6 +68,7 @@ Shader "Lightship/OcclusionExtension"
             float4x4 _DisplayMatrix;
 
             float _UnityCameraForwardScale;
+            float _StabilizationThreshold;
             int _BitMask;
 
             inline float ConvertDistanceToDepth(float d)
@@ -70,35 +84,73 @@ Shader "Lightship/OcclusionExtension"
             {
                 v2f o;
                 o.vertex = UnityObjectToClipPos(v.vertex);
-                o.semantics_uv = mul(_SemanticsTransform, float4(v.uv, 1.0f, 1.0f)).xyz;
                 o.depth_uv = mul(_DisplayMatrix, float4(v.uv, 1.0f, 1.0f)).xy;
+
+#ifdef FEATURE_SUPPRESSION
+                o.semantics_uv = mul(_SemanticsTransform, float4(v.uv, 1.0f, 1.0f)).xyz;
+#endif
+
+#ifdef FEATURE_STABILIZATION
+                o.vertex_uv = v.uv;
+#endif
+
                 return o;
             }
 
             struct fragOutput {
               float depth : SV_Depth;
+#ifdef FEATURE_DEBUG
+              fixed4 color : SV_Target;
+#endif
             };
 
             fragOutput frag(v2f i)
             {
+              fragOutput o;
+
+              // Infer the far plane distance
+#ifdef UNITY_REVERSED_Z
+              const float maxDepth = 0.0f;
+#else
+              const float maxDepth = 1.0f;
+#endif
+
+#ifdef FEATURE_STABILIZATION
+              // Sample non-linear frame depth
+              float frameDepth = ConvertDistanceToDepth(tex2D(_Depth, i.depth_uv).r);
+
+              // Sample non-linear fused depth
+              float fusedDepth = tex2D(_FusedDepth, i.vertex_uv).r;
+
+              // Linearize and compare
+              float frameLinear = Linear01Depth(frameDepth);
+              float fusedLinear = Linear01Depth(fusedDepth);
+              bool useFrameDepth = fusedLinear == maxDepth || (abs(fusedLinear - frameLinear) / fusedLinear) >= _StabilizationThreshold;
+
+              // Determine the depth value
+              float depth = useFrameDepth ? frameDepth : fusedDepth;
+#else
+              float depth = ConvertDistanceToDepth(tex2D(_Depth, i.depth_uv).r);
+#endif
+
+#ifdef FEATURE_SUPPRESSION
               // Sample semantics
               float2 semantics_uv = float2(i.semantics_uv.x / i.semantics_uv.z, i.semantics_uv.y / i.semantics_uv.z);
               uint mask = asuint(tex2D(_Semantics, semantics_uv).r);
-
-              fragOutput o;
-
-              if ((mask & _BitMask) != 0) {
-                // Push the depth value to the far plane
-#ifdef UNITY_REVERSED_Z
-                o.depth = 0.0f;
+              o.depth = (mask & _BitMask) != 0 ? maxDepth : depth;
 #else
-                o.depth = 1.0f;
+              o.depth = depth;
 #endif
-              } else {
-                // Write the default depth if the pixel does not satisfy the semantic mask
-                o.depth = ConvertDistanceToDepth(tex2D(_Depth, i.depth_uv).r);
-              }
 
+#ifdef FEATURE_DEBUG
+
+#ifdef UNITY_REVERSED_Z
+              o.color = fixed4(o.depth, o.depth, o.depth, 1.0f);
+#else
+              o.color = fixed4(1.0f - o.depth, 1.0f - o.depth, 1.0f - o.depth, 1.0f);
+#endif
+
+#endif
               return o;
             }
             ENDCG

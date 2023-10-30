@@ -1,3 +1,4 @@
+// Copyright 2023 Niantic, Inc. All Rights Reserved.
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -6,6 +7,7 @@ using UnityEngine;
 using System.Collections;
 
 #if UNITY_ANDROID && UNITY_EDITOR
+using Niantic.Lightship.AR.Utilities.Log;
 using UnityEditor.Android;
 #endif
 
@@ -26,6 +28,7 @@ namespace Niantic.ARDK.Editor
     // List of permissions:
     private const string CameraPermissionString = "android.permission.CAMERA";
     private const string ReadPermissionString = "android.permission.READ_EXTERNAL_STORAGE";
+    private const string InternetPermissionString = "android.permission.INTERNET";
 
     // List of features:
     // Used to specify feature usage
@@ -65,6 +68,7 @@ namespace Niantic.ARDK.Editor
       var androidManifest = new AndroidManifest(GetManifestPath(basePath));
       needsWrite |= androidManifest.AddPermissionRequest(CameraPermissionString);
       needsWrite |= androidManifest.AddPermissionRequest(ReadPermissionString);
+      needsWrite |= androidManifest.AddPermissionRequest(InternetPermissionString);
       needsWrite |= androidManifest.AddQuery(ARCoreNameString);
       needsWrite |= androidManifest.AddFeature(ARCoreFeatureString, false);
       needsWrite |= androidManifest.AddOpenClNativeLibraries();
@@ -80,7 +84,7 @@ namespace Niantic.ARDK.Editor
     {
       get
       {
-        return 1;
+        return 2;
       }
     }
 
@@ -126,7 +130,7 @@ namespace Niantic.ARDK.Editor
       }
       else
       {
-        Debug.LogWarning("build.gradle not found. Unable to set gradle plugin version");
+        Log.Warning("build.gradle not found. Unable to set gradle plugin version");
       }
     }
 
@@ -190,10 +194,10 @@ namespace Niantic.ARDK.Editor
 
         // These should never be null, but log an error if they are
         if (ApplicationElement == null)
-          Debug.LogError(ApplicationNullErrorMessage);
+          Log.Error(ApplicationNullErrorMessage);
 
         if (ManifestElement == null)
-          Debug.LogError(ManifestNullErrorMessage);
+          Log.Error(ManifestNullErrorMessage);
       }
 
       // Helper to add a <queries> element to the <manifest> block

@@ -1,12 +1,14 @@
+// Copyright 2023 Niantic, Inc. All Rights Reserved.
 using System;
 using System.Collections.Generic;
 
 using Unity.Collections;
 using UnityEngine;
 using UnityEngine.SubsystemsImplementation;
+using Niantic.Lightship.AR.Utilities.Log;
 using UnityEngine.XR.ARSubsystems;
 
-namespace Niantic.Lightship.AR.Subsystems
+namespace Niantic.Lightship.AR.XRSubsystems
 {
     /// <summary>
     /// Base class for a persistent anchor subsystem.
@@ -39,10 +41,17 @@ namespace Niantic.Lightship.AR.Subsystems
         protected override void OnStart()
         {
             base.OnStart();
-
 #if DEVELOPMENT_BUILD || UNITY_EDITOR
             m_ValidationUtility = new();
 #endif
+        }
+
+        // One case of Vps Session ending
+        protected override void OnStop()
+        {
+            base.OnStop();
+            OnSubsystemStop?.Invoke();
+            ResetTelemetryMetrics();
         }
 
         /// <summary>
@@ -61,14 +70,24 @@ namespace Niantic.Lightship.AR.Subsystems
             var gotNetworkStatus = provider.GetNetworkStatusUpdate(out var networkStatuses);
             if (gotNetworkStatus)
             {
-#if ARDK_DEBUG_LOG_ENABLED
 
                 foreach (var status in networkStatuses)
                 {
-                    Debug.Log($"Persistent Anchor request {status.RequestId} for {status.Type} got a status {status.Status}," +
+                    // On success or fail, increment request count. Don't count pending
+                    if (status.Status == RequestStatus.Successful || status.Status == RequestStatus.Failed)
+                    {
+                        // Defaults to 0 if not present
+                        NetworkErrorCodeCounts.TryGetValue(status.Error, out var count);
+                        // Increment then replace
+                        NetworkErrorCodeCounts[status.Error] = ++count;
+
+                        NumberServerRequests++;
+                    }
+#if ARDK_DEBUG_LOG_ENABLED
+                    Log.Info($"Persistent Anchor request {status.RequestId} for {status.Type} got a status {status.Status}," +
                         $" with an error {status.Error} and RTT of {Math.Max(status.EndTimeMs, status.StartTimeMs) - status.StartTimeMs}ms");
-                }
 #endif
+                }
             }
 
             var gotLocalizationStatus = provider.GetLocalizationStatusUpdate(out var localizationStatuses);
@@ -76,7 +95,7 @@ namespace Niantic.Lightship.AR.Subsystems
             {
                 foreach (var status in localizationStatuses)
                 {
-                    Debug.Log($"Localization got a result of {status.Status} with LocalizationConfidence {status.LocalizationConfidence}");
+                    Log.Info($"Localization got a result of {status.Status} with LocalizationConfidence {status.LocalizationConfidence}");
                 }
             }
 #if DEVELOPMENT_BUILD || UNITY_EDITOR
@@ -129,8 +148,23 @@ namespace Niantic.Lightship.AR.Subsystems
         /// <returns>True if vps session id is present, false otherwise</returns>
         public bool GetVpsSessionId(out string vpsSessionId)
         {
-            return provider.GetVpsSessionId(out vpsSessionId);
+            var success = provider.GetVpsSessionId(out vpsSessionId);
+            return success;
         }
+
+        // Invoked when the subsystem is stopped
+        internal event Action OnSubsystemStop;
+
+        internal int NumberServerRequests { get; private set; } = 0;
+
+        // If we discover that the vps session has reset, we should reset the number of server requests
+        internal void ResetTelemetryMetrics()
+        {
+            NumberServerRequests = 0;
+            NetworkErrorCodeCounts.Clear();
+        }
+
+        internal readonly Dictionary<ErrorCode, int> NetworkErrorCodeCounts = new();
 
         /// <summary>
         /// An abstract class to be implemented by providers of this subsystem.

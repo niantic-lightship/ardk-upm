@@ -4,7 +4,7 @@ using System;
 
 using UnityEngine.XR.ARSubsystems;
 
-namespace Niantic.Lightship.AR.Subsystems
+namespace Niantic.Lightship.AR.XRSubsystems
 {
     public enum RequestStatus : byte
     {

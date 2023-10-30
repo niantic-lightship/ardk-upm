@@ -1,14 +1,14 @@
-// Copyright 2022 Niantic, Inc. All Rights Reserved.
+// Copyright 2023 Niantic, Inc. All Rights Reserved.
 
 using System;
 using System.Linq;
 
-namespace Niantic.Lightship.AR
+namespace Niantic.Lightship.AR.VpsCoverage
 {
     /// Received result from server request for CoverageAreas.
     public class CoverageAreasResult
     {
-        internal CoverageAreasResult(_HttpResponse<_CoverageAreasResponse> response)
+        internal CoverageAreasResult(HttpResponse<CoverageAreasResponse> response)
         {
             Status = response.Status;
 

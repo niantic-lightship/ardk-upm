@@ -4,6 +4,7 @@ using System;
 using System.IO;
 using System.Text;
 using UnityEngine;
+using static Niantic.Lightship.AR.Utilities.Log.Log;
 
 namespace Niantic.Lightship.AR.Utilities.Device
 {
@@ -35,8 +36,9 @@ namespace Niantic.Lightship.AR.Utilities.Device
 
             _fullFilePath = Path.Combine(path, fileName);
 
-            File.Open(_fullFilePath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite);
-            Debug.Log($"Creating tracker for {_fullFilePath}");
+            var stream = File.Open(_fullFilePath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite);
+            stream.Close();
+            Info($"Creating tracker for {_fullFilePath}");
         }
 
         /// <summary>
