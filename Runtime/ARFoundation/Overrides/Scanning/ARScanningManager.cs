@@ -1,10 +1,11 @@
-// Copyright 2023 Niantic, Inc. All Rights Reserved.
+// Copyright 2022-2023 Niantic.
 using System.IO;
 using System.Threading.Tasks;
 using Niantic.Lightship.AR.Utilities.Log;
 using Niantic.ARDK.AR.Scanning;
 using Niantic.Lightship.AR.ARFoundation;
 using Niantic.Lightship.AR.Common;
+using Niantic.Lightship.AR.Utilities;
 using Niantic.Lightship.AR.XRSubsystems;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -14,8 +15,11 @@ using UnityEngine.XR.ARFoundation;
 namespace Niantic.Lightship.AR.Scanning
 {
     /// <summary>
-    /// The manager for the scanning subsystem.
+    /// A manager for recording scans of the AR scene for Playback.
+    /// The recording will start when the manager is enabled.
+    /// Use SaveScan() to stop and save the recording into the ScanPath.
     /// </summary>
+    [PublicAPI]
     [DisallowMultipleComponent]
     [DefaultExecutionOrder(LightshipARUpdateOrder.ScanningManager)]
     public class ARScanningManager

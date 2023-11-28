@@ -1,4 +1,4 @@
-// Copyright 2023 Niantic, Inc. All Rights Reserved.
+// Copyright 2022-2023 Niantic.
 
 using System;
 using System.Collections.Generic;
@@ -408,7 +408,7 @@ namespace Niantic.Lightship.AR.Semantics
             // Get normalized image coordinates
             var x = viewportX + 0.5f;
             var y = viewportY + 0.5f;
-            var uv = new Vector2(x / Screen.width, y / Screen.height);
+            var uv = new Vector2(x / cameraParams.Value.screenWidth, y / cameraParams.Value.screenHeight);
 
             // Sample the image
             uint sample = cpuImage.Sample<uint>(uv, samplerMatrix);

@@ -1,5 +1,6 @@
-// Copyright 2023 Niantic, Inc. All Rights Reserved.
+// Copyright 2022-2023 Niantic.
 using System;
+using Niantic.Lightship.AR.Utilities;
 
 namespace Niantic.Lightship.AR.XRSubsystems
 {
@@ -8,6 +9,7 @@ namespace Niantic.Lightship.AR.XRSubsystems
     /// </summary>
     /// <seealso cref="XRPersistentAnchorPayload"/>
     [Serializable]
+    [PublicAPI]
     public struct XRPersistentAnchorPayload : IEquatable<XRPersistentAnchorPayload>
     {
         /// <summary>

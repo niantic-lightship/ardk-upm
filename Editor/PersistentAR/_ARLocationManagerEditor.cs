@@ -1,4 +1,4 @@
-// Copyright 2023 Niantic, Inc. All Rights Reserved.
+// Copyright 2022-2023 Niantic.
 #if UNITY_EDITOR
 using System;
 using System.Collections.Generic;

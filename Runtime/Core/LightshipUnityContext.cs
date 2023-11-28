@@ -1,4 +1,4 @@
-// Copyright 2023 Niantic, Inc. All Rights Reserved.
+// Copyright 2022-2023 Niantic.
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -182,10 +182,10 @@ namespace Niantic.Lightship.AR.Core
                 s_telemetryService?.Dispose();
                 s_telemetryService = null;
 
-                ProfilerUtility.ShutdownAll();
-
                 NativeApi.Lightship_ARDK_Unity_Context_Shutdown(UnityContextHandle);
                 UnityContextHandle = IntPtr.Zero;
+
+                ProfilerUtility.ShutdownAll();
             }
 #endif
         }

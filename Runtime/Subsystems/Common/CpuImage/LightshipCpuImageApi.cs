@@ -1,4 +1,4 @@
-// Copyright 2023 Niantic, Inc. All Rights Reserved.
+// Copyright 2022-2023 Niantic.
 using System;
 using System.Collections.Generic;
 using Niantic.Lightship.AR.Utilities.Log;
@@ -166,7 +166,10 @@ namespace Niantic.Lightship.AR.Subsystems.Common
         /// </summary>
         /// <param name="nativeHandle">A unique identifier for the camera image to convert.</param>
         /// <param name="conversionParams">The parameters to use during the conversion.</param>
-        /// <param name="destinationBuffer">A buffer to write the converted image to.</param>
+        /// <param name="destinationBuffer">
+        ///     A buffer to write the converted image to. Its contents are undefined if the new dimensions
+        ///     are larger than the image's original dimensions.
+        /// </param>
         /// <param name="bufferLength">The number of bytes available in the buffer.</param>
         /// <returns>
         /// <c>true</c> if the image was converted and stored in <paramref name="destinationBuffer"/>.
@@ -193,35 +196,97 @@ namespace Niantic.Lightship.AR.Subsystems.Common
                 || _convertedTexture.height != conversionParams.outputDimensions.y
                 || _convertedTexture.format != conversionParams.outputFormat)
             {
-                _convertedTexture.Reinitialize(conversionParams.outputDimensions.x, conversionParams.outputDimensions.y,
-                    conversionParams.outputFormat, false);
+                _convertedTexture.Reinitialize
+                (
+                    conversionParams.outputDimensions.x,
+                    conversionParams.outputDimensions.y,
+                    conversionParams.outputFormat,
+                    false
+                );
             }
 
+            _pool.TryGetData(nativeHandle, out var sourceData);
             var sourceTexture = new Texture2D(image.Dimensions.x, image.Dimensions.y, image.Format.ConvertToTextureFormat(), false);
+            sourceTexture.LoadRawTextureData(sourceData);
+            sourceTexture.Apply();
 
-            Graphics.CopyTexture
-            (
-                sourceTexture,
-                0,
-                0,
-                conversionParams.inputRect.x,
-                conversionParams.inputRect.y,
-                conversionParams.inputRect.width,
-                conversionParams.inputRect.height,
-                _convertedTexture,
-                0,
-                0,
-                0,
-                0
-            );
+            _convertedTexture.filterMode = FilterMode.Bilinear;
+            Blit(sourceTexture, _convertedTexture, conversionParams.transformation);
 
-            var imageArray = _convertedTexture.GetRawTextureData<byte>();
+            var convertedData = _convertedTexture.GetRawTextureData<byte>();
+
             unsafe
             {
-                UnsafeUtility.MemCpy(destinationBuffer.ToPointer(), imageArray.GetUnsafeReadOnlyPtr(), bufferLength);
+                UnsafeUtility.MemCpy(destinationBuffer.ToPointer(), convertedData.GetUnsafeReadOnlyPtr(), bufferLength);
             }
 
             return true;
+        }
+
+        private static void Blit
+        (
+            Texture sourceTexture,
+            Texture2D destinationTexture,
+            XRCpuImage.Transformation transformation = XRCpuImage.Transformation.None
+        )
+        {
+            var tmp =
+                RenderTexture.GetTemporary
+                (
+                    destinationTexture.width,
+                    destinationTexture.height,
+                    0,
+                    destinationTexture.graphicsFormat
+                );
+
+            var cachedRenderTarget = RenderTexture.active;
+
+            var (scale, offset) = CalculateBlitScale(transformation);
+
+            // Separating scaling and non-scaling in case the implementation for no scaling is more efficient.
+            if (scale != Vector2.one)
+            {
+                Graphics.Blit(sourceTexture, tmp, scale, offset);
+            }
+            else
+            {
+                Graphics.Blit(sourceTexture, tmp);
+            }
+
+            RenderTexture.ReleaseTemporary(tmp);
+
+            // Reads all pixels from the current render target and writes them to a texture.
+            var rect = new Rect(0, 0, destinationTexture.width, destinationTexture.height);
+            destinationTexture.ReadPixels(rect, 0, 0, false);
+
+            RenderTexture.active = cachedRenderTarget;
+        }
+
+        private static (Vector2 scale, Vector2 offset) CalculateBlitScale
+        (
+            XRCpuImage.Transformation transformation
+        )
+        {
+            var scale = Vector2.one;
+            var offset = Vector2.zero;
+
+            switch (transformation)
+            {
+                case XRCpuImage.Transformation.MirrorY:
+                    scale.x *= -1;
+                    offset.x = 1;
+                    break;
+
+                case XRCpuImage.Transformation.MirrorX:
+                    scale.y *= -1;
+                    offset.y = 1;
+                    break;
+
+                case XRCpuImage.Transformation.None:
+                    break;
+            }
+
+            return (scale, offset);
         }
 
         private static readonly Dictionary<XRCpuImage.Format, HashSet<TextureFormat>> s_SupportedConversions =

@@ -1,4 +1,4 @@
-// Copyright 2023 Niantic, Inc. All Rights Reserved.
+// Copyright 2022-2023 Niantic.
 
 using Newtonsoft.Json;
 using Niantic.Lightship.AR.Utilities.Log;
@@ -59,7 +59,10 @@ namespace Niantic.Lightship.AR.Loader
             get => _ardkConfiguration.TelemetryEndpoint;
         }
 
-        private class ArdkConfiguration
+        /// <summary>
+        /// Internal for testing purposes only.
+        /// </summary>
+        internal class ArdkConfiguration
         {
             public string ApiKey;
             public string ScanningEndpoint;

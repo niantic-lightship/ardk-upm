@@ -10,7 +10,8 @@
         "Unity.XR.ARKit",
         "Unity.InputSystem",
         "Unity.RenderPipelines.Universal.Runtime",
-        "Unity.RenderPipelines.Core.Runtime"
+        "Unity.RenderPipelines.Core.Runtime",
+        "Unity.XR.OpenXR"
     ],
     "includePlatforms": [
         "Android",

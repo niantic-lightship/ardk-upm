@@ -1,7 +1,8 @@
-// Copyright 2023 Niantic, Inc. All Rights Reserved.
+// Copyright 2022-2023 Niantic.
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using Niantic.Lightship.AR.Utilities;
 
 namespace Niantic.Lightship.AR.Scanning
 {
@@ -42,6 +43,7 @@ namespace Niantic.Lightship.AR.Scanning
     }
 
     /// Scan Quality Result.
+    [PublicAPI]
     public class ScanQualityResult
     {
         /// An overall score of the scan's quality. Range is 0-1, higher is better.
@@ -52,6 +54,7 @@ namespace Niantic.Lightship.AR.Scanning
         public List<ScanningSqcScores> RejectionReasons { get; set; }
     }
 
+    [PublicAPI]
     public interface IARScanQualityClassifier : IDisposable
     {
         /// <summary>

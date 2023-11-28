@@ -1,4 +1,4 @@
-// Copyright 2023 Niantic, Inc. All Rights Reserved.
+// Copyright 2022-2023 Niantic.
 
 #if UNITY_EDITOR
 
@@ -55,7 +55,7 @@ namespace Niantic.Lightship.AR.Editor
 
         private void OnEnable()
         {
-            _targetFrameRate = serializedObject.FindProperty("_frameRate");
+            _targetFrameRate = serializedObject.FindProperty("_targetFrameRate");
             _maximumIntegrationDistance = serializedObject.FindProperty("_maximumIntegrationDistance");
             _voxelSize = serializedObject.FindProperty("_voxelSize");
             _enableDistanceBasedVolumetricCleanup = serializedObject.FindProperty("_enableDistanceBasedVolumetricCleanup");

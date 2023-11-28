@@ -1,7 +1,7 @@
-// Copyright 2023 Niantic, Inc. All Rights Reserved.
+// Copyright 2022-2023 Niantic.
 using System;
 using System.Collections.Generic;
-
+using Niantic.Lightship.AR.Utilities;
 using Unity.Collections;
 using UnityEngine;
 using UnityEngine.SubsystemsImplementation;
@@ -20,6 +20,7 @@ namespace Niantic.Lightship.AR.XRSubsystems
     /// <para>This abstract class should be implemented by an XR provider and instantiated using the <c>SubsystemManager</c>
     /// to enumerate the available <see cref="XRPersistentAnchorSubsystemDescriptor"/>s.</para>
     /// </remarks>
+    [PublicAPI]
     public class XRPersistentAnchorSubsystem
         : TrackingSubsystem<XRPersistentAnchor, XRPersistentAnchorSubsystem, XRPersistentAnchorSubsystemDescriptor,
             XRPersistentAnchorSubsystem.Provider>

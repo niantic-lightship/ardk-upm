@@ -1,14 +1,18 @@
-// Copyright 2023 Niantic, Inc. All Rights Reserved.
-﻿
+// Copyright 2022-2023 Niantic.
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Niantic.Lightship.AR.Loader;
 using Niantic.Lightship.AR.Settings;
+using Niantic.Lightship.AR.Utilities;
 using UnityEngine;
 
 namespace Niantic.Lightship.AR.VpsCoverage
 {
+    /// <summary>
+    /// Client to request CoverageAreas and LocalizationTargets.
+    /// </summary>
+    [PublicAPI]
     public class CoverageClient
     {
         private const string BasePath = "api/json/v1/";
@@ -98,22 +102,64 @@ namespace Niantic.Lightship.AR.VpsCoverage
             return result;
         }
 
-        public async void TryGetCoverageAreas(LatLng queryLocation, int queryRadius,
-            Action<CoverageAreasResult> onAreasReceived)
+        /// <summary>
+        /// Request CoverageAreas at device location within a radius using the callback pattern.
+        /// </summary>
+        /// <param name="queryLocation">Center of query</param>
+        /// <param name="queryRadius">
+        ///     Radius for query between 0m and 2000m.
+        ///     A negative radius will default to the maximum radius of 2000m.
+        /// </param>
+        /// <param name="onAreasReceived">Callback invoked when the requested CoverageAreas are ready.</param>
+        public async void TryGetCoverageAreas
+        (
+            LatLng queryLocation,
+            int queryRadius,
+            Action<CoverageAreasResult> onAreasReceived
+        )
         {
             var result = await RequestCoverageAreasAsync(queryLocation, queryRadius);
             onAreasReceived?.Invoke(result);
         }
 
-        public async void TryGetLocalizationTargets(string[] targetIdentifiers,
-            Action<LocalizationTargetsResult> onTargetsReceived)
+        /// <summary>
+        /// Request LocalizationTargets for a set of identifiers using the callback pattern.
+        /// </summary>
+        /// <param name="targetIdentifiers">Set of unique identifiers of the requested targets.</param>
+        /// <param name="onTargetsReceived">Callback invoked when the requested LocalizationTargets are ready.</param>
+        public async void TryGetLocalizationTargets
+        (
+            string[] targetIdentifiers,
+            Action<LocalizationTargetsResult> onTargetsReceived
+        )
         {
             var result = await RequestLocalizationTargetsAsync(targetIdentifiers);
             onTargetsReceived?.Invoke(result);
         }
 
-        public async void TryGetCoverage(LatLng queryLocation, int queryRadius,
-            Action<AreaTargetsResult> onLocationsReceived, LocalizationTarget[] privateScanLocalizationTargets = null)
+        /// <summary>
+        /// Request coupled CoverageAreas and LocalizationTargets within a radius, using the callback pattern.
+        /// </summary>
+        /// <param name="queryLocation">Center of query</param>
+        /// <param name="queryRadius">
+        ///     Radius for query between 0m and 2000m.
+        ///     A negative radius will default to the maximum radius of 2000m.
+        /// </param>
+        /// <param name="onLocationsReceived">
+        ///     Callback invoked when the requested CoverageAreas and LocalizationTargets are ready.
+        /// </param>
+        /// <param name="privateScanLocalizationTargets">
+        ///     Optional. For any LocalizationTarget included in this array, a corresponding AreaTarget will be added to
+        ///     the AreaTargets returned through the onLocationsReceived callback. Specify your private AR Locations via
+        ///     the CoverageClientManager in order to utilize this parameter.
+        /// </param>
+        public async void TryGetCoverage
+        (
+            LatLng queryLocation,
+            int queryRadius,
+            Action<AreaTargetsResult> onLocationsReceived,
+            LocalizationTarget[] privateScanLocalizationTargets = null
+        )
         {
             var areasResult = await RequestCoverageAreasAsync(queryLocation, queryRadius);
             LocalizationTargetsResult targetsResult = null;
@@ -133,23 +179,36 @@ namespace Niantic.Lightship.AR.VpsCoverage
             }
 
             var responseStatus = targetsResult?.Status ?? areasResult.Status;
-            var locationsResult = new AreaTargetsResult(queryLocation, queryRadius, responseStatus, areasResult,
-                targetsResult, privateScanLocalizationTargets);
+            var locationsResult =
+                new AreaTargetsResult
+                (
+                    queryLocation,
+                    queryRadius,
+                    responseStatus,
+                    areasResult,
+                    targetsResult,
+                    privateScanLocalizationTargets
+                );
+
             onLocationsReceived?.Invoke(locationsResult);
         }
 
+        /// <summary>
         /// Downloads the image from the provided url as a texture, using the async await pattern.
-        /// @param onImageReceived Callback for downloaded image as texture. When download fails,
-        /// texture is returned as null.
+        /// </summary>
+        /// <param name="imageUrl">URL of the localization target's hint image</param>
         public async Task<Texture> TryGetImageFromUrl(string imageUrl)
         {
             var image = await HttpClient.DownloadImageAsync(imageUrl);
             return image;
         }
 
+        /// <summary>
         /// Downloads the image from the provided url as a texture, using the callback pattern.
-        /// @param onImageReceived Callback for downloaded image as texture. When download fails,
-        /// texture is returned as null.
+        /// </summary>
+        /// <param name="imageUrl"></param>
+        /// <param name="onImageDownloaded">Callback for downloaded image as texture. When download fails,
+        /// texture is returned as null.</param>
         public async void TryGetImageFromUrl(string imageUrl, Action<Texture> onImageDownloaded)
         {
             var image = await HttpClient.DownloadImageAsync(imageUrl);
@@ -160,10 +219,9 @@ namespace Niantic.Lightship.AR.VpsCoverage
         /// async await pattern.
         /// The source image is first resampled so the image is fitting for the limiting dimension, then
         /// it gets cropped to the fixed size.
-        /// @param width Fixed width of cropped image
-        /// @param height Fixed height of cropped image
-        /// @param onImageReceived Callback for downloaded image as texture. When download fails,
-        /// texture is returned as null.
+        /// <param name="imageUrl">URL of the localization target's hint image</param>
+        /// <param name="width">Fixed width of cropped image</param>
+        /// <param name="height">Fixed height of cropped image</param>
         public async Task<Texture> TryGetImageFromUrl(string imageUrl, int width, int height)
         {
             var image = await HttpClient.DownloadImageAsync(imageUrl + "=w" + width + "-h" + height + "-c");
@@ -174,10 +232,11 @@ namespace Niantic.Lightship.AR.VpsCoverage
         /// callback pattern.
         /// The source image is first resampled so the image is fitting for the limiting dimension, then
         /// it gets cropped to the fixed size.
-        /// @param width Fixed width of cropped image
-        /// @param height Fixed height of cropped image
-        /// @param onImageReceived Callback for downloaded image as texture. When download fails,
-        /// texture is returned as null.
+        /// <param name="imageUrl">URL of the localization target's hint image</param>
+        /// <param name="width">Fixed width of cropped image</param>
+        /// <param name="height">Fixed height Fixed height of cropped image</param>
+        /// <param name="onImageDownloaded">Callback for downloaded image as texture. When download fails
+        /// texture is returned as null.</param>
         public async void TryGetImageFromUrl(string imageUrl, int width, int height, Action<Texture> onImageDownloaded)
         {
             var image = await HttpClient.DownloadImageAsync(imageUrl + "=w" + width + "-h" + height + "-c");

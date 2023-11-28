@@ -1,7 +1,8 @@
-// Copyright 2023 Niantic, Inc. All Rights Reserved.
+// Copyright 2022-2023 Niantic.
 using System;
 using System.Collections.Generic;
 using Niantic.Lightship.AR.Subsystems.Common;
+using Niantic.Lightship.AR.Utilities;
 using UnityEngine;
 using UnityEngine.SubsystemsImplementation;
 using UnityEngine.XR.ARSubsystems;
@@ -11,6 +12,7 @@ namespace Niantic.Lightship.AR.XRSubsystems
     /// <summary>
     /// Defines an interface for interacting with semantic segmentation functionality.
     /// </summary>
+    [PublicAPI]
     public class XRSemanticsSubsystem
         : SubsystemWithProvider<XRSemanticsSubsystem, XRSemanticsSubsystemDescriptor, XRSemanticsSubsystem.Provider>
     {

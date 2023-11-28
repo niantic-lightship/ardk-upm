@@ -1,6 +1,7 @@
-// Copyright 2023 Niantic, Inc. All Rights Reserved.
+// Copyright 2022-2023 Niantic.
 using System;
 using System.Runtime.InteropServices;
+using Niantic.Lightship.AR.Utilities;
 using UnityEngine;
 using UnityEngine.XR.ARSubsystems;
 
@@ -10,6 +11,7 @@ namespace Niantic.Lightship.AR.XRSubsystems
     /// Describes session-relative data for an anchor.
     /// </summary>
     /// <seealso cref="XRPersistentAnchor"/>
+    [PublicAPI]
     [StructLayout(LayoutKind.Sequential)]
     public struct XRPersistentAnchor : ITrackable, IEquatable<XRPersistentAnchor>
     {

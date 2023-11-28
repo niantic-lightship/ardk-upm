@@ -1,21 +1,29 @@
-// Copyright 2023 Niantic, Inc. All Rights Reserved.
+// Copyright 2022-2023 Niantic.
 using System;
 using Niantic.Lightship.AR.Utilities.Log;
 using Niantic.Lightship.AR.Subsystems.Meshing;
 using Niantic.Lightship.AR.Utilities;
-using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
+using UnityEngine.Serialization;
+using UnityEngine.XR;
 using UnityEngine.XR.ARFoundation;
+using UnityEngine.XR.Management;
 
 
 namespace Niantic.Lightship.AR.Meshing
 {
+    /// <summary>
+    /// This component allows configuration of the additional functionality available in
+    /// Lightship's implementation of <see cref="XRMeshingSubsystem"/>.
+    /// </summary>
     [RequireComponent(typeof(ARMeshManager))]
+    [PublicAPI]
     public class LightshipMeshingExtension : MonoBehaviour
     {
       [SerializeField]
       [Tooltip("Target number of times per second to run the mesh update routine.")]
-      private int _frameRate = 10;
+      [FormerlySerializedAs("_frameRate")]
+      private int _targetFrameRate = 10;
 
       [Header("AR Fusion Parameters")]
 
@@ -33,7 +41,7 @@ namespace Niantic.Lightship.AR.Meshing
 
       [Header("AR Meshing Parameters")]
       [SerializeField]
-      [Tooltip("The size of the mesh blocks used for generating the mesh filter and mesh collider. This paremeter is automatically rounded to the nearest multiple of the voxel size.")]
+      [Tooltip("The size of the mesh blocks used for generating the mesh filter and mesh collider. This parameter is automatically rounded to the nearest multiple of the voxel size.")]
       private float _meshBlockSize = 1.4f;
 
       [SerializeField]
@@ -47,16 +55,16 @@ namespace Niantic.Lightship.AR.Meshing
       private bool _isDirty;
 
       /// <summary>
-      /// Get or set the frame rate that meshing will aim to run at
+      /// Get or set the frame rate that meshing will aim to run at.
       /// </summary>
       public int TargetFrameRate
       {
-          get => _frameRate;
+          get => _targetFrameRate;
           set
           {
-              if (value != _frameRate)
+              if (value != _targetFrameRate)
               {
-                  _frameRate = value;
+                  _targetFrameRate = value;
                   _isDirty = true;
               }
           }
@@ -172,16 +180,23 @@ namespace Niantic.Lightship.AR.Meshing
 
       private void Start()
       {
-         Configure();
+          // If the subsystem is not loaded yet due to manual XR loading, we'll try configuring again in Update.
+          Configure();
       }
 
       public void Configure()
       {
+          // Only call into native code if an XRMeshSubsystem is loaded.
+          // We should not cache the value of the validation because in the case of manual control of XR loaders,
+          // this can also be called during Update after the loader has been shut down and lead to an assertion.
+          if (!ValidateSubsystem())
+              return;
+
           _isDirty = false;
 
           LightshipMeshingProvider.Configure
           (
-              _frameRate,
+              _targetFrameRate,
               _maximumIntegrationDistance,
               _voxelSize,
               _enableDistanceBasedVolumetricCleanup,
@@ -197,6 +212,36 @@ namespace Niantic.Lightship.AR.Meshing
           {
               Configure();
           }
+      }
+
+      /// <summary>
+      /// Returns true if an XR loader is initialized and an XRMeshSubsystem is present.
+      /// </summary>
+      private bool ValidateSubsystem()
+      {
+          // If automatic XR loading is enabled, then subsystems will be available before the Awake call.
+          // However, if XR loading is done manually, then this component needs to check if initialization is complete.
+          var xrManager = XRGeneralSettings.Instance.Manager;
+          if (!xrManager.isInitializationComplete)
+              return false;
+
+          var meshSubsystem = xrManager.activeLoader.GetLoadedSubsystem<XRMeshSubsystem>();
+
+          if (meshSubsystem == null)
+          {
+              Log.Warning
+              (
+                  "Destroying LightshipMeshingExtension component because " +
+                  $"no active {typeof(XRMeshSubsystem).FullName} is available. " +
+                  "Please ensure that a valid loader configuration exists in the XR project settings " +
+                  "and that meshing is enabled."
+              );
+
+              Destroy(this);
+              return false;
+          }
+
+          return true;
       }
     }
 }

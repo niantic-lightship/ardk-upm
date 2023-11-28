@@ -1,4 +1,4 @@
-// Copyright 2023 Niantic, Inc. All Rights Reserved.
+// Copyright 2022-2023 Niantic.
 // Restrict inclusion to Android builds to avoid symbol resolution error
 
 #if UNITY_ANDROID || UNITY_EDITOR

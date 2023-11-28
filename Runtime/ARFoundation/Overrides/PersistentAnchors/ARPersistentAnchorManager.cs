@@ -1,4 +1,4 @@
-// Copyright 2023 Niantic, Inc. All Rights Reserved.
+// Copyright 2022-2023 Niantic.
 using System;
 using System.Collections.Generic;
 
@@ -188,6 +188,13 @@ namespace Niantic.Lightship.AR.PersistentAnchors
         public void DestroyAnchor(ARPersistentAnchor arPersistentAnchor)
         {
             _arPersistentAnchorManagerImplementation.DestroyAnchor(this, arPersistentAnchor);
+        }
+
+        // Force the ARTrackableManager to query into native and get updates
+        // @note Should only be called on the main thread because this could interact with GameObjects
+        internal void ForceUpdate()
+        {
+            this.Update();
         }
 
         internal new ARPersistentAnchor CreateTrackableImmediate(XRPersistentAnchor xrPersistentAnchor)

@@ -1,11 +1,9 @@
-// Copyright 2023 Niantic, Inc. All Rights Reserved.
+// Copyright 2022-2023 Niantic.
 
 using System;
 using Niantic.Lightship.AR.Utilities.Log;
 using Niantic.Lightship.AR.Core;
 using UnityEngine.XR.ARSubsystems;
-using Niantic.Lightship.AR.Subsystems;
-using Niantic.Lightship.AR.Subsystems.Scanning;
 using Niantic.Lightship.AR.Utilities.Textures;
 using Niantic.Lightship.AR.XRSubsystems;
 using UnityEngine;

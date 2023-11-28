@@ -1,23 +1,25 @@
-// Copyright 2023 Niantic, Inc. All Rights Reserved.
+// Copyright 2022-2023 Niantic.
 using System;
 using System.Collections.Generic;
-using Niantic.Lightship.AR.VpsCoverage;
+using Niantic.Lightship.AR.Utilities;
 
 namespace Niantic.Lightship.AR.VpsCoverage
 {
+    /// <summary>
+    /// Received result from server request for CoverageAreas and LocalizationTargets together.
+    /// </summary>
+    [PublicAPI]
     public class AreaTargetsResult
     {
-        /// <summary>
-        /// The AreaTargetsResult class represents the response object returned after making a VPS coverage query from the
-        /// CoverageClientManager. The VPS Coverage information is captured as a collection of AreaTarget structs.
-        /// </summary>
-        public AreaTargetsResult(
+        public AreaTargetsResult
+        (
             LatLng queryLocation,
             int queryRadius,
             ResponseStatus status,
             CoverageAreasResult areasResult,
             LocalizationTargetsResult targetsResult,
-            LocalizationTarget[] privateScanLocalizationTargets)
+            LocalizationTarget[] privateScanLocalizationTargets
+        )
         {
             QueryLocation = queryLocation;
             QueryRadius = queryRadius;
@@ -50,10 +52,14 @@ namespace Niantic.Lightship.AR.VpsCoverage
                 {
                     // For now, link an generated coverage area to a private scan until the infrastructure is ready for
                     // a private scan to be tied to some coverage area
-                    var privateScanCoverageArea = new CoverageArea(
-                        new[] { privateScanLocalizationTarget.Identifier },
-                        new[] { privateScanLocalizationTarget.Center },
-                        CoverageArea.Localizability.EXPERIMENTAL.ToString());
+                    var privateScanCoverageArea =
+                        new CoverageArea
+                        (
+                            new[] { privateScanLocalizationTarget.Identifier },
+                            new[] { privateScanLocalizationTarget.Center },
+                            CoverageArea.Localizability.EXPERIMENTAL.ToString()
+                        );
+
                     var areaTarget = new AreaTarget(privateScanCoverageArea, privateScanLocalizationTarget);
                     AreaTargets.Add(areaTarget);
                 }

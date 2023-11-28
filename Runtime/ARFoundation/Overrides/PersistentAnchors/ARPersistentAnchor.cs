@@ -1,4 +1,4 @@
-// Copyright 2023 Niantic, Inc. All Rights Reserved.
+// Copyright 2022-2023 Niantic.
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -70,6 +70,8 @@ namespace Niantic.Lightship.AR.PersistentAnchors
 
         internal ARPersistentAnchorInterpolator Interpolator { get; private set; }
 
+        private bool _wasntTrackingLastInterpolationApplication = false;
+
         private void Awake()
         {
             cachedTransform = transform;
@@ -103,7 +105,17 @@ namespace Niantic.Lightship.AR.PersistentAnchors
                 gameObject.AddComponent<ARPersistentAnchorInterpolator>();
             }
 
-            Interpolator.InvokeInterpolation(newPose, startPose);
+            if (_wasntTrackingLastInterpolationApplication || trackingState == TrackingState.None)
+            {
+                // Just jump to new pose after tracking was regained
+                Interpolator.InvokeInterpolation(newPose, newPose);
+            }
+            else
+            {
+                Interpolator.InvokeInterpolation(newPose, startPose);
+            }
+
+            _wasntTrackingLastInterpolationApplication = trackingState == TrackingState.None;
         }
 
         void OnDestroy()

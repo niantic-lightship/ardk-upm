@@ -1,12 +1,14 @@
-// Copyright 2023 Niantic, Inc. All Rights Reserved.
+// Copyright 2022-2023 Niantic.
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using Google.Protobuf;
 using Niantic.ARDK.AR.Protobuf;
+using Niantic.Lightship.AR.Utilities;
 
 namespace Niantic.ARDK.AR.Scanning
 {
+    [PublicAPI]
     public class ScanStore
     {
         private string _scanBasePath;
@@ -67,6 +69,7 @@ namespace Niantic.ARDK.AR.Scanning
             return result;
         }
 
+        [PublicAPI]
         public class SavedScan
         {
             public string ScanPath;

@@ -1,4 +1,4 @@
-// Copyright 2023 Niantic, Inc. All Rights Reserved.
+// Copyright 2022-2023 Niantic.
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -18,7 +18,7 @@ namespace Niantic.Lightship.AR.Utilities
     ///   multi-threaded during the initialization stage, so it's an acceptable solution.
     /// </note>
     /// </summary>
-    [DefaultExecutionOrder(int.MinValue)]
+    [DefaultExecutionOrder(int.MinValue)] [AddComponentMenu("")]
     internal sealed class MonoBehaviourEventDispatcher : MonoBehaviour
     {
         private static MonoBehaviourEventDispatcher s_instance;
@@ -54,6 +54,18 @@ namespace Niantic.Lightship.AR.Utilities
             {
                 Instantiate();
             }
+        }
+
+        // Returns true if we can verify the caller is on the main thread
+        // If no thread has been cached, return false
+        internal static bool IsMainThread()
+        {
+            if (s_mainThread == null)
+            {
+                return false;
+            }
+
+            return s_mainThread == Thread.CurrentThread;
         }
 
         private static void Instantiate()
@@ -138,6 +150,7 @@ namespace Niantic.Lightship.AR.Utilities
                 // If main thread reference has not yet been initialized, then the method was invoked
                 // before the Awake frame, and no MonobehaviourEventDispatcher events happen before Awake,
                 // so it's allowed
+                // Cannot use IsMainThread because it returns false if the main thread has not yet been cached
                 if (s_mainThread != null && Thread.CurrentThread != s_mainThread)
                 {
                     Error("AddListener can only be called from the main thread.");
@@ -167,6 +180,10 @@ namespace Niantic.Lightship.AR.Utilities
             //   This is fine for now because it's called only a few times and n is very small (< 10).
             public void RemoveListener(Action callback)
             {
+                // If main thread reference has not yet been initialized, then the method was invoked
+                // before the Awake frame, and no MonobehaviourEventDispatcher events happen before Awake,
+                // so it's allowed
+                // Cannot use IsMainThread because it returns false if the main thread has not yet been cached
                 if (s_mainThread != null && Thread.CurrentThread != s_mainThread)
                 {
                     Error("RemoveListener can only be called from the main thread.");
@@ -197,6 +214,10 @@ namespace Niantic.Lightship.AR.Utilities
 
             public void InvokeListeners()
             {
+                // If main thread reference has not yet been initialized, then the method was invoked
+                // before the Awake frame, and no MonobehaviourEventDispatcher events happen before Awake,
+                // so it's allowed
+                // Cannot use IsMainThread because it returns false if the main thread has not yet been cached
                 if (s_mainThread != null && Thread.CurrentThread != s_mainThread)
                 {
                     Error("InvokeListeners can only be called from the main thread.");

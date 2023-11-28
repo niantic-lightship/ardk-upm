@@ -1,4 +1,4 @@
-// Copyright 2023 Niantic, Inc. All Rights Reserved.
+// Copyright 2022-2023 Niantic.
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -18,8 +18,8 @@ namespace Niantic.Lightship.AR.Editor
     static class LightshipSDKProjectValidationRules
     {
         private static readonly LightshipSettings s_settings = LightshipSettings.Instance;
-        private static readonly Version s_minGradleVersion = new(6,7,1);
-        private static readonly Version s_minUnityVersion = new(2021,1);
+        private static readonly Version s_minGradleVersion = new(6, 7, 1);
+        private static readonly Version s_minUnityVersion = new(2021, 1);
 
         private const string XRPlugInManagementPath = "Project/XR Plug-in Management";
         private const string NianticLightshipSDKPath = XRPlugInManagementPath + "/Niantic Lightship SDK";
@@ -106,9 +106,7 @@ namespace Niantic.Lightship.AR.Editor
                 {
                     Category = Category,
                     Message = "If using Lightship ARDK VPS or Scanning features, set the Lightship API Key provided by the Lightship Portal.",
-                    CheckPredicate = () =>
-                        !string.IsNullOrWhiteSpace(lightshipSettings.ApiKey) &&
-                        lightshipSettings.ApiKey.Length <= 512,
+                    CheckPredicate = () => !string.IsNullOrWhiteSpace(lightshipSettings.ApiKey),
                     IsRuleEnabled = () =>
                         getIsLightshipPluginEnabled.Invoke() &&
                         (lightshipSettings.UseLightshipPersistentAnchor ||
@@ -131,7 +129,11 @@ namespace Niantic.Lightship.AR.Editor
                         {
                             return false;
                         }
-                        var isInStreamingAssets = datasetPath.StartsWith(Path.Combine(Application.dataPath, datasetContainingDirectory));
+                        // normalize paths using GetFullPath() so that string comparison works on osx or windows
+                        var fullPathDatasetContainingDir = Path.GetFullPath(datasetContainingDirectory, Application.dataPath);
+                        var fullPathDatasetPath = Path.GetFullPath(datasetPath);
+
+                        var isInStreamingAssets = fullPathDatasetPath.StartsWith(fullPathDatasetContainingDir);
                         var doesFolderExist = Directory.Exists(datasetPath);
                         var doesMetafileExist = File.Exists(Path.Combine(datasetPath, PlaybackDatasetMetaFilename));
                         return isInStreamingAssets && doesFolderExist && doesMetafileExist;
@@ -356,7 +358,7 @@ namespace Niantic.Lightship.AR.Editor
                     Message = $"If using Lightship ARDK for Android, set the target Android SDK version to 33 or higher.",
                     CheckPredicate = () => getAndroidTargetSdkVersion.Invoke() >= 33,
                     IsRuleEnabled = getAndroidIsLightshipPluginEnabled.Invoke,
-                    FixIt = () => PlayerSettings.Android.targetSdkVersion = AndroidSdkVersions.AndroidApiLevel33,
+                    FixIt = () => PlayerSettings.Android.targetSdkVersion = (AndroidSdkVersions)33,
                     FixItMessage = $"Open `Project Settings` > `Player` > 'Android settings' > `Other Settings` and set the target Android SDK version to 33 or higher.",
                     FixItAutomatic = true,
                     Error = true

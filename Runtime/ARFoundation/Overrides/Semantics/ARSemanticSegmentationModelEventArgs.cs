@@ -1,7 +1,8 @@
-// Copyright 2023 Niantic, Inc. All Rights Reserved.
+// Copyright 2022-2023 Niantic.
 
 using System;
 using System.Collections.Generic;
+using Niantic.Lightship.AR.Utilities;
 
 namespace Niantic.Lightship.AR.Semantics
 {
@@ -9,6 +10,7 @@ namespace Niantic.Lightship.AR.Semantics
     /// A structure for information about the semantic segmentation model that's become ready. This is used to
     /// communicate information in the <see cref="ARSemanticSegmentationManager.MetadataInitialized" /> event.
     /// </summary>
+    [PublicAPI]
     public struct ARSemanticSegmentationModelEventArgs : IEquatable<ARSemanticSegmentationModelEventArgs>
     {
         /// <summary>

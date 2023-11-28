@@ -1,4 +1,4 @@
-// Copyright 2023 Niantic, Inc. All Rights Reserved.
+// Copyright 2022-2023 Niantic.
 using System;
 using System.IO;
 using UnityEditor;
@@ -249,7 +249,7 @@ namespace Niantic.Lightship.AR.Loader
         private static LightshipSettings CreateInstanceAsset()
         {
             // ensure all parent directories of settings asset exists
-            var settingsPath = Path.Combine(AssetsPath, AssetsRelativeSettingsPath, "Lightship Settings.asset");
+            var settingsPath = Path.Combine(AssetsPath, AssetsRelativeSettingsPath, "LightshipSettings.asset");
             var pathSplits = settingsPath.Split("/");
             var runningPath = pathSplits[0];
             for (var i = 1; i < pathSplits.Length - 1; i++)
@@ -293,7 +293,8 @@ namespace Niantic.Lightship.AR.Loader
             bool preferLidarIfAvailable = false,
             bool enableScanning = false,
             bool overrideLoggingLevel = false,
-            LogType logLevel = LogType.Log)
+            LogType logLevel = LogType.Log,
+            ArdkConfiguration ardkConfiguration = null)
         {
             var settings = CreateInstance<LightshipSettings>();
 
@@ -319,11 +320,18 @@ namespace Niantic.Lightship.AR.Loader
 
             settings._preferLidarIfAvailable = preferLidarIfAvailable;
 
-            settings._ardkConfiguration = ArdkConfiguration.TryGetConfigurationFromJson(
-                Path.Combine(Application.streamingAssetsPath, ConfigFileName),
-                out ArdkConfiguration parsedConfig) ?
-                    parsedConfig :
-                    ArdkConfiguration.GetDefaultEnvironmentConfig();
+            if (ardkConfiguration == null)
+            {
+                settings._ardkConfiguration = ArdkConfiguration.TryGetConfigurationFromJson(
+                    Path.Combine(Application.streamingAssetsPath, ConfigFileName),
+                    out ArdkConfiguration parsedConfig)
+                    ? parsedConfig
+                    : ArdkConfiguration.GetDefaultEnvironmentConfig();
+            }
+            else
+            {
+                settings._ardkConfiguration = ardkConfiguration;
+            }
 
             return settings;
         }

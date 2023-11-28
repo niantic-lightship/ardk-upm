@@ -1,4 +1,4 @@
-// Copyright 2023 Niantic, Inc. All Rights Reserved.
+// Copyright 2022-2023 Niantic.
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -19,9 +19,8 @@ namespace Niantic.Lightship.AR.Occlusion
     /// <summary>
     /// This component allows configuration of the additional functionality available in
     /// Lightship's implementation of <see cref="XROcclusionSubsystem"/>.
-    /// The OptimalOcclusionDistanceMode defaults to <see cref="OptimalOcclusionDistanceMode.ClosestOccluder">
-    /// unless a specific <see cref="_principalOccludee"> is set.
     /// </summary>
+    [PublicAPI]
     [RequireComponent(typeof(Camera))]
     [RequireComponent(typeof(ARCameraManager))]
     [RequireComponent(typeof(AROcclusionManager))]

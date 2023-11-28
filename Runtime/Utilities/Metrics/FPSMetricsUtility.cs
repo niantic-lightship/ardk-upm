@@ -1,4 +1,4 @@
-// Copyright 2023 Niantic, Inc. All Rights Reserved.
+// Copyright 2022-2023 Niantic.
 using System;
 using static Niantic.Lightship.AR.Utilities.Log.Log;
 using Niantic.Lightship.AR.Subsystems;
@@ -137,8 +137,8 @@ namespace Niantic.Lightship.AR.Utilities.Metrics
             {
                 _cameraManager.frameReceived -= OnFrameReceived;
             }
-            TryAutomaticallyTrackFPS();
             SceneManager.sceneLoaded -= OnSceneLoaded;
+            TryAutomaticallyTrackFPS();
         }
 
         private void OnFrameReceived(ARCameraFrameEventArgs args)

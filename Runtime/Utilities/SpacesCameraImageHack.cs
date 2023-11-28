@@ -1,4 +1,4 @@
-// Copyright 2023 Niantic, Inc. All Rights Reserved.
+// Copyright 2022-2023 Niantic.
 
 using System;
 using Niantic.Lightship.AR.Utilities;
@@ -8,10 +8,9 @@ using UnityEngine;
 
 namespace Niantic.Lightship.Spaces
 {
-    public class SpacesCameraImageHack
+    internal static class SpacesCameraImageHack
     {
-
-        static             IntPtr latestPixelData = IntPtr.Zero;
+        static IntPtr latestPixelData = IntPtr.Zero;
 
         public static IntPtr GetPixelDataToDisplay()
         {

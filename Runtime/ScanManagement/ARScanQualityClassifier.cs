@@ -1,4 +1,4 @@
-// Copyright 2023 Niantic, Inc. All Rights Reserved.
+// Copyright 2022-2023 Niantic.
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -7,6 +7,7 @@ using Niantic.Lightship.AR.Scanning;
 using System.Runtime.InteropServices;
 using Niantic.Lightship.AR;
 using Niantic.Lightship.AR.Core;
+using Niantic.Lightship.AR.Utilities;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 
@@ -19,6 +20,7 @@ namespace Niantic.ARDK.AR.Scanning
     ///   - CancelCurrentRun() will interrupt the current compute, if any.
     /// </summary>
     /// Result returned by the <see cref="ARScanQualityClassifier"/>.
+    [PublicAPI]
     public class ARScanQualityClassifier : IARScanQualityClassifier
     {
         private readonly ISqcApi _api;

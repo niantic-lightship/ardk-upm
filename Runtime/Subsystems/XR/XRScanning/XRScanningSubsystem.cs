@@ -1,18 +1,20 @@
-// Copyright 2023 Niantic, Inc. All Rights Reserved.
+// Copyright 2022-2023 Niantic.
 
 using System;
+using Niantic.Lightship.AR.Utilities;
 using UnityEngine.SubsystemsImplementation;
 using UnityEngine.XR.ARSubsystems;
 
 namespace Niantic.Lightship.AR.XRSubsystems
 {
     /// <summary>
-    /// Base class for a scanning subsystem.
+    /// Defines an interface for interacting with scanning functionality.
     /// </summary>
     /// <remarks>
     /// <para>This abstract class should be implemented by an XR provider and instantiated using the <c>SubsystemManager</c>
     /// to enumerate the available <see cref="XRScanningSubsystemDescriptor"/>s.</para>
     /// </remarks>
+    [PublicAPI]
     public class XRScanningSubsystem
         : SubsystemWithProvider<XRScanningSubsystem, XRScanningSubsystemDescriptor, XRScanningSubsystem.Provider>
     {

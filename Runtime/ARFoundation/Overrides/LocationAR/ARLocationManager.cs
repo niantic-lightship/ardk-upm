@@ -1,4 +1,4 @@
-// Copyright 2023 Niantic, Inc. All Rights Reserved.
+// Copyright 2022-2023 Niantic.
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -35,34 +35,48 @@ namespace Niantic.Lightship.AR.LocationAR
         [SerializeField]
         private bool _InterpolationEnabled;
 
-        // Number of seconds between attempting Continuous Localization requests.
-        // After attempting localization, server requests will be sent once a second until localization success
-        // @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
+        /// <summary>
+        /// Number of seconds between attempting Continuous Localization requests.
+        ///
+        /// After attempting localization (StartTracking()), server requests will be sent once a second until
+        /// localization succeeds.
+        ///
+        /// After localization is successful, new localization reqests will be sent at the rate specified in
+        /// ContinuousLocalizationRateSeconds.
+        ///
+        /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
+        /// </summary>
         public float ContinuousLocalizationRateSeconds
         {
             get => _continuousLocalizationRateSeconds;
             set => _continuousLocalizationRateSeconds = value;
         }
 
-        // Number of seconds over which anchor interpolation occurs.
-        // Faster times will result in more noticeable movement.
-        // @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
+        /// <summary>
+        /// Number of seconds over which anchor interpolation occurs.
+        /// Faster times will result in more noticeable movement.
+        /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
+        /// </summary>
         public float InterpolationTimeSeconds
         {
             get => ARPersistentAnchorInterpolator.InterpolationTimeSeconds;
             set => ARPersistentAnchorInterpolator.InterpolationTimeSeconds = value;
         }
 
-        // Whether to enable or disable continuous localization
-        // @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
+        /// <summary>
+        /// Whether to enable or disable continuous localization
+        /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
+        /// </summary>
         public bool ContinuousLocalizationEnabled
         {
             get => _continuousLocalizationEnabled;
             set => _continuousLocalizationEnabled = value;
         }
 
-        // Whether to enable or disable interpolation
-        // @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
+        /// <summary>
+        /// Whether to enable or disable interpolation
+        /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
+        /// </summary>
         public bool InterpolationEnabled
         {
             get => InterpolateAnchors;
@@ -74,15 +88,19 @@ namespace Niantic.Lightship.AR.LocationAR
         [SerializeField]
         private bool _TemporalFusionEnabled;
 
-        // Number of localization results to average for temporal fusion
-        // @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
+        /// <summary>
+        /// Number of localization results to average for temporal fusion
+        /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
+        /// </summary>
         public int TemporalFusionSlidingWindow {
             get => ARPersistentAnchor.FusionSlidingWindowSize;
             set => ARPersistentAnchor.FusionSlidingWindowSize = value;
         }
 
-        // Whether to enable or disable temporal fusion
-        // @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
+        /// <summary>
+        /// Whether to enable or disable temporal fusion
+        /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
+        /// </summary>
         public new bool TemporalFusionEnabled
         {
             get => base.TemporalFusionEnabled;
@@ -121,7 +139,9 @@ namespace Niantic.Lightship.AR.LocationAR
         public bool AutoTrack => _autoTrack;
 
         /// <summary>
-        /// Maximun number of locations that will be tracked by StartTracking. We only support MaxLocationTrackingCount = 1 at the moment
+        /// Maximum number of locations that will be tracked by StartTracking. MaxLocationTrackingCount is always 1.
+        /// Future versions of ARDK may support tracking more than one location at a time, but currently only one
+        /// location at a time can be tracked.
         /// </summary>
         public int MaxLocationTrackingCount
         {
@@ -132,12 +152,11 @@ namespace Niantic.Lightship.AR.LocationAR
         }
 
         // _targetARLocations hold the locations specified by SetARLocations().
-        // Only a subset of _targetARLocations will be tracked. How many is capped by MaxLocationTrackingCount
-        // _targetARLocations will be populated by SetARLocations()
+        // At most one of these _targetARLocations will be tracked.
         private readonly List<ARLocation> _targetARLocations = new();
 
         // _trackedARLocations holds the location actively being tracked.
-        // Its maximun size will be MaxLocationTrackingCount
+        // Its maximum size will be MaxLocationTrackingCount (currently always 1).
         // _trackedARLocations will be populated by HandleARPersistentAnchorStateChanged()
         private readonly List<ARLocation> _trackedARLocations = new();
 
@@ -201,9 +220,10 @@ namespace Niantic.Lightship.AR.LocationAR
         }
 
         /// <summary>
-        /// Selects what AR Locations to track when StartTracking() is called
+        /// Selects the AR Locations to try to track when StartTracking() is called. At most one of these locations will
+        /// actually be tracked.
         /// </summary>
-        /// <param name="arLocation">The locations to track.</param>
+        /// <param name="arLocation">The locations to try to track.</param>
         public void SetARLocations(params ARLocation[] arLocations)
         {
             _targetARLocations.Clear();
@@ -211,10 +231,17 @@ namespace Niantic.Lightship.AR.LocationAR
         }
 
         /// <summary>
-        /// Starts tracking locations specified by SetARLocations(). The number of locations tracked will be limited to MaxAnchorTrackingCount
-        /// The location(s) that ends up being tracked up to MaxAnchorTrackingCount are in first-come first-serve order. This will create digital content in the physical world.
+        /// Starts tracking locations specified by SetARLocations().
+        ///
+        /// Currently only one location can be tracked at a time.
+        /// In the future, the number of locations tracked will be limited to MaxAnchorTrackingCount.
+        ///
         /// Content authored as children of the ARLocation will be enabled once the ARLocation becomes tracked.
-        /// If no locations were specified in SetARLocations(), the closest five locations for the area will be selected
+        /// This will create digital content in the physical world.
+        ///
+        /// If no locations were specified in SetARLocations(), requests will be made to attempt to track nearby
+        /// locations. In this case, up to 5 nearby locations will be targeted and the first one to successfully
+        /// track will be used.
         /// </summary>
         public void StartTracking()
         {
@@ -242,6 +269,8 @@ namespace Niantic.Lightship.AR.LocationAR
 
         /// <summary>
         /// Stops tracking the currently tracked location.  This must be called before switching to a new location.
+        /// @note Anchors are destroyed asynchronously, so there needs to be a small delay after calling StopTracking()
+        /// before calling StartTracking().
         /// </summary>
         public void StopTracking()
         {
@@ -256,6 +285,11 @@ namespace Niantic.Lightship.AR.LocationAR
             foreach (var anchor in _anchorToARLocationMap.Keys)
             {
                 DestroyAnchor(anchor);
+            }
+
+            if (MonoBehaviourEventDispatcher.IsMainThread())
+            {
+                ForceUpdate();
             }
         }
 
@@ -362,11 +396,12 @@ namespace Niantic.Lightship.AR.LocationAR
                 }
                 else
                 {
+                    var wasTrackedAnchorRemoved = false;
                     // If the anchor is removed
                     if (anchor.trackingStateReason == TrackingStateReason.Removed)
                     {
                         ParentARLocationToOriginal(arLocation, anchor);
-                        _trackedARLocations.Remove(arLocation);
+                        wasTrackedAnchorRemoved = _trackedARLocations.Remove(arLocation);
                         _anchorToARLocationMap.Remove(anchor);
 
                         // If the last tracked location is removed, clear state and be ready for the next StartTracking()
@@ -376,9 +411,10 @@ namespace Niantic.Lightship.AR.LocationAR
                         }
                     }
 
-                    if (!_trackedARLocations.Contains(arLocation))
+                    // This arLocation is NOT one we track yet
+                    // If a tracked anchor was removed, we still want to notify that the arLocation is no longer tracked
+                    if (!_trackedARLocations.Contains(arLocation) && !wasTrackedAnchorRemoved)
                     {
-                        // This arLocation is NOT one we track yet
                         return;
                     }
 

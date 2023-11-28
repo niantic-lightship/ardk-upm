@@ -1,4 +1,4 @@
-// Copyright 2023 Niantic, Inc. All Rights Reserved.
+// Copyright 2022-2023 Niantic.
 
 using UnityEngine;
 using UnityEngine.XR.ARFoundation;
@@ -79,7 +79,7 @@ namespace Niantic.Lightship.AR.Settings
             {
                 if (string.IsNullOrWhiteSpace(Metadata.UserId))
                 {
-                    Log.Warning("UserId is missing. Please set a unique Id using {0}.{1} for data management purposes. (Please see documentation for more details)" + nameof(PrivacyData) + nameof(UserId));
+                    Log.Warning($"UserId is missing. Please set a unique Id using {nameof(PrivacyData)}.{nameof(UserId)} for data management purposes. (Please see documentation for more details)");
                 }
 
                 ARSession.stateChanged -= WarnUserOnMissingUserId;

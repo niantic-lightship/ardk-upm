@@ -1,4 +1,4 @@
-// Copyright 2023 Niantic, Inc. All Rights Reserved.
+// Copyright 2022-2023 Niantic.
 using System;
 using System.Collections.Generic;
 using Niantic.Lightship.AR.Utilities.Log;
@@ -176,6 +176,7 @@ namespace Niantic.Lightship.AR.Subsystems.Occlusion
             private EnvironmentDepthMode _requestedEnvironmentDepthMode;
 
             private IApi _api;
+            private bool _nativeProviderIsRunning;
 
             public LightshipOcclusionProvider(): this(new NativeApi()) {}
 
@@ -207,7 +208,9 @@ namespace Niantic.Lightship.AR.Subsystems.Occlusion
                     return;
                 }
 
+                _nativeProviderIsRunning = true;
                 ConfigureProvider();
+                _api.Start(_nativeProviderHandle);
             }
 
             private byte UnityModeToLightshipMode(EnvironmentDepthMode mode)
@@ -232,19 +235,6 @@ namespace Niantic.Lightship.AR.Subsystems.Occlusion
                     return;
                 }
 
-                _api.Stop(_nativeProviderHandle);
-
-                switch (requestedEnvironmentDepthMode)
-                {
-                    // Don't start if depth is disabled
-                    case EnvironmentDepthMode.Disabled:
-                        return;
-                }
-
-                // Don't start if occlusion is disabled
-                if (_occlusionPreferenceMode == OcclusionPreferenceMode.NoOcclusion)
-                    return;
-
                 _api.Configure
                 (
                     _nativeProviderHandle,
@@ -252,7 +242,19 @@ namespace Niantic.Lightship.AR.Subsystems.Occlusion
                     TargetFrameRate
                 );
 
-                _api.Start(_nativeProviderHandle);
+                if (requestedEnvironmentDepthMode == EnvironmentDepthMode.Disabled)
+                {
+                    if (_nativeProviderIsRunning)
+                    {
+                        _nativeProviderIsRunning = false;
+                        _api.Stop(_nativeProviderHandle);
+                    }
+                }
+                else if (!_nativeProviderIsRunning && running)
+                {
+                    _nativeProviderIsRunning = true;
+                    _api.Start(_nativeProviderHandle);
+                }
             }
 
             /// <summary>
@@ -265,6 +267,7 @@ namespace Niantic.Lightship.AR.Subsystems.Occlusion
                     return;
                 }
 
+                _nativeProviderIsRunning = false;
                 _api.Stop(_nativeProviderHandle);
             }
 
@@ -317,14 +320,7 @@ namespace Niantic.Lightship.AR.Subsystems.Occlusion
             public override OcclusionPreferenceMode requestedOcclusionPreferenceMode
             {
                 get => _occlusionPreferenceMode;
-                set
-                {
-                    if (_occlusionPreferenceMode != value)
-                    {
-                        _occlusionPreferenceMode = value;
-                        ConfigureProvider();
-                    }
-                }
+                set => _occlusionPreferenceMode = value;
             }
 
             /// <summary>
@@ -601,8 +597,16 @@ namespace Niantic.Lightship.AR.Subsystems.Occlusion
                 out List<string> disabledKeywords
             )
             {
-                enabledKeywords = _environmentDepthEnabledMaterialKeywords;
-                disabledKeywords = null;
+                if ((_occlusionPreferenceMode == OcclusionPreferenceMode.NoOcclusion))
+                {
+                    enabledKeywords = null;
+                    disabledKeywords = _environmentDepthEnabledMaterialKeywords;
+                }
+                else
+                {
+                    enabledKeywords = _environmentDepthEnabledMaterialKeywords;
+                    disabledKeywords = null;
+                }
             }
         }
     }

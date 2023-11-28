@@ -1,5 +1,4 @@
-// Copyright 2023 Niantic, Inc. All Rights Reserved.
-// Copyright 2023 Niantic Labs. All rights reserved.
+// Copyright 2022-2023 Niantic.
 
 using System;
 using System.Collections.Generic;

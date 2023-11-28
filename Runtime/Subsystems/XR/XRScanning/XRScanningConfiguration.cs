@@ -1,9 +1,10 @@
-// Copyright 2023 Niantic, Inc. All Rights Reserved.
+// Copyright 2022-2023 Niantic.
 
 using System;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
+using Niantic.Lightship.AR.Utilities;
 using Niantic.Lightship.AR.Utilities.Log;
 using UnityEngine;
 
@@ -13,6 +14,7 @@ namespace Niantic.Lightship.AR.XRSubsystems
     /// Configuration for scanning.
     /// </summary>
     /// <seealso cref="XRScanningConfiguration"/>
+    [PublicAPI]
     [StructLayout(LayoutKind.Sequential)]
     public class XRScanningConfiguration
     {

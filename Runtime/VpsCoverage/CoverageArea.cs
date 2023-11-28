@@ -1,4 +1,4 @@
-// Copyright 2023 Niantic, Inc. All Rights Reserved.
+// Copyright 2022-2023 Niantic.
 
 using System;
 using System.Linq;
@@ -8,7 +8,8 @@ using UnityEngine;
 namespace Niantic.Lightship.AR.VpsCoverage
 {
     /// <summary>
-    /// The CoverageArea struct represents a calculated area representing a cluster of localization targets within
+    /// The CoverageArea struct represents an area where localization with VPS is possible.
+    /// Precisely, it is a calculated area representing a cluster of localization targets within
     /// a certain proximity of each other to help determine reliability of VPS tracking.
     /// </summary>
     [PublicAPI]

@@ -1,4 +1,4 @@
-// Copyright 2023 Niantic, Inc. All Rights Reserved.
+// Copyright 2022-2023 Niantic.
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -219,6 +219,7 @@ namespace Niantic.Lightship.AR.Editor
             originToDefaultRotation = Quaternion.identity;
             originToDefaultTranslation = Vector3.zero;
 
+            var assetTargetDir = Path.GetDirectoryName(zipPath);
             using (var file = File.OpenRead(zipPath))
             {
                 using (var zip = new ZipArchive(file, ZipArchiveMode.Read))
@@ -239,12 +240,14 @@ namespace Niantic.Lightship.AR.Editor
                     if (!(meshEntries.Any() && locationEntries.Any()))
                         return false;
 
-                    var mesh = ImportMesh(meshEntries.First(), "ARLocationMesh.fbx");
+                    var mesh = ImportMesh(meshEntries.First(), "ARLocationMesh.fbx", assetTargetDir);
                     locationData = ParseLocationData(locationEntries.First());
 
                     // Some nodes do not have textures
                     if (texEntries.Any())
-                        tex = ImportTexture(texEntries.First());
+                    {
+                        tex = ImportTexture(texEntries.First(), assetTargetDir);
+                    }
 
                     var initialMeshData = new GsbFileRepresentation.MeshData()
                     {
@@ -266,7 +269,7 @@ namespace Niantic.Lightship.AR.Editor
                         originToDefaultTranslation = originToDefaultRotation * defaultToOriginTranslation * -1;
                     }
                     
-                    meshData = UnpackAdditionalMeshes(additionalMeshes);
+                    meshData = UnpackAdditionalMeshes(additionalMeshes, assetTargetDir);
                     meshData.Insert(0, initialMeshData);
 
                     return !(meshData.Count == 0 ||
@@ -275,7 +278,7 @@ namespace Niantic.Lightship.AR.Editor
             }
         }
 
-        private static List<GsbFileRepresentation.MeshData> UnpackAdditionalMeshes(IEnumerable<ZipArchiveEntry> zippedEntries)
+        private static List<GsbFileRepresentation.MeshData> UnpackAdditionalMeshes(IEnumerable<ZipArchiveEntry> zippedEntries, string targetDir)
         {
             var ret = new List<GsbFileRepresentation.MeshData>();
 
@@ -294,11 +297,11 @@ namespace Niantic.Lightship.AR.Editor
                         (e => Path.GetExtension(e.Name).Equals(".json"));
 
                     var edgeData = ParseLocationData(edgeEntries.First());
-                    var texture = ImportTexture(textureEntries.First());
+                    var texture = ImportTexture(textureEntries.First(), targetDir);
 
                     var mesh = meshEntries.First();
                     var strippedName = mesh.Name.Split('.')[0];
-                    var imported = ImportMesh(mesh, $"ARTempMesh{strippedName}.fbx");
+                    var imported = ImportMesh(mesh, $"ARTempMesh{strippedName}.fbx", targetDir);
 
                     var meshData = new GsbFileRepresentation.MeshData()
                     {
@@ -457,10 +460,9 @@ namespace Niantic.Lightship.AR.Editor
 
         private static bool _isImportingMesh;
 
-        private static UnityEngine.Mesh ImportMesh(ZipArchiveEntry entry, string name)
+        private static UnityEngine.Mesh ImportMesh(ZipArchiveEntry entry, string name, string targetDir)
         {
-            var absPath = ProjectBrowserUtilities.BuildAssetPath(name, Application.dataPath);
-            var assetPath = FileUtil.GetProjectRelativePath(absPath);
+            var assetPath = ProjectBrowserUtilities.BuildAssetPath(name, targetDir);
 
             using (var stream = entry.Open())
                 using (var fs = new FileStream(assetPath, FileMode.OpenOrCreate))
@@ -475,10 +477,9 @@ namespace Niantic.Lightship.AR.Editor
 
         private static bool _isImportingTex;
 
-        private static Texture2D ImportTexture(ZipArchiveEntry entry)
+        private static Texture2D ImportTexture(ZipArchiveEntry entry, string targetDir)
         {
-            var absPath = ProjectBrowserUtilities.BuildAssetPath(entry.Name, Application.dataPath);
-            var assetPath = FileUtil.GetProjectRelativePath(absPath);
+            var assetPath = ProjectBrowserUtilities.BuildAssetPath(entry.Name, targetDir);
 
             using (var stream = entry.Open())
             {
