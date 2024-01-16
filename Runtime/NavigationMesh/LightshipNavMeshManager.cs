@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 using System.Collections;
 using System.Collections.Generic;
 using Niantic.Lightship.AR.Utilities;
@@ -14,37 +14,49 @@ namespace Niantic.Lightship.AR.NavigationMesh
     [PublicAPI]
     public class LightshipNavMeshManager : MonoBehaviour
     {
-        [Header("Camera")] [SerializeField] [Tooltip("The scene camera used to render AR content.")]
+        [Header("Camera")]
+        [Tooltip("The scene camera used to render AR content.")]
+        [SerializeField]
         private Camera _camera;
 
         [Header("LightshipNavMesh Settings")]
-        [SerializeField]
         [Tooltip("Metric size of a grid tile containing one node")]
+        [SerializeField]
         [Min(0.0000001f)]
         private float _tileSize = 0.15f;
 
-        [SerializeField] [Tooltip("Tolerance to consider floor as flat despite meshing noise")] [Min(0.0000001f)]
+        [Tooltip("Tolerance to consider floor as flat despite meshing noise")]
+        [SerializeField]
+        [Min(0.0000001f)]
         private float _flatFloorTolerance = 0.2f;
 
-        [SerializeField]
         [Tooltip("Maximum slope angle (degrees) an area can have and still be considered flat")]
+        [SerializeField]
         [Range(0, 40)]
         private float _maxSlope = 25.0f;
 
-        [SerializeField]
         [Tooltip("The maximum amount two cells can differ in elevation and still be considered on the same plane")]
+        [SerializeField]
         [Min(0.0000001f)]
         private float _stepHeight = 0.1f;
 
-        [Header("Scan Settings")] [SerializeField]
+        [Header("Scan Settings")]
+        [Tooltip("How long (in seconds) to wait before scanning the environment again to update the NavMesh")]
+        [SerializeField]
         private float _scanInterval = 0.1f;
 
-        [SerializeField] private float _scanRange = 1.5f;
+        [Tooltip("Size of the area to scan (width in meters of a square centered 1 meter in front of the player)")]
+        [SerializeField]
+        private float _scanRange = 1.5f;
 
-        [SerializeField] [Tooltip("Must be the same layer as meshes.")]
+        [Tooltip("Must be the same layer as meshes.")]
+        [SerializeField]
         private LayerMask _layerMask = ~0;
 
-        [Header("Debug")] [SerializeField] public bool _visualise = true;
+        [Header("Debug")]
+        [Tooltip("Draws vertical lines through each scanned tile. Visible in Scene and Game view if Gizmos are enabled.")]
+        [SerializeField]
+        public bool _visualise = true;
 
         //manager owns these
         private LightshipNavMesh _lightshipNavMesh;

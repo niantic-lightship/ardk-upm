@@ -1,8 +1,9 @@
-// Copyright 2022-2023 Niantic.
-using System;
-using Niantic.Lightship.AR.Subsystems.Playback;
+// Copyright 2022-2024 Niantic.
+
+using System.Collections.Generic;
 using Niantic.Lightship.AR.Utilities.Log;
 using Niantic.Lightship.AR.XRSubsystems;
+using UnityEngine;
 using UnityEngine.XR;
 using UnityEngine.XR.ARSubsystems;
 using UnityEngine.XR.Management;
@@ -11,80 +12,72 @@ namespace Niantic.Lightship.AR.Loader
 {
     public class LightshipStandaloneLoader : XRLoaderHelper, ILightshipLoader
     {
-        private PlaybackLoaderHelper _playbackHelper;
-        private NativeLoaderHelper _nativeHelper;
+        public void InjectLightshipLoaderHelper(LightshipLoaderHelper lightshipLoaderHelper)
+        {
+            _lightshipLoaderHelper = lightshipLoaderHelper;
+        }
 
-        PlaybackDatasetReader ILightshipLoader.PlaybackDatasetReader => _playbackHelper?.DatasetReader;
-
-        /// <summary>
-        /// Optional override settings for manual XR Loader initialization
-        /// </summary>
-        public LightshipSettings InitializationSettings { get; set; }
+        private LightshipLoaderHelper _lightshipLoaderHelper;
+        private List<ILightshipExternalLoader> _externalLoaders = new();
 
         /// <summary>
         /// The `XROcclusionSubsystem` whose lifecycle is managed by this loader.
         /// </summary>
-        public XROcclusionSubsystem LightshipOcclusionSubsystem => GetLoadedSubsystem<XROcclusionSubsystem>();
+        public XROcclusionSubsystem LightshipOcclusionSubsystem => base.GetLoadedSubsystem<XROcclusionSubsystem>();
 
         /// <summary>
         /// The `XRPersistentAnchorSubsystem` whose lifecycle is managed by this loader.
         /// </summary>
         public XRPersistentAnchorSubsystem LightshipPersistentAnchorSubsystem =>
-            GetLoadedSubsystem<XRPersistentAnchorSubsystem>();
+            base.GetLoadedSubsystem<XRPersistentAnchorSubsystem>();
 
         /// <summary>
         /// The `XRMeshingSubsystem` whose lifecycle is managed by this loader.
         /// </summary>
-        public XRMeshSubsystem LightshipMeshSubsystem => GetLoadedSubsystem<XRMeshSubsystem>();
+        public XRMeshSubsystem LightshipMeshSubsystem => base.GetLoadedSubsystem<XRMeshSubsystem>();
 
         /// <summary>
-        /// Initializes the loader.
+        /// Initializes the loader. This is called from Unity when starting an AR session.
         /// </summary>
         /// <returns>`True` if the session subsystems were successfully created, otherwise `false`.</returns>
         public override bool Initialize()
         {
-            if (InitializationSettings == null)
-            {
-                InitializationSettings = LightshipSettings.Instance;
-            }
+            var initializationSettings = LightshipSettings.Instance;
+            _lightshipLoaderHelper ??= new LightshipLoaderHelper(initializationSettings, _externalLoaders);
 
-            return ((ILightshipLoader)this).InitializeWithSettings(InitializationSettings);
+            return InitializeWithLightshipHelper(_lightshipLoaderHelper);
         }
 
-        bool ILightshipLoader.InitializeWithSettings(LightshipSettings settings, bool isTest)
+        /// <summary>
+        /// Initializes the loader with an injected LightshipLoaderHelper. This is a helper to initialize manually from tests.
+        /// </summary>
+        /// <returns>`True` if the session subsystems were successfully created, otherwise `false`.</returns>
+        public bool InitializeWithLightshipHelper(LightshipLoaderHelper lightshipLoaderHelper, bool isTest = false)
         {
-#if NIANTIC_LIGHTSHIP_AR_LOADER_ENABLED
-            if (settings.OverrideLoggingLevel)
-            {
-                Log.LogLevel = settings.LogLevel;
-            }
+            _lightshipLoaderHelper = lightshipLoaderHelper;
+            return _lightshipLoaderHelper.Initialize(this);
+        }
 
-            if (settings.UsePlayback)
-            {
-                _playbackHelper = new PlaybackLoaderHelper();
-                if (!_playbackHelper.Initialize(this, settings))
-                {
-                    return false;
-                }
-
-                // When in playback mode, Lidar device support is dictated whether the Playback input
-                // has LiDAR data or not
-                bool isLidarSupported = _playbackHelper.DatasetReader.GetIsLidarAvailable();
-
-                // Initialize native helper after playback helper, because playback helper creates the dataset reader,
-                // then native helper injects it into the PAM
-                _nativeHelper = new NativeLoaderHelper();
-                return _nativeHelper.Initialize(this, settings, isLidarSupported, isTest);
-            }
-            else
-            {
-                // Initialize native helper with no subsystems except the API key.
-                _nativeHelper = new NativeLoaderHelper();
-                return _nativeHelper.Initialize(this, settings, false, isTest);
-            }
-#else
+        // There is no platform implementation for standalone.
+        public bool IsPlatformDepthAvailable()
+        {
+            Log.Warning("Standalone currently has no platform implementation. You have to run with Playback enabled.");
             return false;
-#endif
+        }
+
+        public new void CreateSubsystem<TDescriptor, TSubsystem>(List<TDescriptor> descriptors, string id) where TDescriptor : ISubsystemDescriptor where TSubsystem : ISubsystem
+        {
+            base.CreateSubsystem<TDescriptor, TSubsystem>(descriptors, id);
+        }
+
+        public new void DestroySubsystem<T>() where T : class, ISubsystem
+        {
+            base.DestroySubsystem<T>();
+        }
+
+        public new T GetLoadedSubsystem<T>() where T : class, ISubsystem
+        {
+            return base.GetLoadedSubsystem<T>();
         }
 
         /// <summary>
@@ -94,10 +87,26 @@ namespace Niantic.Lightship.AR.Loader
         public override bool Deinitialize()
         {
 #if NIANTIC_LIGHTSHIP_AR_LOADER_ENABLED
-            _playbackHelper?.Deinitialize(this);
-            _nativeHelper?.Deinitialize(this);
+            _lightshipLoaderHelper.Deinitialize();
 #endif
             return true;
+        }
+
+        public bool InitializePlatform()
+        {
+            Log.Warning("Standalone currently has no platform implementation. You have to run with Playback enabled.");
+            return true;
+        }
+
+        public bool DeinitializePlatform()
+        {
+            Log.Warning("Standalone currently has no platform implementation. You have to run with Playback enabled.");
+            return true;
+        }
+
+        void ILightshipLoader.AddExternalLoader(ILightshipExternalLoader loader)
+        {
+            _externalLoaders.Add(loader);
         }
     }
 }

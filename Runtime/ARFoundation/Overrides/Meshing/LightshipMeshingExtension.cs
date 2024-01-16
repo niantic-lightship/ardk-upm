@@ -1,7 +1,10 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 using System;
+using System.Collections.Generic;
+using Niantic.Lightship.AR.Semantics;
 using Niantic.Lightship.AR.Utilities.Log;
 using Niantic.Lightship.AR.Subsystems.Meshing;
+using Unity.XR.CoreUtils;
 using Niantic.Lightship.AR.Utilities;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -173,15 +176,76 @@ namespace Niantic.Lightship.AR.Meshing
           }
       }
 
+      private void ValidateHierarchy()
+      {
+          if (this == null)
+          {
+              return;
+          }
+
+          if (GetComponentInParent<XROrigin>(includeInactive: true) == null)
+          {
+              DestroyImmediate(this);
+          }
+      }
+
+#if UNITY_EDITOR
+      private void Reset()
+      {
+          ValidateHierarchy();
+      }
+
       private void OnValidate()
       {
-        _meshBlockSize = (float)Math.Round(_meshBlockSize / _voxelSize) * _voxelSize;
+          // Double check in case hierarchy changes, guaranteed to run only once when added to delayCall
+          UnityEditor.EditorApplication.delayCall += ValidateHierarchy;
+
+          _meshBlockSize = (float)Math.Round(_meshBlockSize / _voxelSize) * _voxelSize;
       }
+#endif
 
       private void Start()
       {
           // If the subsystem is not loaded yet due to manual XR loading, we'll try configuring again in Update.
           Configure();
+      }
+
+      private void OnMetadataInitialized(ARSemanticSegmentationModelEventArgs arSemanticSegmentationModelEventArgs)
+      {
+          _isDirty = true;
+      }
+
+      private uint ChannelListToPackedMask(List<string> channelList)
+      {
+        const int bitsPerPixel = sizeof(UInt32) * 8;
+
+        uint mask = 0u;
+        foreach (string channelName in channelList)
+        {
+            string sanitizedChannelName = channelName.ToLower();
+            int id = _semanticSegmentationManager.GetChannelIndex(sanitizedChannelName);
+            if (id >= 0 && id < bitsPerPixel)
+            {
+                mask |= (1u << (bitsPerPixel - 1 - id));
+            }
+        }
+        return mask;
+      }
+
+      private bool ValidateSemanticSegmentationManager()
+      {
+          if (_semanticSegmentationManager == null)
+          {
+              _semanticSegmentationManager = FindObjectOfType<ARSemanticSegmentationManager>();
+              if (_semanticSegmentationManager == null || !_semanticSegmentationManager.isActiveAndEnabled)
+              {
+                  Log.Warning(
+                      "An active Semantic Segmentation Manager needs to be present in the scene to configure with mesh filtering. Automatically disabling mesh filtering.");
+                  return false;
+              }
+          }
+
+          return true;
       }
 
       public void Configure()
@@ -191,6 +255,26 @@ namespace Niantic.Lightship.AR.Meshing
           // this can also be called during Update after the loader has been shut down and lead to an assertion.
           if (!ValidateSubsystem())
               return;
+
+          if (IsMeshFilteringEnabled)
+          {
+              IsMeshFilteringEnabled = ValidateSemanticSegmentationManager();
+          }
+
+          if (IsMeshFilteringEnabled)
+          {
+              // If Mesh Filtering is enabled, but the Semantic Segmentation Manager does not have metadata,
+              // we can't configure yet, so wait.
+              _semanticSegmentationManager.MetadataInitialized += OnMetadataInitialized;
+              if (!_semanticSegmentationManager.IsMetadataAvailable)
+              {
+                  _isDirty = true;
+                  return;
+              }
+
+              _packedAllowList = (int)ChannelListToPackedMask(_allowList);
+              _packedBlockList = (int)ChannelListToPackedMask(_blockList);
+          }
 
           _isDirty = false;
 
@@ -202,7 +286,12 @@ namespace Niantic.Lightship.AR.Meshing
               _enableDistanceBasedVolumetricCleanup,
               _meshBlockSize,
               _meshCullingDistance,
-              _enableMeshDecimation
+              _enableMeshDecimation,
+              _isMeshFilteringEnabled,
+              _isFilteringAllowListEnabled,
+              _packedAllowList,
+              _isFilteringBlockListEnabled,
+              _packedBlockList
           );
       }
 
@@ -211,6 +300,98 @@ namespace Niantic.Lightship.AR.Meshing
           if (_isDirty)
           {
               Configure();
+          }
+      }
+
+      // Mesh Filtering
+      [Header("Mesh Filtering")]
+
+      [SerializeField]
+      private bool _isMeshFilteringEnabled = false;
+
+      private ARSemanticSegmentationManager _semanticSegmentationManager;
+
+      [SerializeField]
+      private bool _isFilteringAllowListEnabled = false;
+
+      [SerializeField]
+      private List<String> _allowList = new();
+      private int _packedAllowList = 0;
+
+      [SerializeField]
+      private bool _isFilteringBlockListEnabled = false;
+
+      [SerializeField]
+      private List<String> _blockList = new();
+      private int _packedBlockList = 0;
+
+      public bool IsMeshFilteringEnabled
+      {
+          get => _isMeshFilteringEnabled;
+          set
+          {
+              if (value == true)
+              {
+                  value = ValidateSemanticSegmentationManager();
+              }
+
+              if (value != _isMeshFilteringEnabled)
+              {
+                  _isMeshFilteringEnabled = value;
+                  _isDirty = true;
+              }
+          }
+      }
+
+      public bool IsFilteringAllowListEnabled
+      {
+          get => _isFilteringAllowListEnabled;
+          set
+          {
+              if (value != _isFilteringAllowListEnabled)
+              {
+                  _isFilteringAllowListEnabled = value;
+                  _isDirty = true;
+              }
+          }
+      }
+
+      public List<string> AllowList
+      {
+          get => _allowList;
+          set
+          {
+              if (value != _allowList)
+              {
+                  _allowList = value;
+                  _isDirty = true;
+              }
+          }
+      }
+
+      public bool IsFilteringBlockListEnabled
+      {
+          get => _isFilteringBlockListEnabled;
+          set
+          {
+              if (value != _isFilteringBlockListEnabled)
+              {
+                  _isFilteringBlockListEnabled = value;
+                  _isDirty = true;
+              }
+          }
+      }
+
+      public List<string> BlockList
+      {
+          get => _blockList;
+          set
+          {
+              if (value != _blockList)
+              {
+                  _blockList = value;
+                  _isDirty = true;
+              }
           }
       }
 
@@ -238,6 +419,11 @@ namespace Niantic.Lightship.AR.Meshing
               );
 
               Destroy(this);
+              return false;
+          }
+
+          if (meshSubsystem.SubsystemDescriptor.id != "LightshipMeshing")
+          {
               return false;
           }
 

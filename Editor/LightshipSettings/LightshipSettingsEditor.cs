@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 using System;
 using System.Collections.Generic;
 using Niantic.Lightship.AR.Loader;
@@ -14,6 +14,8 @@ namespace Niantic.Lightship.AR.Editor
     [CustomEditor(typeof(LightshipSettings))]
     class LightshipSettingsEditor : UnityEditor.Editor
     {
+        internal const string ProjectValidationSettingsPath = "Project/XR Plug-in Management/Project Validation";
+
         private enum Platform
         {
             Editor = 0,
@@ -39,6 +41,35 @@ namespace Niantic.Lightship.AR.Editor
             public static readonly GUIContent apiKeyLabel = new GUIContent("API Key");
             public static readonly GUIContent enabledLabel = new GUIContent("Enabled");
             public static readonly GUIContent preferLidarLabel = new GUIContent("Prefer LiDAR if Available");
+
+            private static GUIStyle _sdkEnabledStyle;
+
+            public static GUIStyle sdkEnabledStyle
+            {
+                get
+                {
+                    return _sdkEnabledStyle ??= new GUIStyle(EditorStyles.boldLabel)
+                    {
+                        alignment = TextAnchor.MiddleCenter
+                    };
+                }
+            }
+
+            public static readonly GUILayoutOption[] sdkEnabledOptions = { GUILayout.MinWidth(0) };
+
+            private static GUIStyle _sdkDisabledStyle;
+
+            public static GUIStyle sdkDisabledStyle
+            {
+                get
+                {
+                    return _sdkDisabledStyle ??= new GUIStyle(EditorStyles.miniButton)
+                    {
+                        stretchWidth = true,
+                        fontStyle = FontStyle.Bold
+                    };
+                }
+            }
         }
 
         private int _platformSelected = 0;
@@ -98,21 +129,14 @@ namespace Niantic.Lightship.AR.Editor
 
                 EditorGUILayout.Space(10);
                 EditorGUILayout.BeginHorizontal();
+
                 var editorSDKEnabled = LightshipEditorUtilities.GetStandaloneIsLightshipPluginEnabled();
-                var editorContent = editorSDKEnabled
-                    ? new GUIContent("Editor : SDK Enabled", _enabledIcon)
-                    : new GUIContent("Editor : SDK Disabled", _disabledIcon);
-                EditorGUILayout.LabelField(editorContent, EditorStyles.boldLabel);
                 var androidSDKEnabled = LightshipEditorUtilities.GetAndroidIsLightshipPluginEnabled();
-                var androidContent = androidSDKEnabled
-                    ? new GUIContent("Android : SDK Enabled", _enabledIcon)
-                    : new GUIContent("Android : SDK Disabled", _disabledIcon);
-                EditorGUILayout.LabelField(androidContent, EditorStyles.boldLabel);
                 var iosSDKEnabled = LightshipEditorUtilities.GetIosIsLightshipPluginEnabled();
-                var iosContent = iosSDKEnabled
-                    ? new GUIContent("iOS : SDK Enabled", _enabledIcon)
-                    : new GUIContent("iOS : SDK Disabled", _disabledIcon);
-                EditorGUILayout.LabelField(iosContent, EditorStyles.boldLabel);
+
+                LayOutSDKEnabled("Editor", editorSDKEnabled, BuildTargetGroup.Standalone);
+                LayOutSDKEnabled("Android", androidSDKEnabled, BuildTargetGroup.Android);
+                LayOutSDKEnabled("iOS", iosSDKEnabled, BuildTargetGroup.iOS);
 
                 EditorGUILayout.EndHorizontal();
                 EditorGUILayout.Space(10);
@@ -187,6 +211,55 @@ namespace Niantic.Lightship.AR.Editor
                 if (change.changed)
                 {
                     _lightshipSettings.ApplyModifiedProperties();
+                }
+            }
+        }
+
+        private void LayOutSDKEnabled(string platform, bool enabled, BuildTargetGroup group = BuildTargetGroup.Unknown)
+        {
+            if (enabled)
+            {
+                EditorGUILayout.LabelField
+                (
+                    new GUIContent
+                    (
+                        $"{platform} : SDK Enabled",
+                        _enabledIcon,
+                        $"Niantic Lightship is selected as the plug-in provider for {platform} XR. " +
+                        "The SDK is enabled for this platform."
+                    ),
+                    Contents.sdkEnabledStyle,
+                    Contents.sdkEnabledOptions
+                );
+            }
+            else
+            {
+                bool clicked = GUILayout.Button
+                (
+                    new GUIContent
+                    (
+                        $"{platform} : SDK Disabled",
+                        _disabledIcon,
+                        $"Niantic Lightship is not selected as the plug-in provider for {platform} XR." +
+                        "The SDK will not be used. Click to open Project Validation for more info on changing" +
+                        " plug-in providers to enable Lightship SDK."
+                    ),
+                    Contents.sdkDisabledStyle
+                );
+                if (clicked)
+                {
+                    // From OpenXRProjectValidationRulesSetup.cs,
+                    // Delay opening the window since sometimes other settings in the player settings provider redirect to the
+                    // project validation window causing serialized objects to be nullified
+                    EditorApplication.delayCall += () =>
+                    {
+                        if (group is BuildTargetGroup.Standalone or BuildTargetGroup.Android or BuildTargetGroup.iOS)
+                        {
+                            EditorUserBuildSettings.selectedBuildTargetGroup = group;
+                        }
+
+                        SettingsService.OpenProjectSettings(ProjectValidationSettingsPath);
+                    };
                 }
             }
         }

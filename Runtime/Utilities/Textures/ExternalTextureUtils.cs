@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 
 using System;
 using Unity.Collections.LowLevel.Unsafe;
@@ -176,17 +176,15 @@ namespace Niantic.Lightship.AR.Utilities.Textures
                     externalTexture.mipmapCount > 1
                 );
 
-            var rect = new Rect(0, 0, externalTexture.width, externalTexture.height);
-            ReadFromExternalTexture(externalTexture, destinationTexture, rect);
+            ReadFromExternalTexture(externalTexture, destinationTexture);
             return destinationTexture;
         }
 
-        // Performs direct blit from image to output texture using Unity's default material.
+        // Blits the entirety of the source external texture into the destination texture using Unity's default material.
         public static void ReadFromExternalTexture
         (
             this Texture externalTexture,
-            Texture2D destinationTexture,
-            Rect viewRect
+            Texture2D destinationTexture
         )
         {
             var tmp =
@@ -203,16 +201,17 @@ namespace Niantic.Lightship.AR.Utilities.Textures
             RenderTexture.ReleaseTemporary(tmp);
 
             // Reads pixels from the current render target and writes them to a texture.
+            var viewRect = new Rect(0, 0, externalTexture.width, externalTexture.height);
             destinationTexture.ReadPixels(viewRect, 0, 0, false);
 
             RenderTexture.active = cachedRenderTarget;
         }
 
+        // Blits the entirety of the source external texture into the destination texture using the provided material.
         public static void ReadFromExternalTexture
         (
             this Texture externalTexture,
             Texture2D destinationTexture,
-            Rect viewRect,
             Material material
         )
         {
@@ -228,6 +227,7 @@ namespace Niantic.Lightship.AR.Utilities.Textures
             RenderTexture.ReleaseTemporary(tmp);
 
             // Reads pixels from the current render target and writes them to a texture.
+            var viewRect = new Rect(0, 0, externalTexture.width, externalTexture.height);
             destinationTexture.ReadPixels(viewRect, 0, 0, false);
 
             RenderTexture.active = cachedRenderTarget;

@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 
 using System;
 using Niantic.Lightship.AR.Utilities.Log;
@@ -222,19 +222,20 @@ namespace Niantic.Lightship.AR.Subsystems.Scanning
                     }
 
                     _currentConfiguration = value;
-                    _api.Configure
-                    (
-                        _nativeProviderHandle,
-                        _currentConfiguration.Framerate,
-                        _currentConfiguration.RaycasterVisualizationEnabled,
-                        (int)_currentConfiguration.RaycasterVisualizationResolution.x,
-                        (int)_currentConfiguration.RaycasterVisualizationResolution.y,
-                        _currentConfiguration.VoxelVisualizationEnabled,
-                        _currentConfiguration.ScanBasePath,
-                        _currentConfiguration.RawScanTargetId,
-                        _currentConfiguration.UseEstimatedDepth,
-                        _currentConfiguration.FullResolutionEnabled
-                    );
+
+                    var configurationCStruct = new ScannerConfigurationCStruct();
+                    configurationCStruct.Framerate = _currentConfiguration.Framerate;
+                    configurationCStruct.EnableRaycastVisualization = _currentConfiguration.RaycasterVisualizationEnabled;
+                    configurationCStruct.RaycastWidth = (int)_currentConfiguration.RaycasterVisualizationResolution.x;
+                    configurationCStruct.RaycastHeight = (int)_currentConfiguration.RaycasterVisualizationResolution.y;
+                    configurationCStruct.EnableVoxelVisualization = _currentConfiguration.VoxelVisualizationEnabled;
+                    configurationCStruct.BasePath = _currentConfiguration.ScanBasePath;
+                    configurationCStruct.BasePathLen = _currentConfiguration.ScanBasePath.Length;
+                    configurationCStruct.ScanTargetId = _currentConfiguration.RawScanTargetId;
+                    configurationCStruct.ScanTargetIdLen = _currentConfiguration.RawScanTargetId.Length;
+                    configurationCStruct.UseMultidepth = _currentConfiguration.UseEstimatedDepth;
+                    configurationCStruct.EnableFullResolution = _currentConfiguration.FullResolutionEnabled;
+                    _api.Configure(_nativeProviderHandle, configurationCStruct);
                 }
             }
 

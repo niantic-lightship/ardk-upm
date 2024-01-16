@@ -1,10 +1,11 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using Niantic.Lightship.AR.Subsystems.Playback;
 using Niantic.Lightship.AR.Utilities;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.XR.ARSubsystems;
 
 namespace Niantic.Lightship.AR.Subsystems.Playback
@@ -68,9 +69,9 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
         public int FrameCount => frameCount;
 
         [SerializeField]
-        private int framerate;
+        private float framerate;
 
-        public int FrameRate => framerate;
+        public int FrameRate => (int)Math.Round(framerate);
 
         public bool LocationServicesEnabled;
 
@@ -200,6 +201,24 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
             private double timestamp;
 
             public double TimestampInSeconds => timestamp;
+
+            public FrameMetadata(FrameMetadata original, double timestampOffset)
+            {
+                sequence = original.sequence;
+                image = original.image;
+                depth = original.depth;
+                depthConfidence = original.depthConfidence;
+                exposure = original.exposure;
+                pose4x4 = original.pose4x4;
+                projection = original.projection;
+                resolution = original.resolution;
+                intrinsics = original.intrinsics;
+                tracking = original.tracking;
+                trackingReason = original.trackingReason;
+                timestamp = original.timestamp + timestampOffset;
+
+                location = new LocationInfo(original.location, timestampOffset);
+            }
         }
 
         [Serializable]
@@ -255,6 +274,19 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
             private double headingTimestamp;
 
             public double HeadingTimestamp => headingTimestamp;
+
+            public LocationInfo(LocationInfo original, double timestampOffset)
+            {
+                latitude = original.latitude;
+                longitude = original.longitude;
+                positionAccuracy = original.positionAccuracy;
+                positionTimestamp = original.positionTimestamp + timestampOffset;
+                altitude = original.altitude;
+                altitudeAccuracy = original.altitudeAccuracy;
+                heading = original.heading;
+                headingAccuracy = original.headingAccuracy;
+                headingTimestamp = original.headingTimestamp + timestampOffset;
+            }
         }
     }
 }

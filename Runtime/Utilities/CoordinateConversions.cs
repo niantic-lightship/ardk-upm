@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 using UnityEngine;
 
 namespace Niantic.Lightship.AR.Utilities

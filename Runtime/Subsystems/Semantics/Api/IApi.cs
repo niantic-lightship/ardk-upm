@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 using System;
 using System.Collections.Generic;
 using Niantic.Lightship.AR.Subsystems.Common;
@@ -56,6 +56,8 @@ namespace Niantic.Lightship.AR.Subsystems.Semantics
         public bool TryGetChannelNames(IntPtr nativeProviderHandle, out List<string> semanticChannelNames);
 
         public bool TryGetLatestFrameId(IntPtr nativeProviderHandle, out uint frameId);
+
+        public bool TryGetLatestIntrinsicsMatrix(IntPtr nativeProviderHandle, out Matrix4x4 intrinsicsMatrix);
 
         public bool HasMetadata(IntPtr nativeProviderHandle);
     }

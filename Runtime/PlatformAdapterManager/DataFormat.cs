@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 
 namespace Niantic.Lightship.AR.PAM
 {
@@ -16,23 +16,27 @@ namespace Niantic.Lightship.AR.PAM
         // CPU image will come with the image timestamp, image intrinsics, and its
         // data.
         kCpuRgba_256_144_Uint8 = 4,
+        
+        // CPU image will come with the image timestamp, image intrinsics, and its
+        // data.
+        kCpuRgb_256_256_Uint8 = 5,
 
         // JPEG image will come with the image timestamp, image intrinsics, and its
         // data.
-        kJpeg_720_540_Uint8 = 5,
+        kJpeg_720_540_Uint8 = 6,
 
         // GPS location data will come with the timestamp in seconds, the latitude
         // and longitude, the altitude, and the vertical and horizontal accuracies
-        kGpsLocation = 6,
+        kGpsLocation = 7,
 
         // Compass data
-        kCompass = 7,
+        kCompass = 8,
 
         // Full resolution JPEG images, the resolution might be different
         // on different devices.
-        kJpeg_full_res_Uint8 = 8,
+        kJpeg_full_res_Uint8 = 9,
 
         // Platform depth data
-        kPlatform_depth = 9,
+        kPlatform_depth = 10,
     }
 }

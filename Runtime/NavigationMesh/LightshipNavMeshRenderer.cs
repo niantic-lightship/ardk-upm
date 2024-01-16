@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 
 using System.Collections.Generic;
 using System.Linq;
@@ -18,11 +18,14 @@ namespace Niantic.Lightship.AR.NavigationMesh
     {
         [FormerlySerializedAs("_navMeshManager")]
         [FormerlySerializedAs("_gameboardManager")]
+        [Tooltip("The LightshipNavMeshManager that owns the LightshipNavMesh to render.")]
         [SerializeField]
         private LightshipNavMeshManager _lightshipNavMeshManager;
 
+        [Tooltip("The material to apply to generated meshes")]
         [SerializeField]
         private Material _material;
+
         private MeshFilter _meshFilter;
         private Mesh _mesh;
 

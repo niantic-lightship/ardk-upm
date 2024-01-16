@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 
 using System;
 using Niantic.Lightship.AR.Core;
@@ -16,6 +16,7 @@ namespace Niantic.Lightship.AR.Utilities.Preloading
 
         internal static IModelPreloader Create(bool useMock = false)
         {
+#if NIANTIC_LIGHTSHIP_AR_LOADER_ENABLED
             var unityContextHandle = LightshipUnityContext.UnityContextHandle;
 
             if (unityContextHandle == IntPtr.Zero)
@@ -34,6 +35,9 @@ namespace Niantic.Lightship.AR.Utilities.Preloading
                 Debug.Assert(false, "ModelPreloader mock is not implemented");
                 return null;
             }
+#else
+            return null;
+#endif
         }
     }
 }

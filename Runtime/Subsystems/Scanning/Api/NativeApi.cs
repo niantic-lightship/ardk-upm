@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 
 using System;
 using System.Runtime.InteropServices;
@@ -7,7 +7,7 @@ using Niantic.Lightship.AR.Core;
 
 namespace Niantic.Lightship.AR.Subsystems.Scanning
 {
-    public class NativeApi : IApi
+    internal class NativeApi : IApi
     {
         public IntPtr Construct(IntPtr unityContext)
         {
@@ -32,30 +32,13 @@ namespace Niantic.Lightship.AR.Subsystems.Scanning
         public void Configure
         (
             IntPtr handle,
-            int framerate,
-            bool raycastVisualizationEnabled,
-            int raycastVisualizationWidth,
-            int raycastVisualizationHeight,
-            bool voxelVisualizationEnabled,
-            string scanBasePath,
-            string scanTargetId,
-            bool useEstimatedDepth,
-            bool fullResolutionEnabled
+            ScannerConfigurationCStruct config
         )
         {
             Native.Configure
             (
-                handle,
-                framerate,
-                raycastVisualizationEnabled,
-                raycastVisualizationWidth,
-                raycastVisualizationHeight,
-                scanBasePath,
-                scanBasePath.Length,
-                scanTargetId,
-                scanTargetId.Length,
-                useEstimatedDepth,
-                fullResolutionEnabled
+                handle, 
+                config
             );
         }
 
@@ -190,19 +173,7 @@ namespace Niantic.Lightship.AR.Subsystems.Scanning
                 (IntPtr handle, out IntPtr positionBuffer, out IntPtr colorBuffer, out int pointCount);
 
             [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_Scanner_Configure")]
-            public static extern void Configure
-            (
-                IntPtr handle,
-                int framerate,
-                bool enableRaycastVisualization,
-                int raycastWidth,
-                int raycastHeight,
-                string scanBasePath,
-                int scanBasePathLength,
-                string scanTargetId,
-                int scanTargetIdLength,
-                bool useEstimatedDepth,
-                bool fullResolutionEnabled);
+            public static extern void Configure(IntPtr handle, ScannerConfigurationCStruct config);
         }
     }
 }

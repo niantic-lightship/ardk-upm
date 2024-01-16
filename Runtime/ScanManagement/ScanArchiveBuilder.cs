@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 
 using System;
 using System.Collections.Generic;
@@ -13,7 +13,7 @@ namespace Niantic.ARDK.AR.Scanning
 {
     /// Additional metadata relating to an uploaded scan.
     [Serializable]
-    public struct UploadUserInfo
+    public class UploadUserInfo
     {
         /// A list of labels labels to associate with the scan.
         public List<string> ScanLabels;

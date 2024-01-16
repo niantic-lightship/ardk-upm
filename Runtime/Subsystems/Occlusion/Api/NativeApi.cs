@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 
 using System;
 using System.Runtime.InteropServices;
@@ -105,9 +105,30 @@ namespace Niantic.Lightship.AR.Subsystems.Occlusion
             );
         }
 
-        public IntPtr DisposeResource(IntPtr nativeProviderHandle, IntPtr resourceHandle)
+        public bool TryGetLatestIntrinsicsMatrix(IntPtr nativeProviderHandle, out Matrix4x4 intrinsicsMatrix)
         {
-            return Native.DisposeResource(nativeProviderHandle, resourceHandle);
+            float[] intrinsics = new float[9];
+            bool gotIntrinsics = Native.TryGetLatestIntrinsics(nativeProviderHandle, intrinsics);
+
+            if (!gotIntrinsics)
+            {
+                intrinsicsMatrix = default;
+                return false;
+            }
+
+            intrinsicsMatrix = new Matrix4x4
+            (
+                new Vector4(intrinsics[0], intrinsics[1], intrinsics[2], 0),
+                new Vector4(intrinsics[3], intrinsics[4], intrinsics[5], 0),
+                new Vector4(intrinsics[6], intrinsics[7], intrinsics[8], 0),
+                new Vector4(0, 0, 0, 1)
+            );
+            return true;
+        }
+
+        public void DisposeResource(IntPtr nativeProviderHandle, IntPtr resourceHandle)
+        {
+            Native.DisposeResource(nativeProviderHandle, resourceHandle);
         }
 
         private static class Native
@@ -165,8 +186,11 @@ namespace Niantic.Lightship.AR.Subsystems.Occlusion
                 out int size
             );
 
+            [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_OcclusionProvider_TryGetLatestIntrinsics")]
+            public static extern bool TryGetLatestIntrinsics(IntPtr nativeProviderHandle, float[] intrinsics);
+
             [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_OcclusionProvider_ReleaseResource")]
-            public static extern IntPtr DisposeResource(IntPtr depthApiHandle, IntPtr resourceHandle);
+            public static extern void DisposeResource(IntPtr depthApiHandle, IntPtr resourceHandle);
         }
     }
 }

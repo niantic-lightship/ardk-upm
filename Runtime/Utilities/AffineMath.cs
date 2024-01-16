@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -32,7 +32,7 @@ namespace Niantic.Lightship.AR.Utilities
 
       // Calculate scaling
       var targetRatio = targetWidth / targetHeight;
-      var s = targetRatio < 1.0f
+      var s = targetRatio <= 1.0f
         ? new Vector2(targetWidth / (targetHeight / rotatedContainer.y * rotatedContainer.x), 1.0f)
         : new Vector2(1.0f, targetHeight / (targetWidth / rotatedContainer.x * rotatedContainer.y));
 

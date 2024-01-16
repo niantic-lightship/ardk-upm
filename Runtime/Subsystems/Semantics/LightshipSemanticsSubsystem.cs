@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 
 using System;
 using System.Collections.Generic;
@@ -40,6 +40,29 @@ namespace Niantic.Lightship.AR.Subsystems.Semantics
             };
 
             XRSemanticsSubsystem.Register(xrSemanticsSubsystemCinfo);
+        }
+
+        /// <summary>
+        /// Returns the intrinsics matrix of the most recent semantic segmentation prediction. Contains values
+        /// for the camera's focal length and principal point. Converts from world coordinates relative to the
+        /// camera to image space, with the x- and y-coordinates expressed in pixels, scaled by the z-value.
+        /// </summary>
+        /// <value>
+        /// The intrinsics matrix.
+        /// </value>
+        /// <exception cref="System.NotSupportedException">Thrown if getting intrinsics matrix is not supported.
+        /// </exception>
+        public Matrix4x4? LatestIntrinsicsMatrix
+        {
+            get
+            {
+                if (provider is LightshipSemanticsProvider lightshipProvider)
+                {
+                    return lightshipProvider.LatestIntrinsicsMatrix;
+                }
+
+                throw new NotSupportedException();
+            }
         }
 
         void ISubsystemWithMutableApi<IApi>.SwitchApiImplementation(IApi api)
@@ -104,6 +127,32 @@ namespace Niantic.Lightship.AR.Subsystems.Semantics
                         if (_api.TryGetLatestFrameId(_nativeProviderHandle, out uint id))
                         {
                             return id;
+                        }
+                    }
+
+                    return null;
+                }
+            }
+
+            /// <summary>
+            /// Returns the intrinsics matrix of the most recent semantic segmentation prediction. Contains values
+            /// for the camera's focal length and principal point. Converts from world coordinates relative to the
+            /// camera to image space, with the x- and y-coordinates expressed in pixels, scaled by the z-value.
+            /// </summary>
+            /// <value>
+            /// The intrinsics matrix.
+            /// </value>
+            /// <exception cref="System.NotSupportedException">Thrown if getting intrinsics matrix is not supported.
+            /// </exception>
+            public Matrix4x4? LatestIntrinsicsMatrix
+            {
+                get
+                {
+                    if (_nativeProviderHandle.IsValidHandle())
+                    {
+                        if (_api.TryGetLatestIntrinsicsMatrix(_nativeProviderHandle, out Matrix4x4 intrinsicsMatrix))
+                        {
+                            return intrinsicsMatrix;
                         }
                     }
 
@@ -298,6 +347,8 @@ namespace Niantic.Lightship.AR.Subsystems.Semantics
                 {
                     return;
                 }
+                // This should be changed to ConfigureProvider() when TODO [ARDK-737] is completed
+                ConfigureTargetFrameRate();
 
                 _api.Start(_nativeProviderHandle);
             }

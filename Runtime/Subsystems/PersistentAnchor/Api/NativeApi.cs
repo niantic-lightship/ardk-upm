@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 using System;
 using System.Text;
 using System.Runtime.InteropServices;
@@ -13,7 +13,7 @@ using UnityEngine.XR.ARSubsystems;
 
 namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
 {
-    public class NativeApi : IApi
+    internal class NativeApi : IApi
     {
         public IntPtr Construct(IntPtr unityContext)
         {
@@ -32,7 +32,7 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
 
         public void Configure(IntPtr anchorProviderHandle)
         {
-            Native.Configure(anchorProviderHandle);
+            Native.Configure(anchorProviderHandle, false, false, false);
         }
 
         public void Destruct(IntPtr persistentAnchorApiHandle)
@@ -235,7 +235,7 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
             public static extern void Stop(IntPtr anchorApiHandle);
 
             [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_AnchorProvider_Configure")]
-            public static extern void Configure(IntPtr anchorApiHandle);
+            public static extern void Configure(IntPtr anchorApiHandle, bool continuousLocalizationEnabled, bool temporalFusionEnabled, bool slickLocalizationEnabled);
 
             [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_AnchorProvider_Destruct")]
             public static extern void Destruct(IntPtr anchorApiHandle);

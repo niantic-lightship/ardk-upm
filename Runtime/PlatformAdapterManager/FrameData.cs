@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 using System;
 using Niantic.Lightship.AR.PAM;
 using Unity.Collections;
@@ -22,6 +22,12 @@ namespace Niantic.Lightship.AR.PAM
         private NativeArray<float> _rgba256x144CameraIntrinsicsData;
         private readonly Vector2Int _rgba256x144ImageResolution =
             new(DataFormatConstants.Rgba_256_144_ImgWidth, DataFormatConstants.Rgba_256_144_ImgHeight);
+        
+        // RGB 256x256 image data
+        private NativeArray<byte> _rgb256x256ImageData;
+        private NativeArray<float> _rgb256x256CameraIntrinsicsData;
+        private readonly Vector2Int _rgb256x256ImageResolution =
+            new(DataFormatConstants.Rgb_256_256_ImgWidth, DataFormatConstants.Rgb_256_256_ImgHeight);
 
         // JPEG 720x540 image data
         private NativeArray<byte> _cpuJpeg720X540ImageData;
@@ -79,6 +85,26 @@ namespace Niantic.Lightship.AR.PAM
         public UInt32 CpuRgba256x144ImageDataLength
         {
             set => _frameCStruct.CpuRgba256x144ImageDataLength = value;
+        }
+        
+        public Vector2Int Rgb256x256ImageResolution => _rgb256x256ImageResolution;
+
+        public NativeArray<float> Rgb256x256CameraIntrinsicsData => _rgb256x256CameraIntrinsicsData;
+
+        public UInt32 Rgb256x256CameraIntrinsicsLength
+        {
+            set => _frameCStruct.Rgb256x256CameraIntrinsicsLength = value;
+        }
+
+        public IntPtr CpuRgb256x256ImageDataPtr
+        {
+            get => _frameCStruct.CpuRgb256x256ImageData;
+            set => _frameCStruct.CpuRgb256x256ImageData = value;
+        }
+
+        public UInt32 CpuRgb256x256ImageDataLength
+        {
+            set => _frameCStruct.CpuRgb256x256ImageDataLength = value;
         }
 
         public Vector2Int Jpeg720x540ImageResolution => _jpeg720X540ImageResolution;
@@ -199,7 +225,11 @@ namespace Niantic.Lightship.AR.PAM
                 _rgba256x144ImageData.Dispose();
 
             _rgba256x144CameraIntrinsicsData.Dispose();
-
+            
+            if (_rgb256x256ImageData.IsCreated)
+                _rgb256x256ImageData.Dispose();
+            
+            _rgb256x256CameraIntrinsicsData.Dispose();
 
             _cpuJpeg720X540ImageData.Dispose();
             _jpeg720X540CameraIntrinsicsData.Dispose();
@@ -228,11 +258,17 @@ namespace Niantic.Lightship.AR.PAM
 
             _rgba256x144CameraIntrinsicsData =
                 new NativeArray<float>((int)DataFormatConstants.FlatMatrix3x3Length, Allocator.Persistent);
+            
+            _rgb256x256CameraIntrinsicsData =
+                new NativeArray<float>((int)DataFormatConstants.FlatMatrix3x3Length, Allocator.Persistent);
 
             if (imageProcessingMode == PlatformAdapterManager.ImageProcessingMode.CPU)
             {
                 _rgba256x144ImageData =
                     new NativeArray<byte>((int)DataFormatConstants.Rgba_256_144_DataLength, Allocator.Persistent);
+
+                _rgb256x256ImageData =
+                    new NativeArray<byte>((int)DataFormatConstants.Rgb_256_256_DataLength, Allocator.Persistent);
             }
 
             _cpuJpeg720X540ImageData =
@@ -273,8 +309,14 @@ namespace Niantic.Lightship.AR.PAM
                 _frameCStruct.CpuRgba256x144CameraIntrinsics =
                     (IntPtr)_rgba256x144CameraIntrinsicsData.GetUnsafeReadOnlyPtr();
 
+                _frameCStruct.CpuRgb256x256CameraIntrinsics =
+                    (IntPtr)_rgb256x256CameraIntrinsicsData.GetUnsafeReadOnlyPtr();
+
                 if (imageProcessingMode == PlatformAdapterManager.ImageProcessingMode.CPU)
+                {
                     _frameCStruct.CpuRgba256x144ImageData = (IntPtr)_rgba256x144ImageData.GetUnsafeReadOnlyPtr();
+                    _frameCStruct.CpuRgb256x256ImageData = (IntPtr)_rgb256x256ImageData.GetUnsafeReadOnlyPtr();
+                }
 
                 _frameCStruct.CpuJpeg720x540ImageData = (IntPtr)_cpuJpeg720X540ImageData.GetUnsafeReadOnlyPtr();
                 _frameCStruct.CpuJpeg720x540CameraIntrinsics =

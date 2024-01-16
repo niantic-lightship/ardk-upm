@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 #if UNITY_EDITOR
 using System.Text;
 using UnityEditor;
@@ -75,7 +75,7 @@ namespace Niantic.Lightship.AR.Utilities.Attributes
                     break;
             }
 
-            EditorGUI.LabelField(position, label.text, valueStr);
+            EditorGUI.LabelField(position, label, new GUIContent(valueStr));
         }
     }
 }

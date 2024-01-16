@@ -1,6 +1,7 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 
 using System;
+using System.Runtime.InteropServices;
 using Niantic.Lightship.AR.XRSubsystems;
 using UnityEngine;
 using Random = UnityEngine.Random;
@@ -37,26 +38,18 @@ namespace Niantic.Lightship.AR.Subsystems.Scanning
         public void Configure
         (
             IntPtr handle,
-            int framerate,
-            bool raycastVisualizationEnabled,
-            int raycastVisualizationWidth,
-            int raycastVisualizationHeight,
-            bool voxelVisualizationEnabled,
-            string scanBasePath,
-            string scanTargetId,
-            bool fullResolutionEnabled,
-            bool useEstimatedDepth
+            ScannerConfigurationCStruct config
         )
         {
-            _currentConfiguration.Framerate = framerate;
-            _currentConfiguration.RaycasterVisualizationEnabled = raycastVisualizationEnabled;
+            _currentConfiguration.Framerate = config.Framerate;
+            _currentConfiguration.RaycasterVisualizationEnabled = config.EnableRaycastVisualization;
             _currentConfiguration.RaycasterVisualizationResolution =
-                new Vector2(raycastVisualizationWidth, raycastVisualizationHeight);
-            _currentConfiguration.VoxelVisualizationEnabled = voxelVisualizationEnabled;
-            _currentConfiguration.ScanBasePath = scanBasePath;
-            _currentConfiguration.ScanTargetId = scanTargetId;
-            _currentConfiguration.FullResolutionEnabled = fullResolutionEnabled;
-            _currentConfiguration.UseEstimatedDepth = useEstimatedDepth;
+                new Vector2(config.RaycastWidth, config.RaycastHeight);
+            _currentConfiguration.VoxelVisualizationEnabled = config.EnableVoxelVisualization;
+            _currentConfiguration.ScanBasePath = config.BasePath;
+            _currentConfiguration.ScanTargetId = config.ScanTargetId;
+            _currentConfiguration.UseEstimatedDepth = config.UseMultidepth;
+            _currentConfiguration.FullResolutionEnabled = config.EnableFullResolution;
         }
 
         public IntPtr TryGetRaycastBuffer

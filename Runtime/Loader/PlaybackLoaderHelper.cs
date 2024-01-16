@@ -1,9 +1,10 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 using System.Collections.Generic;
 using Niantic.Lightship.AR.Utilities.Log;
 using Niantic.Lightship.AR.Loader;
 using Niantic.Lightship.AR.Subsystems.Playback;
 using UnityEngine;
+using UnityEngine.XR;
 using UnityEngine.XR.ARSubsystems;
 using UnityEngine.XR.Management;
 
@@ -14,17 +15,20 @@ namespace Niantic.Lightship.AR
         private readonly List<XRSessionSubsystemDescriptor> _sessionSubsystemDescriptors = new();
         private readonly List<XRCameraSubsystemDescriptor> _cameraSubsystemDescriptors = new();
         private readonly List<XROcclusionSubsystemDescriptor> _occlusionSubsystemDescriptors = new();
+        private readonly List<XRInputSubsystemDescriptor> _inputSubsystemDescriptors = new();
 
-        public PlaybackDatasetReader DatasetReader { get; private set; }
+        private LightshipPlaybackInputProvider _inputProvider;
+
+        internal PlaybackDatasetReader DatasetReader { get; private set; }
 
         /// <summary>
-        /// Initializes the loader.
+        /// Initializes the loader. This step has to be done before the native helper is initialized, so the native
+        /// helper knows if lidar support is in the dataset.
         /// </summary>
         /// <returns>`True` if the session subsystems were successfully created, otherwise `false`.</returns>
-        public bool Initialize(XRLoaderHelper loader, LightshipSettings settings)
+        internal bool InitializeBeforeNativeHelper(ILightshipLoader loader, LightshipSettings settings)
         {
             Log.Info("Initialize Playback subsystems");
-
             var dataset = PlaybackDatasetLoader.Load(settings.PlaybackDatasetPath);
 
             if (dataset == null)
@@ -87,15 +91,39 @@ namespace Niantic.Lightship.AR
         }
 
         /// <summary>
+        /// Initializes the loader. This step has to be done after the native helper is initialized because the Unity
+        /// context has to exist.
+        /// </summary>
+        /// <returns>`True` if the session subsystems were successfully created, otherwise `false`.</returns>
+        internal bool InitializeAfterNativeHelper(ILightshipLoader loader, LightshipSettings settings)
+        {
+            // Input is an integrated subsystem that must be created after the LightshipUnityContext is initialized,
+            // which is why it's done here instead of in the PlaybackLoaderHelper
+            Log.Info("Creating " + nameof(LightshipPlaybackInputProvider));
+            _inputProvider = new LightshipPlaybackInputProvider();
+            _inputProvider.SetPlaybackDatasetReader(DatasetReader);
+
+            loader.DestroySubsystem<XRInputSubsystem>();
+            loader.CreateSubsystem<XRInputSubsystemDescriptor, XRInputSubsystem>
+            (
+                _inputSubsystemDescriptors,
+                "LightshipInput"
+            );
+
+            return true;
+        }
+
+        /// <summary>
         /// Destroys each initialized subsystem.
         /// </summary>
         /// <returns>Always returns `true`.</returns>
-        public bool Deinitialize(XRLoaderHelper loader)
+        internal bool Deinitialize(ILightshipLoader loader)
         {
             Log.Info("Deinitialize playback subsystems");
             loader.DestroySubsystem<XRSessionSubsystem>();
             loader.DestroySubsystem<XRCameraSubsystem>();
 
+            _inputProvider?.Dispose();
             DatasetReader = null;
             InitializeInput(null, null);
 

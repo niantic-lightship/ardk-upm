@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 using System;
 using static Niantic.Lightship.AR.Utilities.Log.Log;
 using Niantic.Lightship.AR.Subsystems;
@@ -73,7 +73,8 @@ namespace Niantic.Lightship.AR.Utilities.Metrics
                 _usingSemantics = false;
             }
 
-            if (xrManager.activeLoader.GetLoadedSubsystem<XRMeshSubsystem>() is null)
+            var activeMeshSubsystem = xrManager.activeLoader.GetLoadedSubsystem<XRMeshSubsystem>();
+            if (activeMeshSubsystem is null || activeMeshSubsystem.SubsystemDescriptor.id != "LightshipMeshing")
             {
                 Warning("Mesh FPS not being tracked");
                 _usingMesh = false;
@@ -143,26 +144,34 @@ namespace Niantic.Lightship.AR.Utilities.Metrics
 
         private void OnFrameReceived(ARCameraFrameEventArgs args)
         {
-            var thisTimeDepth = GetLatestDepthTimestamp();
-            var thisTimeSemantics = GetLatestSemanticsTimestamp();
-            var thisTimeMesh = GetLatestMeshTimestamp();
-
-            if (_usingDepth && thisTimeDepth != _lastTimeDepth)
+            if (_usingDepth)
             {
-                _instantDepthFPS = (1.0f / (Math.Abs((long)(thisTimeDepth - _lastTimeDepth)) / 1000.0f));
-                _lastTimeDepth = thisTimeDepth;
+                var thisTimeDepth = GetLatestDepthTimestamp();
+                if (_usingDepth && thisTimeDepth != _lastTimeDepth)
+                {
+                    _instantDepthFPS = (1.0f / (Math.Abs((long)(thisTimeDepth - _lastTimeDepth)) / 1000.0f));
+                    _lastTimeDepth = thisTimeDepth;
+                }
             }
 
-            if (_usingSemantics && thisTimeSemantics != _lastTimeSemantics)
+            if (_usingSemantics)
             {
-                _instantSemanticsFPS = (1.0f / (Math.Abs((long)(thisTimeSemantics - _lastTimeSemantics)) / 1000.0f));
-                _lastTimeSemantics = thisTimeSemantics;
+                var thisTimeSemantics = GetLatestSemanticsTimestamp();
+                if (_usingSemantics && thisTimeSemantics != _lastTimeSemantics)
+                {
+                    _instantSemanticsFPS = (1.0f / (Math.Abs((long)(thisTimeSemantics - _lastTimeSemantics)) / 1000.0f));
+                    _lastTimeSemantics = thisTimeSemantics;
+                }
             }
 
-            if (_usingMesh && thisTimeMesh != _lastTimeMesh)
+            if (_usingMesh)
             {
-                _instantMeshFPS = (1.0f / (Math.Abs((long)(thisTimeMesh - _lastTimeMesh)) / 1000.0f));
-                _lastTimeMesh = thisTimeMesh;
+                var thisTimeMesh = GetLatestMeshTimestamp();
+                if (_usingMesh && thisTimeMesh != _lastTimeMesh)
+                {
+                    _instantMeshFPS = (1.0f / (Math.Abs((long)(thisTimeMesh - _lastTimeMesh)) / 1000.0f));
+                    _lastTimeMesh = thisTimeMesh;
+                }
             }
         }
 

@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -129,11 +129,11 @@ namespace Niantic.Lightship.AR.Editor
 
 // Begin Unity minor version gating
 // Unfortunately this is necessary since the _OR_NEWER macros only cover major versions.
-#if UNITY_2021_3_24 || UNITY_2021_3_25 || UNITY_2021_3_26 || UNITY_2021_3_27 || UNITY_2021_3_28 || UNITY_2021_3_29
+#if UNITY_2021_3_24 || UNITY_2021_3_25 || UNITY_2021_3_26 || UNITY_2021_3_27 || UNITY_2021_3_28 || UNITY_2021_3_29 || UNITY_2021_3_32 || UNITY_2021_3_33
                 PostProcessIosUnityAppControllerFix(buildPath);
 #elif UNITY_2022_2_13 || UNITY_2022_2_14 || UNITY_2022_2_15 || UNITY_2022_2_16 || UNITY_2022_2_17 || UNITY_2022_2_18 || UNITY_2022_2_19 || UNITY_2022_2_20 || UNITY_2022_2_21
                 PostProcessIosUnityAppControllerFix(buildPath);
-#elif UNITY_2022_3_0 || UNITY_2022_3_1 || UNITY_2022_3_2 || UNITY_2022_3_3 || UNITY_2022_3_4 || UNITY_2022_3_5 || UNITY_2022_3_6
+#elif UNITY_2022_3_0 || UNITY_2022_3_1 || UNITY_2022_3_2 || UNITY_2022_3_3 || UNITY_2022_3_4 || UNITY_2022_3_5 || UNITY_2022_3_6 || UNITY_2022_3_13 || UNITY_2022_3_14 || UNITY_2022_3_15 || UNITY_2022_3_16
                 PostProcessIosUnityAppControllerFix(buildPath);
 #endif
 // End Unity minor version gating
@@ -274,8 +274,7 @@ namespace Niantic.Lightship.AR.Editor
                 foreach (var loader in generalSettings.Manager.activeLoaders)
                 {
                     loaderIsOpenXR = loader is OpenXRLoader;   //TODO: make this actually check for spaces
-                    if (loader is LightshipStandaloneLoader || loader is LightshipARCoreLoader ||
-                        loader is LightshipARKitLoader || loaderIsOpenXR)
+                    if (loader is ILightshipLoader || loaderIsOpenXR)
                     {
                         LightshipBuildProcessor.loaderEnabled = true;
                         break;
@@ -288,6 +287,7 @@ namespace Niantic.Lightship.AR.Editor
                     {
                         AddDefineSymbols.Add("NIANTIC_LIGHTSHIP_SPACES_ENABLED");
                     }
+
                     AddDefineSymbols.Add("NIANTIC_LIGHTSHIP_AR_LOADER_ENABLED");
                 }
                 else if (!LightshipBuildProcessor.loaderEnabled && previousLoaderEnabled)

@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -12,17 +12,23 @@ namespace Niantic.Lightship.AR.Utilities
     /// Methods subscribed to the static events on this class will be invoked when the corresponding
     /// Unity event is invoked on this MonoBehaviour. Methods can only be subscribed and unsubscribed
     /// from the main Unity thread.
-    /// <note>
+    /// <remarks>
     ///   Class is not entirely thread safe because this ref is only set in Awake (see comment in
     ///   PrioritizingEvent.AddListener for more). But this class is internal and Lightship will never do anything
     ///   multi-threaded during the initialization stage, so it's an acceptable solution.
-    /// </note>
+    /// </remarks>
     /// </summary>
     [DefaultExecutionOrder(int.MinValue)] [AddComponentMenu("")]
     internal sealed class MonoBehaviourEventDispatcher : MonoBehaviour
     {
         private static MonoBehaviourEventDispatcher s_instance;
 
+        // This component's DefaultExecutionOrder is set to int.minValue, which is the same as ARFoundation's
+        // ARSession component and earlier than the other managers. This means that if a listener to the
+        // Updating event accesses a manager’s property (ex. a method subscribed to Update accesses the
+        // AROcclusionManager.environmentDepthTexture property), it won’t have the most up-to-date data. There are no
+        // current use cases like this in ARDK so we're leaving this class as is for now. If such a use case does
+        // appear, see if LateUpdating can be used instead of Updating.
         public static readonly PrioritizingEvent Updating = new ();
         public static readonly PrioritizingEvent LateUpdating = new ();
         public static readonly PrioritizingEvent OnApplicationFocusLost = new ();

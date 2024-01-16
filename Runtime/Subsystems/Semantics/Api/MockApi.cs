@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 using System;
 using System.Collections.Generic;
 using Niantic.Lightship.AR.Subsystems.Common;
@@ -321,6 +321,13 @@ namespace Niantic.Lightship.AR.Subsystems.Semantics
 
             frameId = 0;
             return false;
+        }
+
+        public bool TryGetLatestIntrinsicsMatrix(IntPtr nativeProviderHandle, out Matrix4x4 intrinsicsMatrix)
+        {
+            intrinsicsMatrix = Matrix4x4.identity;
+
+            return true;
         }
 
         public bool HasMetadata(IntPtr nativeProviderHandle)

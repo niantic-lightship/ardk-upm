@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 using System;
 using Niantic.Lightship.AR.Utilities.Textures;
 using Unity.XR.CoreUtils;
@@ -49,6 +49,18 @@ namespace Niantic.Lightship.AR.ARFoundation
         private Matrix4x4 _samplerMatrix;
 
         /// <summary>
+        /// The dimensions of the viewport that were correspond the cached sampler matrix.
+        /// </summary>
+        /// <value>
+        /// The matrix that converts from normalized viewport coordinates to normalized texture coordinates.
+        /// </value>
+        public XRCameraParams CameraParams
+        {
+            get { return _cameraParams; }
+        }
+        private XRCameraParams _cameraParams;
+
+        /// <summary>
         /// The Unity <c>Texture</c> object for the native texture.
         /// </summary>
         /// <value>
@@ -74,10 +86,12 @@ namespace Niantic.Lightship.AR.ARFoundation
         /// </summary>
         /// <param name="descriptor">The texture descriptor wrapping a native texture object.</param>
         /// <param name="samplerMatrix">The transformation matrix that converts from viewport coordinates to texture coordinates.</param>
-        public ARTextureInfo(XRTextureDescriptor descriptor, Matrix4x4 samplerMatrix)
+        /// <param name="cameraParams">The corresponding viewport dimensions used in the sampler matrix</param>
+        public ARTextureInfo(XRTextureDescriptor descriptor, Matrix4x4 samplerMatrix, XRCameraParams cameraParams)
         {
             _descriptor = descriptor;
             _samplerMatrix = samplerMatrix;
+            _cameraParams = cameraParams;
             _texture = ExternalTextureUtils.CreateExternalTexture(_descriptor);
             _lastUpdatedUnityFrameId = Time.frameCount;
         }
@@ -89,6 +103,7 @@ namespace Niantic.Lightship.AR.ARFoundation
         {
             _descriptor.Reset();
             _samplerMatrix = Matrix4x4.identity;
+            _cameraParams = default;
             DestroyTexture();
         }
 
@@ -114,7 +129,7 @@ namespace Niantic.Lightship.AR.ARFoundation
         /// </returns>
         public static ARTextureInfo GetUpdatedTextureInfo(ARTextureInfo textureInfo, XRTextureDescriptor descriptor)
         {
-            return GetUpdatedTextureInfo(textureInfo, descriptor, Matrix4x4.identity);
+            return GetUpdatedTextureInfo(textureInfo, descriptor, Matrix4x4.identity, default);
         }
 
         /// <summary>
@@ -123,16 +138,19 @@ namespace Niantic.Lightship.AR.ARFoundation
         /// <param name="textureInfo">The texture info to update.</param>
         /// <param name="descriptor">The texture descriptor wrapping a native texture object.</param>
         /// <param name="samplerMatrix">The transform that converts from viewport to texture.</param>
+        /// <param name="cameraParams">The corresponding viewport dimensions used in the sampler matrix</param>
         /// <returns>
         /// The updated texture information.
         /// </returns>
-        public static ARTextureInfo GetUpdatedTextureInfo(ARTextureInfo textureInfo, XRTextureDescriptor descriptor, Matrix4x4 samplerMatrix)
+        public static ARTextureInfo GetUpdatedTextureInfo(ARTextureInfo textureInfo, XRTextureDescriptor descriptor,
+            Matrix4x4 samplerMatrix, XRCameraParams cameraParams)
         {
             // Mark updated for the current frame
             textureInfo._lastUpdatedUnityFrameId = Time.frameCount;
 
             // Update the sampler matrix first
             textureInfo._samplerMatrix = samplerMatrix;
+            textureInfo._cameraParams = cameraParams;
 
             // If the current and given descriptors are equal, exit early from this method.
             if (textureInfo._descriptor.Equals(descriptor))

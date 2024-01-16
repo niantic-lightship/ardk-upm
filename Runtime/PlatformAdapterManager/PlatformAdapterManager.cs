@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 
 using System;
 using System.Collections.Generic;
@@ -139,6 +139,7 @@ namespace Niantic.Lightship.AR.PAM
                 _abstractTexturesSetter.Dispose();
 
             MonoBehaviourEventDispatcher.Updating.RemoveListener(SendUpdatedFrameData);
+            Application.onBeforeRender -= OnBeforeRender;
         }
 
         private void SetRgba256x144CameraIntrinsics()
@@ -157,6 +158,25 @@ namespace Niantic.Lightship.AR.PAM
             else
             {
                 _currentFrameData.Rgba256x144CameraIntrinsicsLength = 0;
+            }
+        }
+
+        private void SetRgb256x256CameraIntrinsics()
+        {
+            if (_platformDataAcquirer.TryGetCameraIntrinsics(out XRCameraIntrinsics cameraIntrinsics))
+            {
+                ImageConverter.ConvertCameraIntrinsics
+                (
+                    cameraIntrinsics,
+                    _currentFrameData.Rgb256x256ImageResolution,
+                    _currentFrameData.Rgb256x256CameraIntrinsicsData
+                );
+
+                _currentFrameData.Rgb256x256CameraIntrinsicsLength = DataFormatConstants.FlatMatrix3x3Length;
+            }
+            else
+            {
+                _currentFrameData.Rgb256x256CameraIntrinsicsLength = 0;
             }
         }
 
@@ -237,14 +257,6 @@ namespace Niantic.Lightship.AR.PAM
             }
         }
 
-        private void SetImageAspectRatio()
-        {
-            if (_platformDataAcquirer.TryGetImageResolution(out var resolution))
-            {
-                OcclusionContext.Shared.CameraImageAspectRatio = resolution.width / (float)resolution.height;
-            }
-        }
-
         // Note, all the data lengths needs to be invalidated after sending the frame to SAH,
         // otherwise the same data will be assumed being valid and used again.
         private void InvalidateFrameData()
@@ -309,6 +321,12 @@ namespace Niantic.Lightship.AR.PAM
                         _abstractTexturesSetter.SetRgba256x144Image();
                         break;
 
+                    case DataFormat.kCpuRgb_256_256_Uint8:
+                        SetRgb256x256CameraIntrinsics();
+
+                        _abstractTexturesSetter.SetRgb256x256Image();
+                        break;
+
                     case DataFormat.kJpeg_720_540_Uint8:
                         SetJpeg720x540CameraIntrinsics();
 
@@ -342,7 +360,6 @@ namespace Niantic.Lightship.AR.PAM
             ProfilerUtility.EventStep(TraceCategory, name, "SetCommonData");
 
             SetCameraPose();
-            SetImageAspectRatio();
 
             _currentFrameData.TimestampMs = (ulong)_abstractTexturesSetter.GetCurrentTimestampMs();
 
@@ -375,7 +392,7 @@ namespace Niantic.Lightship.AR.PAM
 
         private void OnBeforeRender()
         {
-            ProfilerUtility.EventInstance("Rendering", "FrameUpdate");
+            ProfilerUtility.EventInstance("Rendering", "FrameUpdate", ProfilerUtility.CustomProcessing.TIME_UNTIL_NEXT);
         }
 
         // Returns only the data formats that were actually sent to SAH
@@ -389,6 +406,11 @@ namespace Niantic.Lightship.AR.PAM
                     case DataFormat.kCpuRgba_256_144_Uint8:
                         if (_currentFrameData._frameCStruct.CpuRgba256x144ImageDataLength > 0)
                             sentDataFormats.Add(DataFormat.kCpuRgba_256_144_Uint8);
+                        break;
+
+                    case DataFormat.kCpuRgb_256_256_Uint8:
+                        if (_currentFrameData._frameCStruct.CpuRgb256x256ImageDataLength > 0)
+                            sentDataFormats.Add(DataFormat.kCpuRgb_256_256_Uint8);
                         break;
 
                     case DataFormat.kJpeg_720_540_Uint8:

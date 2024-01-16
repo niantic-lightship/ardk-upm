@@ -1,5 +1,7 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 using System;
+using Unity.Collections;
+using UnityEngine.XR.ARSubsystems;
 using Niantic.Lightship.AR.Utilities;
 
 namespace Niantic.Lightship.AR.XRSubsystems
@@ -79,5 +81,28 @@ namespace Niantic.Lightship.AR.XRSubsystems
         {
             return m_NativePtr.GetHashCode();
         }
+
+        /// <summary>
+        /// Get the data associated with this <see cref="XRPersistentAnchorPayload"/>.
+        /// This is an expensive operation!
+        /// Returns empty byte[] if payload is invalid
+        /// </summary>
+        public byte[] GetDataAsBytes()
+        {
+            if(m_NativePtr == IntPtr.Zero || m_Size == 0)
+            {
+                return new byte[0];
+            }
+            
+            NativeArray<byte> bytes;
+            unsafe
+            {
+                bytes = NativeCopyUtility.PtrToNativeArrayWithDefault<byte>
+                    (0, (void*)m_NativePtr, sizeof(byte), m_Size, Allocator.Temp);
+            }
+
+            return bytes.ToArray();
+        }
+
     }
 }

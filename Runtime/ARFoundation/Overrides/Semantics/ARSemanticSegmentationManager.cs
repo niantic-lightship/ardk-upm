@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 
 using System;
 using System.Collections.Generic;
@@ -264,7 +264,7 @@ namespace Niantic.Lightship.AR.Semantics
             // If we already have an up-to-date texture
             if (_semanticChannelTextureInfos.TryGetValue(channelName, out ARTextureInfo info))
             {
-                if (!info.IsDirty)
+                if (!info.IsDirty && info.CameraParams == cameraParams)
                 {
                     samplerMatrix = info.SamplerMatrix;
                     return info.Texture as Texture2D;
@@ -293,7 +293,11 @@ namespace Niantic.Lightship.AR.Semantics
             // Cache the texture
             if (!_semanticChannelTextureInfos.ContainsKey(channelName))
             {
-                _semanticChannelTextureInfos.Add(channelName, new ARTextureInfo(textureDescriptor, samplerMatrix));
+                _semanticChannelTextureInfos.Add
+                (
+                    channelName,
+                    new ARTextureInfo(textureDescriptor, samplerMatrix, cameraParams.Value)
+                );
             }
             else
             {
@@ -302,7 +306,8 @@ namespace Niantic.Lightship.AR.Semantics
                     (
                         _semanticChannelTextureInfos[channelName],
                         textureDescriptor,
-                        samplerMatrix
+                        samplerMatrix,
+                        cameraParams.Value
                     );
             }
 
@@ -325,7 +330,7 @@ namespace Niantic.Lightship.AR.Semantics
             if (subsystem.TryGetPackedSemanticChannels(out var textureDescriptor, out samplerMatrix, cameraParams))
             {
                 _packedBitmaskTextureInfo = ARTextureInfo.GetUpdatedTextureInfo(_packedBitmaskTextureInfo,
-                    textureDescriptor, samplerMatrix);
+                    textureDescriptor, samplerMatrix, cameraParams.Value);
                 return _packedBitmaskTextureInfo.Texture as Texture2D;
             }
 

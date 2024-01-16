@@ -1,6 +1,7 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 
 using System;
+using System.Runtime.InteropServices;
 
 namespace Niantic.Lightship.AR.Subsystems.Scanning
 {
@@ -17,15 +18,7 @@ namespace Niantic.Lightship.AR.Subsystems.Scanning
         public void Configure
         (
             IntPtr handle,
-            int framerate,
-            bool raycastVisualizationEnabled,
-            int raycastVisualizationWidth,
-            int raycastVisualizationHeight,
-            bool voxelVisualizationEnabled,
-            string scanBasePath,
-            string scanTargetId,
-            bool useEstimatedDepth,
-            bool fullResolutionEnabled
+            ScannerConfigurationCStruct config
         );
 
         public IntPtr TryGetRaycastBuffer
@@ -58,5 +51,52 @@ namespace Niantic.Lightship.AR.Subsystems.Scanning
         public void ComputeVoxels(IntPtr handle);
 
         public void ReleaseResource(IntPtr handle, IntPtr resourceHandle);
+    }
+
+    /// <summary>
+    /// C struct for C# to send frame data to C++. Defined in ardk_scanning_configuration.h file.
+    /// Note: It is not that great as we have both XRScanningConfiguration and this ScannerConfigurationCStruct.
+    /// The reason why we don't move ScannerConfigurationCStruct into XRScanningConfiguratiis for the benefits
+    /// of decoupling internal and public code, and avoid easily breaking existing public contracts.
+    /// </summary>
+    [StructLayout(LayoutKind.Sequential)]
+    public struct ScannerConfigurationCStruct
+    {
+        // FPS for scanner's recording.
+        public int Framerate;
+
+        // Flag to indicate if raycast visualization should be enabled during scanning.
+        [MarshalAs(UnmanagedType.U1)]
+        public bool EnableRaycastVisualization;
+
+        // Width of the resolution used by the raycast visualization.
+        public int RaycastWidth;
+
+        // Height of the resolution used by the raycast visualization.
+        public int RaycastHeight;
+
+        // Flag to indicate if voxel visualization should be enabled during scanning.
+        [MarshalAs(UnmanagedType.U1)]
+        public bool EnableVoxelVisualization;
+
+        // Base path string.
+        public string BasePath;
+
+        // Length of the base path string.
+        public int BasePathLen;
+
+        // Scan target ID string.
+        public string ScanTargetId;
+
+        // Length of the scan target ID String.
+        public int ScanTargetIdLen;
+
+        // Flag to indicate if multidepth will be used during scanning.
+        [MarshalAs(UnmanagedType.U1)]
+        public bool UseMultidepth;
+
+        // Flag to indicate if full resolution JPEG image will be used during scanning.
+        [MarshalAs(UnmanagedType.U1)]
+        public bool EnableFullResolution;
     }
 }

@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 using System;
 using Niantic.Lightship.AR.Utilities;
 using UnityEngine;
@@ -16,8 +16,6 @@ namespace Niantic.Lightship.AR.PAM
         public abstract bool TryGetCameraFrame(out XRCameraFrame frame);
 
         public abstract bool TryGetCameraPose(out Matrix4x4 pose);
-
-        public abstract bool TryGetImageResolution(out Resolution resolution);
 
         public abstract bool TryGetCpuImage(out XRCpuImage cpuImage);
 

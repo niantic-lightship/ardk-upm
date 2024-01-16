@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -18,10 +18,12 @@ namespace Niantic.Lightship.AR.NavigationMesh
         /// <summary>
         /// The <see cref="LightshipNavMeshAgent"/> that you want to render the path for.
         /// </summary>
+        [Tooltip("The LightshipNavMeshAgent that you want to render the path for.")]
         public LightshipNavMeshAgent _agent;
         /// <summary>
         /// The <see cref="Material"/> used to render the path. This <see cref="Material"/>  will be applied on a <see cref="LineRenderer"/>.
         /// </summary>
+        [Tooltip("The Material used to render the path. This Material will be applied on a LineRenderer.")]
         public Material _material;
         private LineRenderer _lineRenderer;
         private List<Vector3> _points = new List<Vector3>();

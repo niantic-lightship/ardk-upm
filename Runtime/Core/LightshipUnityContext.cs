@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -65,9 +65,6 @@ namespace Niantic.Lightship.AR.Core
             s_userConfig = new UserConfig
             {
                 ApiKey = settings.ApiKey,
-                ScanningCustomEndpoint = "",
-                CustomDepthEndpoint = "",
-                CustomSemanticsEndpoint = "",
             };
 
             DeviceInfo deviceInfo = new DeviceInfo
@@ -103,16 +100,7 @@ namespace Niantic.Lightship.AR.Core
             }
             OnUnityContextHandleInitialized?.Invoke();
 
-            var modelPath = Path.Combine(Application.streamingAssetsPath, "full_model.bin");
-            Log.Info("Model path: " + modelPath);
-
             s_propertyBagHandle = NativeApi.Lightship_ARDK_Unity_Property_Bag_Create(UnityContextHandle);
-            NativeApi.Lightship_ARDK_Unity_Property_Bag_Put
-            (
-                s_propertyBagHandle,
-                "depth_semantics_model_path",
-                modelPath
-            );
 
             ProfilerUtility.RegisterProfiler(new UnityProfiler());
             ProfilerUtility.RegisterProfiler(new CTraceProfiler());
@@ -236,9 +224,6 @@ namespace Niantic.Lightship.AR.Core
         private struct UserConfig
         {
             public string ApiKey;
-            public string CustomDepthEndpoint;
-            public string CustomSemanticsEndpoint;
-            public string ScanningCustomEndpoint;
         }
 
         [StructLayout(LayoutKind.Sequential)]

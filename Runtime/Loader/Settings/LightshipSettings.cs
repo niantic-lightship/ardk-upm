@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 using System;
 using System.IO;
 using UnityEditor;
@@ -33,7 +33,7 @@ namespace Niantic.Lightship.AR.Loader
         private ArdkConfiguration _ardkConfiguration;
 
         /// <summary>
-        /// Api to get the lightship ApiKey.
+        /// Get the Lightship API key.
         /// </summary>
         public string ApiKey
         {
@@ -224,7 +224,23 @@ namespace Niantic.Lightship.AR.Loader
                         ArdkConfiguration.GetDefaultEnvironmentConfig();
             }
 
+            ValidateApiKey(settings.ApiKey);
+
             return settings;
+        }
+
+        private static void ValidateApiKey(string apiKey)
+        {
+
+            if (string.IsNullOrWhiteSpace(apiKey))
+            {
+                Log.Error("Please provide a Lightship API key that has been created for your account for a project at https://lightship.dev/account/projects");
+            }
+
+            if (apiKey is { Length: > 512 })
+            {
+                Log.Error("Provided Lightship API key is too long");
+            }
         }
 
 #if UNITY_EDITOR

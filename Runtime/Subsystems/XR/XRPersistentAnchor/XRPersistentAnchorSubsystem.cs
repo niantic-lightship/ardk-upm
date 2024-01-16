@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 using System;
 using System.Collections.Generic;
 using Niantic.Lightship.AR.Utilities;
@@ -71,7 +71,6 @@ namespace Niantic.Lightship.AR.XRSubsystems
             var gotNetworkStatus = provider.GetNetworkStatusUpdate(out var networkStatuses);
             if (gotNetworkStatus)
             {
-
                 foreach (var status in networkStatuses)
                 {
                     // On success or fail, increment request count. Don't count pending

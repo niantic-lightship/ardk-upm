@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 using System;
 using Niantic.Lightship.AR.Subsystems;
 using Niantic.Lightship.AR.XRSubsystems;
@@ -7,7 +7,7 @@ using UnityEngine.XR.ARSubsystems;
 
 namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
 {
-    public class MockApi : IApi
+    internal class MockApi : IApi
     {
         public IntPtr Construct(IntPtr unityContext)
         {

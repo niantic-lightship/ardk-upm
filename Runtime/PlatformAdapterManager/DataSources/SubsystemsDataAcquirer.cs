@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 using System;
 using System.Collections.Generic;
 using Niantic.Lightship.AR.Utilities.Log;
@@ -30,8 +30,6 @@ namespace Niantic.Lightship.AR.PAM
         private bool _usingLightshipOcclusion;
         private bool _locationServiceNeedsToStart = false;
 
-        private Resolution? _cachedImageResolution;
-
         private Texture2D _gpuImageTex;
         private Texture2D _gpuDepthImageTex;
         private Texture2D _gpuDepthConfidenceTex;
@@ -41,11 +39,8 @@ namespace Niantic.Lightship.AR.PAM
 
         protected InputDevice? InputDevice;
 
-        ~SubsystemsDataAcquirer()
-        {
-            Input.compass.enabled = false;
-            Input.location.Stop();
-        }
+        private bool _autoEnabledLocationServices;
+        private bool _autoEnabledCompass;
 
         public override bool TryToBeReady()
         {
@@ -69,6 +64,26 @@ namespace Niantic.Lightship.AR.PAM
             DestroyTexture(_gpuImageTex);
             DestroyTexture(_gpuDepthImageTex);
             DestroyTexture(_gpuDepthConfidenceTex);
+
+            if (_autoEnabledLocationServices)
+            {
+                Log.Info
+                (
+                    "ARDK enabled location services because they were required by an ARDK feature. " +
+                    "ARDK is now shutting down. If location services are no longer required, they must be " +
+                    "separately disabled."
+                );
+            }
+
+            if (_autoEnabledCompass)
+            {
+                Log.Info
+                (
+                    "ARDK enabled the compass because it was required by an ARDK feature. " +
+                    "ARDK is now shutting down. If the compass data is no longer required, it must be " +
+                    "separately disabled."
+                );
+            }
         }
 
         private void DestroyTexture(Texture2D tex)
@@ -186,48 +201,6 @@ namespace Niantic.Lightship.AR.PAM
             return false;
         }
 
-        public override bool TryGetImageResolution(out Resolution resolution)
-        {
-            // Check cache
-            if (_cachedImageResolution.HasValue)
-            {
-                resolution = _cachedImageResolution.Value;
-                return true;
-            }
-
-            int width = 0;
-            int height = 0;
-            var descriptors = _cameraSubsystem.GetTextureDescriptors(Allocator.Temp);
-            if (descriptors.Length > 0)
-            {
-                // Use the size of the largest image plane
-                var size = 0;
-                for (var i = 0; i < descriptors.Length; i++)
-                {
-                    var plane = descriptors[i];
-                    var planeSize = plane.width * plane.height;
-                    if (planeSize > size)
-                    {
-                        size = planeSize;
-                        width = plane.width;
-                        height = plane.height;
-                    }
-                }
-            }
-            descriptors.Dispose();
-
-            if (width > 0 && height > 0)
-            {
-                // Extract and cache resolution
-                resolution = new Resolution {width = width, height = height};
-                _cachedImageResolution = resolution;
-                return true;
-            }
-
-            resolution = default;
-            return false;
-        }
-
         private void CheckConnectedDevice(InputDevice device, bool displayWarning = true)
         {
             if (GetPositionAndRotation(device, out Vector3 p, out Quaternion r))
@@ -281,12 +254,6 @@ namespace Niantic.Lightship.AR.PAM
 
             // TODO: ARKit returns two textures (Y and CbCr) while ARCore and Playback returns just one
             var descriptor = descriptors[0];
-
-            // Cache the image resolution
-            if (!_cachedImageResolution.HasValue && descriptor.width > 0 && descriptor.height > 0)
-            {
-                _cachedImageResolution = new Resolution {width = descriptor.width, height = descriptor.height};
-            }
 
             if (_gpuImageTex != null)
             {
@@ -351,7 +318,7 @@ namespace Niantic.Lightship.AR.PAM
                 return false;
             }
 
-            if (descriptors.Length == 0 || !confidenceDescriptor.valid)
+            if (descriptors.Length == 0 || !descriptors[0].valid || !confidenceDescriptor.valid)
             {
                 gpuDepthImage = null;
                 gpuDepthConfidenceImage = null;
@@ -441,7 +408,7 @@ namespace Niantic.Lightship.AR.PAM
                     if (Input.location.status == LocationServiceStatus.Stopped)
                     {
                         // Lazy start of location services with compass.
-                        Input.compass.enabled = true;
+                        EnableCompass();
                         RequestLocationPermissions();
                     }
 
@@ -449,7 +416,7 @@ namespace Niantic.Lightship.AR.PAM
                     {
                         // We shouldn't need to restart the location service, but simply
                         // enable the compass.
-                        Input.compass.enabled = true;
+                        EnableCompass();
                     }
                     break;
             }
@@ -474,6 +441,7 @@ namespace Niantic.Lightship.AR.PAM
         /// </summary>
         private void RequestLocationPermissions()
         {
+            Log.Info("Location services are required by an enabled ARDK feature, so ARDK will attempt to enable them.");
             // Android devices require permissions to be granted before starting the Location Service.
             bool startedWithLocationPermission = Input.location.isEnabledByUser;
             if (!startedWithLocationPermission && Application.platform == RuntimePlatform.Android)
@@ -488,6 +456,14 @@ namespace Niantic.Lightship.AR.PAM
 
             // This will trigger Permissions on iOS
             Input.location.Start(DefaultAccuracyMeters, DefaultDistanceMeters);
+            _autoEnabledLocationServices = true;
+        }
+
+        private void EnableCompass()
+        {
+            Log.Info("The device's compass is required by an enabled ARDK feature, so it is being turned on.");
+            Input.compass.enabled = true;
+            _autoEnabledCompass = true;
         }
 
         /// <summary>

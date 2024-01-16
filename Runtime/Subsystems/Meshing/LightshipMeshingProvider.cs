@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 using System;
 using System.Runtime.InteropServices;
 using Niantic.Lightship.AR.Core;
@@ -20,7 +20,12 @@ namespace Niantic.Lightship.AR.Subsystems.Meshing
             bool enableDistanceBasedVolumetricCleanup,
             float meshBlockSize,
             float meshCullingDistance,
-            bool enableMeshDecimation
+            bool enableMeshDecimation,
+            bool enableMeshFiltering,
+            bool enableFilteringAllowList,
+            int packedAllowList,
+            bool enableFilteringBlockList,
+            int packedBlockList
         )
         {
             return Lightship_ARDK_Unity_Meshing_Provider_Configure
@@ -31,7 +36,12 @@ namespace Niantic.Lightship.AR.Subsystems.Meshing
                 enableDistanceBasedVolumetricCleanup,
                 meshBlockSize,
                 meshCullingDistance,
-                enableMeshDecimation
+                enableMeshDecimation,
+                enableMeshFiltering,
+                enableFilteringAllowList,
+                packedAllowList,
+                enableFilteringBlockList,
+                packedBlockList
             );
         }
 
@@ -55,7 +65,12 @@ namespace Niantic.Lightship.AR.Subsystems.Meshing
             bool enableDistanceBasedVolumetricCleanup,
             float meshBlockSize,
             float meshCullingDistance,
-            bool enableMeshDecimation
+            bool enableMeshDecimation,
+            bool enableMeshFiltering,
+            bool enableFilteringAllowList,
+            int packedAllowList,
+            bool enableFilteringBlockList,
+            int packedBlockList
         );
     }
 }

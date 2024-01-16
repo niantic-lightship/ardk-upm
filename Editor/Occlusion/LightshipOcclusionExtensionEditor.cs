@@ -1,8 +1,9 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 
 #if UNITY_EDITOR
 
 using Niantic.Lightship.AR.Occlusion;
+using Niantic.Lightship.AR.Semantics;
 using Niantic.Lightship.AR.Subsystems.Occlusion;
 using UnityEditor;
 using UnityEngine;
@@ -47,6 +48,10 @@ namespace Niantic.Lightship.AR.Editor
             public static GUIContent enabledLabel = new GUIContent("Enabled");
         }
 
+        // Fields get reset whenever the object hierarchy changes, in addition to when this Editor loses focus,
+        private bool _triedLookingForSemanticsManager = false;
+        private bool _triedLookingForMeshManager = false;
+
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
@@ -80,6 +85,16 @@ namespace Niantic.Lightship.AR.Editor
                 if (_isOcclusionSuppressionEnabled.boolValue)
                 {
                     EditorGUILayout.PropertyField(_semanticSegmentationManager);
+
+                    // If we haven't tried auto-filling the field yet, try
+                    if (_semanticSegmentationManager.objectReferenceValue == null && !_triedLookingForSemanticsManager)
+                    {
+                        _triedLookingForSemanticsManager = true;
+                        _semanticSegmentationManager.objectReferenceValue = FindObjectOfType<ARSemanticSegmentationManager>();
+                    }
+
+                    // Now that we've tried auto-filling, show the correct UI based on whether an
+                    // ARSemanticSegmentationManager is referenced
                     if (_semanticSegmentationManager.objectReferenceValue == null)
                     {
                         EditorGUILayout.HelpBox(Contents.noSemanticSegmentationManagerWarning, MessageType.Error);
@@ -97,6 +112,13 @@ namespace Niantic.Lightship.AR.Editor
                 if (_isOcclusionStabilizationEnabled.boolValue)
                 {
                     EditorGUILayout.PropertyField(_meshManager);
+
+                    if (_meshManager.objectReferenceValue == null && !_triedLookingForMeshManager)
+                    {
+                        _triedLookingForMeshManager = true;
+                        _meshManager.objectReferenceValue = FindObjectOfType<ARMeshManager>();
+                    }
+
                     if (_meshManager.objectReferenceValue == null)
                     {
                         EditorGUILayout.HelpBox(Contents.noMeshManagerWarning, MessageType.Error);

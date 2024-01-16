@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 
 using System;
 using System.Collections.Generic;
@@ -98,7 +98,7 @@ namespace Niantic.Lightship.AR.VpsCoverage
 
     #region Custom Awaiter for SendWebRequest()
 
-    public class UnityWebRequestAwaiter : INotifyCompletion
+    internal class UnityWebRequestAwaiter : INotifyCompletion
     {
         private readonly UnityWebRequestAsyncOperation asyncOp;
         private Action _continuation;
@@ -129,7 +129,7 @@ namespace Niantic.Lightship.AR.VpsCoverage
         }
     }
 
-    public static class ExtensionMethods
+    internal static class UnityWebRequestAwaiterExtensions
     {
         public static UnityWebRequestAwaiter GetAwaiter(this UnityWebRequestAsyncOperation asyncOp)
         {

@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 // Restrict inclusion to Android builds to avoid symbol resolution error
 
 #if UNITY_ANDROID || UNITY_EDITOR
@@ -7,15 +7,16 @@
 #define NIANTIC_LIGHTSHIP_ARCORE_LOADER_ENABLED
 #endif
 
+using System.Collections.Generic;
 using Niantic.Lightship.AR.Utilities.Log;
 using Niantic.Lightship.AR.PAM;
-using Niantic.Lightship.AR.Subsystems.Playback;
 using Niantic.Lightship.AR.Utilities;
 using Niantic.Lightship.AR.XRSubsystems;
 using Unity.Collections;
 using UnityEngine;
 using UnityEngine.XR.ARCore;
 using UnityEngine.XR.ARSubsystems;
+using UnityEngine.XR.Management;
 
 namespace Niantic.Lightship.AR.Loader
 {
@@ -27,92 +28,75 @@ namespace Niantic.Lightship.AR.Loader
         private const int CameraResolutionMinWidth = DataFormatConstants.Jpeg_720_540_ImgWidth;
         private const int CameraResolutionMinHeight = DataFormatConstants.Jpeg_720_540_ImgHeight;
 
-        private PlaybackLoaderHelper _playbackHelper;
-        private NativeLoaderHelper _nativeHelper;
+        public void InjectLightshipLoaderHelper(LightshipLoaderHelper lightshipLoaderHelper)
+        {
+            _lightshipLoaderHelper = lightshipLoaderHelper;
+        }
+        private LightshipLoaderHelper _lightshipLoaderHelper;
+        private List<ILightshipExternalLoader> _externalLoaders = new();
 
-        PlaybackDatasetReader ILightshipLoader.PlaybackDatasetReader => _playbackHelper?.DatasetReader;
-
-        /// <summary>
-        /// Optional override settings for manual XR Loader initialization
-        /// </summary>
-        public LightshipSettings InitializationSettings { get; set; }
 
         /// <summary>
         /// The `XROcclusionSubsystem` whose lifecycle is managed by this loader.
         /// </summary>
-        public XROcclusionSubsystem LightshipOcclusionSubsystem => GetLoadedSubsystem<XROcclusionSubsystem>();
+        public XROcclusionSubsystem LightshipOcclusionSubsystem => ((XRLoaderHelper) this).GetLoadedSubsystem<XROcclusionSubsystem>();
 
         /// <summary>
         /// The `XRPersistentAnchorSubsystem` whose lifecycle is managed by this loader.
         /// </summary>
         public XRPersistentAnchorSubsystem LightshipPersistentAnchorSubsystem =>
-            GetLoadedSubsystem<XRPersistentAnchorSubsystem>();
+            ((XRLoaderHelper) this).GetLoadedSubsystem<XRPersistentAnchorSubsystem>();
 
         /// <summary>
-        /// Initializes the loader.
+        /// Initializes the loader. This is called from Unity when starting an AR session.
         /// </summary>
         /// <returns>`True` if the session subsystems were successfully created, otherwise `false`.</returns>
         public override bool Initialize()
         {
-            if (InitializationSettings == null)
-            {
-                InitializationSettings = LightshipSettings.Instance;
-            }
+            var initializationSettings = LightshipSettings.Instance;
+            _lightshipLoaderHelper ??= new LightshipLoaderHelper(initializationSettings, _externalLoaders);
 
-            return ((ILightshipLoader)this).InitializeWithSettings(InitializationSettings);
+            return InitializeWithLightshipHelper(_lightshipLoaderHelper);
         }
 
-        bool ILightshipLoader.InitializeWithSettings(LightshipSettings settings, bool isTest)
+        /// <summary>
+        /// Initializes the loader with an injected LightshipLoaderHelper. This is a helper to initialize manually from tests.
+        /// </summary>
+        /// <returns>`True` if the session subsystems were successfully created, otherwise `false`.</returns>
+        public bool InitializeWithLightshipHelper(LightshipLoaderHelper lightshipLoaderHelper, bool isTest = false)
         {
 #if NIANTIC_LIGHTSHIP_ARCORE_LOADER_ENABLED
-            bool initializationSuccess;
-
-            if (settings.OverrideLoggingLevel)
-            {
-                Log.LogLevel = settings.LogLevel;
-            }
-
-            if (settings.UsePlayback)
-            {
-                // Initialize Playback subsystems instead of initializing ARCore subsystems
-                // (for those features that aren't added/supplanted by Lightship),
-                _playbackHelper = new PlaybackLoaderHelper();
-                initializationSuccess = _playbackHelper.Initialize(this, settings);
-            }
-            else
-            {
-                // Initialize ARCore subsystems
-                initializationSuccess = base.Initialize();
-            }
-
-            // Don't initialize lightship subsystems if ARCore's initialization has already failed.
-            if (!initializationSuccess)
-            {
-                return false;
-            }
-
-            // Must initialize Lightship subsystems after ARCore's, because when there's overlap, the native helper will
-            // (1) destroy ARCore's subsystems and then
-            // (2) create Lightship's version of the subsystems
-            _nativeHelper = new NativeLoaderHelper();
-
-            // Determine if device supports LiDAR only during the window where AFTER arf loader initializes but BEFORE
-            // lightship loader initializes as non-playback relies on checking the existence of arf's meshing subsystem
-            var isLidarSupported = settings.UsePlayback
-                ? _playbackHelper.DatasetReader.GetIsLidarAvailable()
-                : _nativeHelper.DetermineIfDeviceSupportsLidar();
-
-            initializationSuccess &= _nativeHelper.Initialize(this, settings, isLidarSupported, isTest);
-
-            if (!settings.UsePlayback)
-            {
-                MonoBehaviourEventDispatcher.Updating.AddListener(SelectCameraConfiguration);
-            }
-
-            return initializationSuccess;
+            _lightshipLoaderHelper = lightshipLoaderHelper;
+            return _lightshipLoaderHelper.Initialize(this);
 #else
             return false;
 #endif
+        }
+
+        // On Android there is no Lidar
+        public bool IsPlatformDepthAvailable()
+        {
+            return false;
+        }
+
+        public new void CreateSubsystem<TDescriptor, TSubsystem>(List<TDescriptor> descriptors, string id) where TDescriptor : ISubsystemDescriptor where TSubsystem : ISubsystem
+        {
+            base.CreateSubsystem<TDescriptor, TSubsystem>(descriptors, id);
+        }
+
+        public new void DestroySubsystem<T>() where T : class, ISubsystem
+        {
+            base.DestroySubsystem<T>();
+        }
+
+        public new T GetLoadedSubsystem<T>() where T : class, ISubsystem
+        {
+            return base.GetLoadedSubsystem<T>();
+        }
+
+        void ILightshipLoader.AddExternalLoader(ILightshipExternalLoader loader)
+        {
+            _externalLoaders.Add(loader);
         }
 
         // The default camera image resolution from ARCore is 640x480, which is not large enough for the image
@@ -199,15 +183,22 @@ namespace Niantic.Lightship.AR.Loader
         public override bool Deinitialize()
         {
 #if NIANTIC_LIGHTSHIP_ARCORE_LOADER_ENABLED
-            MonoBehaviourEventDispatcher.Updating.RemoveListener(SelectCameraConfiguration);
-
-            _nativeHelper?.Deinitialize(this);
-            _playbackHelper?.Deinitialize(this);
-
-            return base.Deinitialize();
+            return _lightshipLoaderHelper.Deinitialize();
 #else
             return true;
 #endif
+        }
+
+        public bool InitializePlatform()
+        {
+            MonoBehaviourEventDispatcher.Updating.AddListener(SelectCameraConfiguration);
+            return base.Initialize();
+        }
+
+        public bool DeinitializePlatform()
+        {
+            MonoBehaviourEventDispatcher.Updating.RemoveListener(SelectCameraConfiguration);
+            return base.Deinitialize();
         }
     }
 }

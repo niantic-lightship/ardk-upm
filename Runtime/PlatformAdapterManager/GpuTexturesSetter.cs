@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 
 using System;
 using Niantic.Lightship.AR.Utilities.Profiling;
@@ -17,14 +17,11 @@ namespace Niantic.Lightship.AR.PAM
         private Texture2D _gpuConfidenceImage;
 
         private Texture2D _awarenessOutputTexture;
-        private Rect _awarenessOutputRect;
+        private Texture2D _squareOutputTexture;
         private Texture2D _jpegOutputTexture;
-        private Rect _jpegOutputRect;
         private Texture2D _jpegFullResOutputTexture;
-        private Rect _jpegFullResOutputRect;
         private Texture2D _depthOutputTexture;
         private Texture2D _depthConfidenceOutputTexture;
-        private Rect _depthOutputRect;
 
         private bool _isGpuImageValid;
 
@@ -37,6 +34,7 @@ namespace Niantic.Lightship.AR.PAM
         public override void Dispose()
         {
             DestroyTextureIfNotNull(_awarenessOutputTexture);
+            DestroyTextureIfNotNull(_squareOutputTexture);
             DestroyTextureIfNotNull(_jpegOutputTexture);
             DestroyTextureIfNotNull(_jpegFullResOutputTexture);
             DestroyTextureIfNotNull(_depthOutputTexture);
@@ -78,12 +76,11 @@ namespace Niantic.Lightship.AR.PAM
                     ProfilerUtility.EventStep(TraceCategory, traceEvent, "Allocate texture");
                     var resolution = CurrentFrameData.Rgba256x144ImageResolution;
                     _awarenessOutputTexture = new Texture2D(resolution.x, resolution.y, TextureFormat.RGBA32, false);
-                    _awarenessOutputRect = new Rect(0, 0, resolution.x, resolution.y);
                 }
 
                 ProfilerUtility.EventStep(TraceCategory, traceEvent, "ConvertOnGpuAndCopy");
 
-                _gpuImage.ConvertOnGpuAndCopy(_awarenessOutputTexture, _awarenessOutputRect);
+                _gpuImage.ConvertOnGpuAndCopy(_awarenessOutputTexture);
 
                 unsafe
                 {
@@ -96,6 +93,43 @@ namespace Niantic.Lightship.AR.PAM
             else
             {
                 CurrentFrameData.CpuRgba256x144ImageDataLength = 0;
+            }
+
+            ProfilerUtility.EventEnd(TraceCategory, traceEvent);
+        }
+        
+        public override void SetRgb256x256Image()
+        {
+            const string traceEvent = "SetRgb256x256Image (GPU)";
+            ProfilerUtility.EventBegin(TraceCategory, traceEvent);
+
+            ProfilerUtility.EventStep(TraceCategory, traceEvent, "TryGetGpuImage");
+            if (_isGpuImageValid || PlatformDataAcquirer.TryGetGpuImage(out _gpuImage))
+            {
+                _isGpuImageValid = true;
+
+                if (_squareOutputTexture == null)
+                {
+                    ProfilerUtility.EventStep(TraceCategory, traceEvent, "Allocate texture");
+                    var resolution = CurrentFrameData.Rgb256x256ImageResolution;
+                    _squareOutputTexture = new Texture2D(resolution.x, resolution.y, TextureFormat.RGB24, false);
+                }
+
+                ProfilerUtility.EventStep(TraceCategory, traceEvent, "ConvertOnGpuAndCopy");
+
+                _gpuImage.ConvertOnGpuAndCopy(_squareOutputTexture);
+
+                unsafe
+                {
+                    CurrentFrameData.CpuRgb256x256ImageDataPtr =
+                        (IntPtr)_squareOutputTexture.GetRawTextureData<byte>().GetUnsafeReadOnlyPtr();
+                }
+
+                CurrentFrameData.CpuRgb256x256ImageDataLength = DataFormatConstants.Rgb_256_256_DataLength;
+            }
+            else
+            {
+                CurrentFrameData.CpuRgb256x256ImageDataLength = 0;
             }
 
             ProfilerUtility.EventEnd(TraceCategory, traceEvent);
@@ -115,8 +149,6 @@ namespace Niantic.Lightship.AR.PAM
                     ProfilerUtility.EventStep(TraceCategory, traceEvent, "Allocate texture");
                     var resolution = CurrentFrameData.Jpeg720x540ImageResolution;
                     _jpegOutputTexture = new Texture2D(resolution.x, resolution.y, TextureFormat.RGBA32, false);
-
-                    _jpegOutputRect = new Rect(0, 0, resolution.x, resolution.y);
                 }
 
                 ProfilerUtility.EventStep(TraceCategory, traceEvent, "ConvertOnGpuAndCopy");
@@ -124,7 +156,7 @@ namespace Niantic.Lightship.AR.PAM
                 // Unity's EncodeToJPG method expects as input texture data formatted in Unity convention (first pixel
                 // bottom left), whereas the raw data of AR textures are in first pixel top left convention.
                 // Thus we invert the pixels in this step, so they are output correctly oriented in the encoding step.
-                _gpuImage.ConvertOnGpuAndCopy(_jpegOutputTexture, _jpegOutputRect, mirrorX: true);
+                _gpuImage.ConvertOnGpuAndCopy(_jpegOutputTexture, mirrorX: true);
 
                 // New buffer from Unity that contains the JPEG data
                 ProfilerUtility.EventStep(TraceCategory, traceEvent, "EncodeToJPG");
@@ -166,14 +198,12 @@ namespace Niantic.Lightship.AR.PAM
                 {
                     var resolution = CurrentFrameData.JpegFullResImageResolution;
                     _jpegFullResOutputTexture = new Texture2D(resolution.x, resolution.y, TextureFormat.RGBA32, false);
-
-                    _jpegFullResOutputRect = new Rect(0, 0, resolution.x, resolution.y);
                 }
 
                 // Unity's EncodeToJPG method expects as input texture data formatted in Unity convention (first pixel
                 // bottom left), whereas the raw data of AR textures are in first pixel top left convention.
                 // Thus we invert the pixels in this step, so they are output correctly oriented in the encoding step.
-                _gpuImage.ConvertOnGpuAndCopy(_jpegFullResOutputTexture, _jpegFullResOutputRect, mirrorX: true);
+                _gpuImage.ConvertOnGpuAndCopy(_jpegFullResOutputTexture, mirrorX: true);
 
                 // New buffer from Unity that contains the JPEG data
                 ProfilerUtility.EventStep(TraceCategory, traceEvent, "EncodeToJPG");
@@ -215,13 +245,11 @@ namespace Niantic.Lightship.AR.PAM
 
                     _depthConfidenceOutputTexture =
                         new Texture2D(_gpuConfidenceImage.width, _gpuConfidenceImage.height, TextureFormat.R8, false);
-
-                    _depthOutputRect = new Rect(0, 0, _gpuDepthImage.width, _gpuDepthImage.height);
                 }
 
                 ProfilerUtility.EventStep(TraceCategory, traceEvent, "ReadFromExternalTexture");
-                _gpuDepthImage.ReadFromExternalTexture(_depthOutputTexture, _depthOutputRect);
-                _gpuConfidenceImage.ReadFromExternalTexture(_depthConfidenceOutputTexture, _depthOutputRect);
+                _gpuDepthImage.ReadFromExternalTexture(_depthOutputTexture);
+                _gpuConfidenceImage.ReadFromExternalTexture(_depthConfidenceOutputTexture);
 
                 unsafe
                 {

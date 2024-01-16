@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 using System;
 using UnityEngine;
 using UnityEngine.XR.ARSubsystems;
@@ -45,12 +45,6 @@ namespace Niantic.Lightship.AR.PAM
         public override bool TryGetCameraPose(out Matrix4x4 pose)
         {
             pose = Matrix4x4.TRS(Vector3.forward, Quaternion.identity, Vector3.one);
-            return true;
-        }
-
-        public override bool TryGetImageResolution(out Resolution resolution)
-        {
-            resolution = new Resolution();
             return true;
         }
 

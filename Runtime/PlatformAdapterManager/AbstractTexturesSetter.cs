@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 
 using System;
 using UnityEngine.XR.ARSubsystems;
@@ -34,6 +34,7 @@ namespace Niantic.Lightship.AR.PAM
         }
 
         public abstract void SetRgba256x144Image();
+        public abstract void SetRgb256x256Image();
         public abstract void SetJpeg720x540Image();
         public abstract void SetJpegFullResImage();
         public abstract void SetPlatformDepthBuffer();

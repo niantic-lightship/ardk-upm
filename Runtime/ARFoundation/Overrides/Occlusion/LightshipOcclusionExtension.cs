@@ -1,10 +1,11 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using Niantic.Lightship.AR.Utilities.Log;
 using Niantic.Lightship.AR.Semantics;
 using Niantic.Lightship.AR.Subsystems.Occlusion;
+using Niantic.Lightship.AR.Subsystems.Playback;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -99,6 +100,37 @@ namespace Niantic.Lightship.AR.Occlusion
         private bool _showedTargetFrameRateNotSupportedMessage;
         private const string k_TargetFrameRateNotSupportedMessage =
             "TargetFrameRate is not supported on non-Lightship implementations of the XROcclusionSubsystem.";
+
+        /// <summary>
+        /// Returns the intrinsics matrix of the most recent semantic segmentation prediction. Contains values
+        /// for the camera's focal length and principal point. Converts between 2D image pixel coordinates and
+        /// 3D world coordinates relative to the camera.
+        /// </summary>
+        /// <value>
+        /// The intrinsics matrix.
+        /// </value>
+        /// <exception cref="System.NotSupportedException">Thrown if getting intrinsics matrix is not supported.
+        /// </exception>
+        public Matrix4x4? LatestIntrinsicsMatrix
+        {
+            get
+            {
+                if (_occlusionSubsystem is LightshipOcclusionSubsystem lightshipOcclusionSubsystem)
+                {
+                    return lightshipOcclusionSubsystem.LatestIntrinsicsMatrix;
+                }
+                if (_occlusionSubsystem is LightshipPlaybackOcclusionSubsystem lightshipPlaybackOcclusionSubsystem)
+                {
+                    return lightshipPlaybackOcclusionSubsystem.LatestIntrinsicsMatrix;
+                }
+
+                Log.Warning(k_LatestIntrinsicsMatrixNotSupportedMessage);
+                return default;
+            }
+        }
+
+        private const string k_LatestIntrinsicsMatrixNotSupportedMessage =
+            "LatestInrinsicsMatrix is not supported on non-Lightship implementations of the XROcclusionSubsystem.";
 
         [SerializeField]
         [Tooltip("The current method used for determining the distance at which occlusions "
@@ -546,6 +578,30 @@ namespace Niantic.Lightship.AR.Occlusion
         private ScreenOrientation _screenOrientation;
 
         /// <summary>
+        /// The default texture bound to the depth property on the material.
+        /// It let's every pixel pass through until the real depth texture is ready to use.
+        /// This resource only gets allocated if custom occlusion features are used during
+        /// the lifetime of the occlusion extension component.
+        /// </summary>
+        private Texture2D DefaultDepthTexture
+        {
+            get
+            {
+                // Lazy
+                if (_defaultDepthTexture == null)
+                {
+                    var maxDistance = _camera.farClipPlane;
+                    _defaultDepthTexture = new Texture2D(2, 2, TextureFormat.RFloat, mipChain: false);
+                    _defaultDepthTexture.SetPixelData(new[] {maxDistance, maxDistance, maxDistance, maxDistance}, 0);
+                    _defaultDepthTexture.Apply(false);
+                }
+
+                return _defaultDepthTexture;
+            }
+        }
+        private Texture2D _defaultDepthTexture;
+
+        /// <summary>
         /// Verifies the state of the component and enables or disables custom rendering accordingly.
         /// </summary>
         private void ConfigureRendering()
@@ -765,6 +821,12 @@ namespace Niantic.Lightship.AR.Occlusion
             if (_fusedDepthCamera != null)
             {
                 Destroy(_fusedDepthCamera.gameObject);
+            }
+
+            // Destroy additional resources
+            if (_defaultDepthTexture != null)
+            {
+                Destroy(_defaultDepthTexture);
             }
         }
 
@@ -996,6 +1058,9 @@ namespace Niantic.Lightship.AR.Occlusion
                 _backgroundCommandBuffer = new CommandBuffer();
                 _backgroundCommandBuffer.name = k_CustomRenderPassName;
                 _backgroundCommandBuffer.Blit(null, BuiltinRenderTextureType.CameraTarget, BackgroundMaterial);
+
+                // Bind passthrough texture by default
+                BackgroundMaterial.SetTexture(s_depthTextureId, DefaultDepthTexture);
             }
 
             return _backgroundCommandBuffer;

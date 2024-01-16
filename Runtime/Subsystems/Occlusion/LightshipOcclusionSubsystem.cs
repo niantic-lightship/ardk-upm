@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 using System;
 using System.Collections.Generic;
 using Niantic.Lightship.AR.Utilities.Log;
@@ -42,6 +42,31 @@ namespace Niantic.Lightship.AR.Subsystems.Occlusion
                 {
                     lightshipProvider.TargetFrameRate = value;
                 }
+            }
+        }
+
+        /// <summary>
+        /// Returns the intrinsics matrix of the most recent depth prediction. Contains values
+        /// for the camera's focal length and principal point. Since the depth texture is guaranteed to be the same
+        /// aspect ratio as the camera image, these intrinsics will be the same as those from the <c>ARCameraManager</c>
+        /// but scaled by the factor between their resolutions. Converts from world coordinates relative to the
+        /// camera to image space, with the x- and y-coordinates expressed in pixels, scaled by the z-value.
+        /// </summary>
+        /// <value>
+        /// The intrinsics matrix.
+        /// </value>
+        /// <exception cref="System.NotSupportedException">Thrown if getting intrinsics matrix is not supported.
+        /// </exception>
+        public Matrix4x4? LatestIntrinsicsMatrix
+        {
+            get
+            {
+                if (provider is LightshipOcclusionProvider lightshipProvider)
+                {
+                    return lightshipProvider.LatestIntrinsicsMatrix;
+                }
+
+                throw new NotSupportedException();
             }
         }
 
@@ -328,6 +353,23 @@ namespace Niantic.Lightship.AR.Subsystems.Occlusion
             /// </summary>
             public override OcclusionPreferenceMode currentOcclusionPreferenceMode => _occlusionPreferenceMode;
 
+
+            public Matrix4x4? LatestIntrinsicsMatrix
+            {
+                get
+                {
+                    if (_nativeProviderHandle.IsValidHandle())
+                    {
+                        if (_api.TryGetLatestIntrinsicsMatrix(_nativeProviderHandle, out Matrix4x4 intrinsicsMatrix))
+                        {
+                            return intrinsicsMatrix;
+                        }
+                    }
+
+                    return null;
+                }
+            }
+
             /// <summary>
             /// Get the environment texture descriptor.
             /// </summary>
@@ -453,7 +495,7 @@ namespace Niantic.Lightship.AR.Subsystems.Occlusion
             /// <param name="resourceHandle">Handle to the native resource.</param>
             /// <param name="memoryBuffer">Handle to the data buffer.</param>
             /// <param name="size">The size of the data buffer.</param>
-            /// <param name="width">The width if the image.</param>
+            /// <param name="width">The width of the image.</param>
             /// <param name="height">The height of the image.</param>
             /// <param name="format">The texture format that should be used to represent the image.</param>
             /// <param name="frameTimestamp">The timestamp of the frame.</param>
@@ -471,9 +513,7 @@ namespace Niantic.Lightship.AR.Subsystems.Occlusion
             )
             {
                 // Verify the aspect ratio we need to comply with
-                var cameraImageAspectRatio = OcclusionContext.Shared.CameraImageAspectRatio;
-                var isCameraAspectRatioValid =
-                    cameraImageAspectRatio.HasValue && !cameraImageAspectRatio.Value.IsUndefined();
+                var isCameraAspectRatioValid = OcclusionContext.Shared.TryGetCameraImageAspectRatio(out var aspectRatio);
 
                 // Cannot acquire an environment depth image in an appropriate image container
                 if (!_nativeProviderHandle.IsValidHandle() || !isCameraAspectRatioValid)
@@ -508,7 +548,7 @@ namespace Niantic.Lightship.AR.Subsystems.Occlusion
                 }
 
                 // Calculate the aligned image container
-                height = Mathf.FloorToInt(width / cameraImageAspectRatio.Value);
+                height = Mathf.FloorToInt(width / aspectRatio);
 
                 // Acquire the most recent device pose
                 var didAcquirePose = PoseProvider.TryAcquireCurrentPose(out var poseMatrix);

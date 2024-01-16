@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
@@ -422,6 +422,27 @@ namespace  Niantic.Lightship.AR.Subsystems.Semantics
             return Native.TryGetLatestFrameId(nativeProviderHandle, out frameId);
         }
 
+        public bool TryGetLatestIntrinsicsMatrix(IntPtr nativeProviderHandle, out Matrix4x4 intrinsicsMatrix)
+        {
+            float[] intrinsics = new float[9];
+            bool gotIntrinsics = Native.TryGetLatestIntrinsics(nativeProviderHandle, intrinsics);
+
+            if (!gotIntrinsics)
+            {
+                intrinsicsMatrix = default;
+                return false;
+            }
+
+            intrinsicsMatrix = new Matrix4x4
+            (
+                new Vector4(intrinsics[0], intrinsics[1], intrinsics[2], 0),
+                new Vector4(intrinsics[3], intrinsics[4], intrinsics[5], 0),
+                new Vector4(intrinsics[6], intrinsics[7], intrinsics[8], 0),
+                new Vector4(0, 0, 0, 1)
+            );
+            return true;
+        }
+
         public bool HasMetadata(IntPtr nativeProviderHandle)
         {
             return Native.HasMetadata(nativeProviderHandle);
@@ -652,6 +673,9 @@ namespace  Niantic.Lightship.AR.Subsystems.Semantics
 
             [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_SemanticsProvider_TryGetLatestFrameId")]
             public static extern bool TryGetLatestFrameId(IntPtr nativeProviderHandle, out uint frameId);
+
+            [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_SemanticsProvider_TryGetLatestIntrinsics")]
+            public static extern bool TryGetLatestIntrinsics(IntPtr nativeProviderHandle, float[] intrinsics);
 
             [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_SemanticsProvider_HasMetadata")]
             public static extern bool HasMetadata(IntPtr nativeProviderHandle);

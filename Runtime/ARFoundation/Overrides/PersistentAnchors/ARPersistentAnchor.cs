@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -71,6 +71,14 @@ namespace Niantic.Lightship.AR.PersistentAnchors
         internal ARPersistentAnchorInterpolator Interpolator { get; private set; }
 
         private bool _wasntTrackingLastInterpolationApplication = false;
+
+        /// <summary>
+        /// The payload for this anchor as bytes[]
+        /// This is an expensive call!
+        /// </summary>
+        public byte[] GetDataAsBytes() {
+            return sessionRelativeData.xrPersistentAnchorPayload.GetDataAsBytes();
+        }
 
         private void Awake()
         {

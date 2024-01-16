@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 
 using System;
 using System.Runtime.InteropServices;
@@ -29,13 +29,21 @@ namespace Niantic.Lightship.AR.PAM
         private IntPtr _fullResJpegDataHolderPtr;
         private IntPtr _nativeJpegHandle;
 
+#if NIANTIC_LIGHTSHIP_SPACES_ENABLED
+        // TODO(ARDK-2304): Remove this when Snapdragon Spaces fixes their timestamp.
+        // Snapdragon Spaces erroniously gives us XRCpuImage timestamps in ns, not s.
+        // Since XRCpuImage timestamp is readonly we just set a 10^6 conversion factor here.
+        private const int SecondToMillisecondFactor = 1 / 1000;
+#else
         private const int SecondToMillisecondFactor = 1000;
+#endif
 
         private const string TraceCategory = "CpuTexturesSetter";
 
         private void EnsureJpegInitialized()
         {
-            if (_nativeJpegHandle != IntPtr.Zero) {
+            if (_nativeJpegHandle.IsValidHandle())
+            {
                 return;
             }
             _nativeJpegHandle = Native.Lightship_ARDK_Unity_CreateJpeg();
@@ -121,12 +129,33 @@ namespace Niantic.Lightship.AR.PAM
             ProfilerUtility.EventEnd(TraceCategory, traceEvent);
         }
 
+        public override void SetRgb256x256Image()
+        {
+            if (_cpuImage.valid || PlatformDataAcquirer.TryGetCpuImage(out _cpuImage))
+            {
+                _cpuImage.ConvertOnCpuAndWriteToMemory
+                (
+                    CurrentFrameData.Rgb256x256ImageResolution,
+                    CurrentFrameData.CpuRgb256x256ImageDataPtr,
+                    TextureFormat.RGB24
+                );
+
+                _currTimestampMs = _cpuImage.timestamp * SecondToMillisecondFactor;
+                CurrentFrameData.CpuRgb256x256ImageDataLength = DataFormatConstants.Rgb_256_256_DataLength;
+            }
+            else
+            {
+                CurrentFrameData.TimestampMs = 0;
+                CurrentFrameData.CpuRgb256x256ImageDataLength = 0;
+            }
+        }
+
         public override void SetJpeg720x540Image()
         {
             EnsureJpegInitialized();
 
             const string traceEvent = "SetJpeg720x540Image (CPU)";
-            ProfilerUtility.EventBegin(TraceCategory,traceEvent);
+            ProfilerUtility.EventBegin(TraceCategory, traceEvent);
 
             ProfilerUtility.EventStep(TraceCategory, traceEvent, "TryGetCpuImage");
             if (_cpuImage.valid || PlatformDataAcquirer.TryGetCpuImage(out _cpuImage))
@@ -160,7 +189,7 @@ namespace Niantic.Lightship.AR.PAM
                     unsafe
                     {
                         Native.Lightship_ARDK_Unity_CompressJpegRgba(_nativeJpegHandle, _resizedJpegDataHolderPtr,
-                            DataFormatConstants.Jpeg_720_540_ImgWidth , DataFormatConstants.Jpeg_720_540_ImgHeight, DataFormatConstants.JpegQuality,
+                            DataFormatConstants.Jpeg_720_540_ImgWidth, DataFormatConstants.Jpeg_720_540_ImgHeight, DataFormatConstants.JpegQuality,
                             (IntPtr)CurrentFrameData.CpuJpeg720x540ImageData.GetUnsafePtr(), out outSize);
                     }
                     CurrentFrameData.CpuJpeg720x540ImageDataLength = outSize;
@@ -182,7 +211,8 @@ namespace Niantic.Lightship.AR.PAM
         {
             if (PlatformDataAcquirer.TryGetCameraIntrinsics(out XRCameraIntrinsics jpegCameraIntrinsics))
             {
-                if (jpegCameraIntrinsics.resolution != CurrentFrameData.JpegFullResImageResolution) {
+                if (jpegCameraIntrinsics.resolution != CurrentFrameData.JpegFullResImageResolution)
+                {
 
                     // Need to call ReinitializeJpegFullResolutionData() to re-allocate memory
                     // for the full res JPEG image in |_currentFrameData|.
@@ -190,7 +220,8 @@ namespace Niantic.Lightship.AR.PAM
 
                     // Need to reallocate the memory for |_fullResJpegDataHolder|.
                     // Dispose the memory before rellocate new ones, to avoid the leak.
-                    if (_fullResJpegDataHolder.IsCreated) {
+                    if (_fullResJpegDataHolder.IsCreated)
+                    {
                         _fullResJpegDataHolder.Dispose();
                     }
                     _fullResJpegDataHolder = new NativeArray<byte>

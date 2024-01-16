@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 using System;
 using System.Runtime.InteropServices;
 
@@ -41,6 +41,18 @@ namespace Niantic.Lightship.AR.PAM
 
         // Length of the awareness camera intrinsics
         public UInt32 Rgba256x144CameraIntrinsicsLength;
+        
+        // CPU RGB image data with resolution [256, 256], in format of uint8.
+        public IntPtr CpuRgb256x256ImageData;
+
+        // Length of the CPU RGB image with resolution [256, 256]
+        public UInt32 CpuRgb256x256ImageDataLength;
+
+        // Camera intrinsics of the CPU RGB image with resolution [256, 256]
+        public IntPtr CpuRgb256x256CameraIntrinsics;
+
+        // Length of the awareness camera intrinsics
+        public UInt32 Rgb256x256CameraIntrinsicsLength;
 
         // JPEG image data with resolution [720, 540] and compression quality 90%, in uint8 format.
         public IntPtr CpuJpeg720x540ImageData;

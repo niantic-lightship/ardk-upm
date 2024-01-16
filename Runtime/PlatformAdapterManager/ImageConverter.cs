@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 
 using System;
 using System.Runtime.InteropServices;
@@ -94,7 +94,6 @@ namespace Niantic.Lightship.AR.PAM
         (
             this Texture2D image,
             Texture2D output,
-            Rect viewRect,
             ScreenOrientation outputOrientation = ScreenOrientation.LandscapeLeft,
             FilterMode filterMode = FilterMode.Point,
             bool mirrorX = false
@@ -113,9 +112,6 @@ namespace Niantic.Lightship.AR.PAM
 
             var inputResolution = new Vector2Int(image.width, image.height);
 
-            var outputWidth = (int)viewRect.width;
-            var outputHeight = (int)viewRect.height;
-
             var ogFilterMode = image.filterMode;
             image.filterMode = filterMode;
 
@@ -123,8 +119,8 @@ namespace Niantic.Lightship.AR.PAM
             (
                 inputResolution.x,
                 inputResolution.y,
-                outputWidth,
-                outputHeight,
+                output.width,
+                output.height,
                 outputOrientation,
                 mirrorX,
                 layout: CameraMath.MatrixLayout.RowMajor
@@ -132,7 +128,7 @@ namespace Niantic.Lightship.AR.PAM
 
             s_material.SetMatrix(s_unityDisplayTransform, displayTransform);
 
-            image.ReadFromExternalTexture(output, viewRect, s_material);
+            image.ReadFromExternalTexture(output, s_material);
             image.filterMode = ogFilterMode;
         }
 

@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 using System.Collections.Generic;
 using Niantic.Lightship.AR.Utilities.Log;
 using Niantic.Lightship.AR.Core;
@@ -6,26 +6,22 @@ using Niantic.Lightship.AR.Subsystems.Meshing;
 using Niantic.Lightship.AR.Subsystems.Scanning;
 using Niantic.Lightship.AR.Subsystems.Semantics;
 using Niantic.Lightship.AR.Subsystems.PersistentAnchor;
-using Niantic.Lightship.AR.Subsystems.Playback;
 using Niantic.Lightship.AR.XRSubsystems;
 using UnityEngine;
 using UnityEngine.XR;
 using UnityEngine.XR.ARSubsystems;
-using UnityEngine.XR.Management;
 
 namespace Niantic.Lightship.AR.Loader
 {
-    internal class NativeLoaderHelper
+    public class NativeLoaderHelper
     {
         private readonly List<XROcclusionSubsystemDescriptor> _occlusionSubsystemDescriptors = new();
         private readonly List<XRPersistentAnchorSubsystemDescriptor> _persistentAnchorSubsystemDescriptors = new();
         private readonly List<XRSemanticsSubsystemDescriptor> _semanticsSubsystemDescriptors = new();
-        private readonly List<XRInputSubsystemDescriptor> _inputSubsystemDescriptors = new();
         private readonly List<XRScanningSubsystemDescriptor> _scanningSubsystemDescriptors = new();
         private readonly List<XRMeshSubsystemDescriptor> _meshingSubsystemDescriptors = new();
-        private LightshipPlaybackInputProvider _inputProvider;
 
-        public bool Initialize(XRLoaderHelper loader, LightshipSettings settings, bool isLidarSupported, bool isTest)
+        internal bool Initialize(ILightshipLoader loader, LightshipSettings settings, bool isLidarSupported, bool isTest)
         {
             LightshipUnityContext.Initialize(settings, isLidarSupported, isTest);
 
@@ -78,26 +74,6 @@ namespace Niantic.Lightship.AR.Loader
                 );
             }
 
-            // Create Lightship Playback subsystem
-            if (settings.UsePlayback)
-            {
-                Log.Info("Setting up PAM for Playback");
-                var reader = ((ILightshipLoader)loader).PlaybackDatasetReader;
-
-                // Input is an integrated subsystem that must be created after the LightshipUnityContext is initialized,
-                // which is why it's done here instead of in the PlaybackLoaderHelper
-                Log.Info("Creating " + nameof(LightshipPlaybackInputProvider));
-                _inputProvider = new LightshipPlaybackInputProvider();
-                _inputProvider.SetPlaybackDatasetReader(reader);
-
-                loader.DestroySubsystem<XRInputSubsystem>();
-                loader.CreateSubsystem<XRInputSubsystemDescriptor, XRInputSubsystem>
-                (
-                    _inputSubsystemDescriptors,
-                    "LightshipInput"
-                );
-            }
-
             if (settings.UseLightshipMeshing)
             {
                 // our C# "ghost" creates our meshing module to listen to Unity meshing lifecycle callbacks
@@ -115,7 +91,7 @@ namespace Niantic.Lightship.AR.Loader
         /// Destroys each initialized subsystem.
         /// </summary>
         /// <returns>Always returns `true`.</returns>
-        public bool Deinitialize(XRLoaderHelper loader)
+        internal bool Deinitialize(ILightshipLoader loader)
         {
             Log.Info("Destroying lightship subsystems");
 
@@ -125,8 +101,6 @@ namespace Niantic.Lightship.AR.Loader
             loader.DestroySubsystem<XROcclusionSubsystem>();
             loader.DestroySubsystem<XRScanningSubsystem>();
             loader.DestroySubsystem<XRMeshSubsystem>();
-
-            _inputProvider?.Dispose();
 
             // Unity's native lifecycle handler for integrated subsystems does call Stop() before Shutdown() if
             // the subsystem is running when the latter is called. However, for the XRInputSubsystem, this causes
@@ -144,13 +118,6 @@ namespace Niantic.Lightship.AR.Loader
             LightshipUnityContext.Deinitialize();
 
             return true;
-        }
-
-        internal bool DetermineIfDeviceSupportsLidar()
-        {
-            var subsystems = new List<XRMeshSubsystem>();
-            SubsystemManager.GetInstances(subsystems);
-            return subsystems.Count > 0;
         }
     }
 }

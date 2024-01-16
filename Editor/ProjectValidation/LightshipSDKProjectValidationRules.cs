@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -30,19 +30,46 @@ namespace Niantic.Lightship.AR.Editor
         private const string CreateAPIKeyHelpLink = "https://lightship.dev/docs/beta/ardk/install/#adding-your-api-key-to-your-unity-project";
         private const string UpdateGradleVersionHelpLink = "https://lightship.dev/docs/beta/ardk/install/#installing-gradle-for-android";
 
+        private static Dictionary<BuildTargetGroup, List<BuildValidationRule>> s_platformRules;
+
+        internal static Dictionary<BuildTargetGroup, List<BuildValidationRule>> PlatformRules
+        {
+            get
+            {
+                if (s_platformRules == null || s_platformRules.Count == 0)
+                {
+                    s_platformRules = CreateLightshipSDKValidationRules();
+                }
+
+                return s_platformRules;
+            }
+        }
+
         [InitializeOnLoadMethod]
         private static void AddLightshipSDKValidationRules()
         {
-            var iosGlobalRules = CreateGlobalRules(
+            BuildValidator.AddRules(BuildTargetGroup.Standalone, PlatformRules[BuildTargetGroup.Standalone]);
+            BuildValidator.AddRules(BuildTargetGroup.Android, PlatformRules[BuildTargetGroup.Android]);
+            BuildValidator.AddRules(BuildTargetGroup.iOS, PlatformRules[BuildTargetGroup.iOS]);
+        }
+
+        private static Dictionary<BuildTargetGroup, List<BuildValidationRule>> CreateLightshipSDKValidationRules()
+        {
+            var platformRules = new Dictionary<BuildTargetGroup, List<BuildValidationRule>>
+            {
+                { BuildTargetGroup.Standalone, new List<BuildValidationRule>() },
+                { BuildTargetGroup.Android, new List<BuildValidationRule>() },
+                { BuildTargetGroup.iOS, new List<BuildValidationRule>() }
+            };
+
+            var standaloneGlobalRules = CreateGlobalRules(
                 s_settings,
                 "StreamingAssets",
-                GetIosIsLightshipPluginEnabled,
+                GetStandaloneIsLightshipPluginEnabled,
                 GetUnityVersion);
-            var iosRules = CreateIOSRules(
-                s_settings,
-                GetIosIsLightshipPluginEnabled,
-                GetIosTargetOsVersionString,
-                GetIosLocationUsageDescription);
+            var standaloneRules = CreateStandaloneRules(
+                GetStandaloneIsLightshipPluginEnabled);
+
             var androidGlobalRules = CreateGlobalRules(
                 s_settings,
                 "StreamingAssets",
@@ -53,35 +80,34 @@ namespace Niantic.Lightship.AR.Editor
                 GetAndroidTargetSdkVersion,
                 GetAndroidGradleVersion,
                 GetActiveBuildTarget);
-            var standaloneGlobalRules = CreateGlobalRules(
+
+            var iosGlobalRules = CreateGlobalRules(
                 s_settings,
                 "StreamingAssets",
-                GetStandaloneIsLightshipPluginEnabled,
+                GetIosIsLightshipPluginEnabled,
                 GetUnityVersion);
-            var standaloneRules = CreateStandaloneRules(
-                GetStandaloneIsLightshipPluginEnabled);
+            var iosRules = CreateIOSRules(
+                s_settings,
+                GetIosIsLightshipPluginEnabled,
+                GetIosTargetOsVersionString,
+                GetIosLocationUsageDescription);
 
-            BuildValidator.AddRules(BuildTargetGroup.iOS, iosRules);
-            BuildValidator.AddRules(BuildTargetGroup.iOS, new[]
-            {
-                iosGlobalRules[0],
-                iosGlobalRules[1],
-                iosGlobalRules[2]
-            });
-            BuildValidator.AddRules(BuildTargetGroup.Android, androidRules);
-            BuildValidator.AddRules(BuildTargetGroup.Android, new[]
-            {
-                androidGlobalRules[0],
-                androidGlobalRules[1],
-                androidGlobalRules[2]
-            });
-            BuildValidator.AddRules(BuildTargetGroup.Standalone, standaloneRules);
-            BuildValidator.AddRules(BuildTargetGroup.Standalone, new[]
-            {
-                standaloneGlobalRules[0],
-                standaloneGlobalRules[1],
-                standaloneGlobalRules[3]
-            });
+            platformRules[BuildTargetGroup.Standalone].AddRange(standaloneRules);
+            platformRules[BuildTargetGroup.Standalone].Add(standaloneGlobalRules[0]);
+            platformRules[BuildTargetGroup.Standalone].Add(standaloneGlobalRules[1]);
+            platformRules[BuildTargetGroup.Standalone].Add(standaloneGlobalRules[3]);
+
+            platformRules[BuildTargetGroup.Android].AddRange(androidRules);
+            platformRules[BuildTargetGroup.Android].Add(androidGlobalRules[0]);
+            platformRules[BuildTargetGroup.Android].Add(androidGlobalRules[1]);
+            platformRules[BuildTargetGroup.Android].Add(androidGlobalRules[2]);
+
+            platformRules[BuildTargetGroup.iOS].AddRange(iosRules);
+            platformRules[BuildTargetGroup.iOS].Add(iosGlobalRules[0]);
+            platformRules[BuildTargetGroup.iOS].Add(iosGlobalRules[1]);
+            platformRules[BuildTargetGroup.iOS].Add(iosGlobalRules[2]);
+
+            return platformRules;
         }
 
         internal static BuildValidationRule[] CreateGlobalRules(
@@ -105,12 +131,9 @@ namespace Niantic.Lightship.AR.Editor
                 new BuildValidationRule
                 {
                     Category = Category,
-                    Message = "If using Lightship ARDK VPS or Scanning features, set the Lightship API Key provided by the Lightship Portal.",
+                    Message = "If using Lightship ARDK, please set the Lightship API Key provided in your project at https://lightship.dev/account/projects",
                     CheckPredicate = () => !string.IsNullOrWhiteSpace(lightshipSettings.ApiKey),
-                    IsRuleEnabled = () =>
-                        getIsLightshipPluginEnabled.Invoke() &&
-                        (lightshipSettings.UseLightshipPersistentAnchor ||
-                        lightshipSettings.UseLightshipScanning),
+                    IsRuleEnabled = getIsLightshipPluginEnabled.Invoke,
                     FixIt = () => SettingsService.OpenProjectSettings(NianticLightshipSDKPath),
                     FixItMessage = "Open `Project Settings` > `XR Plug-in Management` > `Niantic Lightship SDK` and set the Lightship API Key provided by the Lightship Portal.",
                     HelpText = "For further assistance, follow the instructions in the Lightship SDK docs.",
@@ -203,7 +226,7 @@ namespace Niantic.Lightship.AR.Editor
                 new BuildValidationRule
                 {
                     Category = Category,
-                    Message = "If using Lightship ARDK Depth, Meshing, or Semantics features for iOS, set the target iOS version to 13.0 or higher.",
+                    Message = $"If using Lightship ARDK Depth, Meshing, or Semantics features for iOS, set the target iOS version to 13.0 or higher (currently {getIosTargetOsVersionString.Invoke()}).",
                     CheckPredicate = () => OSVersion.Parse(getIosTargetOsVersionString.Invoke()) >= new OSVersion(13),
                     IsRuleEnabled = () =>
                     {
@@ -226,7 +249,7 @@ namespace Niantic.Lightship.AR.Editor
                 new BuildValidationRule
                 {
                     Category = Category,
-                    Message = "If using Lightship ARDK Scanning feature for iOS, set the target iOS version to 14.0 or higher.",
+                    Message = $"If using Lightship ARDK Scanning feature for iOS, set the target iOS version to 14.0 or higher (currently {getIosTargetOsVersionString.Invoke()}).",
                     CheckPredicate = () => OSVersion.Parse(getIosTargetOsVersionString.Invoke()) >= new OSVersion(14),
                     IsRuleEnabled = () =>
                     {
@@ -355,8 +378,9 @@ namespace Niantic.Lightship.AR.Editor
                 new BuildValidationRule
                 {
                     Category = Category,
-                    Message = $"If using Lightship ARDK for Android, set the target Android SDK version to 33 or higher.",
-                    CheckPredicate = () => getAndroidTargetSdkVersion.Invoke() >= 33,
+                    Message = $"If using Lightship ARDK for Android, set the target Android SDK version to 33 or higher" +
+                        $" (currently {(getAndroidTargetSdkVersion.Invoke() == 0 ? "automatic" : getAndroidTargetSdkVersion.Invoke())}).",
+                    CheckPredicate = () => getAndroidTargetSdkVersion.Invoke() >= 33 || getAndroidTargetSdkVersion.Invoke() == 0,
                     IsRuleEnabled = getAndroidIsLightshipPluginEnabled.Invoke,
                     FixIt = () => PlayerSettings.Android.targetSdkVersion = (AndroidSdkVersions)33,
                     FixItMessage = $"Open `Project Settings` > `Player` > 'Android settings' > `Other Settings` and set the target Android SDK version to 33 or higher.",

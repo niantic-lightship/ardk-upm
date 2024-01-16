@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -609,7 +609,19 @@ namespace Niantic.Lightship.AR.LocationAR
             arLocation.gameObject.SetActive(false);
             if (_originalParents.TryGetValue(anchor, out Transform parent))
             {
-                arLocation.transform.SetParent(parent, false);
+                // If the anchor (current parent) is deactivated this frame, we can't move the arlocation
+                //  from under it. However... the anchor is deactivated when it is about the be removed,
+                //  so we will never be able to reparent the arlocation at scene close.
+                // Instead, developers have to call StopTracking() before scene close.
+                if (arLocation.transform.parent.gameObject.activeInHierarchy)
+                {
+                    arLocation.transform.SetParent(parent, false);
+                }
+                else
+                {
+                    Log.Warning("ARLocation cannot be reparented at scene close, because the anchor is deactivated. " +
+                        "Call StopTracking() before scene close to avoid this problem.");
+                }
             }
 
             _originalParents.Remove(anchor);

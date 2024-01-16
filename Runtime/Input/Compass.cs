@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 
 using System;
 using Niantic.Lightship.AR.Utilities.Log;
@@ -279,7 +279,7 @@ namespace Niantic.Lightship.AR
                 get
                 {
                     if (CanReturnValidValues)
-                        return  _datasetReader.CurrFrame.LocationInfo.HeadingTimestamp;
+                        return _datasetReader.CurrFrame.LocationInfo.HeadingTimestamp;
 
                     return 0;
                 }

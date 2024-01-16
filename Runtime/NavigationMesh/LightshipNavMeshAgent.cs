@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 
 using System;
 using System.Collections;
@@ -13,17 +13,38 @@ namespace Niantic.Lightship.AR.NavigationMesh
     /// You place this MonoBehaviour on a GameObject to have that GameObject navigate autonomously through your real environment.
     /// You can create new versions of this to change how your creatures navigate the LightshipNavMesh.
     /// For example you may want to use physics/forces or add splines rather than straight lines.
-    /// This is a basic example that using linear interpolation and coroutines.
+    /// This is a basic example that uses linear interpolation and coroutines.
     /// </summary>
     [PublicAPI]
     public class LightshipNavMeshAgent : MonoBehaviour
     {
-        [Header("Agent Settings")] [SerializeField]
+        [Header("Agent Settings")]
+
+        [Tooltip("The speed at which the agent will walk, in waypoints/second.")]
+        [SerializeField]
         private float walkingSpeed = 3.0f;
 
-        [SerializeField] private float jumpDistance = 1;
-        [SerializeField] private int jumpPenalty = 2;
+        [Tooltip("The maximum distance an agent can jump in meters.")]
+        [SerializeField]
+        private float jumpDistance = 1;
 
+        [Tooltip("Determines the cost of jumping. This is an added cost for steps taken 'off-surface'.\n\n" +
+            "Being off-surface includes steps taken at the jumping off point and steps taken mid-jump. " +
+            "If there is a 1 cell block between the start and the destination,assuming going around takes " +
+            "~3 points, then jumping over with nopenalty will cost 2 points, jumping over with 1 penalty will " +
+            "cost 3 points, and so on... If there is a gap between the two surfaces, the cost of jumping will " +
+            "aggregate with each step until the agent lands on a surface.")]
+        [SerializeField]
+        private int jumpPenalty = 2;
+
+        [Tooltip("Determines how the agent should behave when its destination is on a foreign surface.\n\n" +
+            "Single Surface: The calculated route will navigate to the destination " +
+            "or the closest point to it within a single surface.\n\n" +
+            "Inter Surface Prefer Performance: The calculated route can contain jumps to other surfaces. " +
+            "The agent will only consider immediate nodes during the search. " +
+            "This method is faster, but does not always find an existing path.\n\n" +
+            "Inter Surface Prefer Results: The calculated route can contain jumps to other surfaces. " +
+            "This method is slower, but it finds a path if it exists.")]
         [SerializeField]
         private PathFindingBehaviour pathFindingBehaviour = PathFindingBehaviour.InterSurfacePreferResults;
 

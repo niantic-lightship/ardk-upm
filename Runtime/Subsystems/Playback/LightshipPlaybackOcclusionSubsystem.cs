@@ -1,8 +1,9 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 
 using System;
 using System.Collections.Generic;
 using System.IO;
+using Niantic.Lightship.AR.Subsystems.Common;
 using Niantic.Lightship.AR.Utilities.Log;
 using Niantic.Lightship.AR.Utilities;
 using Niantic.Lightship.AR.Utilities.Textures;
@@ -43,6 +44,19 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
         void IPlaybackDatasetUser.SetPlaybackDatasetReader(PlaybackDatasetReader reader)
         {
             ((IPlaybackDatasetUser)provider).SetPlaybackDatasetReader(reader);
+        }
+
+        public Matrix4x4? LatestIntrinsicsMatrix
+        {
+            get
+            {
+                if (provider is LightshipPlaybackProvider lightshipProvider)
+                {
+                    return lightshipProvider.LatestIntrinsicsMatrix;
+                }
+
+                throw new NotSupportedException();
+            }
         }
 
         /// <summary>
@@ -127,6 +141,11 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
             /// The occlusion preference mode for when rendering the background.
             /// </summary>
             private OcclusionPreferenceMode _occlusionPreferenceMode;
+            
+            /// <summary>
+            /// The CPU image API for interacting with the environment depth image.
+            /// </summary>
+            public override XRCpuImage.Api environmentDepthCpuImageApi => LightshipCpuImageApi.instance;
 
             /// <summary>
             /// The handle to the native version of the provider
@@ -230,6 +249,33 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
             /// </summary>
             public override OcclusionPreferenceMode currentOcclusionPreferenceMode => _occlusionPreferenceMode;
 
+            public Matrix4x4? LatestIntrinsicsMatrix
+            {
+                get
+                {
+                    if (_datasetReader == null)
+                    {
+                        return null;
+                    }
+
+                    var frame = _datasetReader.CurrFrame;
+                    if (frame == null)
+                    {
+                        return null;
+                    }
+
+                    var intrinsics = frame.Intrinsics;
+
+                    return new Matrix4x4
+                    (
+                        new Vector4(intrinsics.focalLength.x, 0, intrinsics.principalPoint.x, 0),
+                        new Vector4(0, intrinsics.focalLength.y, intrinsics.principalPoint.y, 0),
+                        new Vector4(0, 0, 1, 0),
+                        new Vector4(0, 0, 0, 1)
+                    );
+                }
+            }
+
             /// <summary>
             /// Get the environment texture descriptor.
             /// </summary>
@@ -254,7 +300,7 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
                     xrTextureDescriptor = default;
                     return false;
                 }
-
+                
                 var path = Path.Combine(_datasetReader.GetDatasetPath(), frame.DepthPath);
 
                 var tex = _environmentDepthTextures.GetUpdatedTextureFromPath
@@ -278,6 +324,54 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
                     );
 
                 return true;
+            }
+            
+            /// <summary>
+            /// Gets the CPU construction information for a environment depth image.
+            /// Only really used for FPSMetricsUtility to collect timestamp
+            /// </summary>
+            /// <param name="cinfo">The CPU image construction information, on success.</param>
+            /// <returns>
+            /// <c>true</c> if the environment depth texture is available and its CPU image construction information is
+            /// returned. Otherwise, <c>false</c>.
+            /// </returns>
+            public override bool TryAcquireEnvironmentDepthCpuImage(out XRCpuImage.Cinfo cinfo)
+            {
+                if (_datasetReader == null)
+                {
+                    cinfo = default;
+                    return false;
+                }
+
+                var frame = _datasetReader.CurrFrame;
+                if (frame == null || !frame.HasDepth)
+                {
+                    cinfo = default;
+                    return false;
+                }
+                
+                // Playback depth frames are being used
+                var path = Path.Combine(_datasetReader.GetDatasetPath(), frame.DepthPath);
+
+                var tex = _environmentDepthTextures.GetUpdatedTextureFromPath
+                (
+                    path,
+                    (uint)frame.Sequence
+                );
+
+                var cpuImageApi = (LightshipCpuImageApi)environmentDepthCpuImageApi;
+                var gotCpuImage = cpuImageApi.TryAddManagedXRCpuImage
+                (
+                    tex.GetNativeTexturePtr(), 
+                    tex.width * tex.height,
+                    tex.width,
+                    tex.height,
+                    tex.format,
+                    (ulong)(frame.TimestampInSeconds * 1000.0),
+                    out cinfo
+                );
+
+                return gotCpuImage;
             }
 
             //  Values are 0, 1, and 2 for low, medium, and high, respectively.

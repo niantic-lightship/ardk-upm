@@ -13,12 +13,7 @@
         "Unity.RenderPipelines.Core.Runtime",
         "Unity.XR.OpenXR"
     ],
-    "includePlatforms": [
-        "Android",
-        "Editor",
-        "iOS",
-        "macOSStandalone"
-    ],
+    "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": true,
     "overrideReferences": true,

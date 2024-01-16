@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 
 using System;
 using System.Collections.Generic;
@@ -9,6 +9,17 @@ namespace Niantic.Lightship.AR.Utilities.Profiling
 {
     internal static class ProfilerUtility
     {
+        // Custom processing flags for the trace pipeline. Must match:
+        // argeo/ardk-next/common/profiler/profiler.h
+        // argeo/ardk-next/trace_pipeline/upload_trace.py
+        private const string CUSTOM_PROCESSING_KEY = "TRACE_PIPELINE_CUSTOM_PROCESSING";
+
+        public enum CustomProcessing : ulong
+        {
+            NONE = 0,
+            TIME_UNTIL_NEXT = 1
+        }
+
         private static HashSet<IProfiler> _profilers = new HashSet<IProfiler>();
 
         [Conditional("ENABLE_LIGHTSHIP_PROFILER")]
@@ -134,8 +145,14 @@ namespace Niantic.Lightship.AR.Utilities.Profiling
         }
 
         [Conditional("ENABLE_LIGHTSHIP_PROFILER")]
-        public static void EventInstance(string category, string name)
+        public static void EventInstance(string category, string name, CustomProcessing processingType = CustomProcessing.NONE)
         {
+            if (processingType != CustomProcessing.NONE)
+            {
+                EventInstance(category, name, CUSTOM_PROCESSING_KEY, (ulong)processingType);
+                return;
+            }
+
             foreach (var profiler in _profilers)
             {
                 profiler.EventInstance(category, name);
@@ -143,8 +160,21 @@ namespace Niantic.Lightship.AR.Utilities.Profiling
         }
 
         [Conditional("ENABLE_LIGHTSHIP_PROFILER")]
-        public static void EventInstance(string category, string name, string arg1_name, ulong arg1_val)
+        public static void EventInstance
+        (
+            string category,
+            string name,
+            string arg1_name,
+            ulong arg1_val,
+            CustomProcessing processingType = CustomProcessing.NONE
+        )
         {
+            if (processingType != CustomProcessing.NONE)
+            {
+                EventInstance(category, name, arg1_name, arg1_val, CUSTOM_PROCESSING_KEY, (ulong)processingType);
+                return;
+            }
+
             foreach (var profiler in _profilers)
             {
                 profiler.EventInstance(category, name, arg1_name, arg1_val);

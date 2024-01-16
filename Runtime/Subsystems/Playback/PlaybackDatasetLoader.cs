@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 using System.IO;
 using System.Linq;
 using Niantic.Lightship.AR.Utilities.Log;

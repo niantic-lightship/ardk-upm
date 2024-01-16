@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 using Niantic.Lightship.AR.Utilities.Log;
 using Niantic.Lightship.AR.Loader;
 using Niantic.Lightship.AR.Utilities;
@@ -117,15 +117,19 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
             {
 #if UNITY_EDITOR
                 const KeyCode single = KeyCode.Space;
-                const KeyCode continuous = KeyCode.RightArrow;
+                const KeyCode forward = KeyCode.RightArrow;
+                const KeyCode backward = KeyCode.LeftArrow;
 
                 if (Input.GetKeyUp(single))
                     datasetReader.TryMoveToNextFrame();
                 else if (Input.GetKey(single) || Input.GetKeyDown(single))
                     return;
 
-                if (Input.GetKey(continuous))
-                    datasetReader.TryMoveToNextFrame();
+                if (Input.GetKey(forward))
+                    datasetReader.TryMoveForward();
+
+                if (Input.GetKey(backward))
+                    datasetReader.TryMoveBackward();
 #else
                 if (Input.touchCount == 2)
                     datasetReader.TryMoveToNextFrame();

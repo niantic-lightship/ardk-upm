@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 
 using System;
 using UnityEngine;
@@ -47,6 +47,8 @@ namespace Niantic.Lightship.AR.Subsystems.Occlusion
             out int size
         );
 
-        public IntPtr DisposeResource(IntPtr nativeProviderHandle, IntPtr resourceHandle);
+        public bool TryGetLatestIntrinsicsMatrix(IntPtr nativeProviderHandle, out Matrix4x4 intrinsicsMatrix);
+
+        public void DisposeResource(IntPtr nativeProviderHandle, IntPtr resourceHandle);
     }
 }

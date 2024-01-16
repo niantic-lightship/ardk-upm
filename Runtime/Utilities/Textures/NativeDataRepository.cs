@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 
 using System;
 using System.Collections.Generic;
@@ -10,7 +10,7 @@ using static Niantic.Lightship.AR.Utilities.Log.Log;
 
 namespace Niantic.Lightship.AR.Utilities.Textures
 {
-    public class NativeDataRepository
+    internal class NativeDataRepository
     {
         private const int MaxTextures = 16; // Same as ARKit
         private readonly Dictionary<int, NativeArray<byte>> _dataStore = new();
@@ -21,9 +21,9 @@ namespace Niantic.Lightship.AR.Utilities.Textures
         public ulong Size => _size;
 
         /// <summary>
-        ///
+        /// Add data to be managed by this repository by copying it from the provided location.
         /// </summary>
-        /// <param name="data">The array of data to copy into the pool.</param>
+        /// <param name="data">The array of data to copy into the repository.</param>
         /// <param name="size">The size of the data in bytes.</param>
         /// <param name="handle">A handle that can be used to get or remove this data from the repository.</param>
         /// <returns></returns>
