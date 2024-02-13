@@ -1,7 +1,7 @@
 // Copyright 2022-2024 Niantic.
 using System;
 using System.Collections.Generic;
-using Niantic.Lightship.AR.Utilities.Log;
+using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.Core;
 using Niantic.Lightship.AR.Occlusion;
 using Niantic.Lightship.AR.Subsystems.Common;
@@ -74,7 +74,7 @@ namespace Niantic.Lightship.AR.Subsystems.Occlusion
         /// Register the Lightship occlusion subsystem.
         /// </summary>
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        static void Register()
+        private static void Register()
         {
             Log.Info("LightshipOcclusionSubsystem.Register");
             const string id = "Lightship-Occlusion";

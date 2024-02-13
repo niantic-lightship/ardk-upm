@@ -24,7 +24,8 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
             throw new NotImplementedException();
         }
 
-        public void Configure(IntPtr anchorProviderHandle)
+        public void Configure(IntPtr anchorProviderHandle, bool enableContinuousLocalization, bool enableTemporalFusion, bool enableSlickLocalization,
+                float cloudLocalizerMaxRequestsPerSecond, float slickLocalizerFps, UInt32 cloudTemporalFusionWindowSize, UInt32 slickTemporalFusionWindowSize, bool diagnosticsEnabled)
         {
             throw new NotImplementedException();
         }
@@ -91,13 +92,18 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
             out RequestType typeOut,
             out ErrorCode errorOut,
             out ulong startTimeMsOut,
-            out ulong endTimeMsOut
-        ) =>
+            out ulong endTimeMsOut,
+            out UInt64 frameIdOut
+        ) 
+        {
             throw new NotImplementedException();
+        }
 
         public IntPtr AcquireLocalizationStatus
-            (IntPtr anchorProviderHandle, out IntPtr localizationStatusList, out int listCount) =>
+            (IntPtr anchorProviderHandle, out IntPtr localizationStatusList, out int listCount)
+        {
             throw new NotImplementedException();
+        }
 
         public void ReleaseLocalizationStatus(IntPtr latestChangesHandle)
         {
@@ -105,10 +111,38 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
         }
 
         public bool TryExtractLocalizationStatus
-            (IntPtr localizationStatusHandle, out Guid nodeId, out LocalizationStatus statusOut, out float confidenceOut) =>
+            (IntPtr localizationStatusHandle, out Guid nodeId, out LocalizationStatus statusOut, out float confidenceOut,
+            out UInt64 frameIdOut)
+        {
             throw new NotImplementedException();
+        }
 
-        public bool GetVpsSessionId (IntPtr anchorProviderHandle, out string vpsSessionId) =>
+        public IntPtr AcquireFrameDiagnostics(IntPtr anchorProviderHandle, out IntPtr diagnosticsList, out int listCount)
+        {
             throw new NotImplementedException();
+        }
+
+        public void ReleaseFrameDiagnostics(IntPtr diagnosticsHandle)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool TryExtractFrameDiagnostics
+        (
+            IntPtr diagnosticsHandle,
+            out UInt64 frameId,
+            out UInt64 timestampMs,
+            out IntPtr labelNameList, 
+            out IntPtr labelScoreList, 
+            out UInt32 labelCount
+        )
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool GetVpsSessionId (IntPtr anchorProviderHandle, out string vpsSessionId) 
+        {
+            throw new NotImplementedException();
+        }
     }
 }

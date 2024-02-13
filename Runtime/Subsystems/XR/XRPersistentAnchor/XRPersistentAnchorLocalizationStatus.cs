@@ -42,5 +42,10 @@ namespace Niantic.Lightship.AR.XRSubsystems
         ///     algorithm surfaced
         /// </summary>
         public float LocalizationConfidence;
+
+        /// <summary>
+        /// Frame Id corresponding to frame sent used in Localization
+        /// </summary>
+        public UInt64 FrameId;
     }
 }

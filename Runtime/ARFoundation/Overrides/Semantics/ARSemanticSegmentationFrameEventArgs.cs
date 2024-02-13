@@ -14,7 +14,7 @@ namespace Niantic.Lightship.AR.Semantics
     /// This is used to communicate information in the <see cref="ARSemanticSegmentationManager.frameReceived" /> event.
     /// </summary>
     [PublicAPI]
-    public struct ARSemanticSegmentationFrameEventArgs
+    public readonly struct ARSemanticSegmentationFrameEventArgs
     {
     }
 }

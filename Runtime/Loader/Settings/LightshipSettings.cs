@@ -1,10 +1,11 @@
 // Copyright 2022-2024 Niantic.
+
 using System;
 using System.IO;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Serialization;
-using Niantic.Lightship.AR.Utilities.Log;
+using Niantic.Lightship.AR.Utilities.Logging;
 using UnityEngine.XR.Management;
 
 namespace Niantic.Lightship.AR.Loader
@@ -37,7 +38,8 @@ namespace Niantic.Lightship.AR.Loader
         /// </summary>
         public string ApiKey
         {
-            get {
+            get
+            {
                 if (!string.IsNullOrWhiteSpace(_apiKey))
                 {
                     // ensure that the config provider's key is overridden in case the user has provided their own
@@ -48,76 +50,115 @@ namespace Niantic.Lightship.AR.Loader
             }
         }
 
-        [SerializeField, Tooltip("When enabled, use Niantic's depth provider instead of the native platform's")]
+        [SerializeField]
+        [Tooltip
+            (
+                "When enabled, Lightship's depth and occlusion features can be used via ARFoundation. " +
+                "Additional occlusion features unique to Lightship can be configured in the " +
+                "LightshipOcclusionExtension component."
+            )
+        ]
         private bool _useLightshipDepth = true;
 
         /// <summary>
-        /// Layer used for the depth
+        /// When enabled, Lightship's depth and occlusion features can be used via ARFoundation. Additional occlusion
+        /// features unique to Lightship can be configured in the LightshipOcclusionExtension component.
         /// </summary>
         public bool UseLightshipDepth => _useLightshipDepth;
 
-        [SerializeField, Tooltip("When enabled, use Niantic's meshing provider instead of the native platform's")]
+        [SerializeField]
+        [Tooltip
+            (
+                "When enabled, Lightship's meshing features can be used via ARFoundation. Additional mesh features " +
+                "unique to Lightship can be configured in the LightshipMeshingExtension component."
+            )
+        ]
         private bool _useLightshipMeshing = true;
 
         /// <summary>
-        /// Layer used for the meshing
+        /// When enabled, Lightship's meshing features can be used via ARFoundation. Additional mesh features unique
+        /// to Lightship can be configured in the LightshipMeshingExtension component.
         /// </summary>
         public bool UseLightshipMeshing => _useLightshipMeshing;
 
-        [SerializeField, Tooltip("When enabled, prioritize using AR Foundation LiDAR depth " +
-             "if LiDAR is available on device")]
+        [SerializeField]
+        [Tooltip
+            (
+                "When enabled, LiDAR depth will be used instead of Lightship depth on devices where LiDAR is " +
+                "available. Features unique to the LightshipOcclusionExtension cannot be used."
+            )
+        ]
         private bool _preferLidarIfAvailable = true;
 
         /// <summary>
-        /// Layer used for the depth
+        /// When enabled, LiDAR depth will be used instead of Lightship depth on devices where LiDAR is available.
+        /// Features unique to the LightshipOcclusionExtension cannot be used.
         /// </summary>
+        /// <remarks>
+        /// When enabled in experiences with meshing, the XROcclusionSubsystem must also be running in order to
+        /// generate meshes.
+        /// </remarks>
         public bool PreferLidarIfAvailable => _preferLidarIfAvailable;
 
-
-        [SerializeField,
-         Tooltip("When enabled, use Niantic's persistent anchor provider instead of the native platform's")]
+        [SerializeField, Tooltip("When enabled, Lightship VPS can be used.")]
         private bool _useLightshipPersistentAnchor = true;
 
         /// <summary>
-        /// Layer used for the persistent anchor
+        /// When enabled, Lightship VPS can be used.
         /// </summary>
         public bool UseLightshipPersistentAnchor => _useLightshipPersistentAnchor;
 
         [SerializeField,
-         Tooltip("When enabled, use Niantic's semantic segmentation subsystem provider")]
+         Tooltip("When enabled, Lightship's semantic segmentation features can be used.")]
         private bool _useLightshipSemanticSegmentation = true;
 
         /// <summary>
-        /// Use Lightship provider for semantic segmentation
+        /// When enabled, Lightship's semantic segmentation features can be used.
         /// </summary>
         public bool UseLightshipSemanticSegmentation => _useLightshipSemanticSegmentation;
 
-        [SerializeField,
-         Tooltip("When enabled, use Niantic's scanning subsystem provider")]
+        [SerializeField, Tooltip("When enabled, Lightship's scanning features can be used.")]
         private bool _useLightshipScanning = true;
 
         /// <summary>
-        /// Use Lightship provider for scanning
+        /// When enabled, Lightship's scanning features can be used.
         /// </summary>
         public bool UseLightshipScanning => _useLightshipScanning;
 
-        [SerializeField,
-         Tooltip("When enabled, choose what ARDK log levels to print, ignoring the filter level determined by the build mode")]
-        private bool _overrideLoggingLevel = false;
+        [SerializeField, Tooltip("When true, Lightship's object detection features can be used.")]
+        private bool _useLightshipObjectDetection = true;
 
         /// <summary>
-        /// Override the ARDK logging level
+        /// When true, Lightship's object detection features can be used.
         /// </summary>
-        public bool OverrideLoggingLevel => _overrideLoggingLevel;
+        public bool UseLightshipObjectDetection => _useLightshipObjectDetection;
+
+        [SerializeField, Tooltip("The lowest log level to print")]
+        private LogLevel _unityLogLevel = LogLevel.Warn;
+
+        [SerializeField,
+         Tooltip("The lowest log level for file logger")]
+        private LogLevel _fileLogLevel = LogLevel.Off;
 
         [SerializeField,
          Tooltip("The lowest log level to print")]
-        private LogType _logLevel = LogType.Log;
+        private LogLevel _stdoutLogLevel = LogLevel.Off;
 
         /// <summary>
-        /// The highest log level to print
+        /// The highest log level to print for Unity logger
         /// </summary>
-        public LogType LogLevel => _logLevel;
+        internal LogLevel UnityLightshipLogLevel => _unityLogLevel;
+
+        /// <summary>
+        /// The highest log level to print for a file logger
+        /// </summary>
+        internal LogLevel FileLightshipLogLevel => _fileLogLevel;
+
+        /// <summary>
+        /// The highest log level to print for the stdout logger - typically for internal testing. Keep this off unless
+        /// you know what you are looking for
+        /// </summary>
+        internal LogLevel StdOutLightshipLogLevel => _stdoutLogLevel;
 
         /// <summary>
         /// All Settings for Playback in the Unity Editor
@@ -229,6 +270,7 @@ namespace Niantic.Lightship.AR.Loader
             return settings;
         }
 
+
         private static void ValidateApiKey(string apiKey)
         {
 
@@ -242,6 +284,8 @@ namespace Niantic.Lightship.AR.Loader
                 Log.Error("Provided Lightship API key is too long");
             }
         }
+
+
 
 #if UNITY_EDITOR
         [MenuItem("Lightship/Settings", false, 1)]
@@ -308,8 +352,8 @@ namespace Niantic.Lightship.AR.Loader
             bool enableSemanticSegmentation = false,
             bool preferLidarIfAvailable = false,
             bool enableScanning = false,
-            bool overrideLoggingLevel = false,
-            LogType logLevel = LogType.Log,
+            bool enableObjectDetection = false,
+            LogLevel logLevel = LogLevel.Debug,
             ArdkConfiguration ardkConfiguration = null)
         {
             var settings = CreateInstance<LightshipSettings>();
@@ -320,8 +364,10 @@ namespace Niantic.Lightship.AR.Loader
             settings._useLightshipPersistentAnchor = enablePersistentAnchors;
             settings._useLightshipSemanticSegmentation = enableSemanticSegmentation;
             settings._useLightshipScanning = enableScanning;
-            settings._overrideLoggingLevel = overrideLoggingLevel;
-            settings._logLevel = logLevel;
+            settings._useLightshipObjectDetection = enableObjectDetection;
+            settings._unityLogLevel = logLevel;
+            settings._fileLogLevel = logLevel;
+            settings._stdoutLogLevel = logLevel;
 
             settings._overloadPlaybackSettings =
                 new OverloadPlaybackSettings

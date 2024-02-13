@@ -1,7 +1,7 @@
 // Copyright 2022-2024 Niantic.
 using System;
 using System.Collections.Generic;
-using Niantic.Lightship.AR.Utilities.Log;
+using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.Subsystems.Occlusion;
 using Niantic.Lightship.AR.Utilities;
 using Niantic.Lightship.AR.Utilities.Textures;
@@ -362,7 +362,7 @@ namespace Niantic.Lightship.AR.PAM
                 return false;
             }
 
-            gps.TimestampMs = (UInt64)Input.location.lastData.timestamp * 1000;
+            gps.TimestampMs = (UInt64)(Input.location.lastData.timestamp * 1000);
             gps.Latitude = Input.location.lastData.latitude;
             gps.Longitude = Input.location.lastData.longitude;
             gps.Altitude = Input.location.lastData.altitude;
@@ -383,7 +383,7 @@ namespace Niantic.Lightship.AR.PAM
                 return false;
             }
 
-            compass.TimestampMs = (UInt64)Input.compass.timestamp * 1000;
+            compass.TimestampMs = (UInt64)(Input.compass.timestamp * 1000);
             compass.HeadingAccuracy = Input.compass.headingAccuracy;
             compass.MagneticHeading = Input.compass.magneticHeading;
             compass.RawDataX = Input.compass.rawVector.x;

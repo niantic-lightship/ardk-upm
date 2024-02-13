@@ -1,4 +1,5 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
+
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -6,7 +7,7 @@ using System.IO.Compression;
 using System.Linq;
 using System.Text.RegularExpressions;
 
-using Niantic.Lightship.AR.Utilities.Log;
+using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.LocationAR;
 using Niantic.Lightship.AR.Utilities;
 using Niantic.Lightship.AR.Utilities.UnityAssets;
@@ -258,7 +259,7 @@ namespace Niantic.Lightship.AR.Editor
                         Texture = tex
                     };
 
-                    // If the default mesh is not the origin mesh, invert the transform to make it the origin 
+                    // If the default mesh is not the origin mesh, invert the transform to make it the origin
                     // This is the inverse of the default -> origin transform
                     if (!string.IsNullOrEmpty(locationData.LocalToSpace.destination))
                     {
@@ -268,7 +269,7 @@ namespace Niantic.Lightship.AR.Editor
                         originToDefaultRotation = Quaternion.Inverse(defaultToOriginRotation);
                         originToDefaultTranslation = originToDefaultRotation * defaultToOriginTranslation * -1;
                     }
-                    
+
                     meshData = UnpackAdditionalMeshes(additionalMeshes, assetTargetDir);
                     meshData.Insert(0, initialMeshData);
 
@@ -389,7 +390,7 @@ namespace Niantic.Lightship.AR.Editor
             var combineInstances = new CombineInstance[meshData.Count];
             var meshes = new Mesh[meshData.Count];
             var matrices = new Matrix4x4[meshData.Count];
-            
+
             // Apply the origin to default transform to all meshes
             var originToDefault = Matrix4x4.TRS
             (
@@ -412,7 +413,7 @@ namespace Niantic.Lightship.AR.Editor
                     mesh.RotationToTarget,
                     Vector3.one
                 );
-                
+
                 // Apply the origin to default transform to each mesh to place it in the default space
                 var meshToDefault =  originToDefault * meshToOrigin;
 

@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 using System;
 using System.IO;
 using UnityEditor.Android;
@@ -9,12 +9,12 @@ namespace Niantic.Lightship.AR.Editor
     /**
      * Used to assess if java is running on a machine and execute .jar files
      * through the command line.
-     * 
+     *
      * This class is taken directly from UnityEditor.XR.ARCore.Editor
      * Original class is internal visibility so copied to reproduce functionality.
      * Would be nice to get the class made accessible.
      */
-    static class JavaUtils
+    internal static class JavaUtils
     {
         public static bool TryGetFullPathToJava(out string fullPathToJava, out string diagnosticMessage)
         {

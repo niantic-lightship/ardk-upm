@@ -1,7 +1,7 @@
 // Copyright 2022-2024 Niantic.
 
 using System;
-using Niantic.Lightship.AR.Utilities.Log;
+using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.Core;
 using UnityEngine.XR.ARSubsystems;
 using Niantic.Lightship.AR.Utilities.Textures;
@@ -416,7 +416,7 @@ namespace Niantic.Lightship.AR.Subsystems.Scanning
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        static void RegisterDescriptor()
+        private static void RegisterDescriptor()
         {
             var cinfo = new XRScanningSubsystemDescriptor.Cinfo
             {

@@ -3,7 +3,7 @@ using System;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
-using Niantic.Lightship.AR.Utilities.Log;
+using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.Loader;
 using UnityEngine;
 using Niantic.Lightship.AR.PAM;
@@ -14,10 +14,17 @@ using Niantic.Lightship.AR.Telemetry;
 
 namespace Niantic.Lightship.AR.Core
 {
-    internal class LightshipUnityContext
+    /// <summary>
+    /// [Experimental] <c>LightshipUnityContext</c> contains Lightship system components which are required by multiple modules.  This class should only be accessed by lightship packages
+    /// 
+    /// This Interface is experimental so may change or be removed from future versions without warning.
+    /// </summary>
+    public class LightshipUnityContext
     {
-        // Pointer to the unity context
-        internal static IntPtr UnityContextHandle { get; private set; } = IntPtr.Zero;
+        /// <summary>
+        /// <c>UnityContextHandle</c> holds a pointer to the native Lightship Unity context.  This is intended to be used only by Lightship packages.
+        /// </summary>
+        public static IntPtr UnityContextHandle { get; private set; } = IntPtr.Zero;
 
         internal static PlatformAdapterManager PlatformAdapterManager { get; private set; }
         internal static LightshipSettings ActiveSettings { get; private set; }
@@ -58,6 +65,7 @@ namespace Niantic.Lightship.AR.Core
                 FastSemanticsEndpoint = settings.FastDepthSemanticsEndpoint,
                 MediumSemanticsEndpoint = settings.DefaultDepthSemanticsEndpoint,
                 SmoothSemanticsEndpoint = settings.SmoothDepthSemanticsEndpoint,
+                ObjectDetectionEndpoint = settings.ObjectDetectionEndpoint,
                 TelemetryEndpoint = "",
                 TelemetryKey = "",
             };
@@ -79,6 +87,8 @@ namespace Niantic.Lightship.AR.Core
                 DeviceLidarSupported = isDeviceLidarSupported,
             };
             UnityContextHandle = NativeApi.Lightship_ARDK_Unity_Context_Create(false, ref deviceInfo, ref s_environmentConfig, ref s_userConfig);
+            Log.ConfigureLogger(UnityContextHandle, settings.UnityLightshipLogLevel, settings.FileLightshipLogLevel,
+                settings.StdOutLightshipLogLevel);
 
             if (!isTest)
             {
@@ -93,10 +103,14 @@ namespace Niantic.Lightship.AR.Core
 
                     s_telemetryService = new TelemetryService(UnityContextHandle, telemetryPublisher, settings.ApiKey);
                 }
-                catch (Exception)
+                catch (Exception e)
                 {
-                    // Failed to initialize telemetry service. This is expected from Unity's Auto XR Initialization when starting a test
+                    Log.Debug($"Failed to initialize telemetry service with exception {e}");
                 }
+            }
+            else
+            {
+                Log.Debug("Detected a test run. Keeping telemetry disabled.");
             }
             OnUnityContextHandleInitialized?.Invoke();
 
@@ -198,7 +212,9 @@ namespace Niantic.Lightship.AR.Core
 
             [DllImport(LightshipPlugin.Name)]
             public static extern bool Lightship_ARDK_Unity_Property_Bag_Put(IntPtr bagHandle, string key, string value);
+
         }
+
 
         // PLEASE NOTE: Do NOT add feature flags in this struct.
         [StructLayout(LayoutKind.Sequential)]
@@ -215,6 +231,7 @@ namespace Niantic.Lightship.AR.Core
             public string SmoothSemanticsEndpoint;
             public string ScanningEndpoint;
             public string ScanningSqcEndpoint;
+            public string ObjectDetectionEndpoint;
             public string TelemetryEndpoint;
             public string TelemetryKey;
         }

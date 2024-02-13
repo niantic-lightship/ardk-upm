@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 using System;
 using System.Diagnostics;
 
@@ -11,7 +11,7 @@ namespace Niantic.Lightship.AR.Editor
      * Original class is internal visibility so copied to reproduce functionality.
      * Would be nice to get the class made accessible.
      */
-    static class UseCli
+    internal static class UseCli
     {
         /// <summary>
         /// Executes a command line interface (CLI), capturing standard output and error. <paramref name="fileName"/> is

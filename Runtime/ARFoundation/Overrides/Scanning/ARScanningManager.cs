@@ -1,7 +1,7 @@
 // Copyright 2022-2024 Niantic.
 using System.IO;
 using System.Threading.Tasks;
-using Niantic.Lightship.AR.Utilities.Log;
+using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.ARDK.AR.Scanning;
 using Niantic.Lightship.AR.ARFoundation;
 using Niantic.Lightship.AR.Common;
@@ -83,7 +83,7 @@ namespace Niantic.Lightship.AR.Scanning
         /// <value>
         /// The Raycast Color Buffer for Scan Visualization.
         /// </value>
-        ARTextureInfo _raycastColorTextureInfo;
+        private ARTextureInfo _raycastColorTextureInfo;
 
         /// <summary>
         /// The Raycast Normal Buffer for Scan Visualization.
@@ -91,7 +91,7 @@ namespace Niantic.Lightship.AR.Scanning
         /// <value>
         /// The Raycast Normal Buffer for Scan Visualization.
         /// </value>
-        ARTextureInfo _raycastNormalTextureInfo;
+        private ARTextureInfo _raycastNormalTextureInfo;
 
         /// <summary>
         /// The Raycast Position Buffer for Scan Visualization.
@@ -99,7 +99,7 @@ namespace Niantic.Lightship.AR.Scanning
         /// <value>
         /// The Raycast Position Buffer for Scan Visualization.
         /// </value>
-        ARTextureInfo _raycastPositionTextureInfo;
+        private ARTextureInfo _raycastPositionTextureInfo;
 
         /// <summary>
         /// Read the current raycast color texture.
@@ -182,7 +182,7 @@ namespace Niantic.Lightship.AR.Scanning
             _raycastPositionTextureInfo.Reset();
         }
 
-        void Update()
+        private void Update()
         {
             if (subsystem != null)
             {

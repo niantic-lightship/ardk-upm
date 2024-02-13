@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -7,7 +7,7 @@ using UnityEngine;
 using System.Collections;
 
 #if UNITY_ANDROID && UNITY_EDITOR
-using Niantic.Lightship.AR.Utilities.Log;
+using Niantic.Lightship.AR.Utilities.Logging;
 using UnityEditor.Android;
 #endif
 

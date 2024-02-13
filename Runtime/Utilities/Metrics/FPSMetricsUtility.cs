@@ -1,6 +1,6 @@
 // Copyright 2022-2024 Niantic.
 using System;
-using static Niantic.Lightship.AR.Utilities.Log.Log;
+using static Niantic.Lightship.AR.Utilities.Logging.Log;
 using Niantic.Lightship.AR.Subsystems;
 using Niantic.Lightship.AR.Subsystems.Meshing;
 using Niantic.Lightship.AR.Subsystems.Occlusion;

@@ -3,7 +3,7 @@ using System;
 using System.Runtime.InteropServices;
 using Unity.Collections;
 using UnityEngine;
-using Niantic.Lightship.AR.Utilities.Log;
+using Niantic.Lightship.AR.Utilities.Logging;
 using Random = UnityEngine.Random;
 
 namespace Niantic.Lightship.AR.PAM

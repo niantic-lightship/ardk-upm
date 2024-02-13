@@ -1,6 +1,7 @@
 // Copyright 2022-2024 Niantic.
 using System;
-using Niantic.Lightship.AR.Utilities.Log;
+using System.Collections.Generic;
+using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.Core;
 using Niantic.Lightship.AR.Subsystems;
 using Niantic.Lightship.AR.XRSubsystems;
@@ -21,11 +22,15 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
         internal class LightshipProvider : Provider
         {
             private IApi _api;
+            private XRPersistentAnchorConfiguration _currentConfiguration = new XRPersistentAnchorConfiguration();
 
             /// <summary>
             /// The handle to the native version of the provider
             /// </summary>
             private IntPtr _nativeProviderHandle;
+
+            private bool _isMock;
+            public override bool IsMockProvider => _isMock;
 
             /// <summary>
             /// Construct the implementation provider.
@@ -53,6 +58,8 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
                 }
 
                 _api = api;
+                _isMock = _api is not NativeApi;
+
                 _nativeProviderHandle = _api.Construct(LightshipUnityContext.UnityContextHandle);
             }
 
@@ -87,15 +94,10 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
                 _nativeProviderHandle = IntPtr.Zero;;
             }
 
+            [Obsolete]
             public void Configure(IntPtr persistentAnchorApiHandle)
             {
-                if (!_nativeProviderHandle.IsValidHandle())
-                {
-                    return;
-                }
-
-                // TO DO: Expose configuration
-                _api.Configure(persistentAnchorApiHandle);
+                // TODO: Remove
             }
 
             public override TrackableChanges<XRPersistentAnchor> GetChanges
@@ -169,9 +171,10 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
 
             public override bool GetNetworkStatusUpdate(out XRPersistentAnchorNetworkRequestStatus[] statuses)
             {
+                statuses = default;
+
                 if (!_nativeProviderHandle.IsValidHandle())
                 {
-                    statuses = default;
                     return false;
                 }
 
@@ -179,8 +182,6 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
 
                 if (listCount == 0)
                 {
-                    statuses = default;
-
                     if (!handle.IsValidHandle())
                     {
                         Log.Error("Tried to release network status handle with invalid pointer.");
@@ -226,9 +227,10 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
 
             public override bool GetLocalizationStatusUpdate(out XRPersistentAnchorLocalizationStatus[] statuses)
             {
+                statuses = default;
+
                 if (!_nativeProviderHandle.IsValidHandle())
                 {
-                    statuses = default;
                     return false;
                 }
 
@@ -236,8 +238,6 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
 
                 if (listCount == 0)
                 {
-                    statuses = default;
-
                     if (!handle.IsValidHandle())
                     {
                         Log.Error("Tried to release localization status handle with invalid pointer.");
@@ -281,6 +281,67 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
                 return true;
 
             }
+
+#if NIANTIC_ARDK_EXPERIMENTAL_FEATURES
+
+            public override bool GetFrameDiagnosticsUpdate(out XRPersistentAnchorFrameDiagnostics[] diagnosticsArray)
+            {
+                diagnosticsArray = default;
+
+                if (!_nativeProviderHandle.IsValidHandle())
+                {
+                    return false;
+                }
+
+                var handle = _api.AcquireFrameDiagnostics(_nativeProviderHandle, out var diagnostics, out var listCount);
+
+                if (listCount == 0)
+                {
+                    if (!handle.IsValidHandle())
+                    {
+                        Log.Error("Tried to release localization status handle with invalid pointer.");
+                    }
+
+                    _api.ReleaseFrameDiagnostics(handle);
+                    return false;
+                }
+
+                try
+                {
+                    diagnosticsArray = new XRPersistentAnchorFrameDiagnostics[listCount];
+                    NativeArray<IntPtr> diagnosticsPtrList;
+                    unsafe
+                    {
+                        diagnosticsPtrList = NativeCopyUtility.PtrToNativeArrayWithDefault
+                        (
+                            IntPtr.Zero,
+                            diagnostics.ToPointer(),
+                            sizeof(IntPtr),
+                            listCount,
+                            Allocator.Temp
+                        );
+                    }
+
+                    for (int i = 0; i < listCount; i++)
+                    {
+                        diagnosticsArray[i] = GetFrameDiagnostics(diagnosticsPtrList[i]);
+                    }
+                }
+                finally
+                {
+                    if (!handle.IsValidHandle())
+                    {
+                        Log.Error("Tried to release localization status handle with invalid pointer.");
+                    }
+
+                    _api.ReleaseFrameDiagnostics(handle);
+                }
+
+                return true;
+
+            }
+
+#endif
 
             public override bool GetVpsSessionId(out string vpsSessionId)
             {
@@ -415,7 +476,8 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
                     out var type,
                     out var error,
                     out var startTime,
-                    out var endTime
+                    out var endTime,
+                    out var frameId
                 );
 
                 if (!success)
@@ -431,7 +493,8 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
                     Type = (RequestType)type,
                     Error = (ErrorCode)error,
                     StartTimeMs = startTime,
-                    EndTimeMs = endTime
+                    EndTimeMs = endTime,
+                    FrameId = frameId
                 };
             }
 
@@ -452,7 +515,8 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
                     statusIntPtr,
                     out var requestId,
                     out var status,
-                    out var confidence
+                    out var confidence,
+                    out var frameId
                 );
 
                 if (!success)
@@ -465,13 +529,103 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
                 {
                     NodeId = requestId,
                     Status = status,
-                    LocalizationConfidence = confidence
+                    LocalizationConfidence = confidence,
+                    FrameId = frameId
                 };
+            }
+
+#if NIANTIC_ARDK_EXPERIMENTAL_FEATURES
+            private XRPersistentAnchorFrameDiagnostics GetFrameDiagnostics(IntPtr diagnosticsIntPtr)
+            {
+                if (!_nativeProviderHandle.IsValidHandle())
+                {
+                    return default;
+                }
+
+                if (!diagnosticsIntPtr.IsValidHandle())
+                {
+                    Log.Error("Tried to extract frame diagnostics with invalid status pointer.");
+                }
+
+                var success = _api.TryExtractFrameDiagnostics
+                (
+                    diagnosticsIntPtr,
+                    out var frameId,
+                    out var timestampMs,
+                    out var labelNameList,
+                    out var labelScoreList,
+                    out var labelCount
+                );
+
+                if (!success)
+                {
+                    Log.Error("Failed to extract frame diagnostics");
+                    return default;
+                }
+
+                // Read label names and scores
+                NativeArray<UInt32> labelNames;
+                NativeArray<float> labelScores;
+                unsafe
+                {
+                    labelNames = NativeCopyUtility.PtrToNativeArrayWithDefault
+                    (
+                        (UInt32)0,
+                        labelNameList.ToPointer(),
+                        sizeof(UInt32),
+                        (int)labelCount,
+                        Allocator.Temp
+                    );
+
+                    labelScores = NativeCopyUtility.PtrToNativeArrayWithDefault
+                    (
+                        (float)0,
+                        labelScoreList.ToPointer(),
+                        sizeof(float),
+                        (int)labelCount,
+                        Allocator.Temp
+                    );
+                }
+
+                Dictionary<DiagnosticLabel, float> scoresPerDiagnosticLabel = new();
+                for (int i = 0; i < (int)labelCount; i++)
+                {
+                    scoresPerDiagnosticLabel[(DiagnosticLabel)labelNames[i]] = labelScores[i];
+                }
+
+                return new XRPersistentAnchorFrameDiagnostics
+                {
+                    FrameId = frameId,
+                    TimestampMs = timestampMs,
+                    ScoresPerDiagnosticLabel = scoresPerDiagnosticLabel
+                };
+            }
+#endif
+
+            public override XRPersistentAnchorConfiguration CurrentConfiguration
+            {
+                get => _currentConfiguration;
+                set
+                {
+                    _currentConfiguration = value;
+                    _api.Configure
+                    (
+                        _nativeProviderHandle,
+                        _currentConfiguration.ContinuousLocalizationEnabled,
+                        _currentConfiguration.TemporalFusionEnabled,
+                        _currentConfiguration.SlickLocalizationEnabled,
+                        _currentConfiguration.CloudLocalizerMaxRequestsPerSecond,
+                        _currentConfiguration.SlickLocalizationFps,
+                        _currentConfiguration.CloudLocalizationTemporalFusionWindowSize,
+                        _currentConfiguration.SlickLocalizationTemporalFusionWindowSize,
+                        _currentConfiguration.DiagnosticsEnabled
+                    );
+                }
             }
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        static void RegisterDescriptor()
+        private static void RegisterDescriptor()
         {
             var cinfo = new XRPersistentAnchorSubsystemDescriptor.Cinfo
             {

@@ -22,7 +22,7 @@ namespace Niantic.Lightship.AR.XRSubsystems
         /// </summary>
         public static XRPersistentAnchor defaultValue => s_Default;
 
-        static readonly XRPersistentAnchor s_Default = new XRPersistentAnchor
+        private static readonly XRPersistentAnchor s_Default = new XRPersistentAnchor
         {
             m_Id = TrackableId.invalidId, m_Pose = Pose.identity, m_timestampMs = 0
         };
@@ -156,16 +156,16 @@ namespace Niantic.Lightship.AR.XRSubsystems
         /// <returns>`True` if <paramref name="lhs"/> is not equal to <paramref name="rhs"/>, otherwise `false`.</returns>
         public static bool operator !=(XRPersistentAnchor lhs, XRPersistentAnchor rhs) => !lhs.Equals(rhs);
 
-        TrackableId m_Id;
+        private TrackableId m_Id;
 
-        Pose m_Pose;
+        private Pose m_Pose;
 
-        TrackingState m_TrackingState;
+        private TrackingState m_TrackingState;
 
-        TrackingStateReason m_TrackingStateReason;
+        private TrackingStateReason m_TrackingStateReason;
 
-        XRPersistentAnchorPayload m_XRPersistentAnchorPayload;
+        private XRPersistentAnchorPayload m_XRPersistentAnchorPayload;
 
-        UInt64 m_timestampMs;
+        private UInt64 m_timestampMs;
     }
 }

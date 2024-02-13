@@ -72,7 +72,7 @@ namespace Niantic.Lightship.AR.NavigationMesh
             get { return _lightshipNavMesh; }
         }
 
-        void Start()
+        private void Start()
         {
             //create my LightshipNavMesh
             _settings = new ModelSettings

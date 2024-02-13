@@ -1,7 +1,7 @@
 // Copyright 2022-2024 Niantic.
 using System.IO;
 using System.Linq;
-using Niantic.Lightship.AR.Utilities.Log;
+using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.Utilities.UnityAssets;
 using UnityEngine;
 

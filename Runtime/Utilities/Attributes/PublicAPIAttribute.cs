@@ -5,7 +5,7 @@ using System;
 namespace Niantic.Lightship.AR.Utilities
 {
     // Used for Doxygen generation
-    internal class PublicAPIAttribute : Attribute
+    public class PublicAPIAttribute : Attribute
     {
 
     }

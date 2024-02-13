@@ -23,7 +23,7 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
             RegisterLayouts();
         }
 
-        void RegisterLayouts()
+        private void RegisterLayouts()
         {
             Inputs.RegisterLayout<XRHMD>(matches: new InputDeviceMatcher()
                 .WithInterface(XRUtilities.InterfaceMatchAnyVersion)

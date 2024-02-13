@@ -30,9 +30,19 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
             Native.Stop(anchorProviderHandle);
         }
 
-        public void Configure(IntPtr anchorProviderHandle)
+        public void Configure(IntPtr anchorProviderHandle, bool enableContinuousLocalization, bool enableTemporalFusion, bool enableSlickLocalization,
+                float cloudLocalizerMaxRequestsPerSecond, float slickLocalizerFps, UInt32 cloudTemporalFusionWindowSize, UInt32 slickTemporalFusionWindowSize, bool diagnosticsEnabled)
         {
-            Native.Configure(anchorProviderHandle, false, false, false);
+            // TODO: We may change C-API to pass a struct of flags instead of booleans params
+            Native.Configure(anchorProviderHandle,
+                enableContinuousLocalization,
+                enableTemporalFusion,
+                enableSlickLocalization,
+                Convert.ToUInt32(Math.Ceiling(cloudLocalizerMaxRequestsPerSecond)),
+                Convert.ToUInt32(Math.Ceiling(slickLocalizerFps)),
+                cloudTemporalFusionWindowSize,
+                slickTemporalFusionWindowSize,
+                diagnosticsEnabled);
         }
 
         public void Destruct(IntPtr persistentAnchorApiHandle)
@@ -153,7 +163,8 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
             out RequestType typeOut,
             out ErrorCode errorOut,
             out ulong startTimeMsOut,
-            out ulong endTimeMsOut
+            out ulong endTimeMsOut,
+            out UInt64 frameIdOut
         )
         {
             var success = Native.TryExtractNetworkStatus
@@ -164,7 +175,8 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
                 out var nativeTypeOut,
                 out var nativeErrorOut,
                 out startTimeMsOut,
-                out endTimeMsOut
+                out endTimeMsOut,
+                out frameIdOut
             );
 
             networkStatus = (RequestStatus)nativeNetworkStatus;
@@ -193,7 +205,8 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
             IntPtr localizationStatusHandle,
             out Guid nodeId,
             out LocalizationStatus statusOut,
-            out float confidenceOut
+            out float confidenceOut,
+            out UInt64 frameIdOut
         )
         {
             var success =
@@ -202,10 +215,45 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
                     localizationStatusHandle,
                     out nodeId,
                     out var nativeStatusOut,
-                    out confidenceOut
+                    out confidenceOut,
+                    out frameIdOut
                 );
 
             statusOut = (LocalizationStatus)nativeStatusOut;
+            return success;
+        }
+
+        public IntPtr AcquireFrameDiagnostics(IntPtr anchorProviderHandle, out IntPtr diagnosticsList, out int listCount)
+        {
+            return Native.AcquireFrameDiagnostics(anchorProviderHandle, out diagnosticsList, out listCount);
+        }
+
+        public void ReleaseFrameDiagnostics(IntPtr arrayHandle)
+        {
+            Native.ReleaseFrameDiagnostics(arrayHandle);
+        }
+
+        public bool TryExtractFrameDiagnostics
+        (
+            IntPtr diagnosticsHandle,
+            out UInt64 frameId,
+            out UInt64 timestampMs,
+            out IntPtr labelNameList, 
+            out IntPtr labelScoreList, 
+            out UInt32 labelCount
+        )
+        {
+            var success =
+                Native.TryExtractFrameDiagnostics
+                (
+                    diagnosticsHandle,
+                    out frameId,
+                    out timestampMs,
+                    out labelNameList,
+                    out labelScoreList,
+                    out labelCount
+                );
+
             return success;
         }
 
@@ -235,7 +283,8 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
             public static extern void Stop(IntPtr anchorApiHandle);
 
             [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_AnchorProvider_Configure")]
-            public static extern void Configure(IntPtr anchorApiHandle, bool continuousLocalizationEnabled, bool temporalFusionEnabled, bool slickLocalizationEnabled);
+            public static extern void Configure(IntPtr anchorApiHandle, bool continuousLocalizationEnabled, bool temporalFusionEnabled, bool slickLocalizationEnabled,
+                UInt32 cloudLocalizerMaxRequestsPerSecond, UInt32 slickLocalizerFps, UInt32 cloudTemporalFusionWindowSize, UInt32 slickTemporalFusionWindowSize, bool diagnosticsEnabled);
 
             [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_AnchorProvider_Destruct")]
             public static extern void Destruct(IntPtr anchorApiHandle);
@@ -308,7 +357,8 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
                 out byte typeOut,
                 out UInt32 errorOut,
                 out UInt64 startTimeMsOut,
-                out UInt64 endTimeMsOut
+                out UInt64 endTimeMsOut,
+                out UInt64 frameIdOut
             );
 
             [DllImport
@@ -340,7 +390,42 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
                 IntPtr anchorChangeIntPtr,
                 out Guid trackableId,
                 out byte status,
-                out float confidence
+                out float confidence,
+                out UInt64 frameId
+            );
+
+            [DllImport
+            (
+                LightshipPlugin.Name,
+                EntryPoint = "Lightship_ARDK_Unity_AnchorProvider_AcquireLatestVpsDiagnostics"
+            )]
+            public static extern IntPtr AcquireFrameDiagnostics
+            (
+                IntPtr anchorApiHandle,
+                out IntPtr elementListPr,
+                out int elementCount
+            );
+
+            [DllImport
+            (
+                LightshipPlugin.Name,
+                EntryPoint = "Lightship_ARDK_Unity_AnchorProvider_ReleaseLatestVpsDiagnostics"
+            )]
+            public static extern void ReleaseFrameDiagnostics(IntPtr arrayHandle);
+
+            [DllImport
+            (
+                LightshipPlugin.Name,
+                EntryPoint = "Lightship_ARDK_Unity_AnchorProvider_TryExtractVpsDiagnostics"
+            )]
+            public static extern bool TryExtractFrameDiagnostics
+            (
+                IntPtr diagnosticsHandle,
+                out UInt64 frameId,
+                out UInt64 timestampMs,
+                out IntPtr labelNameList, 
+                out IntPtr labelScoreList, 
+                out UInt32 labelCount
             );
 
             [DllImport

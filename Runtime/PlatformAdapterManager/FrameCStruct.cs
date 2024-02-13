@@ -30,6 +30,12 @@ namespace Niantic.Lightship.AR.PAM
         // Tracking state of current frame. See tracking_state.h for definitions.
         public UInt32 TrackingState;
 
+        // The width of the raw camera image.
+        public UInt32 CameraImageWidth;
+
+        // The height of the raw camera image.
+        public UInt32 CameraImageHeight;
+
         // CPU RGBA image data with resolution [256, 144], in format of uint8.
         public IntPtr CpuRgba256x144ImageData;
 
@@ -41,7 +47,7 @@ namespace Niantic.Lightship.AR.PAM
 
         // Length of the awareness camera intrinsics
         public UInt32 Rgba256x144CameraIntrinsicsLength;
-        
+
         // CPU RGB image data with resolution [256, 256], in format of uint8.
         public IntPtr CpuRgb256x256ImageData;
 

@@ -2,13 +2,17 @@
 using System;
 using System.Collections.Generic;
 
-using Niantic.Lightship.AR.Utilities.Log;
+using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.Loader;
 using System.Linq;
 using Niantic.Lightship.AR.Common;
 using Niantic.Lightship.AR.Core;
 using Niantic.Lightship.AR.Utilities;
 using Niantic.Lightship.AR.XRSubsystems;
+
+using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
+
 using UnityEngine;
 #if !UNITY_EDITOR && UNITY_ANDROID
 using UnityEngine.Android;
@@ -77,6 +81,7 @@ namespace Niantic.Lightship.AR.PersistentAnchors
         private bool _isMock;
         private bool _isInitialLocalization = false;
         private ARPersistentAnchorTelemetrySidecar _telemetrySidecar;
+        private MockARPersistentAnchorManagerImplementation _mockARPersistentAnchorManagerImplementation;
 
         /// <summary>
         /// The prefab to use when creating an ARPersistentAnchor.  If null, a new GameObject will be created.
@@ -84,15 +89,18 @@ namespace Niantic.Lightship.AR.PersistentAnchors
         protected override GameObject GetPrefab() => _defaultAnchorGameobject;
 
         protected bool InterpolateAnchors = false;
-        protected bool TemporalFusionEnabled = false;
+
+        protected bool ContinuousLocalizationEnabled = XRPersistentAnchorConfiguration.DefaultContinuousLocalizationEnabled;
+        protected bool TemporalFusionEnabled = XRPersistentAnchorConfiguration.DefaultTemporalFusionEnabled;
+        protected float CloudLocalizerMaxRequestsPerSecond = XRPersistentAnchorConfiguration.DefaultCloudLocalizerMaxRequestsPerSecond;
+        protected uint CloudLocalizationTemporalFusionWindowSize = XRPersistentAnchorConfiguration.DefaultCloudLocalizationTemporalFusionWindowSize;
+        protected bool DiagnosticsEnabled = XRPersistentAnchorConfiguration.DefaultDiagnosticsEnabled;
 
         internal GameObject DefaultAnchorPrefab
         {
             get => _defaultAnchorGameobject;
         }
-
-        private IARPersistentAnchorManagerImplementation _arPersistentAnchorManagerImplementation;
-
+        
         protected override void OnEnable()
         {
             base.OnEnable();
@@ -108,8 +116,27 @@ namespace Niantic.Lightship.AR.PersistentAnchors
                 Instance = this;
             }
 
-            InitializeARPersistentAnchorManagerImplementation();
+            // Temporary solution to support mock while simulation is WIP
+            var shouldUseEditorMock = ShouldUseEditorMock();
+            _isMock = subsystem.IsMockProvider;
+            if(shouldUseEditorMock && !_isMock)
+            {
+                _mockARPersistentAnchorManagerImplementation = new MockARPersistentAnchorManagerImplementation(this);
+                _isMock = true;
+            }
+            
             InitializeTelemetry();
+        }
+
+        protected override void OnBeforeStart()
+        {
+            XRPersistentAnchorConfiguration cfg = new();
+            cfg.ContinuousLocalizationEnabled = ContinuousLocalizationEnabled;
+            cfg.TemporalFusionEnabled = TemporalFusionEnabled;
+            cfg.CloudLocalizerMaxRequestsPerSecond = CloudLocalizerMaxRequestsPerSecond;
+            cfg.CloudLocalizationTemporalFusionWindowSize = CloudLocalizationTemporalFusionWindowSize;
+            cfg.DiagnosticsEnabled = DiagnosticsEnabled;
+            subsystem.CurrentConfiguration = cfg;
         }
 
         protected virtual void Start()
@@ -118,6 +145,7 @@ namespace Niantic.Lightship.AR.PersistentAnchors
             {
                 subsystem.OnSubsystemStop += OnSubsystemStop;
             }
+            
             RequestLocationPermission();
         }
 
@@ -132,6 +160,14 @@ namespace Niantic.Lightship.AR.PersistentAnchors
               Instance = null;
             }
 
+            if (_mockARPersistentAnchorManagerImplementation != null)
+            {
+                _mockARPersistentAnchorManagerImplementation.Dispose();
+                _mockARPersistentAnchorManagerImplementation = null;
+            }
+
+            _isMock = false;
+            
             base.OnDisable();
         }
 
@@ -142,7 +178,6 @@ namespace Niantic.Lightship.AR.PersistentAnchors
                 subsystem.OnSubsystemStop -= OnSubsystemStop;
             }
             RemoveAllAnchorsImmediate();
-            DestroyARPersistentAnchorManagerImplementation();
             base.OnDestroy();
         }
 
@@ -162,7 +197,12 @@ namespace Niantic.Lightship.AR.PersistentAnchors
         /// </returns>
         public bool GetVpsSessionId(out string vpsSessionId)
         {
-            return _arPersistentAnchorManagerImplementation.GetVpsSessionId(this, out vpsSessionId);
+            if (_isMock && _mockARPersistentAnchorManagerImplementation != null)
+            {
+                return _mockARPersistentAnchorManagerImplementation.GetVpsSessionId(out vpsSessionId); 
+            }
+
+            return subsystem.GetVpsSessionId(out vpsSessionId);
         }
 
         /// <summary>
@@ -178,7 +218,39 @@ namespace Niantic.Lightship.AR.PersistentAnchors
         /// </returns>
         public bool TryTrackAnchor(ARPersistentAnchorPayload payload, out ARPersistentAnchor arPersistentAnchor)
         {
-            return _arPersistentAnchorManagerImplementation.TryTrackAnchor(this, payload, out arPersistentAnchor);
+            if( _isMock && _mockARPersistentAnchorManagerImplementation != null)
+            {
+                return _mockARPersistentAnchorManagerImplementation.TryTrackAnchor(this, payload, out arPersistentAnchor);
+            }
+            
+            if (subsystem == null || !subsystem.running)
+            {
+                arPersistentAnchor = default;
+                return false;
+            }
+            
+            var data = payload.Data;
+            var dataNativeArray = new NativeArray<byte>(data, Allocator.Temp);
+            IntPtr payloadIntPtr;
+            unsafe
+            {
+                payloadIntPtr = (IntPtr)dataNativeArray.GetUnsafeReadOnlyPtr();
+            }
+
+            int payloadSize = payload.Data.Length;
+            var xrPersistentAnchorPayload = new XRPersistentAnchorPayload(payloadIntPtr, payloadSize);
+            bool success = subsystem.TryLocalize(xrPersistentAnchorPayload, out var xrPersistentAnchor);
+            if (success)
+            {
+                arPersistentAnchor = CreateTrackableImmediate(xrPersistentAnchor);
+            }
+            else
+            {
+                Log.Error("Failed to localize." + gameObject);
+                arPersistentAnchor = default;
+            }
+
+            return success;
         }
 
         /// <summary>
@@ -187,7 +259,38 @@ namespace Niantic.Lightship.AR.PersistentAnchors
         /// <param name="arPersistentAnchor">The anchor to destroy</param>
         public void DestroyAnchor(ARPersistentAnchor arPersistentAnchor)
         {
-            _arPersistentAnchorManagerImplementation.DestroyAnchor(this, arPersistentAnchor);
+            if (_isMock && _mockARPersistentAnchorManagerImplementation != null)
+            {
+                _mockARPersistentAnchorManagerImplementation.DestroyAnchor(this, arPersistentAnchor);
+                return;
+            }
+
+            if (subsystem == null)
+            {
+                return;
+            }
+            var trackableId = arPersistentAnchor.trackableId;
+            bool success = subsystem.TryRemoveAnchor(trackableId);
+            if (PendingAdds.ContainsKey(trackableId))
+            {
+                PendingAdds.Remove(trackableId);
+            }
+            if (success)
+            {
+                if (arPersistentAnchor._markedForDestruction)
+                {
+                    Trackables.Remove(trackableId);
+                    ReportRemovedAnchors(arPersistentAnchor);
+                }
+                else
+                {
+                    arPersistentAnchor._markedForDestruction = true;
+                }
+            }
+            else if(subsystem.running)
+            {
+                Log.Error($"Failed to destroy anchor {trackableId}." + gameObject);
+            }
         }
 
         // Force the ARTrackableManager to query into native and get updates
@@ -264,30 +367,6 @@ namespace Niantic.Lightship.AR.PersistentAnchors
                 var nextAnchorPose = predictedPose;
                 var lastAnchorPose = updatedAnchor.PredictedPose;
 
-                if (TemporalFusionEnabled)
-                {
-                    // Override the raw predicted pose with the previous fused pose
-                    lastAnchorPose = updatedAnchor.FusedPose;
-
-                    if (updatedAnchor.trackingState == TrackingState.None)
-                    {
-                        updatedAnchor.ClearTemporalFusion();
-                    }
-                    else if (updatedAnchor.trackingState == TrackingState.Tracking)
-                    {
-                        // Update temporal fusion, this manipulates the pose of the anchor.
-                        nextAnchorPose = updatedAnchor.UpdateAndApplyTemporalFusion(predictedPose);
-                    }
-                    else if (updatedAnchor.trackingState == TrackingState.Limited)
-                    {
-                        // Apply the previous fused pose to overwrite the limited prediction
-                        updatedAnchor.ApplyPoseToTransform(updatedAnchor.FusedPose);
-
-                        // For interpolation, target == start, so no interpolation takes place
-                        nextAnchorPose = lastAnchorPose;
-                    }
-                }
-
                 if (InterpolateAnchors)
                 {
                     // Start interpolation with the previous cached pose, before updating it
@@ -326,7 +405,7 @@ namespace Niantic.Lightship.AR.PersistentAnchors
                 arPersistentAnchorStateChanged?.Invoke(arPersistentAnchorStateChangedEvent);
             }
 
-            if (_isMock || removedAnchors.Length == 0)
+            if (removedAnchors.Length == 0)
             {
                 return;
             }
@@ -336,38 +415,6 @@ namespace Niantic.Lightship.AR.PersistentAnchors
             {
                 HandleTelemetryForSessionEnd();
                 subsystem?.ResetTelemetryMetrics();
-            }
-        }
-
-        private void InitializeARPersistentAnchorManagerImplementation()
-        {
-            if (_arPersistentAnchorManagerImplementation != null)
-            {
-                return;
-            }
-
-#if UNITY_EDITOR
-            if (LightshipUnityContext.ActiveSettings.UsePlayback)
-            {
-                _arPersistentAnchorManagerImplementation = new ARPersistentAnchorManagerImplementation(this);
-                _isMock = false;
-            }
-            else
-            {
-                _arPersistentAnchorManagerImplementation = new MockARPersistentAnchorManagerImplementation(this);
-                _isMock = true;
-            }
-#else
-            _arPersistentAnchorManagerImplementation = new ARPersistentAnchorManagerImplementation(this);
-#endif
-        }
-
-        private void DestroyARPersistentAnchorManagerImplementation()
-        {
-            if (_arPersistentAnchorManagerImplementation != null)
-            {
-                _arPersistentAnchorManagerImplementation.Dispose();
-                _arPersistentAnchorManagerImplementation = null;
             }
         }
 
@@ -383,7 +430,9 @@ namespace Niantic.Lightship.AR.PersistentAnchors
         {
             get
             {
-                GetVpsSessionId(out var id);
+                string id;
+                
+                GetVpsSessionId(out id);
                 return id;
             }
         }
@@ -474,6 +523,22 @@ namespace Niantic.Lightship.AR.PersistentAnchors
             }
 
             _telemetrySidecar.SessionEnded();
+        }
+
+        private bool ShouldUseEditorMock()
+        {
+#if UNITY_EDITOR
+            if (LightshipUnityContext.ActiveSettings.UsePlayback)
+            {
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+#else
+            return false;
+#endif
         }
     }
 }

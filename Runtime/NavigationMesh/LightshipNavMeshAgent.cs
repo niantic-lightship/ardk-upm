@@ -70,9 +70,9 @@ namespace Niantic.Lightship.AR.NavigationMesh
         private LightshipNavMeshManager _lightshipNavMeshManager;
         private LightshipNavMesh _lightshipNavMesh;
 
-        Vector3 _dir = new Vector3(0, 0, 0);
+        private Vector3 _dir = new Vector3(0, 0, 0);
 
-        void Start()
+        private void Start()
         {
             _agentConfig = new AgentConfiguration(jumpPenalty, jumpDistance, pathFindingBehaviour);
 
@@ -86,7 +86,7 @@ namespace Niantic.Lightship.AR.NavigationMesh
             _lightshipNavMesh = _lightshipNavMeshManager.LightshipNavMesh;
         }
 
-        void Update()
+        private void Update()
         {
             switch (State)
             {

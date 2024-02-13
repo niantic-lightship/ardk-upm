@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Niantic.Lightship.AR.Utilities.Log;
+using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.Common;
 using Niantic.Lightship.AR.Utilities;
 using Niantic.Lightship.AR.XRSubsystems;
@@ -126,7 +126,7 @@ namespace Niantic.Lightship.AR.PersistentAnchors
             _wasntTrackingLastInterpolationApplication = trackingState == TrackingState.None;
         }
 
-        void OnDestroy()
+        private void OnDestroy()
         {
             if (_markedForDestruction)
             {

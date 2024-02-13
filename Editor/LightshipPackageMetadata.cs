@@ -1,6 +1,6 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 using System.Collections.Generic;
-using Niantic.Lightship.AR.Utilities.Log;
+using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.Loader;
 using UnityEngine;
 using UnityEditor;
@@ -8,7 +8,7 @@ using UnityEditor.XR.Management.Metadata;
 
 namespace Niantic.Lightship.AR.Editor
 {
-    class XRPackage : IXRPackage
+    internal class XRPackage : IXRPackage
     {
         private class LightshipLoaderMetadata : IXRLoaderMetadata
         {

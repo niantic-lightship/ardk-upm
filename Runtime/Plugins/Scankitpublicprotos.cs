@@ -40,28 +40,29 @@ namespace Niantic.ARDK.AR.Protobuf {
             "EhIKCm1vZGVsX25hbWUYByABKAkSGQoRbWFudWZhY3R1cmVyX25hbWUYCCAB",
             "KAkSCwoDcG9pGAkgASgJEhAKCHJlY29yZGVyGAogASgJEhEKCXVzZXJfanNv",
             "bhgLIAEoCRIUCgxuYXRpdmVfZGVwdGgYDCABKAgSDgoGb3JpZ2luGA0gAygC",
-            "EhcKD2dsb2JhbF9yb3RhdGlvbhgOIAMoAiJgChFDYW1lcmFQYXJhbXNQcm90",
-            "bxINCgV3aWR0aBgBIAEoBRIOCgZoZWlnaHQYAiABKAUSCQoBZhgDIAEoAhIK",
-            "CgJweBgEIAEoAhIKCgJweRgFIAEoAhIJCgFrGAYgASgCIj0KFEFmZmluZVRy",
-            "YW5zZm9ybVByb3RvEhAKCHJvdGF0aW9uGAEgAygCEhMKC3RyYW5zbGF0aW9u",
-            "GAIgAygCIsIBCg1Mb2NhdGlvblByb3RvEhEKCXRpbWVzdGFtcBgBIAEoARIQ",
-            "CghsYXRpdHVkZRgCIAEoARIRCglsb25naXR1ZGUYAyABKAESEAoIYWNjdXJh",
-            "Y3kYBCABKAISGAoQZWxldmF0aW9uX21ldGVycxgFIAEoAhIaChJlbGV2YXRp",
-            "b25fYWNjdXJhY3kYBiABKAISFwoPaGVhZGluZ19kZWdyZWVzGAcgASgCEhgK",
-            "EGhlYWRpbmdfYWNjdXJhY3kYCCABKAIiNAoRRXhwb3N1cmVJbmZvUHJvdG8S",
-            "DwoHc2h1dHRlchgBIAEoAhIOCgZvZmZzZXQYAiABKAIiLAoPRGVwdGhSYW5n",
-            "ZVByb3RvEgwKBG5lYXIYASABKAISCwoDZmFyGAIgASgCIjAKD1Jhc3RlclNp",
-            "emVQcm90bxINCgV3aWR0aBgBIAEoBRIOCgZoZWlnaHQYAiABKAUiZgoQQm91",
-            "bmRpbmdCb3hQcm90bxIMCgRsb194GAEgASgCEgwKBGxvX3kYAiABKAISDAoE",
-            "bG9fehgDIAEoAhIMCgRoaV94GAQgASgCEgwKBGhpX3kYBSABKAISDAoEaGlf",
-            "ehgGIAEoAkIbqgIYTmlhbnRpYy5BUkRLLkFSLlByb3RvYnVmYgZwcm90bzM="));
+            "EhcKD2dsb2JhbF9yb3RhdGlvbhgOIAMoAiJtChFDYW1lcmFQYXJhbXNQcm90",
+            "bxINCgV3aWR0aBgBIAEoBRIOCgZoZWlnaHQYAiABKAUSCgoCZngYAyABKAIS",
+            "CgoCZnkYByABKAISCgoCcHgYBCABKAISCgoCcHkYBSABKAISCQoBaxgGIAEo",
+            "AiI9ChRBZmZpbmVUcmFuc2Zvcm1Qcm90bxIQCghyb3RhdGlvbhgBIAMoAhIT",
+            "Cgt0cmFuc2xhdGlvbhgCIAMoAiLCAQoNTG9jYXRpb25Qcm90bxIRCgl0aW1l",
+            "c3RhbXAYASABKAESEAoIbGF0aXR1ZGUYAiABKAESEQoJbG9uZ2l0dWRlGAMg",
+            "ASgBEhAKCGFjY3VyYWN5GAQgASgCEhgKEGVsZXZhdGlvbl9tZXRlcnMYBSAB",
+            "KAISGgoSZWxldmF0aW9uX2FjY3VyYWN5GAYgASgCEhcKD2hlYWRpbmdfZGVn",
+            "cmVlcxgHIAEoAhIYChBoZWFkaW5nX2FjY3VyYWN5GAggASgCIjQKEUV4cG9z",
+            "dXJlSW5mb1Byb3RvEg8KB3NodXR0ZXIYASABKAISDgoGb2Zmc2V0GAIgASgC",
+            "IiwKD0RlcHRoUmFuZ2VQcm90bxIMCgRuZWFyGAEgASgCEgsKA2ZhchgCIAEo",
+            "AiIwCg9SYXN0ZXJTaXplUHJvdG8SDQoFd2lkdGgYASABKAUSDgoGaGVpZ2h0",
+            "GAIgASgFImYKEEJvdW5kaW5nQm94UHJvdG8SDAoEbG9feBgBIAEoAhIMCgRs",
+            "b195GAIgASgCEgwKBGxvX3oYAyABKAISDAoEaGlfeBgEIAEoAhIMCgRoaV95",
+            "GAUgASgCEgwKBGhpX3oYBiABKAJCG6oCGE5pYW50aWMuQVJESy5BUi5Qcm90",
+            "b2J1ZmIGcHJvdG8z"));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(null, new pbr::GeneratedClrTypeInfo[] {
             new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.ARDK.AR.Protobuf.FramesProto), global::Niantic.ARDK.AR.Protobuf.FramesProto.Parser, new[]{ "Id", "Frames", "Anchors", "Locations" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.ARDK.AR.Protobuf.FrameProto), global::Niantic.ARDK.AR.Protobuf.FrameProto.Parser, new[]{ "Id", "Anchor", "Timestamp", "Camera", "Transform", "Exposure", "Range", "Quality", "IsLargeImage", "TrackingState" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.ARDK.AR.Protobuf.ScanMetadataProto), global::Niantic.ARDK.AR.Protobuf.ScanMetadataProto.Parser, new[]{ "Id", "ImageSize", "DepthSize", "StartTimestamp", "TimezoneOffset", "AppName", "PlatformName", "ModelName", "ManufacturerName", "Poi", "Recorder", "UserJson", "NativeDepth", "Origin", "GlobalRotation" }, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.ARDK.AR.Protobuf.CameraParamsProto), global::Niantic.ARDK.AR.Protobuf.CameraParamsProto.Parser, new[]{ "Width", "Height", "F", "Px", "Py", "K" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.ARDK.AR.Protobuf.CameraParamsProto), global::Niantic.ARDK.AR.Protobuf.CameraParamsProto.Parser, new[]{ "Width", "Height", "Fx", "Fy", "Px", "Py", "K" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.ARDK.AR.Protobuf.AffineTransformProto), global::Niantic.ARDK.AR.Protobuf.AffineTransformProto.Parser, new[]{ "Rotation", "Translation" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.ARDK.AR.Protobuf.LocationProto), global::Niantic.ARDK.AR.Protobuf.LocationProto.Parser, new[]{ "Timestamp", "Latitude", "Longitude", "Accuracy", "ElevationMeters", "ElevationAccuracy", "HeadingDegrees", "HeadingAccuracy" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.ARDK.AR.Protobuf.ExposureInfoProto), global::Niantic.ARDK.AR.Protobuf.ExposureInfoProto.Parser, new[]{ "Shutter", "Offset" }, null, null, null),
@@ -1233,7 +1234,8 @@ namespace Niantic.ARDK.AR.Protobuf {
     public CameraParamsProto(CameraParamsProto other) : this() {
       width_ = other.width_;
       height_ = other.height_;
-      f_ = other.f_;
+      fx_ = other.fx_;
+      fy_ = other.fy_;
       px_ = other.px_;
       py_ = other.py_;
       k_ = other.k_;
@@ -1266,14 +1268,28 @@ namespace Niantic.ARDK.AR.Protobuf {
       }
     }
 
-    /// <summary>Field number for the "f" field.</summary>
-    public const int FFieldNumber = 3;
-    private float f_;
+    /// <summary>Field number for the "fx" field.</summary>
+    public const int FxFieldNumber = 3;
+    private float fx_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    public float F {
-      get { return f_; }
+    public float Fx {
+      get { return fx_; }
       set {
-        f_ = value;
+        fx_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "fy" field.</summary>
+    public const int FyFieldNumber = 7;
+    private float fy_;
+    /// <summary>
+    ///  Added v3.0.0 - earlier builds assume fx == fy and store it with id=3 (fx)
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public float Fy {
+      get { return fy_; }
+      set {
+        fy_ = value;
       }
     }
 
@@ -1325,7 +1341,8 @@ namespace Niantic.ARDK.AR.Protobuf {
       }
       if (Width != other.Width) return false;
       if (Height != other.Height) return false;
-      if (F != other.F) return false;
+      if (Fx != other.Fx) return false;
+      if (Fy != other.Fy) return false;
       if (Px != other.Px) return false;
       if (Py != other.Py) return false;
       if (K != other.K) return false;
@@ -1337,7 +1354,8 @@ namespace Niantic.ARDK.AR.Protobuf {
       int hash = 1;
       if (Width != 0) hash ^= Width.GetHashCode();
       if (Height != 0) hash ^= Height.GetHashCode();
-      if (F != 0F) hash ^= F.GetHashCode();
+      if (Fx != 0F) hash ^= Fx.GetHashCode();
+      if (Fy != 0F) hash ^= Fy.GetHashCode();
       if (Px != 0F) hash ^= Px.GetHashCode();
       if (Py != 0F) hash ^= Py.GetHashCode();
       if (K != 0F) hash ^= K.GetHashCode();
@@ -1359,9 +1377,9 @@ namespace Niantic.ARDK.AR.Protobuf {
         output.WriteRawTag(16);
         output.WriteInt32(Height);
       }
-      if (F != 0F) {
+      if (Fx != 0F) {
         output.WriteRawTag(29);
-        output.WriteFloat(F);
+        output.WriteFloat(Fx);
       }
       if (Px != 0F) {
         output.WriteRawTag(37);
@@ -1375,6 +1393,10 @@ namespace Niantic.ARDK.AR.Protobuf {
         output.WriteRawTag(53);
         output.WriteFloat(K);
       }
+      if (Fy != 0F) {
+        output.WriteRawTag(61);
+        output.WriteFloat(Fy);
+      }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -1386,7 +1408,10 @@ namespace Niantic.ARDK.AR.Protobuf {
       if (Height != 0) {
         size += 1 + pb::CodedOutputStream.ComputeInt32Size(Height);
       }
-      if (F != 0F) {
+      if (Fx != 0F) {
+        size += 1 + 4;
+      }
+      if (Fy != 0F) {
         size += 1 + 4;
       }
       if (Px != 0F) {
@@ -1412,8 +1437,11 @@ namespace Niantic.ARDK.AR.Protobuf {
       if (other.Height != 0) {
         Height = other.Height;
       }
-      if (other.F != 0F) {
-        F = other.F;
+      if (other.Fx != 0F) {
+        Fx = other.Fx;
+      }
+      if (other.Fy != 0F) {
+        Fy = other.Fy;
       }
       if (other.Px != 0F) {
         Px = other.Px;
@@ -1443,7 +1471,7 @@ namespace Niantic.ARDK.AR.Protobuf {
             break;
           }
           case 29: {
-            F = input.ReadFloat();
+            Fx = input.ReadFloat();
             break;
           }
           case 37: {
@@ -1456,6 +1484,10 @@ namespace Niantic.ARDK.AR.Protobuf {
           }
           case 53: {
             K = input.ReadFloat();
+            break;
+          }
+          case 61: {
+            Fy = input.ReadFloat();
             break;
           }
         }

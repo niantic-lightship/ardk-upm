@@ -16,7 +16,8 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
 
         public void Stop(IntPtr anchorProviderHandle);
 
-        public void Configure(IntPtr anchorProviderHandle);
+        public void Configure(IntPtr anchorProviderHandle, bool enableContinuousLocalization, bool enableTemporalFusion, bool enableSlickLocalization,
+                float cloudLocalizerMaxRequestsPerSecond, float slickLocalizerFps, UInt32 cloudTemporalFusionWindowSize, UInt32 slickTemporalFusionWindowSize, bool diagnosticsEnabled);
 
         public void Destruct(IntPtr anchorProviderHandle);
 
@@ -63,7 +64,8 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
             out RequestType typeOut,
             out ErrorCode errorOut,
             out UInt64 startTimeMsOut,
-            out UInt64 endTimeMsOut
+            out UInt64 endTimeMsOut,
+            out UInt64 frameIdOut
         );
 
         public IntPtr AcquireLocalizationStatus(IntPtr anchorProviderHandle, out IntPtr localizationStatusList, out int listCount);
@@ -75,7 +77,22 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
             IntPtr localizationStatusHandle,
             out Guid nodeId,
             out LocalizationStatus statusOut,
-            out float confidenceOut
+            out float confidenceOut,
+            out UInt64 frameIdOut
+        );
+
+        public IntPtr AcquireFrameDiagnostics(IntPtr anchorProviderHandle, out IntPtr diagnosticsList, out int listCount);
+
+        public void ReleaseFrameDiagnostics(IntPtr diagnosticsHandle);
+
+        public bool TryExtractFrameDiagnostics
+        (
+            IntPtr diagnosticsHandle,
+            out UInt64 frameId,
+            out UInt64 timestampMs,
+            out IntPtr labelNameList, 
+            out IntPtr labelScoreList, 
+            out UInt32 labelCount
         );
 
         public bool GetVpsSessionId(IntPtr anchorProviderHandle, out string vpsSessionId);

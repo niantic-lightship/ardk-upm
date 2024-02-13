@@ -3,7 +3,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 
-using Niantic.Lightship.AR.Utilities.Log;
+using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.Protobuf;
 using Niantic.Lightship.AR.Telemetry;
 using Niantic.Lightship.AR.Utilities;

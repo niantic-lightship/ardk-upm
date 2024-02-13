@@ -1,6 +1,6 @@
 {
     "name": "Niantic.Lightship.AR",
-    "rootNamespace": "",
+    "rootNamespace": "Niantic.Lightship.AR",
     "references": [
         "Unity.XR.ARSubsystems",
         "Unity.XR.Management",

@@ -6,7 +6,7 @@ using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 using Random = System.Random;
-using static Niantic.Lightship.AR.Utilities.Log.Log;
+using static Niantic.Lightship.AR.Utilities.Logging.Log;
 
 namespace Niantic.Lightship.AR.Utilities.Textures
 {

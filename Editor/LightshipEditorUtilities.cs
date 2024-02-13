@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 
 using System;
 using System.Linq;
@@ -8,7 +8,7 @@ using UnityEditor.XR.Management;
 
 namespace Niantic.Lightship.AR.Editor
 {
-    static class LightshipEditorUtilities
+    internal static class LightshipEditorUtilities
     {
         internal static bool GetIosIsLightshipPluginEnabled()
         {

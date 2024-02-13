@@ -2,7 +2,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Niantic.Lightship.AR.Utilities.Log;
+using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.PersistentAnchors;
 using Niantic.Lightship.AR.Utilities;
 using Niantic.Lightship.AR.VpsCoverage;
@@ -29,28 +29,11 @@ namespace Niantic.Lightship.AR.LocationAR
         [Header("Experimental: Drift Mitigation")]
         [Tooltip("Continuously send localization requests to refine ARLocation tracking")]
         [SerializeField]
-        private bool _ContinuousLocalizationEnabled;
+        private bool _ContinuousLocalizationEnabled = XRPersistentAnchorConfiguration.DefaultContinuousLocalizationEnabled;
 
         [Tooltip("Interpolate anchor updates instead of snapping. Only works when continuous localization is enabled")]
         [SerializeField]
         private bool _InterpolationEnabled;
-
-        /// <summary>
-        /// Number of seconds between attempting Continuous Localization requests.
-        ///
-        /// After attempting localization (StartTracking()), server requests will be sent once a second until
-        /// localization succeeds.
-        ///
-        /// After localization is successful, new localization reqests will be sent at the rate specified in
-        /// ContinuousLocalizationRateSeconds.
-        ///
-        /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
-        /// </summary>
-        public float ContinuousLocalizationRateSeconds
-        {
-            get => _continuousLocalizationRateSeconds;
-            set => _continuousLocalizationRateSeconds = value;
-        }
 
         /// <summary>
         /// Number of seconds over which anchor interpolation occurs.
@@ -69,8 +52,8 @@ namespace Niantic.Lightship.AR.LocationAR
         /// </summary>
         public bool ContinuousLocalizationEnabled
         {
-            get => _continuousLocalizationEnabled;
-            set => _continuousLocalizationEnabled = value;
+            get => base.ContinuousLocalizationEnabled;
+            set => base.ContinuousLocalizationEnabled = value;
         }
 
         /// <summary>
@@ -83,28 +66,79 @@ namespace Niantic.Lightship.AR.LocationAR
             set => InterpolateAnchors = value;
         }
 
-#if NIANTIC_ARDK_EXPERIMENTAL_FEATURES
-        [Tooltip("Averages multiple localization results to provide a more stable localization. Only works when continuous localization is enabled")]
-        [SerializeField]
-        private bool _TemporalFusionEnabled;
-
         /// <summary>
-        /// Number of localization results to average for temporal fusion
-        /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
+        /// Obsolete. Use CloudLocalizerMaxRequestsPerSecond instead.
         /// </summary>
-        public int TemporalFusionSlidingWindow {
-            get => ARPersistentAnchor.FusionSlidingWindowSize;
-            set => ARPersistentAnchor.FusionSlidingWindowSize = value;
-        }
+        [Obsolete]
+        public int ContinuousLocalizationRateSeconds;
+
+#if NIANTIC_ARDK_EXPERIMENTAL_FEATURES
+
+        [Tooltip("Averages/Fuses multiple localization results to provide a more stable localization. Only works when continuous localization is enabled")]
+        [SerializeField]
+        private bool _TemporalFusionEnabled = XRPersistentAnchorConfiguration.DefaultTemporalFusionEnabled;
+
+        [Tooltip("Max Requests Per Second send to Cloud for Localization. 0 value means as many requests as possible")]
+        [SerializeField]
+        private float _CloudLocalizerMaxRequestsPerSecond = XRPersistentAnchorConfiguration.DefaultCloudLocalizerMaxRequestsPerSecond;
+
+        [Tooltip("Number of localization samples used to fuse")]
+        [SerializeField]
+        private uint _CloudLocalizationTemporalFusionWindowSize = XRPersistentAnchorConfiguration.DefaultCloudLocalizationTemporalFusionWindowSize;
+
+        [Tooltip("Whether to enable or disable frame diagnostics")]
+        [SerializeField]
+        private bool _DiagnosticsEnabled = XRPersistentAnchorConfiguration.DefaultDiagnosticsEnabled;
 
         /// <summary>
         /// Whether to enable or disable temporal fusion
         /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
         /// </summary>
-        public new bool TemporalFusionEnabled
+        public bool TemporalFusionEnabled
         {
             get => base.TemporalFusionEnabled;
             set => base.TemporalFusionEnabled = value;
+        }
+
+        /// <summary>
+        /// Max Requests Per Second send to Cloud for Localization. 0 value means as many requests as possible.
+        /// Currently, value will be round up to int. Future releases will allow for fractional values
+        /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
+        /// </summary>
+        public float CloudLocalizerMaxRequestsPerSecond
+        {
+            get => base.CloudLocalizerMaxRequestsPerSecond;
+            set => base.CloudLocalizerMaxRequestsPerSecond = value;
+        }
+
+        /// <summary>
+        /// Number of localization samples used to fuse
+        /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
+        /// </summary>
+        public uint CloudLocalizationTemporalFusionWindowSize
+        {
+            get => base.CloudLocalizationTemporalFusionWindowSize;
+            set => base.CloudLocalizationTemporalFusionWindowSize = value;
+        }
+
+        /// <summary>
+        /// Whether to enable or disable frame diagnostics
+        /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
+        /// </summary>
+        public bool DiagnosticsEnabled
+        {
+            get => base.DiagnosticsEnabled;
+            set => base.DiagnosticsEnabled = value;
+        }
+
+        /// <summary>
+        /// Obsolete. Use CloudLocalizationTemporalFusionWindowSize instead.
+        /// </summary>
+        [Obsolete]
+        public int TemporalFusionSlidingWindow
+        {
+            get => (int)base.CloudLocalizationTemporalFusionWindowSize;
+            set => base.CloudLocalizationTemporalFusionWindowSize = (uint)value;
         }
 #endif
 
@@ -112,10 +146,6 @@ namespace Niantic.Lightship.AR.LocationAR
         [Tooltip("Whether or not to auto-track the currently selected location.  Auto-tracked locations will be enabled, including their children, when the camera is aimed at the physical location.")]
         [SerializeField]
         private bool _autoTrack = false;
-
-        private bool _continuousLocalizationEnabled = false;
-        private float _continuousLocalizationRateSeconds = 5.0f;
-        private float _elapsedTime = 0;
 
         private bool _keepTryingStartLocationServices = false;
 
@@ -179,12 +209,20 @@ namespace Niantic.Lightship.AR.LocationAR
         protected override void OnEnable()
         {
             base.OnEnable();
-            _continuousLocalizationEnabled = _ContinuousLocalizationEnabled;
             InterpolateAnchors = _InterpolationEnabled;
+            arPersistentAnchorStateChanged += HandleARPersistentAnchorStateChanged;
+        }
+
+        protected override void OnBeforeStart()
+        {
+            base.ContinuousLocalizationEnabled = _ContinuousLocalizationEnabled;
 #if NIANTIC_ARDK_EXPERIMENTAL_FEATURES
             base.TemporalFusionEnabled = _TemporalFusionEnabled;
+            base.CloudLocalizerMaxRequestsPerSecond = _CloudLocalizerMaxRequestsPerSecond;
+            base.CloudLocalizationTemporalFusionWindowSize = _CloudLocalizationTemporalFusionWindowSize;
+            base.DiagnosticsEnabled = _DiagnosticsEnabled;
 #endif
-            arPersistentAnchorStateChanged += HandleARPersistentAnchorStateChanged;
+            base.OnBeforeStart();
         }
 
         protected override void Start()
@@ -582,26 +620,6 @@ namespace Niantic.Lightship.AR.LocationAR
             }
 
             TryTrackLocations(arLocations.ToArray());
-        }
-
-        protected override void Update()
-        {
-            base.Update();
-
-            if (!_continuousLocalizationEnabled || _trackedARLocations.Count == 0)
-            {
-                _elapsedTime = 0;
-                return;
-            }
-
-            _elapsedTime += Time.deltaTime;
-            // Currently the only criteria is elapsed time.
-            // Can experiment with other behaviours here
-            if (_elapsedTime >= _continuousLocalizationRateSeconds)
-            {
-                _elapsedTime = 0;
-                TryUpdateTracking();
-            }
         }
 
         private void ParentARLocationToOriginal(ARLocation arLocation, ARPersistentAnchor anchor)

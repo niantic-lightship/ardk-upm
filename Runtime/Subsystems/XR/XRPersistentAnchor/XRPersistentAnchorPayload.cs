@@ -73,9 +73,9 @@ namespace Niantic.Lightship.AR.XRSubsystems
         public static bool operator !=(XRPersistentAnchorPayload lhs, XRPersistentAnchorPayload rhs) =>
             !lhs.Equals(rhs);
 
-        IntPtr m_NativePtr;
+        private IntPtr m_NativePtr;
 
-        int m_Size;
+        private int m_Size;
 
         public override int GetHashCode()
         {

@@ -7,15 +7,28 @@ using UnityEngine;
 
 namespace Niantic.Lightship.AR.Utilities
 {
+  /// <summary>
   /// This utility is a collection of functions that produce 2D affine transformations.
   /// Affine transformation is a linear mapping method that preserves points, straight
   /// lines, and planes. The functions here are used to calculate matrices that fit
   /// images to the viewport.
+  /// Visit to learn more: https://en.wikipedia.org/wiki/Affine_transformation#Image_transformation
+  /// </summary>
   internal static class AffineMath
   {
+    /// <summary>
     /// Returns an affine transformation such that if multiplied with normalized
-    /// coordinates in the target coordinate frame, the results are normalized
+    /// coordinates in the target coordinate frame, the results are the normalized
     /// coordinates in the source coordinate frame.
+    /// </summary>
+    /// <param name="sourceWidth">The width of the source coordinate frame.</param>
+    /// <param name="sourceHeight">The height of the source coordinate frame.</param>
+    /// <param name="sourceOrientation">The orientation of the source coordinate frame.</param>
+    /// <param name="targetWidth">The width of the target coordinate frame.</param>
+    /// <param name="targetHeight">The height of the target coordinate frame.</param>
+    /// <param name="targetOrientation">The orientation of the target coordinate frame.</param>
+    /// <param name="reverseRotation">If true, rotation will be interpreted counter-clockwise.</param>
+    /// <returns>An affine transformation matrix embedded in a Matrix4x4.</returns>
     internal static Matrix4x4 Fit
     (
       float sourceWidth,
@@ -109,21 +122,25 @@ namespace Niantic.Lightship.AR.Utilities
           : new Vector2(sourceHeight, sourceWidth);
     }
 
+    /// <summary>
     /// Calculates an affine transformation to rotate from one screen orientation to another
     /// around the pivot.
-    /// @param from Original orientation.
-    /// @param to Target orientation.
-    /// @returns An affine matrix to be applied to normalized image coordinates.
+    /// </summary>
+    /// <param name="from">Original orientation.</param>
+    /// <param name="to">Target orientation.</param>
+    /// <returns>An affine matrix to be applied to normalized image coordinates.</returns>
     private static Matrix4x4 ScreenRotation(ScreenOrientation from, ScreenOrientation to)
     {
       // Rotate around the center
       return Translation(-s_center) * Rotation(GetRadians(from, to)) * Translation(s_center);
     }
 
+    /// <summary>
     /// Calculates the angle to rotate from one screen orientation to another in radians.
-    /// @param from Original orientation.
-    /// @param to Target orientation.
-    /// @returns Angle to rotate to get from one orientation to the other.
+    /// </summary>
+    /// <param name="from">Original orientation.</param>
+    /// <param name="to">Target orientation.</param>
+    /// <returns>Angle to rotate to get from one orientation to the other.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static double GetRadians(ScreenOrientation from, ScreenOrientation to)
     {

@@ -34,5 +34,11 @@ namespace Niantic.Lightship.AR.Common
         /// Should come after the <see cref="ARSession"/>.
         /// </summary>
         public const int SemanticSegmentationManager = Session + 1;
+
+        /// <summary>
+        /// The <see cref="ARObjectDetectionManager"/>'s update order.
+        /// Should come after the <see cref="ARSession"/>.
+        /// </summary>
+        public const int ObjectDetectionManager = Session + 1;
     }
 }

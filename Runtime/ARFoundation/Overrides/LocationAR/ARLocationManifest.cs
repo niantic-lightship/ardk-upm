@@ -4,7 +4,7 @@ using System;
 using System.IO;
 using System.Linq;
 
-using Niantic.Lightship.AR.Utilities.Log;
+using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.Utilities;
 using Niantic.Lightship.AR.Utilities.UnityAssets;
 

@@ -5,7 +5,7 @@ using Niantic.Lightship.AR.Utilities;
 using Unity.Collections;
 using UnityEngine;
 using UnityEngine.SubsystemsImplementation;
-using Niantic.Lightship.AR.Utilities.Log;
+using Niantic.Lightship.AR.Utilities.Logging;
 using UnityEngine.XR.ARSubsystems;
 
 namespace Niantic.Lightship.AR.XRSubsystems
@@ -39,6 +39,16 @@ namespace Niantic.Lightship.AR.XRSubsystems
 
         }
 
+        /// <summary>
+        /// Get or set configuration with <paramref> <name>XRPersistentAnchorConfiguration</name>
+        /// </paramref>
+        /// </summary>
+        public XRPersistentAnchorConfiguration CurrentConfiguration
+        {
+            get => provider.CurrentConfiguration;
+            set => provider.CurrentConfiguration = value;
+        }
+
         protected override void OnStart()
         {
             base.OnStart();
@@ -54,6 +64,17 @@ namespace Niantic.Lightship.AR.XRSubsystems
             OnSubsystemStop?.Invoke();
             ResetTelemetryMetrics();
         }
+
+        public bool IsMockProvider => provider.IsMockProvider;
+
+        /// </summary>
+        /// Called when debug info is available
+        ///
+        /// Each invocation of this event contains a XRPersistentAnchorDebugInfo object
+        /// that contains arrays of XRPersistentAnchorNetworkRequestStatus, XRPersistentAnchorLocalizationStatus,
+        /// and (experimental) XRPersistentAnchorFrameDiagnostics
+        /// </summary>
+        public event Action<XRPersistentAnchorDebugInfo> debugInfoProvided;
 
         /// <summary>
         /// Get the changes to anchors (added, updated, and removed) since the last call
@@ -98,6 +119,29 @@ namespace Niantic.Lightship.AR.XRSubsystems
                     Log.Info($"Localization got a result of {status.Status} with LocalizationConfidence {status.LocalizationConfidence}");
                 }
             }
+
+#if NIANTIC_ARDK_EXPERIMENTAL_FEATURES
+            var gotDiagnostics = provider.GetFrameDiagnosticsUpdate(out var diagnosticsArray);
+            if (gotDiagnostics)
+            {
+                // TODO: How do we want to expose diagnostics?
+            }
+#else
+            var gotDiagnostics = false;
+#endif
+
+            // We send debug info out
+            bool debugInfoIsAvailable = gotNetworkStatus || gotLocalizationStatus || gotDiagnostics;
+            if (debugInfoIsAvailable)
+            {
+#if NIANTIC_ARDK_EXPERIMENTAL_FEATURES
+                var debugInfo = new XRPersistentAnchorDebugInfo(networkStatuses, localizationStatuses, diagnosticsArray);
+#else
+                var debugInfo = new XRPersistentAnchorDebugInfo(networkStatuses, localizationStatuses);
+#endif
+                debugInfoProvided?.Invoke(debugInfo);
+            }
+
 #if DEVELOPMENT_BUILD || UNITY_EDITOR
             m_ValidationUtility.ValidateAndDisposeIfThrown(changes);
 #endif
@@ -171,6 +215,14 @@ namespace Niantic.Lightship.AR.XRSubsystems
         /// </summary>
         public abstract class Provider : SubsystemProvider<XRPersistentAnchorSubsystem>
         {
+            public virtual bool IsMockProvider { get; } = false;
+            
+            /// <summary>
+            /// Get or set configuration with <paramref> <name>XRPersistentAnchorConfiguration</name>
+            /// </paramref>
+            /// </summary>
+            public virtual XRPersistentAnchorConfiguration CurrentConfiguration { get; set; }
+
             /// <summary>
             /// Invoked to get the changes to anchors (added, updated, and removed) since the last call to
             /// <see cref="GetChanges(XRPersistentAnchor,Allocator)"/>.
@@ -196,6 +248,13 @@ namespace Niantic.Lightship.AR.XRSubsystems
             /// <returns>True if an update is present, false otherwise</returns>
             public abstract bool GetLocalizationStatusUpdate(out XRPersistentAnchorLocalizationStatus[] statuses);
 
+#if NIANTIC_ARDK_EXPERIMENTAL_FEATURES
+            /// <summary>
+            /// Get a list of frame diagnostics updates, if any
+            /// </summary>
+            /// <returns>True if an update is present, false otherwise</returns>
+            public abstract bool GetFrameDiagnosticsUpdate(out XRPersistentAnchorFrameDiagnostics[] statuses);
+#endif
             /// <summary>
             /// Get the vps session id, if any
             /// </summary>

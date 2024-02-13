@@ -3,7 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Niantic.Lightship.AR.Utilities.Log;
+using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.Core;
 using Niantic.Lightship.AR.Loader;
 using Niantic.Lightship.AR.Occlusion;
@@ -305,7 +305,7 @@ namespace Niantic.Lightship.AR.PAM
                 _platformDataAcquirer.OnFormatRemoved(_removedDataFormats[i]);
             }
 
-            ProfilerUtility.EventBegin(TraceCategory, name, "formatsize", (UInt64)(readyDataFormatsSize));
+            ProfilerUtility.EventBegin(TraceCategory, name, "formatsize", readyDataFormatsSize.ToString());
 
             for (var i = 0; i < readyDataFormatsSize; i++)
             {
@@ -366,6 +366,9 @@ namespace Niantic.Lightship.AR.PAM
             _currentFrameData.DeviceOrientation = _platformDataAcquirer.GetDeviceOrientation().FromUnityToArdk();
             _currentFrameData.TrackingState = _platformDataAcquirer.GetTrackingState().FromUnityToArdk();
             _currentFrameData.FrameId = _frameCounter++;
+            _currentFrameData.CameraImageResolution = _platformDataAcquirer.TryGetCameraIntrinsics(out var intrinsics)
+                ? intrinsics.resolution
+                : Vector2Int.zero;
 
             // SAH handles checking if all required data is in this frame
             ProfilerUtility.EventStep(TraceCategory, name, "SendData");
@@ -392,7 +395,10 @@ namespace Niantic.Lightship.AR.PAM
 
         private void OnBeforeRender()
         {
-            ProfilerUtility.EventInstance("Rendering", "FrameUpdate", ProfilerUtility.CustomProcessing.TIME_UNTIL_NEXT);
+            ProfilerUtility.EventInstance("Rendering", "FrameUpdate", new CustomProcessingOptions
+            {
+                ProcessingType = CustomProcessingOptions.Type.TIME_UNTIL_NEXT
+            });
         }
 
         // Returns only the data formats that were actually sent to SAH

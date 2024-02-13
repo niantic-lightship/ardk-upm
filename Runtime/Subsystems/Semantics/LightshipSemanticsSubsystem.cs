@@ -2,7 +2,7 @@
 
 using System;
 using System.Collections.Generic;
-using Niantic.Lightship.AR.Utilities.Log;
+using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.Core;
 using Niantic.Lightship.AR.XRSubsystems;
 using Unity.Collections;
@@ -27,7 +27,7 @@ namespace Niantic.Lightship.AR.Subsystems.Semantics
         /// Register the Lightship semantics subsystem.
         /// </summary>
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        static void Register()
+        private static void Register()
         {
             Log.Info(nameof(LightshipSemanticsSubsystem)+"."+nameof(Register));
             const string id = "Lightship-Semantics";
@@ -471,6 +471,42 @@ namespace Niantic.Lightship.AR.Subsystems.Semantics
 
                 confidenceList.Dispose();
 
+                return true;
+            }
+
+            /// <summary>
+            /// Resets the confidence thresholds for all semantic channels to the default values from the current model.
+            /// </summary>
+            /// <remarks>
+            /// This reverts any changes made with <see cref="TrySetChannelConfidenceThresholds"/>.
+            /// </remarks>
+            /// <exception cref="System.NotSupportedException">Thrown when resetting confidence thresholds is not
+            /// supported by the implementation.</exception>
+            /// <returns>True if the thresholds were reset. Otherwise, false.</returns>
+            public override bool TryResetChannelConfidenceThresholds()
+            {
+                if (!_nativeProviderHandle.IsValidHandle())
+                {
+                    return false;
+                }
+
+                if (!TryGetChannelNames(out var channelNames))
+                {
+                    return false;
+                }
+
+                var confidenceList = new NativeArray<float>(channelNames.Count, Allocator.Temp);
+
+                // To reset the thresholds list, set all values to a negative number
+                for (int i = 0; i < confidenceList.Length; i++)
+                    confidenceList[i] = _useDefaultConfidenceThreshold;
+
+                unsafe
+                {
+                    _api.Configure(_nativeProviderHandle, TargetFrameRate, (uint) confidenceList.Length, (IntPtr) confidenceList.GetUnsafePtr());
+                }
+
+                confidenceList.Dispose();
                 return true;
             }
         }

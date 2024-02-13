@@ -1,7 +1,7 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 #if UNITY_EDITOR
 using System;
-using Niantic.Lightship.AR.Utilities.Log;
+using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.LocationAR;
 using Niantic.Lightship.AR.PersistentAnchors;
 using Niantic.Lightship.AR.Subsystems;
@@ -17,7 +17,7 @@ internal class ARLocationEditor : Editor
     private ARLocationManifest _manifest;
     internal const string DefaultARLocationName = "AR Location";
 
-    static class Contents
+    private static class Contents
     {
         public static readonly GUIContent includeMeshInBuildLabel =
             new GUIContent

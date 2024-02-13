@@ -12,7 +12,7 @@ namespace Niantic.Lightship.AR.Editor
     /// This Editor renders to the XR Plug-in Management category of the Project Settings window.
     /// </summary>
     [CustomEditor(typeof(LightshipSettings))]
-    class LightshipSettingsEditor : UnityEditor.Editor
+    internal class LightshipSettingsEditor : UnityEditor.Editor
     {
         internal const string ProjectValidationSettingsPath = "Project/XR Plug-in Management/Project Validation";
 
@@ -22,7 +22,7 @@ namespace Niantic.Lightship.AR.Editor
             Device = 1
         }
 
-        static class Contents
+        private static class Contents
         {
             public static readonly GUIContent[] _platforms =
             {
@@ -83,14 +83,15 @@ namespace Niantic.Lightship.AR.Editor
         private SerializedProperty _useLightshipPersistentAnchorProperty;
         private SerializedProperty _useLightshipSemanticSegmentationProperty;
         private SerializedProperty _useLightshipScanningProperty;
-        private SerializedProperty _overrideLoggingLevelProperty;
-        private SerializedProperty _logLevelProperty;
-
+        private SerializedProperty _useLightshipObjectDetectionProperty;
+        private SerializedProperty _unityLogLevelProperty;
+        private SerializedProperty _fileLogLevelProperty;
+        private SerializedProperty _stdOutLogLevelProperty;
         private IPlaybackSettingsEditor[] _playbackSettingsEditors;
         private Texture _enabledIcon;
         private Texture _disabledIcon;
 
-        void OnEnable()
+        private void OnEnable()
         {
             _lightshipSettings = new SerializedObject(LightshipSettings.Instance);
             _apiKeyProperty = _lightshipSettings.FindProperty("_apiKey");
@@ -98,11 +99,15 @@ namespace Niantic.Lightship.AR.Editor
             _useLightshipMeshingProperty = _lightshipSettings.FindProperty("_useLightshipMeshing");
             _preferLidarIfAvailableProperty = _lightshipSettings.FindProperty("_preferLidarIfAvailable");
             _useLightshipPersistentAnchorProperty = _lightshipSettings.FindProperty("_useLightshipPersistentAnchor");
-            _useLightshipSemanticSegmentationProperty = _lightshipSettings.FindProperty
-                ("_useLightshipSemanticSegmentation");
+            _useLightshipSemanticSegmentationProperty =
+                _lightshipSettings.FindProperty("_useLightshipSemanticSegmentation");
             _useLightshipScanningProperty = _lightshipSettings.FindProperty("_useLightshipScanning");
-            _overrideLoggingLevelProperty = _lightshipSettings.FindProperty("_overrideLoggingLevel");
-            _logLevelProperty = _lightshipSettings.FindProperty("_logLevel");
+            _useLightshipObjectDetectionProperty =
+                _lightshipSettings.FindProperty("_useLightshipObjectDetection");
+                _lightshipSettings.FindProperty("__useLightshipObjectDetectionProperty");
+            _unityLogLevelProperty = _lightshipSettings.FindProperty("_unityLogLevel");
+            _fileLogLevelProperty = _lightshipSettings.FindProperty("_fileLogLevel");
+            _stdOutLogLevelProperty = _lightshipSettings.FindProperty("_stdoutLogLevel");
 
             _playbackSettingsEditors =
                 new IPlaybackSettingsEditor[] { new EditorPlaybackSettingsEditor(), new DevicePlaybackSettingsEditor() };
@@ -182,6 +187,13 @@ namespace Niantic.Lightship.AR.Editor
                 EditorGUI.indentLevel--;
 
                 EditorGUILayout.Space(10);
+                EditorGUILayout.LabelField("Object Detection", EditorStyles.boldLabel);
+                EditorGUILayout.PropertyField(_useLightshipObjectDetectionProperty, Contents.enabledLabel);
+                EditorGUI.indentLevel++;
+                // Put Object Detection sub-settings here
+                EditorGUI.indentLevel--;
+
+                EditorGUILayout.Space(10);
                 EditorGUILayout.LabelField("Playback", EditorStyles.boldLabel);
 
                 GUILayout.BeginHorizontal();
@@ -192,17 +204,25 @@ namespace Niantic.Lightship.AR.Editor
 
                 EditorGUILayout.Space(10);
                 EditorGUILayout.LabelField("Logging", EditorStyles.boldLabel);
-                EditorGUILayout.PropertyField(_overrideLoggingLevelProperty, new GUIContent("Override Log Level Visibility"));
                 EditorGUI.indentLevel++;
-                // Put Logging sub-settings here
-                if (_overrideLoggingLevelProperty.boolValue)
-                {
-                    EditorGUILayout.PropertyField
-                    (
-                        _logLevelProperty,
-                        new GUIContent("Lowest Log Level to Display")
-                    );
-                }
+
+                EditorGUILayout.PropertyField
+                (
+                    _unityLogLevelProperty,
+                    new GUIContent("Unity Log Level", tooltip: "Log level for Unity's built-in logging system")
+                );
+
+                EditorGUILayout.PropertyField
+                (
+                    _stdOutLogLevelProperty,
+                    new GUIContent("Stdout Log Level", tooltip: "Log level for stdout logging system. Recommended to be set to 'off'")
+                );
+                EditorGUILayout.PropertyField
+                (
+                    _fileLogLevelProperty,
+                    new GUIContent("File Log Level", tooltip: "Log level for logging things into a file. " +
+                        "Recommended to be set to 'off' unless its a niantic support case. File Location: [add location here]")
+                );
 
                 EditorGUI.indentLevel--;
 

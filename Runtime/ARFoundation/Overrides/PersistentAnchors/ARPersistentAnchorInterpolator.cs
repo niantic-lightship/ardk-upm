@@ -1,6 +1,6 @@
 // Copyright 2022-2024 Niantic.
 using System;
-using Niantic.Lightship.AR.Utilities.Log;
+using Niantic.Lightship.AR.Utilities.Logging;
 using UnityEngine;
 
 namespace Niantic.Lightship.AR.PersistentAnchors
@@ -9,14 +9,14 @@ namespace Niantic.Lightship.AR.PersistentAnchors
     //  new pose. This is useful for smooth transitions between predicted poses.
     // Provides virtual methods to be overriden for custom interpolation behaviour.
     // @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
-    public class ARPersistentAnchorInterpolator : 
+    public class ARPersistentAnchorInterpolator :
         MonoBehaviour
     {
-        // Tunable value for how long it takes to interpolate between poses. In the default behaviour, this is used as 
+        // Tunable value for how long it takes to interpolate between poses. In the default behaviour, this is used as
         // a maximum value, and the actual interpolation time is calculated based on distance.
         public static float InterpolationTimeSeconds { get; set; } = 3.0f;
         protected ARPersistentAnchor ARPersistentAnchor { get; private set; }
-        
+
         // Cached transform on this Gameobject, to avoid repeated lookups
         protected Transform cachedTransform;
 
@@ -27,7 +27,7 @@ namespace Niantic.Lightship.AR.PersistentAnchors
         private Pose targetPose = Pose.identity;
         private float _interpolationTime;
 
-        // This can be overriden for a custom Awake, but be sure to call base.Awake() to register 
+        // This can be overriden for a custom Awake, but be sure to call base.Awake() to register
         protected virtual void Awake()
         {
             cachedTransform = transform;
@@ -38,7 +38,7 @@ namespace Niantic.Lightship.AR.PersistentAnchors
                 Destroy(this);
                 return;
             }
-            
+
             ARPersistentAnchor.RegisterInterpolator(this);
         }
 
@@ -50,7 +50,7 @@ namespace Niantic.Lightship.AR.PersistentAnchors
                 Log.Error("No ARPersistentAnchor found on this GameObject");
                 return;
             }
-            
+
             ARPersistentAnchor.DeregisterInterpolator();
         }
 
@@ -91,7 +91,7 @@ namespace Niantic.Lightship.AR.PersistentAnchors
             if (!targetPose.Equals(lerpStartPose))
             {
                 elapsedInterpolationTime += Time.deltaTime;
-                
+
                 // At end of interpolation time, reset interpolation
                 if (elapsedInterpolationTime >= _interpolationTime)
                 {
@@ -102,7 +102,7 @@ namespace Niantic.Lightship.AR.PersistentAnchors
                 // Interpolate towards to target
                 else
                 {
-                    // Elapsed / Interpolation is between 0 and 1 
+                    // Elapsed / Interpolation is between 0 and 1
                     var smoothTime = EaseInOut(elapsedInterpolationTime / _interpolationTime);
                     var lerpPos = Vector3.Lerp
                     (
@@ -120,24 +120,24 @@ namespace Niantic.Lightship.AR.PersistentAnchors
 
                     intermediateLerpPose = new Pose(lerpPos, lerpRot);
                 }
-                
+
                 ApplyPoseToTransform(intermediateLerpPose);
             }
         }
-        
+
         // Applies a Pose to the transform this component is attached to
         protected void ApplyPoseToTransform(Pose pose)
         {
             cachedTransform.position = pose.position;
             cachedTransform.rotation = pose.rotation;
         }
-        
+
         // Get the Pose from the transform this component is attached to
         protected Pose TransformToPose()
         {
             return new Pose(cachedTransform.position, cachedTransform.rotation);
         }
-        
+
         internal void InvokeInterpolation(Pose newPose, Pose oldPose)
         {
             OnPoseUpdateReceived(newPose, oldPose);

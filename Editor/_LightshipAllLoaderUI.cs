@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 using UnityEditor;
 using UnityEditor.XR.Management;
 using UnityEditor.XR.Management.Metadata;
@@ -11,7 +11,7 @@ namespace Niantic.Lightship.AR.Editor
     [XRCustomLoaderUI("Niantic.Lightship.AR.Loader.LightshipStandaloneLoader", BuildTargetGroup.Standalone)]
     internal class _LightshipAllLoaderUI : IXRCustomLoaderUI
     {
-        struct Content
+        private struct Content
         {
             public static readonly GUIContent AndroidLoaderName = new GUIContent("Niantic Lightship SDK + Google ARCore");
             public static readonly GUIContent IOSLoaderName = new GUIContent("Niantic Lightship SDK + Apple ARKit");

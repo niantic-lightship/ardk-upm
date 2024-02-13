@@ -1,10 +1,9 @@
 // Copyright 2022-2024 Niantic.
 
 using System;
-
 using UnityEngine;
 
-namespace Niantic.Lightship.AR.NavigationMesh
+namespace Niantic.Lightship.AR.NavigationMesh.Internal
 {
   /// Encloses data for grid elements used during path finding.
   internal struct PathFindingNode: IEquatable<PathFindingNode>, IComparable<PathFindingNode>
@@ -85,6 +84,11 @@ namespace Niantic.Lightship.AR.NavigationMesh
     public int CompareTo(PathFindingNode other)
     {
       return Cost.CompareTo(other.Cost);
+    }
+
+    public override bool Equals(object obj)
+    {
+        return obj is PathFindingNode node && Equals(node);
     }
   }
 }

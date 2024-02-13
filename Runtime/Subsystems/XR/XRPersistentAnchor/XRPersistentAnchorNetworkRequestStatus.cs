@@ -83,5 +83,10 @@ namespace Niantic.Lightship.AR.XRSubsystems
         /// Only comparable to StartTimeMs
         /// </summary>
         public ulong EndTimeMs;
+
+        /// <summary>
+        /// Frame Id corresponding to frame sent in NetworkRequest, if available
+        /// </summary>
+        public UInt64 FrameId;
     }
 }

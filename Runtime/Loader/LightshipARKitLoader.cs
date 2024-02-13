@@ -8,6 +8,9 @@
 #endif
 
 using System.Collections.Generic;
+using Niantic.Lightship.AR.Subsystems;
+using Niantic.Lightship.AR.Subsystems.Playback;
+using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.XRSubsystems;
 using UnityEngine;
 using UnityEngine.XR;
@@ -20,7 +23,7 @@ namespace Niantic.Lightship.AR.Loader
     /// <summary>
     /// Manages the lifecycle of Lightship and ARKit subsystems.
     /// </summary>
-    public class LightshipARKitLoader : ARKitLoader, ILightshipLoader
+    public class LightshipARKitLoader : ARKitLoader, ILightshipInternalLoaderSupport
     {
         public void InjectLightshipLoaderHelper(LightshipLoaderHelper lightshipLoaderHelper)
         {

@@ -2,7 +2,7 @@
 
 using System;
 using System.Collections.Generic;
-using Niantic.Lightship.AR.Utilities.Log;
+using Niantic.Lightship.AR.Utilities.Logging;
 
 namespace Niantic.Lightship.AR.Loader
 {
@@ -12,7 +12,7 @@ namespace Niantic.Lightship.AR.Loader
         private readonly NativeLoaderHelper _nativeLoaderHelper;
         private readonly LightshipSettings _initializationSettings;
 
-        private ILightshipLoader _loader;
+        private ILightshipInternalLoaderSupport _loader;
         private readonly List<ILightshipExternalLoader> _externalLoaders;
 
         // Use this constructor in loader to reduce duplication of code
@@ -41,16 +41,11 @@ namespace Niantic.Lightship.AR.Loader
         /// Initializes the loader. Additionally added external loader will be loaded after this core loader is done.
         /// </summary>
         /// <returns>`True` if the session subsystems were successfully created, otherwise `false`.</returns>
-        internal bool Initialize(ILightshipLoader loader, bool isTest = false)
+        internal bool Initialize(ILightshipInternalLoaderSupport loader, bool isTest = false)
         {
 #if NIANTIC_LIGHTSHIP_AR_LOADER_ENABLED
             _loader = loader;
             var initializationSuccess = true;
-
-            if (_initializationSettings.OverrideLoggingLevel)
-            {
-                Log.LogLevel = _initializationSettings.LogLevel;
-            }
 
             if (_initializationSettings.UsePlayback)
             {

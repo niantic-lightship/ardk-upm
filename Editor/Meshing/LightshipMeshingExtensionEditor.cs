@@ -31,7 +31,7 @@ namespace Niantic.Lightship.AR.Editor
         private SerializedProperty _isFilteringBlockListEnabled;
         private SerializedProperty _filteringBlockList;
 
-        static class Contents
+        private static class Contents
         {
             public static readonly string meshBlockSizeWarning =
                 "The Mesh Block Size will be automatically rounded to the closest multiple of the Voxel Size.";

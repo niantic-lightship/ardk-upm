@@ -92,7 +92,7 @@ namespace Niantic.Lightship.AR.XRSubsystems
             SubsystemDescriptorStore.RegisterDescriptor(new XRScanningSubsystemDescriptor(cinfo));
         }
 
-        XRScanningSubsystemDescriptor(Cinfo cinfo)
+        private XRScanningSubsystemDescriptor(Cinfo cinfo)
         {
             id = cinfo.id;
             providerType = cinfo.providerType;

@@ -1,6 +1,6 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 using System;
-using Niantic.Lightship.AR.Utilities.Log;
+using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.LocationAR;
 using Niantic.Lightship.AR.PersistentAnchors;
 using UnityEditor;
@@ -36,7 +36,7 @@ namespace Niantic.Lightship.AR.Editor.Inspectors
             }
         }
 
-        static class Contents
+        private static class Contents
         {
             public static readonly GUIStyle rightJustifiedLabelStyle =
                 new GUIStyle(EditorStyles.label) { alignment = TextAnchor.MiddleRight, wordWrap = true };

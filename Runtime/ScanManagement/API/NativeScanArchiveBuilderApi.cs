@@ -2,7 +2,7 @@
 using System;
 using System.Runtime.InteropServices;
 using System.Text;
-using Niantic.Lightship.AR.Utilities.Log;
+using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.Core;
 using UnityEngine;
 

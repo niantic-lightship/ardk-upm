@@ -5,20 +5,26 @@ using UnityEngine.XR.ARSubsystems;
 
 namespace Niantic.Lightship.AR.Utilities
 {
+    /// <summary>
+    /// A collection of functions used to calculate transformations for AR imaging.
+    /// </summary>
     public static class CameraMath
     {
-        /// Returns an affine transform for converting between normalized image coordinates and a
-        /// coordinate space appropriate for rendering the camera image onscreen.
-        /// @note The width and height arguments must conform with the specified viewport orientation.
-        /// @param imageWidth The width of the raw AR background image in pixels.
-        /// @param imageHeight The height of the raw AR background image in pixels.
-        /// @param viewportWidth The width of the viewport in pixels.
-        /// @param viewportHeight The height of the viewport in pixels.
-        /// @param viewportOrientation The orientation of the viewport.
-        /// @param invertVertically
-        ///     Mirror the image across the X axis. This reverses the order of the horizontal rows,
-        ///     flipping the image upside down.
-        /// @returns An affine 4x4 transformation matrix.
+        /// <summary>
+        /// Returns an affine transformation matrix for converting between normalized image
+        /// coordinates and a coordinate space appropriate for rendering the camera image onscreen.
+        /// </summary>
+        /// <remarks>The viewport width and height arguments must conform with the current orientation.</remarks>>
+        /// <param name="imageWidth">The width of the raw AR background image in pixels.</param>
+        /// <param name="imageHeight">The height of the raw AR background image in pixels.</param>
+        /// <param name="viewportWidth">The width of the viewport in pixels.</param>
+        /// <param name="viewportHeight">The height of the viewport in pixels.</param>
+        /// <param name="viewportOrientation">The orientation of the viewport.</param>
+        /// <param name="invertVertically">Whether to mirror the image across the X axis.
+        ///     This reverses the order of the horizontal rows, flipping the image upside down.</param>
+        /// <param name="layout">The layout of the resulting matrix.</param>
+        /// <param name="reverseRotation">On some platforms, the direction of UI rotation is counter-clockwise.</param>
+        /// <returns>An affine 4x4 transformation matrix.</returns>
         public static Matrix4x4 CalculateDisplayMatrix
         (
             int imageWidth,
@@ -60,11 +66,14 @@ namespace Niantic.Lightship.AR.Utilities
             return layout == MatrixLayout.ColumnMajor ? result.transpose : result;
         }
 
+        /// <summary>
         /// Returns a transform matrix appropriate for rendering 3D content to match the image
         /// captured by the camera, using the specified parameters.
-        /// @param intrinsics The intrinsics of the physical camera.
-        /// @param cameraParams Presentation params of the virtual camera.
-        /// @param useOpenGLConvention Whether to construct an OpenGL-like projection matrix.
+        /// </summary>
+        /// <param name="intrinsics">The intrinsics of the physical camera.</param>
+        /// <param name="cameraParams">Presentation params of the virtual camera.</param>
+        /// <param name="useOpenGLConvention">Whether to construct an OpenGL-like projection matrix.</param>
+        /// <returns>The projection matrix.</returns>
         public static Matrix4x4 CalculateProjectionMatrix
         (
             XRCameraIntrinsics intrinsics,

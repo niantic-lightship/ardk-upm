@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using static Niantic.Lightship.AR.Utilities.Log.Log;
+using static Niantic.Lightship.AR.Utilities.Logging.Log;
 
 namespace Niantic.Lightship.AR.Utilities
 {
@@ -21,6 +21,7 @@ namespace Niantic.Lightship.AR.Utilities
     [DefaultExecutionOrder(int.MinValue)] [AddComponentMenu("")]
     internal sealed class MonoBehaviourEventDispatcher : MonoBehaviour
     {
+        internal static string s_gameObjectName = "__lightship_ar_monobehaviour_event_dispatcher__";
         private static MonoBehaviourEventDispatcher s_instance;
 
         // This component's DefaultExecutionOrder is set to int.minValue, which is the same as ARFoundation's
@@ -83,7 +84,7 @@ namespace Niantic.Lightship.AR.Utilities
             }
 
             var go =
-                new GameObject("__lightship_ar_monobehaviour_event_dispatcher__", typeof(MonoBehaviourEventDispatcher));
+                new GameObject(s_gameObjectName, typeof(MonoBehaviourEventDispatcher));
 
             go.hideFlags = HideFlags.HideInHierarchy;
 

@@ -1,6 +1,6 @@
 // Copyright 2022-2024 Niantic.
 
-using Niantic.Lightship.AR.Utilities.Log;
+using Niantic.Lightship.AR.Utilities.Logging;
 using UnityEngine;
 
 namespace Niantic.Lightship.AR.Occlusion

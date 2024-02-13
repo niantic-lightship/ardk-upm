@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 using System.Collections.Generic;
 using Niantic.Lightship.AR.LocationAR;
 using Niantic.Lightship.AR.VpsCoverage;
@@ -16,7 +16,7 @@ namespace Niantic.Lightship.AR.Editor.Inspectors
         private SerializedProperty _queryLatitudeProperty;
         private SerializedProperty _queryLongitudeProperty;
 
-        void OnEnable()
+        private void OnEnable()
         {
             _useCurrentLocationProperty = serializedObject.FindProperty("_useCurrentLocation");
             _queryLatitudeProperty = serializedObject.FindProperty("_queryLatitude");

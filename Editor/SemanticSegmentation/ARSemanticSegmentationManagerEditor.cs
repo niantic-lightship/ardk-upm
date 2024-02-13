@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 
 using Niantic.Lightship.AR.Semantics;
 using Niantic.Lightship.AR.Subsystems.Occlusion;
@@ -12,7 +12,7 @@ namespace Niantic.Lightship.AR.Editor.SemanticSegmentation
     {
         private SerializedProperty _targetFrameRate;
 
-        static class Tooltips
+        private static class Tooltips
         {
             public const string HighFrameRateWarning = "A target framerate over 20 could negatively affect performance on older devices.";
 

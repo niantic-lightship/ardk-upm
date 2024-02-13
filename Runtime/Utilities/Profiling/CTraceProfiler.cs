@@ -43,7 +43,7 @@ namespace Niantic.Lightship.AR.Utilities.Profiling
             Native.Lightship_ARDK_Unity_TraceEventAsyncBegin0(category, name, GetOrAddId(category, name));
         }
 
-        public void EventBegin(string category, string name, string arg1_name, UInt64 arg1_val)
+        public void EventBegin(string category, string name, string arg1_name, string arg1_val)
         {
             var id = GetOrAddId(category, name);
             Native.Lightship_ARDK_Unity_TraceEventAsyncBegin1(category, name, id, arg1_name, arg1_val);
@@ -54,9 +54,9 @@ namespace Niantic.Lightship.AR.Utilities.Profiling
             string category,
             string name,
             string arg1Name,
-            UInt64 arg1Val,
+            string arg1Val,
             string arg2Name,
-            UInt64 arg2Val
+            string arg2Val
         )
         {
             var id = GetOrAddId(category, name);
@@ -69,7 +69,7 @@ namespace Niantic.Lightship.AR.Utilities.Profiling
             Native.Lightship_ARDK_Unity_TraceEventAsyncStep0(category, name, id, step);
         }
 
-        public void EventStep(string category, string name, string step, string arg1_name, UInt64 arg1_val)
+        public void EventStep(string category, string name, string step, string arg1_name, string arg1_val)
         {
             var id = GetOrAddId(category, name);
             Native.Lightship_ARDK_Unity_TraceEventAsyncStep1(category, name, id, step, arg1_name, arg1_val);
@@ -81,7 +81,7 @@ namespace Niantic.Lightship.AR.Utilities.Profiling
             Native.Lightship_ARDK_Unity_TraceEventAsyncEnd0(category, name, id);
         }
 
-        public void EventEnd(string category, string name, string arg1Name, UInt64 arg1Val)
+        public void EventEnd(string category, string name, string arg1Name, string arg1Val)
         {
             var id = GetOrAddId(category, name);
             Native.Lightship_ARDK_Unity_TraceEventAsyncEnd1(category, name, id, arg1Name, arg1Val);
@@ -92,9 +92,9 @@ namespace Niantic.Lightship.AR.Utilities.Profiling
             string category,
             string name,
             string arg1Name,
-            UInt64 arg1Val,
+            string arg1Val,
             string arg2Name,
-            UInt64 arg2Val
+            string arg2Val
         )
         {
             var id = GetOrAddId(category, name);
@@ -106,7 +106,7 @@ namespace Niantic.Lightship.AR.Utilities.Profiling
             Native.Lightship_ARDK_Unity_TraceEventInstance0(category, name);
         }
 
-        public void EventInstance(string category, string name, string arg1Name, UInt64 arg1Val)
+        public void EventInstance(string category, string name, string arg1Name, string arg1Val)
         {
             Native.Lightship_ARDK_Unity_TraceEventInstance1(category, name, arg1Name, arg1Val);
         }
@@ -116,9 +116,9 @@ namespace Niantic.Lightship.AR.Utilities.Profiling
             string category,
             string name,
             string arg1Name,
-            UInt64 arg1Val,
+            string arg1Val,
             string arg2Name,
-            UInt64 arg2Val
+            string arg2Val
         )
         {
             Native.Lightship_ARDK_Unity_TraceEventInstance2(category, name, arg1Name, arg1Val, arg2Name, arg2Val);
@@ -147,7 +147,7 @@ namespace Niantic.Lightship.AR.Utilities.Profiling
                 string name,
                 UInt64 id,
                 string arg1Name,
-                UInt64 arg1Val
+                string arg1Val
             );
 
             [DllImport(LightshipPlugin.Name)]
@@ -157,9 +157,9 @@ namespace Niantic.Lightship.AR.Utilities.Profiling
                 string name,
                 UInt64 id,
                 string arg1Name,
-                UInt64 arg1Val,
+                string arg1Val,
                 string arg2Name,
-                UInt64 arg2Val
+                string arg2Val
             );
 
             [DllImport(LightshipPlugin.Name)]
@@ -179,7 +179,7 @@ namespace Niantic.Lightship.AR.Utilities.Profiling
                 UInt64 id,
                 string step,
                 string arg1Name,
-                UInt64 arg1Val
+                string arg1Val
             );
 
             [DllImport(LightshipPlugin.Name)]
@@ -192,7 +192,7 @@ namespace Niantic.Lightship.AR.Utilities.Profiling
                 string name,
                 UInt64 id,
                 string arg1Name,
-                UInt64 arg1Val
+                string arg1Val
             );
 
             [DllImport(LightshipPlugin.Name)]
@@ -202,9 +202,9 @@ namespace Niantic.Lightship.AR.Utilities.Profiling
                 string name,
                 UInt64 id,
                 string arg1Name,
-                UInt64 arg1Val,
+                string arg1Val,
                 string arg2Name,
-                UInt64 arg2Val
+                string arg2Val
             );
 
             [DllImport(LightshipPlugin.Name)]
@@ -216,7 +216,7 @@ namespace Niantic.Lightship.AR.Utilities.Profiling
                 string category,
                 string name,
                 string arg1Name,
-                UInt64 arg1Val
+                string arg1Val
             );
 
             [DllImport(LightshipPlugin.Name)]
@@ -225,9 +225,9 @@ namespace Niantic.Lightship.AR.Utilities.Profiling
                 string category,
                 string name,
                 string arg1Name,
-                UInt64 arg1Val,
+                string arg1Val,
                 string arg2Name,
-                UInt64 arg2Val
+                string arg2Val
             );
         }
     }

@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Niantic.Lightship.AR.Utilities.Log;
+using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.Subsystems.Common;
 using Niantic.Lightship.AR.Utilities;
 using Niantic.Lightship.AR.Utilities.Textures;

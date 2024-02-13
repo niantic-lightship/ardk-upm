@@ -1,7 +1,7 @@
 // Copyright 2022-2024 Niantic.
 
 using Newtonsoft.Json;
-using Niantic.Lightship.AR.Utilities.Log;
+using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.Utilities.UnityAssets;
 using UnityEngine;
 
@@ -49,6 +49,11 @@ namespace Niantic.Lightship.AR.Loader
             get => _ardkConfiguration.SmoothDepthSemanticsEndpoint;
         }
 
+        internal string ObjectDetectionEndpoint
+        {
+            get => _ardkConfiguration.ObjectDetectionEndpoint;
+        }
+
         internal string TelemetryApiKey
         {
             get => _ardkConfiguration.TelemetryApiKey;
@@ -73,6 +78,7 @@ namespace Niantic.Lightship.AR.Loader
             public string DefaultDepthSemanticsEndpoint;
             public string SmoothDepthSemanticsEndpoint;
             public string ScanningSqcEndpoint;
+            public string ObjectDetectionEndpoint;
             public string TelemetryEndpoint;
             public string TelemetryApiKey;
 
@@ -94,6 +100,8 @@ namespace Niantic.Lightship.AR.Loader
                     DefaultDepthSemanticsEndpoint = "https://armodels.eng.nianticlabs.com/niantic_ca_v1.2.bin",
                     FastDepthSemanticsEndpoint = "https://armodels.eng.nianticlabs.com/niantic_ca_v1.2_fast.bin",
                     SmoothDepthSemanticsEndpoint = "https://armodels.eng.nianticlabs.com/niantic_ca_v1.2_antiflicker.bin",
+
+                    ObjectDetectionEndpoint = "https://armodels.eng.nianticlabs.com/niantic_ob_v0.3_full.bin",
 
                     TelemetryEndpoint = "https://analytics.nianticlabs.com",
                     TelemetryApiKey = "b7d03117-f80f-4039-8488-3466633f8639",

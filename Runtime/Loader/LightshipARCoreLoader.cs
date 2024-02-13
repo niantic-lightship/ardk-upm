@@ -8,7 +8,7 @@
 #endif
 
 using System.Collections.Generic;
-using Niantic.Lightship.AR.Utilities.Log;
+using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.PAM;
 using Niantic.Lightship.AR.Utilities;
 using Niantic.Lightship.AR.XRSubsystems;
@@ -23,7 +23,7 @@ namespace Niantic.Lightship.AR.Loader
     /// <summary>
     /// Manages the lifecycle of Lightship and ARCore subsystems.
     /// </summary>
-    public class LightshipARCoreLoader : ARCoreLoader, ILightshipLoader
+    public class LightshipARCoreLoader : ARCoreLoader, ILightshipInternalLoaderSupport
     {
         private const int CameraResolutionMinWidth = DataFormatConstants.Jpeg_720_540_ImgWidth;
         private const int CameraResolutionMinHeight = DataFormatConstants.Jpeg_720_540_ImgHeight;

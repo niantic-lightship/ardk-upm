@@ -2,7 +2,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Niantic.Lightship.AR.Utilities.Log;
+using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.Semantics;
 using Niantic.Lightship.AR.Subsystems.Occlusion;
 using Niantic.Lightship.AR.Subsystems.Playback;

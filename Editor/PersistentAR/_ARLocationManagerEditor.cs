@@ -1,9 +1,9 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 #if UNITY_EDITOR
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Niantic.Lightship.AR.Utilities.Log;
+using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.LocationAR;
 using Niantic.Lightship.AR.Subsystems;
 using UnityEditor;
@@ -27,7 +27,7 @@ internal class _ARLocationManagerEditor : Editor
         SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
-    static class Contents
+    private static class Contents
     {
         public static readonly GUIContent locationSelectorLabel =
             new GUIContent

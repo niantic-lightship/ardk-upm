@@ -15,7 +15,7 @@ using System.Text.RegularExpressions;
 
 namespace Niantic.Lightship.AR.Editor
 {
-    static class LightshipSDKProjectValidationRules
+    internal static class LightshipSDKProjectValidationRules
     {
         private static readonly LightshipSettings s_settings = LightshipSettings.Instance;
         private static readonly Version s_minGradleVersion = new(6, 7, 1);

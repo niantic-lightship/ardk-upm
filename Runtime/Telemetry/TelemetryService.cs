@@ -1,11 +1,12 @@
 // Copyright 2022-2024 Niantic.
+
 using System;
 using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Google.Protobuf;
-using Niantic.Lightship.AR.Utilities.Log;
+using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.ARDK.AR.Protobuf;
 using Niantic.Lightship.AR.Core;
 using Niantic.Lightship.AR.Protobuf;
@@ -65,9 +66,9 @@ namespace Niantic.Lightship.AR.Telemetry
                     // will throw exception on cancellation. But otherwise, it will delay process termination by native polling rate.
                     await Task.Delay(nativePollingRate, cancellationToken);
                 }
-                catch (Exception)
+                catch (Exception e)
                 {
-                    // Log.Error($"Encountered exception: {e} while running the timed telemetry native poller");
+                    Log.Debug($"Encountered exception: {e} while running the timed telemetry native poller");
                 }
             }
         }
@@ -171,9 +172,9 @@ namespace Niantic.Lightship.AR.Telemetry
                 }
 
             }
-            catch (Exception)
+            catch (Exception e)
             {
-                // Log.Error($"Encountered exception: {e} while running the GetArray call");
+                Log.Debug($"Encountered exception: {e} while running the GetArray call");
             }
             finally
             {
@@ -197,9 +198,9 @@ namespace Niantic.Lightship.AR.Telemetry
                 ardkNextTelemetryOmniProto = _protoMessageParser.ParseFrom(serialisedPayload.ToArray());
                 return true;
             }
-            catch (Exception)
+            catch (Exception e)
             {
-                // Log.Error($"Error while parsing event: {e}");
+                Log.Debug($"Error while parsing event: {e}");
             }
 
             ardkNextTelemetryOmniProto = null;
@@ -218,9 +219,9 @@ namespace Niantic.Lightship.AR.Telemetry
                     // will throw exception on cancellation. But otherwise, it will delay process termination by polling time delay.
                     await Task.Delay(ts, cancellationToken);
                 }
-                catch (Exception)
+                catch (Exception e)
                 {
-                    // Log.Error($"Encountered exception: {e} while running the timed telemetry loop");
+                    Log.Debug($"Encountered exception: {e} while running the timed telemetry loop");
                 }
             }
         }

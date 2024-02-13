@@ -3,9 +3,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Niantic.Lightship.AR.NavigationMesh.Internal;
 using Niantic.Lightship.AR.Utilities;
 using UnityEngine;
-
 using Random = UnityEngine.Random;
 
 namespace Niantic.Lightship.AR.NavigationMesh
@@ -215,7 +215,7 @@ namespace Niantic.Lightship.AR.NavigationMesh
 
       // Construct a mathematical plane
       var position = Utils.TileToPosition(surface.Elements.FirstOrDefault().Coordinates, _settings.TileSize);
-      var p = new UnityEngine.Plane
+      var p = new Plane
         (Vector3.up, new Vector3(position.x, surface.Elevation, position.y));
 
       // Raycast plane

@@ -2,7 +2,13 @@
 
 namespace Niantic.Lightship.AR.Core
 {
-    internal static class LightshipPlugin
+    /// <summary>
+    /// [Experimental] <c>LightshipPlugin</c> holds general properties of the Lightship ARDK Unity plugin.
+    /// 
+    /// This Interface is experimental so may change or be removed from future versions without warning.
+    /// </summary>
+    /// <value><c>Name</c> is the name of the shared library from which native symbols can be imported.</value>
+    public static class LightshipPlugin
     {
 #if UNITY_IOS && !UNITY_EDITOR
         public const string Name = "__Internal";

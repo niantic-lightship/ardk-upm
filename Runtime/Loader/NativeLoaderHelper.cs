@@ -1,6 +1,6 @@
 // Copyright 2022-2024 Niantic.
 using System.Collections.Generic;
-using Niantic.Lightship.AR.Utilities.Log;
+using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.Core;
 using Niantic.Lightship.AR.Subsystems.Meshing;
 using Niantic.Lightship.AR.Subsystems.Scanning;
@@ -20,8 +20,9 @@ namespace Niantic.Lightship.AR.Loader
         private readonly List<XRSemanticsSubsystemDescriptor> _semanticsSubsystemDescriptors = new();
         private readonly List<XRScanningSubsystemDescriptor> _scanningSubsystemDescriptors = new();
         private readonly List<XRMeshSubsystemDescriptor> _meshingSubsystemDescriptors = new();
+        private readonly List<XRObjectDetectionSubsystemDescriptor> _objectDetectionSubsystemDescriptors = new();
 
-        internal bool Initialize(ILightshipLoader loader, LightshipSettings settings, bool isLidarSupported, bool isTest)
+        internal bool Initialize(ILightshipInternalLoaderSupport loader, LightshipSettings settings, bool isLidarSupported, bool isTest)
         {
             LightshipUnityContext.Initialize(settings, isLidarSupported, isTest);
 
@@ -79,9 +80,23 @@ namespace Niantic.Lightship.AR.Loader
                 // our C# "ghost" creates our meshing module to listen to Unity meshing lifecycle callbacks
                 loader.DestroySubsystem<XRMeshSubsystem>();
                 var meshingProvider = new LightshipMeshingProvider(LightshipUnityContext.UnityContextHandle);
+
                 // Create Unity integrated subsystem
-                loader.CreateSubsystem<XRMeshSubsystemDescriptor, XRMeshSubsystem>(_meshingSubsystemDescriptors,
-                    "LightshipMeshing");
+                loader.CreateSubsystem<XRMeshSubsystemDescriptor, XRMeshSubsystem>
+                (
+                    _meshingSubsystemDescriptors,
+                    "LightshipMeshing"
+                );
+            }
+
+
+            if (settings.UseLightshipObjectDetection)
+            {
+                loader.CreateSubsystem<XRObjectDetectionSubsystemDescriptor, XRObjectDetectionSubsystem>
+                (
+                    _objectDetectionSubsystemDescriptors,
+                    "Lightship-ObjectDetection"
+                );
             }
 
             return true;
@@ -91,7 +106,7 @@ namespace Niantic.Lightship.AR.Loader
         /// Destroys each initialized subsystem.
         /// </summary>
         /// <returns>Always returns `true`.</returns>
-        internal bool Deinitialize(ILightshipLoader loader)
+        internal bool Deinitialize(ILightshipInternalLoaderSupport loader)
         {
             Log.Info("Destroying lightship subsystems");
 
@@ -101,6 +116,7 @@ namespace Niantic.Lightship.AR.Loader
             loader.DestroySubsystem<XROcclusionSubsystem>();
             loader.DestroySubsystem<XRScanningSubsystem>();
             loader.DestroySubsystem<XRMeshSubsystem>();
+            loader.DestroySubsystem<XRObjectDetectionSubsystem>();
 
             // Unity's native lifecycle handler for integrated subsystems does call Stop() before Shutdown() if
             // the subsystem is running when the latter is called. However, for the XRInputSubsystem, this causes

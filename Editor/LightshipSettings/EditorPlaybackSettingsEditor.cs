@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 
 using Niantic.Lightship.AR.Loader;
 using UnityEditor;
@@ -10,7 +10,7 @@ namespace Niantic.Lightship.AR.Editor
     {
         private ILightshipPlaybackSettings _editorPlaybackSettings;
 
-        static class Contents
+        private static class Contents
         {
             public static readonly GUIContent usePlaybackLabel =
                 new GUIContent
@@ -92,7 +92,11 @@ namespace Niantic.Lightship.AR.Editor
                 _editorPlaybackSettings.PlaybackDatasetPath = changedPath;
             }
 
-            if (GUILayout.Button("Browse", GUILayout.Width(125)))
+            var browse = GUILayout.Button("Browse", GUILayout.Width(125));
+
+            EditorGUILayout.EndHorizontal();
+
+            if (browse)
             {
                 var browsedPath =
                     EditorUtility.OpenFolderPanel
@@ -107,8 +111,6 @@ namespace Niantic.Lightship.AR.Editor
                     _editorPlaybackSettings.PlaybackDatasetPath = browsedPath;
                 }
             }
-
-            EditorGUILayout.EndHorizontal();
         }
     }
 }

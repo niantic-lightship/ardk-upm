@@ -2,7 +2,7 @@
 
 using System.Collections.Generic;
 using UnityEngine;
-using Niantic.Lightship.AR.Utilities.Log;
+using Niantic.Lightship.AR.Utilities.Logging;
 using UnityEngine.XR;
 
 namespace Niantic.Lightship.AR

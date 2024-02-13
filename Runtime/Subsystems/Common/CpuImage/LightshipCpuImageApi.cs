@@ -1,7 +1,7 @@
 // Copyright 2022-2024 Niantic.
 using System;
 using System.Collections.Generic;
-using Niantic.Lightship.AR.Utilities.Log;
+using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.Utilities;
 using Niantic.Lightship.AR.Utilities.Textures;
 using Unity.Collections.LowLevel.Unsafe;

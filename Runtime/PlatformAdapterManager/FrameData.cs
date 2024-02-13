@@ -212,6 +212,15 @@ namespace Niantic.Lightship.AR.PAM
             set => _frameCStruct.TrackingState = value;
         }
 
+        public Vector2Int CameraImageResolution
+        {
+            set
+            {
+                _frameCStruct.CameraImageWidth = (UInt32)value.x;
+                _frameCStruct.CameraImageHeight = (UInt32)value.y;
+            }
+        }
+
         public UInt64 FrameId
         {
             set => _frameCStruct.FrameId = value;

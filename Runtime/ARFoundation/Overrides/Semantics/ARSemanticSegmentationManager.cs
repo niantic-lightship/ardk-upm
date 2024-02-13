@@ -3,7 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using Niantic.Lightship.AR.Utilities.Log;
+using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.ARFoundation;
 using Niantic.Lightship.AR.Common;
 using Niantic.Lightship.AR.Subsystems.Common;
@@ -522,6 +522,8 @@ namespace Niantic.Lightship.AR.Semantics
         /// <remarks>
         /// Each semantic channel will use its default threshold value chosen by the model until a new value is set
         /// by this function during the AR session.
+        /// Changes to the semantic segmentation thresholds are undone by either restarting the subsystem or by calling
+        /// <see cref="TryResetChannelConfidenceThresholds"/>.
         /// </remarks>
         /// <param name="channelConfidenceThresholds">
         /// A dictionary consisting of keys specifying the name of the semantics channel that is needed and values
@@ -531,10 +533,24 @@ namespace Niantic.Lightship.AR.Semantics
         /// </param>
         /// <exception cref="System.NotSupportedException">Thrown when setting confidence thresholds is not
         /// supported by the implementation.</exception>
-        /// <returns>True if the threshold was set. Otherwise, false.</returns>
+        /// <returns>True if the thresholds were set. Otherwise, false.</returns>
         public bool TrySetChannelConfidenceThresholds(Dictionary<string,float> channelConfidenceThresholds)
         {
             return subsystem.TrySetChannelConfidenceThresholds(channelConfidenceThresholds);
+        }
+
+        /// <summary>
+        /// Resets the confidence thresholds for all semantic channels to the default values from the current model.
+        /// </summary>
+        /// <remarks>
+        /// This reverts any changes made with <see cref="TrySetChannelConfidenceThresholds"/>.
+        /// </remarks>
+        /// <exception cref="System.NotSupportedException">Thrown when resetting confidence thresholds is not
+        /// supported by the implementation.</exception>
+        /// <returns>True if the thresholds were reset. Otherwise, false.</returns>
+        public bool TryResetChannelConfidenceThresholds()
+        {
+            return subsystem.TryResetChannelConfidenceThresholds();
         }
     }
 }

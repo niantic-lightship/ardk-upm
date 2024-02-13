@@ -29,7 +29,7 @@ namespace Niantic.Lightship.AR.Editor
         private SerializedProperty _useCustomBackgroundMaterial;
         private SerializedProperty _customBackgroundMaterial;
 
-        static class Contents
+        private static class Contents
         {
             public static readonly string highFrameRateWarning =
                 "A target framerate over 20 could negatively affect performance on older devices.";

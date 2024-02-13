@@ -1,11 +1,11 @@
 // Copyright 2022-2024 Niantic.
 using System;
-using Niantic.Lightship.AR.Utilities.Log;
+using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.Protobuf;
 using Niantic.Platform.Analytics.Telemetry;
 using Niantic.Platform.Analytics.Telemetry.Logging;
-using UnityEngine;
 using ILogHandler = Niantic.Platform.Analytics.Telemetry.Logging.ILogHandler;
+using LogLevel = Niantic.Platform.Analytics.Telemetry.Logging.LogLevel;
 
 namespace Niantic.Lightship.AR.Telemetry
 {
@@ -29,11 +29,11 @@ namespace Niantic.Lightship.AR.Telemetry
                 debugOptions.LogOptions = LogOptions.All;
 
                 builder.SetDebugOptions(debugOptions);
-                // Log.Info("Registering logger for telemetry.");
+                Log.Debug("Registering logger for telemetry.");
             }
 
             _ardkPublisher = builder.Build();
-            // Log.Info("Successfully created the ardk publisher.");
+            Log.Debug("Successfully created the ardk publisher.");
         }
 
         public void RecordEvent(ArdkNextTelemetryOmniProto telemetryEvent)

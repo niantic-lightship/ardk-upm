@@ -4,10 +4,11 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Niantic.Lightship.AR.Subsystems.Common;
-using Niantic.Lightship.AR.Utilities.Log;
+using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.Utilities;
 using Niantic.Lightship.AR.Utilities.Textures;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Scripting;
@@ -22,7 +23,7 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
         /// Register the Lightship Playback occlusion subsystem.
         /// </summary>
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        static void Register()
+        private static void Register()
         {
             Log.Info("LightshipPlaybackOcclusionSubsystem.Register");
             const string id = "Lightship-Playback-Occlusion";
@@ -62,7 +63,7 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
         /// <summary>
         /// The implementation provider class.
         /// </summary>
-        class LightshipPlaybackProvider : Provider, IPlaybackDatasetUser
+        private class LightshipPlaybackProvider : Provider, IPlaybackDatasetUser
         {
             /// <summary>
             /// The shader property name for the environment depth texture.
@@ -78,7 +79,7 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
             /// <value>
             /// The shader property name for the environment depth confidence texture.
             /// </value>
-            const string TextureEnvironmentDepthConfidencePropertyName = "_EnvironmentDepthConfidence";
+            private const string TextureEnvironmentDepthConfidencePropertyName = "_EnvironmentDepthConfidence";
 
             /// <summary>
             /// The shader property name identifier for the environment depth texture.
@@ -141,7 +142,7 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
             /// The occlusion preference mode for when rendering the background.
             /// </summary>
             private OcclusionPreferenceMode _occlusionPreferenceMode;
-            
+
             /// <summary>
             /// The CPU image API for interacting with the environment depth image.
             /// </summary>
@@ -300,7 +301,7 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
                     xrTextureDescriptor = default;
                     return false;
                 }
-                
+
                 var path = Path.Combine(_datasetReader.GetDatasetPath(), frame.DepthPath);
 
                 var tex = _environmentDepthTextures.GetUpdatedTextureFromPath
@@ -325,7 +326,7 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
 
                 return true;
             }
-            
+
             /// <summary>
             /// Gets the CPU construction information for a environment depth image.
             /// Only really used for FPSMetricsUtility to collect timestamp
@@ -349,7 +350,7 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
                     cinfo = default;
                     return false;
                 }
-                
+
                 // Playback depth frames are being used
                 var path = Path.Combine(_datasetReader.GetDatasetPath(), frame.DepthPath);
 
@@ -360,10 +361,17 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
                 );
 
                 var cpuImageApi = (LightshipCpuImageApi)environmentDepthCpuImageApi;
+
+                IntPtr dataPtr;
+                unsafe
+                {
+                    dataPtr = (IntPtr) tex.GetRawTextureData<byte>().GetUnsafeReadOnlyPtr();
+                }
+
                 var gotCpuImage = cpuImageApi.TryAddManagedXRCpuImage
                 (
-                    tex.GetNativeTexturePtr(), 
-                    tex.width * tex.height,
+                    dataPtr,
+                    tex.width * tex.height * tex.format.BytesPerPixel(),
                     tex.width,
                     tex.height,
                     tex.format,

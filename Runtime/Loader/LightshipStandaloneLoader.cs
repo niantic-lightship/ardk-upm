@@ -1,7 +1,7 @@
 // Copyright 2022-2024 Niantic.
 
 using System.Collections.Generic;
-using Niantic.Lightship.AR.Utilities.Log;
+using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.XRSubsystems;
 using UnityEngine;
 using UnityEngine.XR;
@@ -10,7 +10,7 @@ using UnityEngine.XR.Management;
 
 namespace Niantic.Lightship.AR.Loader
 {
-    public class LightshipStandaloneLoader : XRLoaderHelper, ILightshipLoader
+    public class LightshipStandaloneLoader : XRLoaderHelper, ILightshipInternalLoaderSupport
     {
         public void InjectLightshipLoaderHelper(LightshipLoaderHelper lightshipLoaderHelper)
         {
@@ -87,7 +87,7 @@ namespace Niantic.Lightship.AR.Loader
         public override bool Deinitialize()
         {
 #if NIANTIC_LIGHTSHIP_AR_LOADER_ENABLED
-            _lightshipLoaderHelper.Deinitialize();
+            _lightshipLoaderHelper?.Deinitialize();
 #endif
             return true;
         }

@@ -1,6 +1,6 @@
-// Copyright 2022 - 2023 Niantic.
+// Copyright 2022-2024 Niantic.
 
-using Niantic.Lightship.AR.Utilities.Log;
+using Niantic.Lightship.AR.Utilities.Logging;
 using UnityEditor;
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
@@ -49,7 +49,7 @@ namespace Niantic.Lightship.AR.Editor
         }
 
         [OnOpenAsset(0)]
-        static bool GoToProjectValidation(int instanceId, int line)
+        private static bool GoToProjectValidation(int instanceId, int line)
         {
             // If the user double clicks on an error from this script, open the Project Validation window
             if (EditorUtility.InstanceIDToObject(instanceId).name != "LightshipSDKProjectValidationBuildPreprocess" ||

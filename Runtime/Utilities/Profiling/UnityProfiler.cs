@@ -49,7 +49,7 @@ namespace Niantic.Lightship.AR.Utilities.Profiling
             CreateAndOrBeginMarker(markerName);
         }
 
-        public void EventBegin(string category, string name, string arg1_name, ulong arg1_val)
+        public void EventBegin(string category, string name, string arg1_name, string arg1_val)
         {
             EventBegin(category, name);
         }
@@ -59,9 +59,9 @@ namespace Niantic.Lightship.AR.Utilities.Profiling
             string category,
             string name,
             string arg1_name,
-            UInt64 arg1_val,
+            string arg1_val,
             string arg2_name,
-            UInt64 arg2_val
+            string arg2_val
         )
         {
             EventBegin(category, name);
@@ -84,7 +84,7 @@ namespace Niantic.Lightship.AR.Utilities.Profiling
             marker.End();
         }
 
-        public void EventEnd(string category, string name, string arg1_name, ulong arg1_val)
+        public void EventEnd(string category, string name, string arg1_name, string arg1_val)
         {
             EventEnd(category, name);
         }
@@ -94,9 +94,9 @@ namespace Niantic.Lightship.AR.Utilities.Profiling
             string category,
             string name,
             string arg1_name,
-            UInt64 arg1_val,
+            string arg1_val,
             string arg2_name,
-            UInt64 arg2_val
+            string arg2_val
         )
         {
             EventEnd(category, name);
@@ -113,7 +113,7 @@ namespace Niantic.Lightship.AR.Utilities.Profiling
             _currStep = marker;
         }
 
-        public void EventStep(string category, string name, string step, string arg1_name, ulong arg1_val)
+        public void EventStep(string category, string name, string step, string arg1_name, string arg1_val)
         {
             EventStep(category, name, step);
         }
@@ -128,7 +128,7 @@ namespace Niantic.Lightship.AR.Utilities.Profiling
             // no-op
         }
 
-        public void EventInstance(string category, string name, string arg1_name, ulong arg1_val)
+        public void EventInstance(string category, string name, string arg1_name, string arg1_val)
         {
             // no-op
         }
@@ -138,9 +138,9 @@ namespace Niantic.Lightship.AR.Utilities.Profiling
             string category,
             string name,
             string arg1_name,
-            UInt64 arg1_val,
+            string arg1_val,
             string arg2_name,
-            UInt64 arg2_val
+            string arg2_val
         )
         {
             // no-op

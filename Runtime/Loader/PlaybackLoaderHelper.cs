@@ -1,6 +1,6 @@
 // Copyright 2022-2024 Niantic.
 using System.Collections.Generic;
-using Niantic.Lightship.AR.Utilities.Log;
+using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.Loader;
 using Niantic.Lightship.AR.Subsystems.Playback;
 using UnityEngine;
@@ -26,7 +26,7 @@ namespace Niantic.Lightship.AR
         /// helper knows if lidar support is in the dataset.
         /// </summary>
         /// <returns>`True` if the session subsystems were successfully created, otherwise `false`.</returns>
-        internal bool InitializeBeforeNativeHelper(ILightshipLoader loader, LightshipSettings settings)
+        internal bool InitializeBeforeNativeHelper(ILightshipInternalLoaderSupport loader, LightshipSettings settings)
         {
             Log.Info("Initialize Playback subsystems");
             var dataset = PlaybackDatasetLoader.Load(settings.PlaybackDatasetPath);
@@ -95,7 +95,7 @@ namespace Niantic.Lightship.AR
         /// context has to exist.
         /// </summary>
         /// <returns>`True` if the session subsystems were successfully created, otherwise `false`.</returns>
-        internal bool InitializeAfterNativeHelper(ILightshipLoader loader, LightshipSettings settings)
+        internal bool InitializeAfterNativeHelper(ILightshipInternalLoaderSupport loader, LightshipSettings settings)
         {
             // Input is an integrated subsystem that must be created after the LightshipUnityContext is initialized,
             // which is why it's done here instead of in the PlaybackLoaderHelper
@@ -117,7 +117,7 @@ namespace Niantic.Lightship.AR
         /// Destroys each initialized subsystem.
         /// </summary>
         /// <returns>Always returns `true`.</returns>
-        internal bool Deinitialize(ILightshipLoader loader)
+        internal bool Deinitialize(ILightshipInternalLoaderSupport loader)
         {
             Log.Info("Deinitialize playback subsystems");
             loader.DestroySubsystem<XRSessionSubsystem>();

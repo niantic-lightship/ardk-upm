@@ -1,4 +1,4 @@
-// Copyright 2022-2023 Niantic.
+// Copyright 2022-2024 Niantic.
 using System;
 using System.IO;
 using System.Linq;
@@ -17,7 +17,7 @@ namespace Niantic.Lightship.AR.Editor
      * Original class is internal visibility so copied to reproduce functionality.
      * Would be nice to get the class made accessible.
      */
-    static class Gradle
+    internal static class Gradle
     {
         public const string gradleLauncherPrefix = "gradle-launcher-";
 

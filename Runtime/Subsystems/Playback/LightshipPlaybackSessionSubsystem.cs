@@ -1,5 +1,5 @@
 // Copyright 2022-2024 Niantic.
-using Niantic.Lightship.AR.Utilities.Log;
+using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.Loader;
 using Niantic.Lightship.AR.Utilities;
 using UnityEngine;
@@ -16,7 +16,7 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
         /// Register the Lightship playback session subsystem.
         /// </summary>
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        static void Register()
+        private static void Register()
         {
             Log.Info("LightshipPlaybackSessionSubsystem.Register");
             const string id = "Lightship-Playback-Session";
@@ -85,6 +85,12 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
             // start or resume
             public override void Start()
             {
+                if (datasetReader == null)
+                {
+                    Log.Warning("Dataset reader is null, can't start LightshipPlaybackSessionSubsystem");
+                    return;
+                }
+
                 datasetReader.Reset();
                 if (!lightshipSettings.RunManually)
                 {

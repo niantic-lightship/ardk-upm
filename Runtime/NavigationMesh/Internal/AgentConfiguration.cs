@@ -6,7 +6,7 @@ using Niantic.Lightship.AR.Utilities;
 namespace Niantic.Lightship.AR.NavigationMesh
 {
     [PublicAPI]
-    public struct AgentConfiguration
+    public readonly struct AgentConfiguration
     {
         /// The maximum distance an agent can jump in meters.
         public readonly float JumpDistance;

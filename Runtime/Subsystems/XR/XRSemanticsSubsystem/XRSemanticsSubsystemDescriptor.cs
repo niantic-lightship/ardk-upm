@@ -105,7 +105,7 @@ namespace Niantic.Lightship.AR.XRSubsystems
     public class XRSemanticsSubsystemDescriptor :
         SubsystemDescriptorWithProvider<XRSemanticsSubsystem, XRSemanticsSubsystem.Provider>
     {
-        XRSemanticsSubsystemDescriptor(XRSemanticsSubsystemCinfo semanticsSubsystemCinfo)
+        private XRSemanticsSubsystemDescriptor(XRSemanticsSubsystemCinfo semanticsSubsystemCinfo)
         {
             id = semanticsSubsystemCinfo.id;
             providerType = semanticsSubsystemCinfo.providerType;
@@ -116,7 +116,7 @@ namespace Niantic.Lightship.AR.XRSubsystems
         /// <summary>
         /// Query for whether semantic segmentation is supported.
         /// </summary>
-        Func<Supported> m_SemanticSegmentationImageSupportedDelegate;
+        private Func<Supported> m_SemanticSegmentationImageSupportedDelegate;
 
         /// <summary>
         /// (Read Only) Whether the subsystem supports semantic segmentation image.

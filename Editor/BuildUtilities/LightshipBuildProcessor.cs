@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
-using Niantic.Lightship.AR.Utilities.Log;
+using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.Loader;
 using Niantic.Lightship.AR.Occlusion;
 using Niantic.Lightship.AR.Subsystems.Playback;
@@ -77,7 +77,7 @@ namespace Niantic.Lightship.AR.Editor
             }
 
             [DllImport("libc")] //https://man7.org/linux/man-pages/man3/realpath.3.html
-            static extern IntPtr realpath([In, MarshalAs(UnmanagedType.LPUTF8Str)] string path, [Out] byte[] buf);
+            private static extern IntPtr realpath([In, MarshalAs(UnmanagedType.LPUTF8Str)] string path, [Out] byte[] buf);
             private static void ReplaceFrameworksSymlinks(string directoryPath)
             {
                 foreach (string filePath in Directory.GetFiles(directoryPath)) {
@@ -274,7 +274,7 @@ namespace Niantic.Lightship.AR.Editor
                 foreach (var loader in generalSettings.Manager.activeLoaders)
                 {
                     loaderIsOpenXR = loader is OpenXRLoader;   //TODO: make this actually check for spaces
-                    if (loader is ILightshipLoader || loaderIsOpenXR)
+                    if (loader is ILightshipInternalLoaderSupport || loaderIsOpenXR)
                     {
                         LightshipBuildProcessor.loaderEnabled = true;
                         break;

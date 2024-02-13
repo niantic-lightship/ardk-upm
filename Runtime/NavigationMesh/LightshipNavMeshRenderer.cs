@@ -56,7 +56,7 @@ namespace Niantic.Lightship.AR.NavigationMesh
             ren.enabled = false;
         }
 
-        void UpdateMesh()
+        private void UpdateMesh()
         {
             //this will build a mesh for the LightshipNavMesh nav tiles
             //you can copy and customise this if you would like to stylise the navigation mesh surface.
@@ -107,7 +107,7 @@ namespace Niantic.Lightship.AR.NavigationMesh
             }
         }
 
-        void Update()
+        private void Update()
         {
             UpdateMesh();
         }

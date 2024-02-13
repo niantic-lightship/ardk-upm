@@ -4,7 +4,7 @@ using System;
 using System.IO;
 using System.Text;
 using UnityEngine;
-using static Niantic.Lightship.AR.Utilities.Log.Log;
+using static Niantic.Lightship.AR.Utilities.Logging.Log;
 
 namespace Niantic.Lightship.AR.Utilities.Device
 {

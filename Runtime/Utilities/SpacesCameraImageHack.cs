@@ -10,7 +10,7 @@ namespace Niantic.Lightship.Spaces
 {
     internal static class SpacesCameraImageHack
     {
-        static IntPtr latestPixelData = IntPtr.Zero;
+        private static IntPtr latestPixelData = IntPtr.Zero;
 
         public static IntPtr GetPixelDataToDisplay()
         {

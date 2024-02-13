@@ -2,7 +2,7 @@
 
 using System;
 using System.Collections.Generic;
-
+using Niantic.Lightship.AR.NavigationMesh.Internal;
 using UnityEngine;
 
 namespace Niantic.Lightship.AR.NavigationMesh

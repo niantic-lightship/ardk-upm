@@ -28,7 +28,7 @@ namespace Niantic.Lightship.AR.NavigationMesh
         private LineRenderer _lineRenderer;
         private List<Vector3> _points = new List<Vector3>();
 
-        void Start()
+        private void Start()
         {
             _lineRenderer = gameObject.AddComponent<LineRenderer>();
             _lineRenderer.material = _material;
@@ -40,7 +40,7 @@ namespace Niantic.Lightship.AR.NavigationMesh
 
         }
 
-        void AddLine(Vector3 start, Vector3 end)
+        private void AddLine(Vector3 start, Vector3 end)
         {
             _points.Add(start);
             _points.Add(end);
@@ -57,7 +57,7 @@ namespace Niantic.Lightship.AR.NavigationMesh
             _lineRenderer.enabled = false;
         }
 
-        void Update()
+        private void Update()
         {
 
             if (_agent.path.Waypoints == null)

@@ -1,6 +1,6 @@
 {
     "name": "Niantic.Lightship.AR.Editor",
-    "rootNamespace": "",
+    "rootNamespace": "Niantic.Lightship.AR.Editor",
     "references": [
         "Unity.EditorCoroutines.Editor",
         "Unity.XR.ARSubsystems",

@@ -3,12 +3,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-
-//using Niantic.ARDK.Utilities.Logging;
-
 using UnityEngine;
 
-namespace Niantic.Lightship.AR.NavigationMesh
+namespace Niantic.Lightship.AR.NavigationMesh.Internal
 {
   internal sealed class PathFinding
   {

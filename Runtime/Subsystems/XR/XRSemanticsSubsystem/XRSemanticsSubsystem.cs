@@ -126,6 +126,16 @@ namespace Niantic.Lightship.AR.XRSubsystems
             }
         }
 
+        /// <summary>
+        /// Is true if metadata has been downloaded and decrypted on the current device. Only if this value
+        /// is true can the semantic segmentation label names or inference results be acquired.
+        /// </summary>
+        /// <value>
+        /// If metadata is available.
+        /// </value>
+        /// <exception cref="System.NotSupportedException">
+        /// Thrown frame rate configuration is not supported.
+        /// </exception>
         public bool IsMetadataAvailable
         {
             get
@@ -163,6 +173,18 @@ namespace Niantic.Lightship.AR.XRSubsystems
         /// <returns>True if the threshold was set. Otherwise, false.</returns>
         public bool TrySetChannelConfidenceThresholds(Dictionary<string,float> channelConfidenceThresholds)
             => provider.TrySetChannelConfidenceThresholds(channelConfidenceThresholds);
+
+        /// <summary>
+        /// Resets the confidence thresholds for all semantic channels to the default values from the current model.
+        /// </summary>
+        /// <remarks>
+        /// This reverts any changes made with <see cref="TrySetChannelConfidenceThresholds"/>.
+        /// </remarks>
+        /// <exception cref="System.NotSupportedException">Thrown when resetting confidence thresholds is not
+        /// supported by the implementation.</exception>
+        /// <returns>True if the thresholds were reset. Otherwise, false.</returns>
+        public bool TryResetChannelConfidenceThresholds()
+            => provider.TryResetChannelConfidenceThresholds();
 
         /// <summary>
         /// The provider which will service the <see cref="XRSemanticsSubsystem"/>.
@@ -296,6 +318,19 @@ namespace Niantic.Lightship.AR.XRSubsystems
             /// <returns>True if the threshold was set. Otherwise, false.</returns>
             public virtual bool TrySetChannelConfidenceThresholds(Dictionary<string,float> channelConfidenceThresholds)
                 => throw new NotSupportedException("Setting semantic channel confidence thresholds is not "
+                    + "supported by this implementation");
+
+            /// <summary>
+            /// Resets the confidence thresholds for all semantic channels to the default values from the current model.
+            /// </summary>
+            /// <remarks>
+            /// This reverts any changes made with <see cref="TrySetChannelConfidenceThresholds"/>.
+            /// </remarks>
+            /// <exception cref="System.NotSupportedException">Thrown when resetting confidence thresholds is not
+            /// supported by the implementation.</exception>
+            /// <returns>True if the thresholds were reset. Otherwise, false.</returns>
+            public virtual bool TryResetChannelConfidenceThresholds()
+                => throw new NotSupportedException("Resetting semantic channel confidence thresholds is not "
                     + "supported by this implementation");
         }
     }

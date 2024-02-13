@@ -3,7 +3,7 @@
 using UnityEngine;
 using UnityEngine.XR.ARFoundation;
 using JetBrains.Annotations;
-using Niantic.Lightship.AR.Utilities.Log;
+using Niantic.Lightship.AR.Utilities.Logging;
 
 namespace Niantic.Lightship.AR.Settings
 {
