@@ -16,8 +16,17 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
 
         public void Stop(IntPtr anchorProviderHandle);
 
-        public void Configure(IntPtr anchorProviderHandle, bool enableContinuousLocalization, bool enableTemporalFusion, bool enableSlickLocalization,
-                float cloudLocalizerMaxRequestsPerSecond, float slickLocalizerFps, UInt32 cloudTemporalFusionWindowSize, UInt32 slickTemporalFusionWindowSize, bool diagnosticsEnabled);
+        public void Configure(IntPtr anchorProviderHandle,
+            bool enableContinuousLocalization,
+            bool enableTemporalFusion,
+            bool enableTransformSmoothing,
+            bool enableSlickLocalization,
+            float cloudLocalizerInitialRequestsPerSecond,
+            float cloudLocalizerContinuousRequestsPerSecond,
+            float slickLocalizerFps,
+            UInt32 cloudTemporalFusionWindowSize,
+            UInt32 slickTemporalFusionWindowSize,
+            bool diagnosticsEnabled);
 
         public void Destruct(IntPtr anchorProviderHandle);
 
@@ -90,8 +99,8 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
             IntPtr diagnosticsHandle,
             out UInt64 frameId,
             out UInt64 timestampMs,
-            out IntPtr labelNameList, 
-            out IntPtr labelScoreList, 
+            out IntPtr labelNameList,
+            out IntPtr labelScoreList,
             out UInt32 labelCount
         );
 

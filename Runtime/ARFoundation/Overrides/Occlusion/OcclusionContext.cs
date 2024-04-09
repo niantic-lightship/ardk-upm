@@ -1,5 +1,6 @@
 // Copyright 2022-2024 Niantic.
 
+using System;
 using Unity.Collections;
 using UnityEngine.XR.ARSubsystems;
 using UnityEngine.XR.Management;
@@ -12,9 +13,11 @@ namespace Niantic.Lightship.AR.Occlusion
     public struct OcclusionContext
     {
         /// Linear eye-depth from the camera to the occludee
+        [Obsolete("Use XRDisplayContext.OccludeeEyeDepth instead.")]
         public float OccludeeEyeDepth;
 
         /// Global setting
+        [Obsolete("Use XRDisplayContext instead.")]
         public static OcclusionContext Shared;
 
         static OcclusionContext()
@@ -22,13 +25,14 @@ namespace Niantic.Lightship.AR.Occlusion
             ResetOccludee();
         }
 
-        internal static void ResetOccludee()
+        private static void ResetOccludee()
         {
             Shared.OccludeeEyeDepth = 5.0f;
         }
 
         private float? _cachedAspectRatio;
 
+        [Obsolete("Instead, calculate the camera image aspect ratio by using the XRCameraSubsystem.TryGetIntrinsics method's return value.")]
         public bool TryGetCameraImageAspectRatio(out float aspectRatio)
         {
             if (_cachedAspectRatio.HasValue)

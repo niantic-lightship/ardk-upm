@@ -25,10 +25,7 @@ namespace Niantic.Lightship.AR.PAM
 
         public abstract bool TryGetGpuDepthImage(out Texture2D gpuDepthImage, out Texture2D gpuDepthConfidenceImage);
 
-        public virtual DeviceOrientation GetDeviceOrientation()
-        {
-            return DeviceOrientation.Portrait;
-        }
+        public abstract ScreenOrientation GetScreenOrientation();
 
         public abstract TrackingState GetTrackingState();
 

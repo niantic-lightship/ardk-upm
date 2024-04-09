@@ -5,6 +5,7 @@ using System.Linq;
 using Niantic.Lightship.AR.Loader;
 using UnityEditor;
 using UnityEditor.XR.Management;
+using UnityEngine.XR.Simulation;
 
 namespace Niantic.Lightship.AR.Editor
 {
@@ -23,6 +24,11 @@ namespace Niantic.Lightship.AR.Editor
         internal static bool GetStandaloneIsLightshipPluginEnabled()
         {
             return GetIsLightshipPluginEnabledForPlatform(BuildTargetGroup.Standalone, typeof(LightshipStandaloneLoader));
+        }
+
+        internal static bool GetSimulationIsLightshipPluginEnabled()
+        {
+            return GetIsLightshipPluginEnabledForPlatform(BuildTargetGroup.Standalone, typeof(LightshipSimulationLoader));
         }
 
         private static bool GetIsLightshipPluginEnabledForPlatform(BuildTargetGroup buildTargetGroup, Type lightshipLoaderType)
@@ -46,7 +52,25 @@ namespace Niantic.Lightship.AR.Editor
             {
                 doesLoaderOfTypeExist = managerSettings.activeLoaders.Any(loader => loader is LightshipStandaloneLoader);
             }
+            else if (lightshipLoaderType == typeof(LightshipSimulationLoader))
+            {
+                doesLoaderOfTypeExist = managerSettings.activeLoaders.Any(loader => loader is LightshipSimulationLoader);
+            }
             return managerSettings != null && doesLoaderOfTypeExist;
+        }
+
+        internal static bool IsUnitySimulationPluginEnabled()
+        {
+            var generalSettings = XRGeneralSettingsPerBuildTarget.XRGeneralSettingsForBuildTarget(BuildTargetGroup.Standalone);
+            if (null == generalSettings)
+                return false;
+
+            var managerSettings = generalSettings.AssignedSettings;
+            if (null == managerSettings)
+                return false;
+
+            var simulationLoaderIsActive = managerSettings.activeLoaders.Any(loader => loader is SimulationLoader);
+            return simulationLoaderIsActive;
         }
     }
 }

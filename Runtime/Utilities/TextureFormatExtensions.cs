@@ -21,6 +21,8 @@ namespace Niantic.Lightship.AR.Utilities
                     return 32;
                 case TextureFormat.R8:
                     return 8;
+                case TextureFormat.ARGB32:
+                    return 32;
             }
 
             return 0; //unimplemented conversion for this format
@@ -40,6 +42,8 @@ namespace Niantic.Lightship.AR.Utilities
                     return 4;
                 case TextureFormat.R8:
                     return 1;
+                case TextureFormat.ARGB32:
+                    return 4;
             }
 
             return 0; //unimplemented conversion for this format
@@ -59,6 +63,8 @@ namespace Niantic.Lightship.AR.Utilities
                     return 4;
                 case XRCpuImage.Format.OneComponent8:
                     return 1;
+                case XRCpuImage.Format.ARGB32:
+                    return 4;
             }
 
             return 0; //unimplemented conversion for this format
@@ -76,6 +82,7 @@ namespace Niantic.Lightship.AR.Utilities
             {
                 case TextureFormat.R8: return XRCpuImage.Format.OneComponent8;
                 case TextureFormat.RFloat: return XRCpuImage.Format.DepthFloat32;
+                case TextureFormat.ARGB32: return XRCpuImage.Format.ARGB32;
                 default: return 0;
             }
         }
@@ -86,6 +93,7 @@ namespace Niantic.Lightship.AR.Utilities
             {
                 case XRCpuImage.Format.OneComponent8: return TextureFormat.R8;
                 case XRCpuImage.Format.DepthFloat32: return TextureFormat.RFloat;
+                case XRCpuImage.Format.ARGB32: return TextureFormat.ARGB32;
                 default: throw new NotImplementedException();
             }
         }

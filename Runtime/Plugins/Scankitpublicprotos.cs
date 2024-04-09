@@ -23,43 +23,43 @@ namespace Niantic.ARDK.AR.Protobuf {
       byte[] descriptorData = global::System.Convert.FromBase64String(
           string.Concat(
             "CkBhcmdlby9TY2FuaXZlcnNlL1NjYW5LaXQvU2NhbktpdC9Qcm90by9TY2Fu",
-            "S2l0UHVibGljUHJvdG9zLnByb3RvIoEBCgtGcmFtZXNQcm90bxIKCgJpZBgB",
+            "S2l0UHVibGljUHJvdG9zLnByb3RvIqEBCgtGcmFtZXNQcm90bxIKCgJpZBgB",
             "IAEoCRIbCgZmcmFtZXMYBSADKAsyCy5GcmFtZVByb3RvEiYKB2FuY2hvcnMY",
             "DSADKAsyFS5BZmZpbmVUcmFuc2Zvcm1Qcm90bxIhCglsb2NhdGlvbnMYAiAD",
-            "KAsyDi5Mb2NhdGlvblByb3RvIpECCgpGcmFtZVByb3RvEgoKAmlkGAEgASgF",
-            "Eg4KBmFuY2hvchgCIAEoBRIRCgl0aW1lc3RhbXAYAyABKAESIgoGY2FtZXJh",
-            "GAQgASgLMhIuQ2FtZXJhUGFyYW1zUHJvdG8SKAoJdHJhbnNmb3JtGAUgASgL",
-            "MhUuQWZmaW5lVHJhbnNmb3JtUHJvdG8SJAoIZXhwb3N1cmUYBiABKAsyEi5F",
-            "eHBvc3VyZUluZm9Qcm90bxIfCgVyYW5nZRgHIAEoCzIQLkRlcHRoUmFuZ2VQ",
-            "cm90bxIPCgdxdWFsaXR5GAggASgCEhYKDmlzX2xhcmdlX2ltYWdlGAkgASgI",
-            "EhYKDnRyYWNraW5nX3N0YXRlGAogASgFIuYCChFTY2FuTWV0YWRhdGFQcm90",
-            "bxIKCgJpZBgBIAEoCRIkCgppbWFnZV9zaXplGAIgASgLMhAuUmFzdGVyU2l6",
-            "ZVByb3RvEiQKCmRlcHRoX3NpemUYAyABKAsyEC5SYXN0ZXJTaXplUHJvdG8S",
-            "FwoPc3RhcnRfdGltZXN0YW1wGAQgASgBEhcKD3RpbWV6b25lX29mZnNldBgP",
-            "IAEoBRIQCghhcHBfbmFtZRgFIAEoCRIVCg1wbGF0Zm9ybV9uYW1lGAYgASgJ",
-            "EhIKCm1vZGVsX25hbWUYByABKAkSGQoRbWFudWZhY3R1cmVyX25hbWUYCCAB",
-            "KAkSCwoDcG9pGAkgASgJEhAKCHJlY29yZGVyGAogASgJEhEKCXVzZXJfanNv",
-            "bhgLIAEoCRIUCgxuYXRpdmVfZGVwdGgYDCABKAgSDgoGb3JpZ2luGA0gAygC",
-            "EhcKD2dsb2JhbF9yb3RhdGlvbhgOIAMoAiJtChFDYW1lcmFQYXJhbXNQcm90",
-            "bxINCgV3aWR0aBgBIAEoBRIOCgZoZWlnaHQYAiABKAUSCgoCZngYAyABKAIS",
-            "CgoCZnkYByABKAISCgoCcHgYBCABKAISCgoCcHkYBSABKAISCQoBaxgGIAEo",
-            "AiI9ChRBZmZpbmVUcmFuc2Zvcm1Qcm90bxIQCghyb3RhdGlvbhgBIAMoAhIT",
-            "Cgt0cmFuc2xhdGlvbhgCIAMoAiLCAQoNTG9jYXRpb25Qcm90bxIRCgl0aW1l",
-            "c3RhbXAYASABKAESEAoIbGF0aXR1ZGUYAiABKAESEQoJbG9uZ2l0dWRlGAMg",
-            "ASgBEhAKCGFjY3VyYWN5GAQgASgCEhgKEGVsZXZhdGlvbl9tZXRlcnMYBSAB",
-            "KAISGgoSZWxldmF0aW9uX2FjY3VyYWN5GAYgASgCEhcKD2hlYWRpbmdfZGVn",
-            "cmVlcxgHIAEoAhIYChBoZWFkaW5nX2FjY3VyYWN5GAggASgCIjQKEUV4cG9z",
-            "dXJlSW5mb1Byb3RvEg8KB3NodXR0ZXIYASABKAISDgoGb2Zmc2V0GAIgASgC",
-            "IiwKD0RlcHRoUmFuZ2VQcm90bxIMCgRuZWFyGAEgASgCEgsKA2ZhchgCIAEo",
-            "AiIwCg9SYXN0ZXJTaXplUHJvdG8SDQoFd2lkdGgYASABKAUSDgoGaGVpZ2h0",
-            "GAIgASgFImYKEEJvdW5kaW5nQm94UHJvdG8SDAoEbG9feBgBIAEoAhIMCgRs",
-            "b195GAIgASgCEgwKBGxvX3oYAyABKAISDAoEaGlfeBgEIAEoAhIMCgRoaV95",
-            "GAUgASgCEgwKBGhpX3oYBiABKAJCG6oCGE5pYW50aWMuQVJESy5BUi5Qcm90",
-            "b2J1ZmIGcHJvdG8z"));
+            "KAsyDi5Mb2NhdGlvblByb3RvEh4KCWtleWZyYW1lcxgDIAMoCzILLkZyYW1l",
+            "UHJvdG8ikQIKCkZyYW1lUHJvdG8SCgoCaWQYASABKAUSDgoGYW5jaG9yGAIg",
+            "ASgFEhEKCXRpbWVzdGFtcBgDIAEoARIiCgZjYW1lcmEYBCABKAsyEi5DYW1l",
+            "cmFQYXJhbXNQcm90bxIoCgl0cmFuc2Zvcm0YBSABKAsyFS5BZmZpbmVUcmFu",
+            "c2Zvcm1Qcm90bxIkCghleHBvc3VyZRgGIAEoCzISLkV4cG9zdXJlSW5mb1By",
+            "b3RvEh8KBXJhbmdlGAcgASgLMhAuRGVwdGhSYW5nZVByb3RvEg8KB3F1YWxp",
+            "dHkYCCABKAISFgoOaXNfbGFyZ2VfaW1hZ2UYCSABKAgSFgoOdHJhY2tpbmdf",
+            "c3RhdGUYCiABKAUi5gIKEVNjYW5NZXRhZGF0YVByb3RvEgoKAmlkGAEgASgJ",
+            "EiQKCmltYWdlX3NpemUYAiABKAsyEC5SYXN0ZXJTaXplUHJvdG8SJAoKZGVw",
+            "dGhfc2l6ZRgDIAEoCzIQLlJhc3RlclNpemVQcm90bxIXCg9zdGFydF90aW1l",
+            "c3RhbXAYBCABKAESFwoPdGltZXpvbmVfb2Zmc2V0GA8gASgFEhAKCGFwcF9u",
+            "YW1lGAUgASgJEhUKDXBsYXRmb3JtX25hbWUYBiABKAkSEgoKbW9kZWxfbmFt",
+            "ZRgHIAEoCRIZChFtYW51ZmFjdHVyZXJfbmFtZRgIIAEoCRILCgNwb2kYCSAB",
+            "KAkSEAoIcmVjb3JkZXIYCiABKAkSEQoJdXNlcl9qc29uGAsgASgJEhQKDG5h",
+            "dGl2ZV9kZXB0aBgMIAEoCBIOCgZvcmlnaW4YDSADKAISFwoPZ2xvYmFsX3Jv",
+            "dGF0aW9uGA4gAygCIm0KEUNhbWVyYVBhcmFtc1Byb3RvEg0KBXdpZHRoGAEg",
+            "ASgFEg4KBmhlaWdodBgCIAEoBRIKCgJmeBgDIAEoAhIKCgJmeRgHIAEoAhIK",
+            "CgJweBgEIAEoAhIKCgJweRgFIAEoAhIJCgFrGAYgASgCIj0KFEFmZmluZVRy",
+            "YW5zZm9ybVByb3RvEhAKCHJvdGF0aW9uGAEgAygCEhMKC3RyYW5zbGF0aW9u",
+            "GAIgAygCIsIBCg1Mb2NhdGlvblByb3RvEhEKCXRpbWVzdGFtcBgBIAEoARIQ",
+            "CghsYXRpdHVkZRgCIAEoARIRCglsb25naXR1ZGUYAyABKAESEAoIYWNjdXJh",
+            "Y3kYBCABKAISGAoQZWxldmF0aW9uX21ldGVycxgFIAEoAhIaChJlbGV2YXRp",
+            "b25fYWNjdXJhY3kYBiABKAISFwoPaGVhZGluZ19kZWdyZWVzGAcgASgCEhgK",
+            "EGhlYWRpbmdfYWNjdXJhY3kYCCABKAIiNAoRRXhwb3N1cmVJbmZvUHJvdG8S",
+            "DwoHc2h1dHRlchgBIAEoAhIOCgZvZmZzZXQYAiABKAIiLAoPRGVwdGhSYW5n",
+            "ZVByb3RvEgwKBG5lYXIYASABKAISCwoDZmFyGAIgASgCIjAKD1Jhc3RlclNp",
+            "emVQcm90bxINCgV3aWR0aBgBIAEoBRIOCgZoZWlnaHQYAiABKAUiZgoQQm91",
+            "bmRpbmdCb3hQcm90bxIMCgRsb194GAEgASgCEgwKBGxvX3kYAiABKAISDAoE",
+            "bG9fehgDIAEoAhIMCgRoaV94GAQgASgCEgwKBGhpX3kYBSABKAISDAoEaGlf",
+            "ehgGIAEoAkIbqgIYTmlhbnRpYy5BUkRLLkFSLlByb3RvYnVmYgZwcm90bzM="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.ARDK.AR.Protobuf.FramesProto), global::Niantic.ARDK.AR.Protobuf.FramesProto.Parser, new[]{ "Id", "Frames", "Anchors", "Locations" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.ARDK.AR.Protobuf.FramesProto), global::Niantic.ARDK.AR.Protobuf.FramesProto.Parser, new[]{ "Id", "Frames", "Anchors", "Locations", "Keyframes" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.ARDK.AR.Protobuf.FrameProto), global::Niantic.ARDK.AR.Protobuf.FrameProto.Parser, new[]{ "Id", "Anchor", "Timestamp", "Camera", "Transform", "Exposure", "Range", "Quality", "IsLargeImage", "TrackingState" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.ARDK.AR.Protobuf.ScanMetadataProto), global::Niantic.ARDK.AR.Protobuf.ScanMetadataProto.Parser, new[]{ "Id", "ImageSize", "DepthSize", "StartTimestamp", "TimezoneOffset", "AppName", "PlatformName", "ModelName", "ManufacturerName", "Poi", "Recorder", "UserJson", "NativeDepth", "Origin", "GlobalRotation" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.ARDK.AR.Protobuf.CameraParamsProto), global::Niantic.ARDK.AR.Protobuf.CameraParamsProto.Parser, new[]{ "Width", "Height", "Fx", "Fy", "Px", "Py", "K" }, null, null, null),
@@ -76,7 +76,10 @@ namespace Niantic.ARDK.AR.Protobuf {
   }
   #region Messages
   /// <summary>
-  ///  Frames and locations are stored separately in frames.pb:
+  ///  FramesProto is stored separately from the ScanProto in order to allow the basic scan metadata
+  ///  to load quickly without all of the frame or location metadata.
+  ///  This proto was originally combined with ScanProto - which is why its IDs are not sequential. But
+  ///  there is no requirement that IDs in FramesProto and ScanProto be distinct.
   /// </summary>
   public sealed partial class FramesProto : pb::IMessage<FramesProto> {
     private static readonly pb::MessageParser<FramesProto> _parser = new pb::MessageParser<FramesProto>(() => new FramesProto());
@@ -106,6 +109,7 @@ namespace Niantic.ARDK.AR.Protobuf {
       frames_ = other.frames_.Clone();
       anchors_ = other.anchors_.Clone();
       locations_ = other.locations_.Clone();
+      keyframes_ = other.keyframes_.Clone();
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -166,6 +170,21 @@ namespace Niantic.ARDK.AR.Protobuf {
       get { return locations_; }
     }
 
+    /// <summary>Field number for the "keyframes" field.</summary>
+    public const int KeyframesFieldNumber = 3;
+    private static readonly pb::FieldCodec<global::Niantic.ARDK.AR.Protobuf.FrameProto> _repeated_keyframes_codec
+        = pb::FieldCodec.ForMessage(26, global::Niantic.ARDK.AR.Protobuf.FrameProto.Parser);
+    private readonly pbc::RepeatedField<global::Niantic.ARDK.AR.Protobuf.FrameProto> keyframes_ = new pbc::RepeatedField<global::Niantic.ARDK.AR.Protobuf.FrameProto>();
+    /// <summary>
+    ///  The subset of frames used in reconstruction. If the pipeline does bundle adjustment, the poses
+    ///  will be bundle adjusted. The IDs match the corresponding frame IDs in `frames`. As a result,
+    ///  there may be gaps in the sequence of IDs.
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public pbc::RepeatedField<global::Niantic.ARDK.AR.Protobuf.FrameProto> Keyframes {
+      get { return keyframes_; }
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public override bool Equals(object other) {
       return Equals(other as FramesProto);
@@ -183,6 +202,7 @@ namespace Niantic.ARDK.AR.Protobuf {
       if(!frames_.Equals(other.frames_)) return false;
       if(!anchors_.Equals(other.anchors_)) return false;
       if(!locations_.Equals(other.locations_)) return false;
+      if(!keyframes_.Equals(other.keyframes_)) return false;
       return true;
     }
 
@@ -193,6 +213,7 @@ namespace Niantic.ARDK.AR.Protobuf {
       hash ^= frames_.GetHashCode();
       hash ^= anchors_.GetHashCode();
       hash ^= locations_.GetHashCode();
+      hash ^= keyframes_.GetHashCode();
       return hash;
     }
 
@@ -208,6 +229,7 @@ namespace Niantic.ARDK.AR.Protobuf {
         output.WriteString(Id);
       }
       locations_.WriteTo(output, _repeated_locations_codec);
+      keyframes_.WriteTo(output, _repeated_keyframes_codec);
       frames_.WriteTo(output, _repeated_frames_codec);
       anchors_.WriteTo(output, _repeated_anchors_codec);
     }
@@ -221,6 +243,7 @@ namespace Niantic.ARDK.AR.Protobuf {
       size += frames_.CalculateSize(_repeated_frames_codec);
       size += anchors_.CalculateSize(_repeated_anchors_codec);
       size += locations_.CalculateSize(_repeated_locations_codec);
+      size += keyframes_.CalculateSize(_repeated_keyframes_codec);
       return size;
     }
 
@@ -235,6 +258,7 @@ namespace Niantic.ARDK.AR.Protobuf {
       frames_.Add(other.frames_);
       anchors_.Add(other.anchors_);
       locations_.Add(other.locations_);
+      keyframes_.Add(other.keyframes_);
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -251,6 +275,10 @@ namespace Niantic.ARDK.AR.Protobuf {
           }
           case 18: {
             locations_.AddEntriesFrom(input, _repeated_locations_codec);
+            break;
+          }
+          case 26: {
+            keyframes_.AddEntriesFrom(input, _repeated_keyframes_codec);
             break;
           }
           case 42: {

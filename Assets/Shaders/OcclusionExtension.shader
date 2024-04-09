@@ -4,7 +4,7 @@ Shader "Lightship/OcclusionExtension"
     {
         _Depth ("DepthTexture", 2D) = "black" {}
         _FusedDepth("FusedDepthTexture", 2D) = "black" {}
-        _Semantics ("SemanticsTexture", 2D) = "black" {}
+        _Suppression ("SuppressionTexture", 2D) = "black" {}
         _StabilizationThreshold ("Stabilization Threshold", Range(0.0, 1.0)) = 0.5
     }
     SubShader
@@ -33,6 +33,7 @@ Shader "Lightship/OcclusionExtension"
             #pragma fragment frag
             #pragma multi_compile_local __ FEATURE_SUPPRESSION
             #pragma multi_compile_local __ FEATURE_STABILIZATION
+            #pragma multi_compile_local __ FEATURE_EDGE_SMOOTHING
             #pragma multi_compile_local __ FEATURE_DEBUG
 
             #include "UnityCG.cginc"
@@ -46,10 +47,10 @@ Shader "Lightship/OcclusionExtension"
             struct v2f
             {
               float4 vertex : SV_POSITION;
-              float2 depth_uv : TEXCOORD0;
+              float3 depth_uv : TEXCOORD0;
 
 #ifdef FEATURE_SUPPRESSION
-              float3 semantics_uv : TEXCOORD1;
+              float3 suppression_uv : TEXCOORD1;
 #endif
 
 #ifdef FEATURE_STABILIZATION
@@ -60,16 +61,16 @@ Shader "Lightship/OcclusionExtension"
             // Samplers for depth and semantics textures
             sampler2D _Depth;
             sampler2D _FusedDepth;
-            sampler2D _Semantics;
+            sampler2D _Suppression;
 
-            // The semantics texture is raw and it requires a full affine and warp transform
-            // The depth texture is pre-warped so it only requires the default display matrix
-            float4x4 _SemanticsTransform;
-            float4x4 _DisplayMatrix;
+            // UV transforms
+            float4x4 _SuppressionTransform;
+            float4x4 _DepthTransform;
 
             float _UnityCameraForwardScale;
             float _StabilizationThreshold;
-            int _BitMask;
+
+            float4 _DepthTextureParams;
 
             inline float ConvertDistanceToDepth(float d)
             {
@@ -80,14 +81,20 @@ Shader "Lightship/OcclusionExtension"
                 return (d < _ProjectionParams.y) ? 0.0f : ((1.0f / _ZBufferParams.z) * ((1.0f / d) - _ZBufferParams.w));
             }
 
+            // Z buffer to linear depth
+            inline float LinearEyeDepth(float z, float4 zParams)
+            {
+              return 1.0f / (zParams.z * z + zParams.w);
+            }
+
             v2f vert (appdata v)
             {
                 v2f o;
                 o.vertex = UnityObjectToClipPos(v.vertex);
-                o.depth_uv = mul(_DisplayMatrix, float4(v.uv, 1.0f, 1.0f)).xy;
+                o.depth_uv = mul(_DepthTransform, float4(v.uv, 1.0f, 1.0f)).xyz;
 
 #ifdef FEATURE_SUPPRESSION
-                o.semantics_uv = mul(_SemanticsTransform, float4(v.uv, 1.0f, 1.0f)).xyz;
+                o.suppression_uv = mul(_SuppressionTransform, float4(v.uv, 1.0f, 1.0f)).xyz;
 #endif
 
 #ifdef FEATURE_STABILIZATION
@@ -104,6 +111,40 @@ Shader "Lightship/OcclusionExtension"
 #endif
             };
 
+            // Modified from:
+            // https://forum.unity.com/threads/how-to-make-data-shader-support-bilinear-trilinear.356692/#post-6407712
+            // Texure's filtering mode doens't matter, will always be mip 0 bilinear after this
+            // TexelSize should be in Unity's default format, zw = texel dimensions, xy == 1 / zw
+            float SampleFloatBilinear(sampler2D tex, float2 uv, float4 texelSize)
+            {
+                // Scale & offset uvs to integer values at texel centers
+                float2 uv_texels = uv * texelSize.zw + 0.5f;
+
+                // Get uvs for the center of the 4 surrounding texels by flooring
+                float4 uv_min_max = float4((floor(uv_texels) - 0.5f) * texelSize.xy, (floor(uv_texels) + 0.5f) * texelSize.xy);
+
+                // Blend factor
+                float2 uv_frac = frac(uv_texels);
+
+                // Sample all 4 texels
+                float a = tex2Dlod(tex, float4(uv_min_max.xy, 0.0f, 0.0f)).r;
+                float b = tex2Dlod(tex, float4(uv_min_max.xw, 0.0f, 0.0f)).r;
+                float c = tex2Dlod(tex, float4(uv_min_max.zy, 0.0f, 0.0f)).r;
+                float d = tex2Dlod(tex, float4(uv_min_max.zw, 0.0f, 0.0f)).r;
+
+                // Bilinear interpolation
+                return lerp(lerp(a, b, uv_frac.y), lerp(c, d, uv_frac.y), uv_frac.x);
+            }
+
+            // Samples the depth texture for distances
+            inline float SampleLinearEyeDepth(float2 uv) {
+#ifdef FEATURE_EDGE_SMOOTHING
+              return SampleFloatBilinear(_Depth, uv, _DepthTextureParams);
+#else
+              return tex2D(_Depth, uv).r;
+#endif
+            }
+
             fragOutput frag(v2f i)
             {
               fragOutput o;
@@ -111,16 +152,20 @@ Shader "Lightship/OcclusionExtension"
               // Infer the far plane distance
 #ifdef UNITY_REVERSED_Z
               const float maxDepth = 0.0f;
+              const float eps = -1.1754944E-3f;
 #else
               const float maxDepth = 1.0f;
+              const float eps = 1.1754944E-3f;
 #endif
+
+              float2 depth_uv = float2(i.depth_uv.x / i.depth_uv.z, i.depth_uv.y / i.depth_uv.z);
 
 #ifdef FEATURE_STABILIZATION
               // Sample non-linear frame depth
-              float frameDepth = ConvertDistanceToDepth(tex2D(_Depth, i.depth_uv).r);
+              float frameDepth = ConvertDistanceToDepth(SampleLinearEyeDepth(depth_uv));
 
               // Sample non-linear fused depth
-              float fusedDepth = tex2D(_FusedDepth, i.vertex_uv).r;
+              float fusedDepth = tex2D(_FusedDepth, i.vertex_uv).r + eps;
 
               // Linearize and compare
               float frameLinear = Linear01Depth(frameDepth);
@@ -130,14 +175,14 @@ Shader "Lightship/OcclusionExtension"
               // Determine the depth value
               float depth = useFrameDepth ? frameDepth : fusedDepth;
 #else
-              float depth = ConvertDistanceToDepth(tex2D(_Depth, i.depth_uv).r);
+              float depth = ConvertDistanceToDepth(SampleLinearEyeDepth(depth_uv));
 #endif
 
 #ifdef FEATURE_SUPPRESSION
               // Sample semantics
-              float2 semantics_uv = float2(i.semantics_uv.x / i.semantics_uv.z, i.semantics_uv.y / i.semantics_uv.z);
-              uint mask = asuint(tex2D(_Semantics, semantics_uv).r);
-              o.depth = (mask & _BitMask) != 0 ? maxDepth : depth;
+              float2 suppression_uv = float2(i.suppression_uv.x / i.suppression_uv.z, i.suppression_uv.y / i.suppression_uv.z);
+              float mask = tex2D(_Suppression, suppression_uv).r;
+              o.depth = ((depth * (1.0-mask)) + (maxDepth * mask));
 #else
               o.depth = depth;
 #endif

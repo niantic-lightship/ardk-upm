@@ -46,6 +46,30 @@ namespace Niantic.Lightship.AR.Subsystems.Occlusion
         }
 
         /// <summary>
+        /// Request to bypass automatically fetching the texture descriptors.
+        /// </summary>
+        internal bool RequestDisableFetchTextureDescriptors
+        {
+            get
+            {
+                if (provider is LightshipOcclusionProvider lightshipProvider)
+                {
+                    return lightshipProvider.RequestDisableFetchTextureDescriptors;
+                }
+
+                return false;
+            }
+
+            set
+            {
+                if (provider is LightshipOcclusionProvider lightshipProvider)
+                {
+                    lightshipProvider.RequestDisableFetchTextureDescriptors = value;
+                }
+            }
+        }
+
+        /// <summary>
         /// Returns the intrinsics matrix of the most recent depth prediction. Contains values
         /// for the camera's focal length and principal point. Since the depth texture is guaranteed to be the same
         /// aspect ratio as the camera image, these intrinsics will be the same as those from the <c>ARCameraManager</c>
@@ -68,6 +92,35 @@ namespace Niantic.Lightship.AR.Subsystems.Occlusion
 
                 throw new NotSupportedException();
             }
+        }
+
+        /// <summary>
+        /// Tries to acquire the latest environment depth CPU image. Using this
+        /// override, the aspect ratio of the resulting image may differ from
+        /// that of the camera image. Use the provided sampler matrix to display
+        /// the image on the specified viewport.
+        /// </summary>
+        /// <param name="viewport">The viewport that samplerMatrix should map the image onto.</param>
+        /// <param name="cpuImage">If this method returns `true`, an acquired <see cref="XRCpuImage"/>. The CPU image
+        /// must be disposed by the caller.</param>
+        /// <param name="samplerMatrix">The transformation matrix used when displaying the image on the viewport.</param>
+        /// <returns>Returns `true` if an <see cref="XRCpuImage"/> was successfully acquired.
+        /// Returns `false` otherwise.</returns>
+        internal bool TryAcquireEnvironmentDepthCpuImage(XRCameraParams viewport, out XRCpuImage cpuImage, out Matrix4x4 samplerMatrix)
+        {
+            if (provider is LightshipOcclusionProvider lsProvider)
+            {
+                if (lsProvider.environmentDepthCpuImageApi != null &&
+                    lsProvider.TryAcquireEnvironmentDepthCpuImage(viewport, out var cinfo, out samplerMatrix))
+                {
+                    cpuImage = new XRCpuImage(provider.environmentDepthCpuImageApi, cinfo);
+                    return true;
+                }
+            }
+
+            cpuImage = default;
+            samplerMatrix = Matrix4x4.identity;
+            return false;
         }
 
         /// <summary>
@@ -158,6 +211,8 @@ namespace Niantic.Lightship.AR.Subsystems.Occlusion
             private uint _targetFrameRate = MaxRecommendedFrameRate;
             private ulong _latestTimestampMs = 0;
 
+            public bool RequestDisableFetchTextureDescriptors { get; set; }
+
             public uint TargetFrameRate
             {
                 get
@@ -220,7 +275,7 @@ namespace Niantic.Lightship.AR.Subsystems.Occlusion
                 _environmentDepthTextures = new BufferedTextureCache(FramesInMemoryCount);
 
                 // Reset settings possibly inherited from a previous session
-                OcclusionContext.ResetOccludee();
+                XRDisplayContext.ResetOccludee();
             }
 
             /// <summary>
@@ -390,7 +445,6 @@ namespace Niantic.Lightship.AR.Subsystems.Occlusion
                     var gotEnvDepth =
                         TryAcquireEnvironmentDepth
                         (
-                            requestPostProcessing: true,
                             out IntPtr resourceHandle,
                             out IntPtr memoryBuffer,
                             out int size,
@@ -453,7 +507,6 @@ namespace Niantic.Lightship.AR.Subsystems.Occlusion
                 var gotEnvDepth =
                     TryAcquireEnvironmentDepth
                     (
-                        requestPostProcessing: true,
                         out IntPtr resourceHandle,
                         out IntPtr memoryBuffer,
                         out int size,
@@ -463,6 +516,52 @@ namespace Niantic.Lightship.AR.Subsystems.Occlusion
                         out _latestTimestampMs
                     ); // Need to save _latestTimestamp for different calls to TryAcquireEnvironmentDepth
 
+
+                if (!gotEnvDepth)
+                {
+                    cinfo = default;
+                    return false;
+                }
+
+                var cpuImageApi = (LightshipCpuImageApi)environmentDepthCpuImageApi;
+                var gotCpuImage = cpuImageApi.TryAddManagedXRCpuImage(memoryBuffer, size, width, height, format, _latestTimestampMs, out cinfo);
+                _api.DisposeResource(_nativeProviderHandle, resourceHandle);
+
+                return gotCpuImage;
+            }
+
+            /// <summary>
+            /// Gets the CPU construction information for a environment depth image.
+            /// Using this override, the aspect ratio of the resulting image may differ
+            /// from that of the camera image. Use the provided sampler matrix to display
+            /// the image on the specified viewport.
+            /// </summary>
+            /// <param name="viewport">The viewport description the image should map onto.</param>
+            /// <param name="cinfo">The CPU image construction information, on success.</param>
+            /// <param name="samplerMatrix"></param>
+            /// <returns>
+            /// <c>true</c> if the environment depth texture is available and its CPU image construction information is
+            /// returned. Otherwise, <c>false</c>.
+            /// </returns>
+            internal bool TryAcquireEnvironmentDepthCpuImage
+            (
+                XRCameraParams viewport,
+                out XRCpuImage.Cinfo cinfo,
+                out Matrix4x4 samplerMatrix
+            )
+            {
+                var gotEnvDepth = TryAcquireEnvironmentDepth
+                (
+                    out IntPtr resourceHandle,
+                    out IntPtr memoryBuffer,
+                    out samplerMatrix,
+                    out int size,
+                    out int width,
+                    out int height,
+                    out TextureFormat format,
+                    out _latestTimestampMs,
+                    viewport
+                ); // Need to save _latestTimestamp for different calls to TryAcquireEnvironmentDepth
 
                 if (!gotEnvDepth)
                 {
@@ -488,10 +587,9 @@ namespace Niantic.Lightship.AR.Subsystems.Occlusion
             }
 
             /// <summary>
-            /// Acquires the latest environment depth resource.
+            /// Acquires the latest environment depth image.
+            /// The resulting image will have the same aspect ratio as the camera image.
             /// </summary>
-            /// <param name="requestPostProcessing">Whether to perform post-processing to align the image with
-            ///     the current camera pose. Requesting this feature does not guarantee it will actually occur.</param>
             /// <param name="resourceHandle">Handle to the native resource.</param>
             /// <param name="memoryBuffer">Handle to the data buffer.</param>
             /// <param name="size">The size of the data buffer.</param>
@@ -502,7 +600,6 @@ namespace Niantic.Lightship.AR.Subsystems.Occlusion
             /// <returns>Whether the resource has been acquired.</returns>
             private bool TryAcquireEnvironmentDepth
             (
-                bool requestPostProcessing,
                 out IntPtr resourceHandle,
                 out IntPtr memoryBuffer,
                 out int size,
@@ -513,7 +610,7 @@ namespace Niantic.Lightship.AR.Subsystems.Occlusion
             )
             {
                 // Verify the aspect ratio we need to comply with
-                var isCameraAspectRatioValid = OcclusionContext.Shared.TryGetCameraImageAspectRatio(out var aspectRatio);
+                var isCameraAspectRatioValid = XRDisplayContext.TryGetCameraImageAspectRatio(out var aspectRatio);
 
                 // Cannot acquire an environment depth image in an appropriate image container
                 if (!_nativeProviderHandle.IsValidHandle() || !isCameraAspectRatioValid)
@@ -550,45 +647,17 @@ namespace Niantic.Lightship.AR.Subsystems.Occlusion
                 // Calculate the aligned image container
                 height = Mathf.FloorToInt(width / aspectRatio);
 
-                // Acquire the most recent device pose
-                var didAcquirePose = PoseProvider.TryAcquireCurrentPose(out var poseMatrix);
-
-                // Successfully acquired the native resource, but no post-processing
-                // was requested or we have insufficient information to perform it
-                IntPtr processedResourceHandle;
-                if (!requestPostProcessing || !didAcquirePose)
-                {
-                    // Blit the original image to a container that matches the camera image aspect ratio
-                    processedResourceHandle =
-                        _api.Blit
-                        (
-                            _nativeProviderHandle,
-                            resourceHandle,
-                            width,
-                            height,
-                            out memoryBuffer,
-                            out size
-                        );
-                }
-                else
-                {
-                    // Convert the pose to native ARDK format
-                    var pose = MatrixConversionHelper.Matrix4x4ToInternalArray(poseMatrix.FromUnityToArdk());
-
-                    // Warp the original depth image to align it with the current pose
-                    processedResourceHandle =
-                        _api.Warp
-                        (
-                            _nativeProviderHandle,
-                            resourceHandle,
-                            pose,
-                            width,
-                            height,
-                            OcclusionContext.Shared.OccludeeEyeDepth,
-                            out memoryBuffer,
-                            out size
-                        );
-                }
+                // Blit the original image to a container that matches the camera image aspect ratio
+                IntPtr processedResourceHandle =
+                    _api.Blit
+                    (
+                        _nativeProviderHandle,
+                        resourceHandle,
+                        width,
+                        height,
+                        out memoryBuffer,
+                        out size
+                    );
 
                 // Release the original buffer
                 _api.DisposeResource(_nativeProviderHandle, resourceHandle);
@@ -599,10 +668,83 @@ namespace Niantic.Lightship.AR.Subsystems.Occlusion
             }
 
             /// <summary>
+            /// Acquires the latest environment depth image.
+            /// The resulting image has the aspect ratio as the inference result.
+            /// </summary>
+            /// <param name="resourceHandle">Handle to the native resource.</param>
+            /// <param name="memoryBuffer">Handle to the data buffer.</param>
+            /// <param name="samplerMatrix">The matrix to fit the image to the viewport.</param>
+            /// <param name="size">The size of the data buffer.</param>
+            /// <param name="width">The width of the image.</param>
+            /// <param name="height">The height of the image.</param>
+            /// <param name="format">The texture format that should be used to represent the image.</param>
+            /// <param name="frameTimestamp">The timestamp of the frame.</param>
+            /// <param name="viewport"></param>
+            /// <returns>Whether the resource has been acquired.</returns>
+            private bool TryAcquireEnvironmentDepth
+            (
+                out IntPtr resourceHandle,
+                out IntPtr memoryBuffer,
+                out Matrix4x4 samplerMatrix,
+                out int size,
+                out int width,
+                out int height,
+                out TextureFormat format,
+                out ulong frameTimestamp,
+                XRCameraParams viewport
+            )
+            {
+                // Cannot acquire an environment depth image in an appropriate image container
+                if (!_nativeProviderHandle.IsValidHandle())
+                {
+                    resourceHandle = IntPtr.Zero;
+                    memoryBuffer = IntPtr.Zero;
+                    samplerMatrix = Matrix4x4.identity;
+                    size = default;
+                    width = default;
+                    height = default;
+                    format = default;
+                    frameTimestamp = default;
+                    return false;
+                }
+
+                // Acquire the inference result
+                resourceHandle = _api.GetEnvironmentDepth
+                (
+                    _nativeProviderHandle,
+                    out memoryBuffer,
+                    out size,
+                    out width,
+                    out height,
+                    out format,
+                    out _,
+                    out frameTimestamp
+                );
+
+                if (resourceHandle != IntPtr.Zero)
+                {
+                    samplerMatrix =
+                        _api.AcquireSamplerMatrix
+                        (
+                            _nativeProviderHandle,
+                            resourceHandle,
+                            viewport,
+                            InputReader.CurrentPose,
+                            width,
+                            height
+                        );
+
+                    return true;
+                }
+
+                samplerMatrix = Matrix4x4.identity;
+                return false;
+            }
+
+            /// <summary>
             /// The CPU image API for interacting with the environment depth image.
             /// </summary>
             public override XRCpuImage.Api environmentDepthCpuImageApi => LightshipCpuImageApi.instance;
-
 
             /// <summary>
             /// Gets the occlusion texture descriptors associated with the current AR frame.
@@ -616,11 +758,14 @@ namespace Niantic.Lightship.AR.Subsystems.Occlusion
                 Allocator allocator
             )
             {
-                if (TryGetEnvironmentDepth(out var xrTextureDescriptor))
+                if (!RequestDisableFetchTextureDescriptors)
                 {
-                    var nativeArray = new NativeArray<XRTextureDescriptor>(1, allocator);
-                    nativeArray[0] = xrTextureDescriptor;
-                    return nativeArray;
+                    if (TryGetEnvironmentDepth(out var xrTextureDescriptor))
+                    {
+                        var nativeArray = new NativeArray<XRTextureDescriptor>(1, allocator);
+                        nativeArray[0] = xrTextureDescriptor;
+                        return nativeArray;
+                    }
                 }
 
                 return new NativeArray<XRTextureDescriptor>(0, allocator);

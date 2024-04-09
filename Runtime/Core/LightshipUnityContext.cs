@@ -16,7 +16,7 @@ namespace Niantic.Lightship.AR.Core
 {
     /// <summary>
     /// [Experimental] <c>LightshipUnityContext</c> contains Lightship system components which are required by multiple modules.  This class should only be accessed by lightship packages
-    /// 
+    ///
     /// This Interface is experimental so may change or be removed from future versions without warning.
     /// </summary>
     public class LightshipUnityContext
@@ -39,7 +39,7 @@ namespace Niantic.Lightship.AR.Core
         internal static event Action OnDeinitialized;
         internal static event Action OnUnityContextHandleInitialized;
 
-        internal static void Initialize(LightshipSettings settings, bool isDeviceLidarSupported, bool isTest = false)
+        internal static void Initialize(LightshipSettings settings, bool isDeviceLidarSupported, bool disableTelemetry = false)
         {
             ActiveSettings = settings;
 #if NIANTIC_LIGHTSHIP_AR_LOADER_ENABLED
@@ -90,7 +90,7 @@ namespace Niantic.Lightship.AR.Core
             Log.ConfigureLogger(UnityContextHandle, settings.UnityLightshipLogLevel, settings.FileLightshipLogLevel,
                 settings.StdOutLightshipLogLevel);
 
-            if (!isTest)
+            if (!disableTelemetry)
             {
                 // Cannot use Application.persistentDataPath in testing
                 try
@@ -138,20 +138,24 @@ namespace Niantic.Lightship.AR.Core
             if (Application.isEditor || settings.UsePlayback)
             {
                 PlatformAdapterManager =
-                    AR.PAM.PlatformAdapterManager.Create<PAM.NativeApi, StandaloneSubsystemsDataAcquirer>
+                    PlatformAdapterManager.Create<PAM.NativeApi, SubsystemsDataAcquirer>
                     (
                         UnityContextHandle,
-                        AR.PAM.PlatformAdapterManager.ImageProcessingMode.GPU
+                        PlatformAdapterManager.ImageProcessingMode.GPU,
+                        isLidarDepthEnabled: settings.PreferLidarIfAvailable && s_isDeviceLidarSupported,
+                        trySendOnUpdate: settings.TestSettings.TickPamOnUpdate
                     );
             }
             // Native
             else
             {
                 PlatformAdapterManager =
-                    AR.PAM.PlatformAdapterManager.Create<PAM.NativeApi, SubsystemsDataAcquirer>
+                    PlatformAdapterManager.Create<PAM.NativeApi, SubsystemsDataAcquirer>
                     (
                         UnityContextHandle,
-                        AR.PAM.PlatformAdapterManager.ImageProcessingMode.CPU
+                        PlatformAdapterManager.ImageProcessingMode.CPU,
+                        isLidarDepthEnabled: settings.PreferLidarIfAvailable && s_isDeviceLidarSupported,
+                        trySendOnUpdate: settings.TestSettings.TickPamOnUpdate
                     );
             }
         }

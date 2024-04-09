@@ -101,7 +101,7 @@ namespace Niantic.Lightship.AR.Loader
                     FastDepthSemanticsEndpoint = "https://armodels.eng.nianticlabs.com/niantic_ca_v1.2_fast.bin",
                     SmoothDepthSemanticsEndpoint = "https://armodels.eng.nianticlabs.com/niantic_ca_v1.2_antiflicker.bin",
 
-                    ObjectDetectionEndpoint = "https://armodels.eng.nianticlabs.com/niantic_ob_v0.3_full.bin",
+                    ObjectDetectionEndpoint = "https://armodels.eng.nianticlabs.com/niantic_ob_v0.4_full.bin",
 
                     TelemetryEndpoint = "https://analytics.nianticlabs.com",
                     TelemetryApiKey = "b7d03117-f80f-4039-8488-3466633f8639",

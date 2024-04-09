@@ -123,5 +123,111 @@ namespace Niantic.Lightship.AR.Utilities
 
             return new Vector2Int(x, y);
         }
+
+        /// <summary>
+        /// Acquires the data buffer of the specified XRCpuImage.
+        /// </summary>
+        /// <param name="image">The image to access data of.</param>
+        /// <param name="plane">The image plane index.</param>
+        /// <typeparam name="T">The type of the data buffer.</typeparam>
+        /// <returns>The image data.</returns>
+        internal static NativeArray<T>? AcquireDataBuffer<T>(this XRCpuImage image, int plane = 0) where T: struct
+        {
+            if (!image.valid)
+            {
+                return null;
+            }
+
+            // Access the image plane
+            XRCpuImage.Plane imagePlane;
+            try
+            {
+                imagePlane = image.GetPlane(plane);
+            }
+            catch (Exception)
+            {
+                Error($"Could not retrieve image plane: {image} during sampling.");
+                return null;
+            }
+
+            // Acquire image data
+            return imagePlane.data.Reinterpret<T>(UnsafeUtility.SizeOf<byte>());
+        }
+
+        /// <summary>
+        /// Copies the contents of an XRCpuImage to the destination texture.
+        /// If the destination texture does not exist, it will be created.
+        /// Releasing the destination texture is the responsibility of the caller.
+        /// </summary>
+        /// <param name="source">The source XRCpuImage.</param>
+        /// <param name="sourcePlane">The index of the image plane to copy.</param>
+        /// <param name="destination">The target texture to copy to.</param>
+        /// <param name="destinationFilter">The sampling method of the target texture.</param>
+        /// <param name="linearColorSpace">Whether to sample the target texture in linear color space.</param>
+        /// <param name="pushToGpu">Whether to upload the texture to gpu when done.</param>
+        /// <returns>Whether the target texture was successfully updated.</returns>
+        internal static bool CreateOrUpdateTexture(
+            this XRCpuImage source,
+            ref Texture2D destination,
+            int sourcePlane = 0,
+            FilterMode destinationFilter = FilterMode.Bilinear,
+            bool linearColorSpace = false,
+            bool pushToGpu = true
+        )
+        {
+            if (!source.valid)
+            {
+                return false;
+            }
+
+            // Access the image data
+            XRCpuImage.Plane imagePlane;
+            try
+            {
+                imagePlane = source.GetPlane(sourcePlane);
+            }
+            catch (Exception)
+            {
+                Error($"Could not retrieve image plane: {source}.");
+                return false;
+            }
+
+            // Infer the destination format
+            var textureFormat = source.format.AsTextureFormat();
+
+            // Check whether the destination container needs to be created
+            if (destination == null || destination.width != source.width || destination.height != source.height ||
+                destination.format != textureFormat)
+            {
+                if (destination != null)
+                {
+                    // Release the previously allocated texture
+                    UnityEngine.Object.Destroy(destination);
+                }
+
+                // Allocate the target texture
+                destination = new Texture2D(source.width, source.height, textureFormat, false, linearColorSpace)
+                {
+                    wrapMode = TextureWrapMode.Clamp, anisoLevel = 0
+                };
+            }
+
+            if (destination.filterMode != destinationFilter)
+            {
+                destination.filterMode = destinationFilter;
+            }
+
+            // Copy to texture
+            destination.GetPixelData<byte>(mipLevel: 0).CopyFrom(imagePlane.data);
+
+            // Upload to gpu memory
+            if (pushToGpu)
+            {
+                destination.Apply(false, false);
+            }
+
+            // Success
+            return true;
+        }
     }
 }

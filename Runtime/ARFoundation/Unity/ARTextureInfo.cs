@@ -1,18 +1,19 @@
 // Copyright 2022-2024 Niantic.
+
 using System;
+using System.Diagnostics.CodeAnalysis;
 using Niantic.Lightship.AR.Utilities.Textures;
 using Unity.XR.CoreUtils;
 using UnityEngine;
-using UnityEngine.XR.ARSubsystems;
 using UnityEngine.Rendering;
-using UnityObject = UnityEngine.Object;
+using UnityEngine.XR.ARSubsystems;
 
-namespace Niantic.Lightship.AR.ARFoundation
+namespace Niantic.Lightship.AR.ARFoundation.Unity
 {
     /// <summary>
     /// COPY PASTED FROM UNITY
-    /// Container that packages a <see cref="UnityEngine.XR.ARSubsystems.XRTextureDescriptor"/> wrapping a native texture
-    /// object with a <c>Texture</c> that is created for the native texture object and a sampler matrix.
+    /// Container that packages a <see cref="UnityEngine.XR.ARSubsystems.XRTextureDescriptor"/> wrapping a native
+    /// texture object with a <c>Texture</c> that is created for the native texture object and a sampler matrix.
     /// </summary>
     internal struct ARTextureInfo : IEquatable<ARTextureInfo>, IDisposable
     {
@@ -30,7 +31,7 @@ namespace Niantic.Lightship.AR.ARFoundation
         /// <value>
         /// The texture descriptor describing the metadata for the native texture object.
         /// </value>
-        public XRTextureDescriptor Descriptor
+        public readonly XRTextureDescriptor Descriptor
         {
             get { return _descriptor; }
         }
@@ -42,7 +43,7 @@ namespace Niantic.Lightship.AR.ARFoundation
         /// <value>
         /// The matrix that converts from normalized viewport coordinates to normalized texture coordinates.
         /// </value>
-        public Matrix4x4 SamplerMatrix
+        public readonly Matrix4x4 SamplerMatrix
         {
             get { return _samplerMatrix; }
         }
@@ -54,7 +55,7 @@ namespace Niantic.Lightship.AR.ARFoundation
         /// <value>
         /// The matrix that converts from normalized viewport coordinates to normalized texture coordinates.
         /// </value>
-        public XRCameraParams CameraParams
+        public readonly XRCameraParams CameraParams
         {
             get { return _cameraParams; }
         }
@@ -66,7 +67,7 @@ namespace Niantic.Lightship.AR.ARFoundation
         /// <value>
         /// The Unity <c>Texture</c> object for the native texture.
         /// </value>
-        public Texture Texture
+        public readonly Texture Texture
         {
             get { return _texture; }
         }
@@ -75,7 +76,7 @@ namespace Niantic.Lightship.AR.ARFoundation
         /// <summary>
         /// True, if this texture info was not updated in the current Unity frame.
         /// </summary>
-        public bool IsDirty
+        public readonly bool IsDirty
         {
             get { return _lastUpdatedUnityFrameId != Time.frameCount; }
         }
@@ -186,6 +187,7 @@ namespace Niantic.Lightship.AR.ARFoundation
             }
         }
 
+        [SuppressMessage("Performance", "EPS12:A struct member can be made readonly")]
         public void Dispose()
         {
             DestroyTexture();

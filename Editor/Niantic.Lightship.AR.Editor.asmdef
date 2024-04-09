@@ -25,6 +25,32 @@
     "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "name": "Unity",
+            "expression": "[2021.3.24,2021.3.29]",
+            "define": "FIX_INTEGRATED_SUBSYSTEM_2021"
+        },
+        {
+            "name": "Unity",
+            "expression": "2021.3.32",
+            "define": "FIX_INTEGRATED_SUBSYSTEM_2021"
+        },
+        {
+            "name": "Unity",
+            "expression": "[2022.2.13,2022.2.21]",
+            "define": "FIX_INTEGRATED_SUBSYSTEM_2022"
+        },
+        {
+            "name": "Unity",
+            "expression": "[2022.3.0,2022.3.7]",
+            "define": "FIX_INTEGRATED_SUBSYSTEM_2022"
+        },
+        {
+            "name": "Unity",
+            "expression": "2022.3.13",
+            "define": "FIX_INTEGRATED_SUBSYSTEM_2022"
+        }
+    ],
     "noEngineReferences": false
 }

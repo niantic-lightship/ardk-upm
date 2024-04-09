@@ -8,6 +8,7 @@ using Niantic.Lightship.AR.Utilities;
 using Niantic.Lightship.AR.VpsCoverage;
 using Niantic.Lightship.AR.XRSubsystems;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.XR.ARSubsystems;
 
 #if !UNITY_EDITOR && UNITY_ANDROID
@@ -27,7 +28,8 @@ namespace Niantic.Lightship.AR.LocationAR
     public class ARLocationManager : ARPersistentAnchorManager
     {
         [Header("Experimental: Drift Mitigation")]
-        [Tooltip("Continuously send localization requests to refine ARLocation tracking")]
+        [Tooltip("Continue to send localization requests after initial localization is achieved. " +
+            "This refines the localization over time and mitigates drift, but consumes more bandwidth")]
         [SerializeField]
         private bool _ContinuousLocalizationEnabled = XRPersistentAnchorConfiguration.DefaultContinuousLocalizationEnabled;
 
@@ -58,40 +60,42 @@ namespace Niantic.Lightship.AR.LocationAR
 
         /// <summary>
         /// Whether to enable or disable interpolation
+        /// It is recommended to use the native solution "TransformUpdateSmoothingEnabled" instead of this property
         /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
         /// </summary>
         public bool InterpolationEnabled
         {
-            get => InterpolateAnchors;
-            set => InterpolateAnchors = value;
+            get => base.InterpolateAnchors;
+            set => base.InterpolateAnchors = value;
         }
 
-        /// <summary>
-        /// Obsolete. Use CloudLocalizerMaxRequestsPerSecond instead.
-        /// </summary>
-        [Obsolete]
-        public int ContinuousLocalizationRateSeconds;
-
 #if NIANTIC_ARDK_EXPERIMENTAL_FEATURES
-
         [Tooltip("Averages/Fuses multiple localization results to provide a more stable localization. Only works when continuous localization is enabled")]
         [SerializeField]
         private bool _TemporalFusionEnabled = XRPersistentAnchorConfiguration.DefaultTemporalFusionEnabled;
 
-        [Tooltip("Max Requests Per Second send to Cloud for Localization. 0 value means as many requests as possible")]
+        [Header("Experimental: Drift Mitigation tuning")]
+        [FormerlySerializedAs("_CloudLocalizerMaxRequestsPerSecond")]
+        [Tooltip("Number of seconds between server requests for initial localization. 0 value means as many requests as possible.")]
         [SerializeField]
-        private float _CloudLocalizerMaxRequestsPerSecond = XRPersistentAnchorConfiguration.DefaultCloudLocalizerMaxRequestsPerSecond;
+        private float _InitialServiceRequestIntervalSeconds = 1 / XRPersistentAnchorConfiguration.DefaultCloudLocalizerInitialRequestsPerSecond;
 
-        [Tooltip("Number of localization samples used to fuse")]
+        [Tooltip("Number of seconds between server requests for continuous localization. 0 value means as many requests as possible.")]
+        [SerializeField]
+        private float _ContinuousServiceRequestIntervalSeconds = 1 / XRPersistentAnchorConfiguration.DefaultCloudLocalizerContinuousRequestsPerSecond;
+
+        [Tooltip("Number of localization samples used to fuse. This value should account for the rate of localization requests. " +
+            "By default, it is recommended to cache around 5 seconds of localization samples to fuse")]
         [SerializeField]
         private uint _CloudLocalizationTemporalFusionWindowSize = XRPersistentAnchorConfiguration.DefaultCloudLocalizationTemporalFusionWindowSize;
 
+        [Header("Experimental: Diagnostics")]
         [Tooltip("Whether to enable or disable frame diagnostics")]
         [SerializeField]
         private bool _DiagnosticsEnabled = XRPersistentAnchorConfiguration.DefaultDiagnosticsEnabled;
 
         /// <summary>
-        /// Whether to enable or disable temporal fusion
+        /// Whether to enable or disable temporal fusion.
         /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
         /// </summary>
         public bool TemporalFusionEnabled
@@ -101,14 +105,33 @@ namespace Niantic.Lightship.AR.LocationAR
         }
 
         /// <summary>
-        /// Max Requests Per Second send to Cloud for Localization. 0 value means as many requests as possible.
-        /// Currently, value will be round up to int. Future releases will allow for fractional values
+        /// Whether to enable or disable transform update smoothing
         /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
         /// </summary>
-        public float CloudLocalizerMaxRequestsPerSecond
+        public bool TransformUpdateSmoothingEnabled
         {
-            get => base.CloudLocalizerMaxRequestsPerSecond;
-            set => base.CloudLocalizerMaxRequestsPerSecond = value;
+            get => base.TransformUpdateSmoothingEnabled;
+            set => base.TransformUpdateSmoothingEnabled = value;
+        }
+
+        /// <summary>
+        /// Number of seconds between server requests for initial localization. 0 value means as many requests as possible.
+        /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
+        /// </summary>
+        public float InitialServiceRequestIntervalSeconds
+        {
+            get => base.CloudLocalizerInitialRequestsPerSecond <= 0 ? 0 : 1 / base.CloudLocalizerInitialRequestsPerSecond;
+            set => base.CloudLocalizerInitialRequestsPerSecond = value <= 0 ? 0 : 1 / value;
+        }
+
+        /// <summary>
+        /// Number of seconds between server requests for continuous localization. 0 value means as many requests as possible.
+        /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
+        /// </summary>
+        public float ContinuousServiceRequestIntervalSeconds
+        {
+            get => base.CloudLocalizerContinuousRequestsPerSecond <= 0 ? 0 : 1 / base.CloudLocalizerContinuousRequestsPerSecond;
+            set => base.CloudLocalizerContinuousRequestsPerSecond = value <= 0 ? 0 : 1 / value;
         }
 
         /// <summary>
@@ -208,20 +231,26 @@ namespace Niantic.Lightship.AR.LocationAR
 
         protected override void OnEnable()
         {
+            // This will invoke OnBeforeStart and then start the subsystem. Put any initialization logic
+            //  dependent on the subsystem in OnBeforeStart.
             base.OnEnable();
-            InterpolateAnchors = _InterpolationEnabled;
             arPersistentAnchorStateChanged += HandleARPersistentAnchorStateChanged;
         }
 
         protected override void OnBeforeStart()
         {
+            // Apply the settings from the inspector
             base.ContinuousLocalizationEnabled = _ContinuousLocalizationEnabled;
 #if NIANTIC_ARDK_EXPERIMENTAL_FEATURES
             base.TemporalFusionEnabled = _TemporalFusionEnabled;
-            base.CloudLocalizerMaxRequestsPerSecond = _CloudLocalizerMaxRequestsPerSecond;
+            base.TransformUpdateSmoothingEnabled = _InterpolationEnabled;
+            base.CloudLocalizerInitialRequestsPerSecond = _InitialServiceRequestIntervalSeconds <= 0 ? 0 : 1 / _InitialServiceRequestIntervalSeconds;
+            base.CloudLocalizerContinuousRequestsPerSecond = _ContinuousServiceRequestIntervalSeconds <= 0 ? 0 : 1 / _ContinuousServiceRequestIntervalSeconds;
             base.CloudLocalizationTemporalFusionWindowSize = _CloudLocalizationTemporalFusionWindowSize;
             base.DiagnosticsEnabled = _DiagnosticsEnabled;
 #endif
+
+            // This will set the config based on the previously applied settings
             base.OnBeforeStart();
         }
 

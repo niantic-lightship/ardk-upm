@@ -24,34 +24,6 @@ namespace Niantic.Lightship.AR.Utilities
             }
         }
 
-        // Translates Unity Input's DeviceOrientation enum into the corresponding Lightship values
-        // defined in orientation.h
-        public static uint FromUnityToArdk(this DeviceOrientation orientation)
-        {
-            switch (orientation)
-            {
-                case DeviceOrientation.Unknown:
-                    return 0; // Unknown
-                case DeviceOrientation.Portrait:
-                    return 1; // Portrait
-                case DeviceOrientation.PortraitUpsideDown:
-                    return 2; // PortraitUpsideDown
-                case DeviceOrientation.LandscapeLeft:
-                    return 4; // LandscapeLeft
-                case DeviceOrientation.LandscapeRight:
-                    return 3; // LandscapeRight
-                //NOTE: we default to portrait orientation in face down/up mode because we don't
-                //have enough information about the last valid orientation.
-                //TODO: Implement a better way to track the last valid orientation.
-                case DeviceOrientation.FaceUp:
-                    return 1; // Portrait
-                case DeviceOrientation.FaceDown:
-                    return 1; // Portrait
-                default:
-                    return 0;
-            }
-        }
-
         // Translates Unity's ScreenOrientation enum into the corresponding Lightship values
         // defined in orientation.h
         public static uint FromUnityToArdk(this ScreenOrientation orientation)

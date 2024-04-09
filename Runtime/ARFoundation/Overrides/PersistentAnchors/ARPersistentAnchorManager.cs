@@ -78,29 +78,135 @@ namespace Niantic.Lightship.AR.PersistentAnchors
         internal Dictionary<TrackableId, ARPersistentAnchor> PendingAdds => m_PendingAdds;
 
         private Dictionary<ARPersistentAnchor, TrackingState> _arPersistentAnchorStates = new();
-        private bool _isMock;
         private bool _isInitialLocalization = false;
         private ARPersistentAnchorTelemetrySidecar _telemetrySidecar;
-        private MockARPersistentAnchorManagerImplementation _mockARPersistentAnchorManagerImplementation;
 
         /// <summary>
         /// The prefab to use when creating an ARPersistentAnchor.  If null, a new GameObject will be created.
         /// </summary>
         protected override GameObject GetPrefab() => _defaultAnchorGameobject;
 
+        // Flag for enabling Unity interpolation of anchors
+        // This is now deprecated for native interpolation (transform update smoothing)
         protected bool InterpolateAnchors = false;
 
-        protected bool ContinuousLocalizationEnabled = XRPersistentAnchorConfiguration.DefaultContinuousLocalizationEnabled;
-        protected bool TemporalFusionEnabled = XRPersistentAnchorConfiguration.DefaultTemporalFusionEnabled;
-        protected float CloudLocalizerMaxRequestsPerSecond = XRPersistentAnchorConfiguration.DefaultCloudLocalizerMaxRequestsPerSecond;
-        protected uint CloudLocalizationTemporalFusionWindowSize = XRPersistentAnchorConfiguration.DefaultCloudLocalizationTemporalFusionWindowSize;
-        protected bool DiagnosticsEnabled = XRPersistentAnchorConfiguration.DefaultDiagnosticsEnabled;
+        private bool _continuousLocalizationEnabled = XRPersistentAnchorConfiguration.DefaultContinuousLocalizationEnabled;
+        protected bool ContinuousLocalizationEnabled
+        {
+            get => _continuousLocalizationEnabled;
+            set
+            {
+                if (subsystem.running)
+                {
+                    Log.Warning("Configured ContinuousLocalizationEnabled while the subsystem is running." +
+                                "Stop the subsystem and set the CurrentConfiguration instead.");
+
+                }
+                _continuousLocalizationEnabled = value;
+            }
+        }
+
+        private bool _temporalFusionEnabled = XRPersistentAnchorConfiguration.DefaultTemporalFusionEnabled;
+        protected bool TemporalFusionEnabled
+        {
+            get => _temporalFusionEnabled;
+            set
+            {
+                if (subsystem.running)
+                {
+                    Log.Warning("Configured TemporalFusionEnabled while the subsystem is running." +
+                                "Stop the subsystem and set the CurrentConfiguration instead.");
+
+                }
+                _temporalFusionEnabled = value;
+            }
+        }
+
+        private bool _transformUpdateSmoothingEnabled = XRPersistentAnchorConfiguration.DefaultTransformUpdateSmoothingEnabled;
+        protected bool TransformUpdateSmoothingEnabled
+        {
+            get => _transformUpdateSmoothingEnabled;
+            set
+            {
+                if (subsystem.running)
+                {
+                    Log.Warning("Configured TransformUpdateSmoothingEnabled while the subsystem is running." +
+                                "Stop the subsystem and set the CurrentConfiguration instead.");
+
+                }
+                _transformUpdateSmoothingEnabled = value;
+            }
+        }
+
+        private float _cloudLocalizerInitialRequestsPerSecond = XRPersistentAnchorConfiguration.DefaultCloudLocalizerInitialRequestsPerSecond;
+        protected float CloudLocalizerInitialRequestsPerSecond
+        {
+            get => _cloudLocalizerInitialRequestsPerSecond;
+            set
+            {
+                if (subsystem.running)
+                {
+                    Log.Warning("Configured CloudLocalizerInitialRequestsPerSecond while the subsystem is running." +
+                                "Stop the subsystem and set the CurrentConfiguration instead.");
+
+                }
+                _cloudLocalizerInitialRequestsPerSecond = value;
+            }
+        }
+
+        private float _cloudLocalizerContinuousRequestsPerSecond = XRPersistentAnchorConfiguration.DefaultCloudLocalizerContinuousRequestsPerSecond;
+        protected float CloudLocalizerContinuousRequestsPerSecond
+        {
+            get => _cloudLocalizerContinuousRequestsPerSecond;
+            set
+            {
+                if (subsystem.running)
+                {
+                    Log.Warning("Configured CloudLocalizerMaxRequestsPerSecond while the subsystem is running." +
+                        "Stop the subsystem and set the CurrentConfiguration instead.");
+
+                }
+                _cloudLocalizerContinuousRequestsPerSecond = value;
+            }
+        }
+
+        private uint _cloudLocalizationTemporalFusionWindowSize = XRPersistentAnchorConfiguration.DefaultCloudLocalizationTemporalFusionWindowSize;
+        protected uint CloudLocalizationTemporalFusionWindowSize
+        {
+            get => _cloudLocalizationTemporalFusionWindowSize;
+            set
+            {
+                if (subsystem.running)
+                {
+                    Log.Warning("Configured CloudLocalizationTemporalFusionWindowSize while the subsystem is running." +
+                                "Stop the subsystem and set the CurrentConfiguration instead.");
+
+                }
+                _cloudLocalizationTemporalFusionWindowSize = value;
+            }
+        }
+
+        private bool _diagnosticsEnabled = XRPersistentAnchorConfiguration.DefaultDiagnosticsEnabled;
+        protected bool DiagnosticsEnabled
+        {
+            get => _diagnosticsEnabled;
+            set
+            {
+                if (subsystem.running)
+                {
+                    Log.Warning("Configured DiagnosticsEnabled while the subsystem is running." +
+                                "Stop the subsystem and set the CurrentConfiguration instead.");
+
+                }
+                _diagnosticsEnabled = value;
+            }
+        }
 
         internal GameObject DefaultAnchorPrefab
         {
             get => _defaultAnchorGameobject;
         }
-        
+
         protected override void OnEnable()
         {
             base.OnEnable();
@@ -116,15 +222,6 @@ namespace Niantic.Lightship.AR.PersistentAnchors
                 Instance = this;
             }
 
-            // Temporary solution to support mock while simulation is WIP
-            var shouldUseEditorMock = ShouldUseEditorMock();
-            _isMock = subsystem.IsMockProvider;
-            if(shouldUseEditorMock && !_isMock)
-            {
-                _mockARPersistentAnchorManagerImplementation = new MockARPersistentAnchorManagerImplementation(this);
-                _isMock = true;
-            }
-            
             InitializeTelemetry();
         }
 
@@ -133,7 +230,9 @@ namespace Niantic.Lightship.AR.PersistentAnchors
             XRPersistentAnchorConfiguration cfg = new();
             cfg.ContinuousLocalizationEnabled = ContinuousLocalizationEnabled;
             cfg.TemporalFusionEnabled = TemporalFusionEnabled;
-            cfg.CloudLocalizerMaxRequestsPerSecond = CloudLocalizerMaxRequestsPerSecond;
+            cfg.TransformUpdateSmoothingEnabled = TransformUpdateSmoothingEnabled;
+            cfg.CloudLocalizerInitialRequestsPerSecond = CloudLocalizerInitialRequestsPerSecond;
+            cfg.CloudLocalizerContinuousRequestsPerSecond = CloudLocalizerContinuousRequestsPerSecond;
             cfg.CloudLocalizationTemporalFusionWindowSize = CloudLocalizationTemporalFusionWindowSize;
             cfg.DiagnosticsEnabled = DiagnosticsEnabled;
             subsystem.CurrentConfiguration = cfg;
@@ -145,7 +244,7 @@ namespace Niantic.Lightship.AR.PersistentAnchors
             {
                 subsystem.OnSubsystemStop += OnSubsystemStop;
             }
-            
+
             RequestLocationPermission();
         }
 
@@ -160,14 +259,6 @@ namespace Niantic.Lightship.AR.PersistentAnchors
               Instance = null;
             }
 
-            if (_mockARPersistentAnchorManagerImplementation != null)
-            {
-                _mockARPersistentAnchorManagerImplementation.Dispose();
-                _mockARPersistentAnchorManagerImplementation = null;
-            }
-
-            _isMock = false;
-            
             base.OnDisable();
         }
 
@@ -197,9 +288,10 @@ namespace Niantic.Lightship.AR.PersistentAnchors
         /// </returns>
         public bool GetVpsSessionId(out string vpsSessionId)
         {
-            if (_isMock && _mockARPersistentAnchorManagerImplementation != null)
+            if (subsystem == null)
             {
-                return _mockARPersistentAnchorManagerImplementation.GetVpsSessionId(out vpsSessionId); 
+                vpsSessionId = null;
+                return false;
             }
 
             return subsystem.GetVpsSessionId(out vpsSessionId);
@@ -218,17 +310,12 @@ namespace Niantic.Lightship.AR.PersistentAnchors
         /// </returns>
         public bool TryTrackAnchor(ARPersistentAnchorPayload payload, out ARPersistentAnchor arPersistentAnchor)
         {
-            if( _isMock && _mockARPersistentAnchorManagerImplementation != null)
-            {
-                return _mockARPersistentAnchorManagerImplementation.TryTrackAnchor(this, payload, out arPersistentAnchor);
-            }
-            
             if (subsystem == null || !subsystem.running)
             {
                 arPersistentAnchor = default;
                 return false;
             }
-            
+
             var data = payload.Data;
             var dataNativeArray = new NativeArray<byte>(data, Allocator.Temp);
             IntPtr payloadIntPtr;
@@ -259,16 +346,11 @@ namespace Niantic.Lightship.AR.PersistentAnchors
         /// <param name="arPersistentAnchor">The anchor to destroy</param>
         public void DestroyAnchor(ARPersistentAnchor arPersistentAnchor)
         {
-            if (_isMock && _mockARPersistentAnchorManagerImplementation != null)
-            {
-                _mockARPersistentAnchorManagerImplementation.DestroyAnchor(this, arPersistentAnchor);
-                return;
-            }
-
             if (subsystem == null)
             {
                 return;
             }
+
             var trackableId = arPersistentAnchor.trackableId;
             bool success = subsystem.TryRemoveAnchor(trackableId);
             if (PendingAdds.ContainsKey(trackableId))
@@ -431,7 +513,7 @@ namespace Niantic.Lightship.AR.PersistentAnchors
             get
             {
                 string id;
-                
+
                 GetVpsSessionId(out id);
                 return id;
             }
@@ -455,7 +537,7 @@ namespace Niantic.Lightship.AR.PersistentAnchors
         private void HandleTelemetryForUpdatedAnchor(ARPersistentAnchor updatedAnchor)
         {
             // If this is a mock, don't emit telemetry
-            if (_isMock)
+            if (subsystem == null || subsystem.IsMockProvider)
             {
                 return;
             }
@@ -484,7 +566,7 @@ namespace Niantic.Lightship.AR.PersistentAnchors
         private void HandleTelemetryForAddedAnchor(ARPersistentAnchor addedAnchor)
         {
             // If this is a mock, don't emit telemetry
-            if (_isMock)
+            if (subsystem == null || subsystem.IsMockProvider)
             {
                 return;
             }
@@ -517,28 +599,12 @@ namespace Niantic.Lightship.AR.PersistentAnchors
         {
             _isInitialLocalization = false;
 
-            if (_isMock)
+            if (subsystem == null || subsystem.IsMockProvider)
             {
                 return;
             }
 
             _telemetrySidecar.SessionEnded();
-        }
-
-        private bool ShouldUseEditorMock()
-        {
-#if UNITY_EDITOR
-            if (LightshipUnityContext.ActiveSettings.UsePlayback)
-            {
-                return false;
-            }
-            else
-            {
-                return true;
-            }
-#else
-            return false;
-#endif
         }
     }
 }

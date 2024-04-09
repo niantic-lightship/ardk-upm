@@ -74,6 +74,11 @@ namespace Niantic.Lightship.AR.PAM
             return true;
         }
 
+        public override ScreenOrientation GetScreenOrientation()
+        {
+            return ScreenOrientation.Portrait;
+        }
+
         public override TrackingState GetTrackingState()
         {
             return TrackingState.Tracking;

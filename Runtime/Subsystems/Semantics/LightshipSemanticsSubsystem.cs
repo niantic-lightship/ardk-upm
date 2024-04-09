@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.Core;
+using Niantic.Lightship.AR.Subsystems.Playback;
 using Niantic.Lightship.AR.XRSubsystems;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
@@ -90,6 +91,7 @@ namespace Niantic.Lightship.AR.Subsystems.Semantics
             private const float _useDefaultConfidenceThreshold = -1.0f;
 
             private List<string> _channelNames = new();
+            private List<string> _suppressionMaskChannels = new();
 
             public LightshipSemanticsProvider() : this(new NativeApi()) { }
 
@@ -113,7 +115,20 @@ namespace Niantic.Lightship.AR.Subsystems.Semantics
                     if (_targetFrameRate != value)
                     {
                         _targetFrameRate = value;
-                        ConfigureTargetFrameRate();
+                        ConfigureProvider();
+                    }
+                }
+            }
+
+            public override List<string> SuppressionMaskChannels
+            {
+                get => _suppressionMaskChannels;
+                set
+                {
+                    if (_suppressionMaskChannels != value)
+                    {
+                        _suppressionMaskChannels = value;
+                        ConfigureProvider();
                     }
                 }
             }
@@ -236,6 +251,7 @@ namespace Niantic.Lightship.AR.Subsystems.Semantics
                     _nativeProviderHandle,
                     channelName,
                     cameraParams,
+                    InputReader.CurrentPose,
                     out semanticChannelDescriptor,
                     out samplerMatrix
                 );
@@ -266,7 +282,16 @@ namespace Niantic.Lightship.AR.Subsystems.Semantics
                     return false;
                 }
 
-                return _api.TryAcquireSemanticChannelCpuImage(_nativeProviderHandle, channelName, cameraParams, out cpuImage, out samplerMatrix);
+                return
+                    _api.TryAcquireSemanticChannelCpuImage
+                    (
+                        _nativeProviderHandle,
+                        channelName,
+                        cameraParams,
+                        InputReader.CurrentPose,
+                        out cpuImage,
+                        out samplerMatrix
+                    );
             }
 
             /// <summary>
@@ -294,7 +319,15 @@ namespace Niantic.Lightship.AR.Subsystems.Semantics
                     return false;
                 }
 
-                return _api.TryGetPackedSemanticChannels(_nativeProviderHandle, cameraParams, out packedSemanticsDescriptor, out samplerMatrix);
+                return
+                    _api.TryGetPackedSemanticChannels
+                    (
+                        _nativeProviderHandle,
+                        cameraParams,
+                        InputReader.CurrentPose,
+                        out packedSemanticsDescriptor,
+                        out samplerMatrix
+                    );
             }
 
             /// <summary>
@@ -320,7 +353,82 @@ namespace Niantic.Lightship.AR.Subsystems.Semantics
                     return false;
                 }
 
-                return _api.TryAcquirePackedSemanticChannelsCpuImage(_nativeProviderHandle, cameraParams, out cpuImage, out samplerMatrix);
+                return
+                    _api.TryAcquirePackedSemanticChannelsCpuImage
+                    (
+                        _nativeProviderHandle,
+                        cameraParams,
+                        InputReader.CurrentPose,
+                        out cpuImage,
+                        out samplerMatrix
+                    );
+            }
+
+
+            /// <summary>
+            /// Tries to get the suppression mask texture already computed from the latest semantics.
+            /// </summary>
+            /// <param name="suppressionMaskDescriptor">The suppression mask texture descriptor to be populated, if available from the provider.</param>
+            /// <param name="samplerMatrix">A matrix that converts from viewport to texture coordinates</param>
+            /// <param name="cameraParams">Describes the viewport</param>
+            /// <returns>
+            /// <c>true</c> if the suppression mask texture descriptor is available and is returned. Otherwise, <c>false</c>.
+            /// </returns>
+            public override bool TryGetSuppressionMaskTexture
+            (
+                out XRTextureDescriptor suppressionMaskDescriptor,
+                out Matrix4x4 samplerMatrix,
+                XRCameraParams? cameraParams = null
+            )
+            {
+                if (!_nativeProviderHandle.IsValidHandle())
+                {
+                    suppressionMaskDescriptor = default;
+                    samplerMatrix = Matrix4x4.identity;
+                    return false;
+                }
+
+                return _api.TryGetSuppressionMaskTexture
+                (
+                    _nativeProviderHandle,
+                    cameraParams,
+                    InputReader.CurrentPose,
+                    out suppressionMaskDescriptor,
+                    out samplerMatrix
+                );
+            }
+
+            /// <summary>
+            /// Try to acquire the suppression mask XRCpuImage.
+            /// </summary>
+            /// <param name="cpuImage">If the method returns 'true', an acquired <see cref="XRCpuImage"/>. The XRCpuImage must be disposed by the caller.</param>
+            /// <param name="samplerMatrix">A matrix that converts from viewport to texture coordinates.</param>
+            /// <param name="cameraParams">Describes the viewport.</param>
+            /// <returns>True if the XRCpuImage is acquired. Otherwise, false</returns>
+            public override bool TryAcquireSuppressionMaskCpuImage
+            (
+                out XRCpuImage cpuImage,
+                out Matrix4x4 samplerMatrix,
+                XRCameraParams? cameraParams = null
+            )
+            {
+                cpuImage = default;
+                samplerMatrix = default;
+
+                if (!_nativeProviderHandle.IsValidHandle())
+                {
+                    return false;
+                }
+
+                return
+                    _api.TryAcquireSuppressionMaskCpuImage
+                    (
+                        _nativeProviderHandle,
+                        cameraParams,
+                        InputReader.CurrentPose,
+                        out cpuImage,
+                        out samplerMatrix
+                    );
             }
 
             /// <summary>
@@ -348,7 +456,7 @@ namespace Niantic.Lightship.AR.Subsystems.Semantics
                     return;
                 }
                 // This should be changed to ConfigureProvider() when TODO [ARDK-737] is completed
-                ConfigureTargetFrameRate();
+                ConfigureProvider();
 
                 _api.Start(_nativeProviderHandle);
             }
@@ -371,12 +479,13 @@ namespace Niantic.Lightship.AR.Subsystems.Semantics
             /// </summary>
             public override void Destroy()
             {
+                _channelNames = new List<string>();
+
                 if (!_nativeProviderHandle.IsValidHandle())
                 {
                     return;
                 }
 
-                _channelNames = new List<string>();
                 _api.Destruct(_nativeProviderHandle);
                 _nativeProviderHandle = IntPtr.Zero;
             }
@@ -387,7 +496,7 @@ namespace Niantic.Lightship.AR.Subsystems.Semantics
             // For now, passing on a thresholds list of size = 0 doesn't matter because of the
             // bug [ARDK-653] where thresholds are never configured.
             // Additionally, bug [ARDK-986] means Configure calls are ignored if model initialization is in progress.
-            private void ConfigureTargetFrameRate()
+            private void ConfigureProvider()
             {
                 if (!_nativeProviderHandle.IsValidHandle())
                 {
@@ -399,7 +508,8 @@ namespace Niantic.Lightship.AR.Subsystems.Semantics
                     _nativeProviderHandle,
                     TargetFrameRate,
                     0,
-                    IntPtr.Zero
+                    IntPtr.Zero,
+                    SuppressionMaskChannels
                 );
             }
 
@@ -466,7 +576,7 @@ namespace Niantic.Lightship.AR.Subsystems.Semantics
                 // Set config values
                 unsafe
                 {
-                    _api.Configure(_nativeProviderHandle, TargetFrameRate, (uint) confidenceList.Length, (IntPtr) confidenceList.GetUnsafePtr());
+                    _api.Configure(_nativeProviderHandle, TargetFrameRate, (uint) confidenceList.Length, (IntPtr) confidenceList.GetUnsafePtr(), SuppressionMaskChannels);
                 }
 
                 confidenceList.Dispose();
@@ -503,7 +613,7 @@ namespace Niantic.Lightship.AR.Subsystems.Semantics
 
                 unsafe
                 {
-                    _api.Configure(_nativeProviderHandle, TargetFrameRate, (uint) confidenceList.Length, (IntPtr) confidenceList.GetUnsafePtr());
+                    _api.Configure(_nativeProviderHandle, TargetFrameRate, (uint) confidenceList.Length, (IntPtr) confidenceList.GetUnsafePtr(), SuppressionMaskChannels);
                 }
 
                 confidenceList.Dispose();

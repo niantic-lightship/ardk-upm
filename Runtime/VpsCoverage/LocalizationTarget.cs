@@ -43,18 +43,18 @@ namespace Niantic.Lightship.AR.VpsCoverage
         }
 
         /// Unique identifier of the LocalizationTarget.
-        public string Identifier => _identifier;
+        public readonly string Identifier => _identifier;
 
         /// Geolocation of the LocalizationTarget.
-        public LatLng Center => _center;
+        public readonly LatLng Center => _center;
 
         /// Name of the LocalizationTarget.
-        public string Name => _name;
+        public readonly string Name => _name;
 
         /// Url where hint image is stored.
-        public string ImageURL => _imageURL;
+        public readonly string ImageURL => _imageURL;
 
         /// Default anchor.
-        public string DefaultAnchor => _defaultAnchor;
+        public readonly string DefaultAnchor => _defaultAnchor;
     }
 }

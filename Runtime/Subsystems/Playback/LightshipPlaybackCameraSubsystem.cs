@@ -197,7 +197,12 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
 
             public override bool TryGetFrame(XRCameraParams cameraParams, out XRCameraFrame cameraFrame)
             {
-                cameraParams.screenOrientation = GameViewUtils.GetGameViewAspectRatio(cameraParams);
+#if UNITY_EDITOR
+                // The Screen.orientation value passed in when the ARCameraManager invokes this method is not
+                // valid in Editor. Hence we have to override it.
+                cameraParams.screenOrientation = GameViewUtils.GetEditorScreenOrientation();
+#endif
+
                 var frame = _datasetReader.CurrFrame;
                 if (frame == null)
                 {

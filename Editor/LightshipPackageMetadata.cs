@@ -25,30 +25,37 @@ namespace Niantic.Lightship.AR.Editor
             public List<IXRLoaderMetadata> loaderMetadata { get; set; }
         }
 
-        private static IXRPackageMetadata s_Metadata = new LightshipPackageMetadata()
+        private static IXRPackageMetadata s_Metadata = new LightshipPackageMetadata
         {
             packageName = LightshipPackageInfo.displayName,
             packageId = LightshipPackageInfo.identifier,
             settingsType = typeof(LightshipSettings).FullName,
-            loaderMetadata = new List<IXRLoaderMetadata>()
+            loaderMetadata = new List<IXRLoaderMetadata>
             {
-                new LightshipLoaderMetadata()
+                new LightshipLoaderMetadata
                 {
-                    loaderName = "Niantic Lightship SDK",
+                    loaderName = "Niantic Lightship SDK for Unity Editor",
                     loaderType = typeof(LightshipStandaloneLoader).FullName,
+                    supportedBuildTargets = new List<BuildTargetGroup> { BuildTargetGroup.Standalone }
+                },
+                new LightshipLoaderMetadata
+                {
+                    loaderName = "Niantic Lightship Simulation",
+                    loaderType = typeof(LightshipSimulationLoader).FullName,
                     supportedBuildTargets = new List<BuildTargetGroup>() { BuildTargetGroup.Standalone, }
                 },
+
                 new LightshipLoaderMetadata()
                 {
                     loaderName = "Niantic Lightship SDK + Google ARCore",
                     loaderType = typeof(LightshipARCoreLoader).FullName,
-                    supportedBuildTargets = new List<BuildTargetGroup>() { BuildTargetGroup.Android, }
+                    supportedBuildTargets = new List<BuildTargetGroup> { BuildTargetGroup.Android }
                 },
-                new LightshipLoaderMetadata()
+                new LightshipLoaderMetadata
                 {
                     loaderName = "Niantic Lightship SDK + Apple ARKit",
                     loaderType = typeof(LightshipARKitLoader).FullName,
-                    supportedBuildTargets = new List<BuildTargetGroup>() { BuildTargetGroup.iOS, }
+                    supportedBuildTargets = new List<BuildTargetGroup> { BuildTargetGroup.iOS }
                 }
             }
         };

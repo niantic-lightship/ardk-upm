@@ -63,6 +63,19 @@ namespace Niantic.Lightship.AR.Utilities
             }
         }
 
+        // Cache the current thread as the main thread for testing
+        internal static void CacheThreadForTesting(Thread thread)
+        {
+            // If the main thread has already been cached, don't allow it to be overwritten
+            // Unless we are resetting the thread to null
+            if (s_mainThread != null && thread != null)
+            {
+                return;
+            }
+
+            s_mainThread = thread;
+        }
+
         // Returns true if we can verify the caller is on the main thread
         // If no thread has been cached, return false
         internal static bool IsMainThread()

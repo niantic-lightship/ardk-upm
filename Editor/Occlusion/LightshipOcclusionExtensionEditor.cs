@@ -16,6 +16,7 @@ namespace Niantic.Lightship.AR.Editor
     {
         private SerializedProperty _targetFrameRate;
 
+        private SerializedProperty _bypassManagerUpdates;
         private SerializedProperty _optimalOcclusionDistanceMode;
         private SerializedProperty _principalOccludee;
 
@@ -28,6 +29,8 @@ namespace Niantic.Lightship.AR.Editor
 
         private SerializedProperty _useCustomBackgroundMaterial;
         private SerializedProperty _customBackgroundMaterial;
+
+        private SerializedProperty _smoothEdgePreferred;
 
         private static class Contents
         {
@@ -66,6 +69,8 @@ namespace Niantic.Lightship.AR.Editor
             if (occlusionManager.requestedOcclusionPreferenceMode !=
                 UnityEngine.XR.ARSubsystems.OcclusionPreferenceMode.NoOcclusion)
             {
+                EditorGUILayout.LabelField("Bypass Occlusion Manager Updates", EditorStyles.boldLabel);
+                EditorGUILayout.PropertyField(_bypassManagerUpdates,Contents.enabledLabel);
                 EditorGUILayout.LabelField("Optimal Occlusion", EditorStyles.boldLabel);
                 EditorGUILayout.PropertyField(_optimalOcclusionDistanceMode, Contents.modeLabel);
                 if (_optimalOcclusionDistanceMode.enumValueIndex == (int)LightshipOcclusionExtension.OptimalOcclusionDistanceMode.SpecifiedGameObject)
@@ -139,6 +144,12 @@ namespace Niantic.Lightship.AR.Editor
                         EditorGUILayout.PropertyField(_customBackgroundMaterial);
                         --EditorGUI.indentLevel;
                     }
+                    else
+                    {
+                        _customBackgroundMaterial.objectReferenceValue = null;
+                    }
+
+                    EditorGUILayout.PropertyField(_smoothEdgePreferred);
                 }
             }
 
@@ -148,6 +159,7 @@ namespace Niantic.Lightship.AR.Editor
         private void OnEnable()
         {
             _targetFrameRate = serializedObject.FindProperty("_targetFrameRate");
+            _bypassManagerUpdates = serializedObject.FindProperty("_bypassOcclusionManagerUpdates");
             _optimalOcclusionDistanceMode = serializedObject.FindProperty("_optimalOcclusionDistanceMode");
             _principalOccludee = serializedObject.FindProperty("_principalOccludee");
             _isOcclusionSuppressionEnabled = serializedObject.FindProperty("_isOcclusionSuppressionEnabled");
@@ -157,6 +169,7 @@ namespace Niantic.Lightship.AR.Editor
             _meshManager = serializedObject.FindProperty("_meshManager");
             _useCustomBackgroundMaterial = serializedObject.FindProperty("_useCustomBackgroundMaterial");
             _customBackgroundMaterial = serializedObject.FindProperty("_customBackgroundMaterial");
+            _smoothEdgePreferred = serializedObject.FindProperty("_preferSmoothEdges");
         }
     }
 }

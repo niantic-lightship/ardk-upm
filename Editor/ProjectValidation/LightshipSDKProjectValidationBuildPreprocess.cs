@@ -1,11 +1,11 @@
 // Copyright 2022-2024 Niantic.
 
+using System.Collections.Generic;
 using Niantic.Lightship.AR.Utilities.Logging;
 using UnityEditor;
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
 using UnityEditor.Callbacks;
-using UnityEngine;
 
 namespace Niantic.Lightship.AR.Editor
 {
@@ -32,24 +32,52 @@ namespace Niantic.Lightship.AR.Editor
                 return;
             }
 
-            bool ruleFailed = false;
+            bool anyRuleFailed = false;
+            bool errorRuleFailed = false;
+            List<string> warnings = new List<string>();
             foreach (var rule in LightshipSDKProjectValidationRules.PlatformRules[platformGroup])
             {
-                if (rule.IsRuleEnabled.Invoke() && rule.Error && !rule.CheckPredicate.Invoke())
+                if (rule.IsRuleEnabled.Invoke() && !rule.CheckPredicate.Invoke())
                 {
-                    Log.Error($"Lightship SDK Project Validation failed: '{rule.Message}'. See Project Validation window for more details.");
-                    ruleFailed = true;
+                    if (rule.Error)
+                    {
+                        Log.Error
+                        (
+                            $"Lightship SDK Project Validation failed: '{rule.Message}'. See Project Validation window for more details."
+                        );
+                        errorRuleFailed = true;
+                    }
+                    else
+                    {
+                        warnings.Add($"Lightship SDK Project Validation warning: '{rule.Message}'. See Project Validation window for more details.");
+                    }
+
+                    anyRuleFailed = true;
                 }
             }
 
-            if (ruleFailed)
+            if (anyRuleFailed)
             {
-                throw new BuildFailedException("Lightship SDK build failed. All errors in Project Validation must be fixed.");
+                EditorApplication.delayCall += () =>
+                {
+                    GoToProjectValidation();
+                    foreach (string warning in warnings)
+                    {
+                        Log.Warning(warning);
+                    }
+                };
+            }
+            if (errorRuleFailed)
+            {
+                throw new BuildFailedException
+                (
+                    "Lightship SDK build failed. All errors in Project Validation must be fixed."
+                );
             }
         }
 
         [OnOpenAsset(0)]
-        private static bool GoToProjectValidation(int instanceId, int line)
+        private static bool OnDoubleClicked(int instanceId, int line)
         {
             // If the user double clicks on an error from this script, open the Project Validation window
             if (EditorUtility.InstanceIDToObject(instanceId).name != "LightshipSDKProjectValidationBuildPreprocess" ||
@@ -58,11 +86,16 @@ namespace Niantic.Lightship.AR.Editor
                 return false;
             }
 
+            GoToProjectValidation();
+            return true;
+        }
+
+        private static void GoToProjectValidation()
+        {
             EditorApplication.delayCall += () =>
             {
                 SettingsService.OpenProjectSettings("Project/XR Plug-in Management/Project Validation");
             };
-            return true;
         }
     }
 }

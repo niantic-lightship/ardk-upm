@@ -13,7 +13,7 @@ namespace Niantic.Lightship.AR.PAM
     {
         // An Id to identify the current frame, this Id is promised to be different
         // across frames within the same run.
-        public UInt64 FrameId;
+        public UInt32 FrameId;
 
         // Timestamp in milliseconds that the frame's pose and camera images were generated
         public UInt64 TimestampMs;
@@ -24,8 +24,12 @@ namespace Niantic.Lightship.AR.PAM
         // Length of the pose array.
         public UInt32 CameraPoseLength;
 
-        // Device orientation of current frame. See orientation.h for definitions.
-        public UInt32 DeviceOrientation;
+        // Orientation of current frame. See orientation.h for definitions, and use the method
+        // XREnumConversions.FromUnityToArdk(orientation) to calculate the correct int value.
+        // Note: It's called "kDeviceOrientation" in "data_format.h", but based on how the ARDK_Orientation enum is
+        // defined in C++, it more aptly corresponds to Unity's "ScreenOrientation," which excludes FaceDown and FaceUp
+        // as possible values, instead returning the last known screen orientation when those device orientations occur.
+        public UInt32 ScreenOrientation;
 
         // Tracking state of current frame. See tracking_state.h for definitions.
         public UInt32 TrackingState;

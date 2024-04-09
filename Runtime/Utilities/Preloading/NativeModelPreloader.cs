@@ -14,6 +14,7 @@ namespace Niantic.Lightship.AR.Utilities.Preloading
         [Description("Lightship Depth")] Depth,
         [Description("Lightship Semantic Segmentation")] Semantics,
         [Description("Lightship Scanning Framework")] Scanning,
+        [Description("Lightship Object Detection")] ObjectDetection
     }
 
     internal sealed class NativeModelPreloader: IModelPreloader
@@ -49,6 +50,11 @@ namespace Niantic.Lightship.AR.Utilities.Preloading
             return DownloadModel(Feature.Semantics, (byte) semanticsMode);
         }
 
+        public override PreloaderStatusCode DownloadModel(ObjectDetectionMode objectDetectionMode)
+        {
+            return DownloadModel(Feature.ObjectDetection, (byte)objectDetectionMode);
+        }
+
         private PreloaderStatusCode DownloadModel(Feature feature, byte mode)
         {
             if (!_nativeHandle.IsValidHandle())
@@ -69,6 +75,11 @@ namespace Niantic.Lightship.AR.Utilities.Preloading
             return RegisterModel(Feature.Semantics, (byte) semanticsMode, filepath);
         }
 
+        public override PreloaderStatusCode RegisterModel(ObjectDetectionMode objectDetectionMode, string filepath)
+        {
+            return RegisterModel(Feature.ObjectDetection, (byte)objectDetectionMode, filepath);
+        }
+
         private PreloaderStatusCode RegisterModel(Feature feature, byte mode, string filepath)
         {
             if (!_nativeHandle.IsValidHandle())
@@ -87,6 +98,11 @@ namespace Niantic.Lightship.AR.Utilities.Preloading
         public override PreloaderStatusCode CurrentProgress(SemanticsMode semanticsMode, out float progress)
         {
             return CurrentProgress(Feature.Semantics, (byte) semanticsMode, out progress);
+        }
+
+        public override PreloaderStatusCode CurrentProgress(ObjectDetectionMode objectDetectionMode, out float progress)
+        {
+            return CurrentProgress(Feature.ObjectDetection, (byte)objectDetectionMode, out progress);
         }
 
         private PreloaderStatusCode CurrentProgress(Feature feature, byte mode, out float progress)
@@ -110,6 +126,11 @@ namespace Niantic.Lightship.AR.Utilities.Preloading
             return ExistsInCache(Feature.Semantics, (byte) semanticsMode);
         }
 
+        public override bool ExistsInCache(ObjectDetectionMode objectDetectionMode)
+        {
+            return ExistsInCache(Feature.ObjectDetection, (byte)objectDetectionMode);
+        }
+
         private bool ExistsInCache(Feature feature, byte mode)
         {
             if (!_nativeHandle.IsValidHandle())
@@ -128,6 +149,11 @@ namespace Niantic.Lightship.AR.Utilities.Preloading
         public override bool ClearFromCache(SemanticsMode semanticsMode)
         {
             return ClearFromCache(Feature.Semantics, (byte) semanticsMode);
+        }
+
+        public override bool ClearFromCache(ObjectDetectionMode objectDetectionMode)
+        {
+            return ClearFromCache(Feature.ObjectDetection, (byte)objectDetectionMode);
         }
 
         private bool ClearFromCache(Feature feature, byte mode)

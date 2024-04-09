@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.Core;
 using Niantic.Lightship.AR.Subsystems.Meshing;
+using Niantic.Lightship.AR.Subsystems.ObjectDetection;
 using Niantic.Lightship.AR.Subsystems.Scanning;
 using Niantic.Lightship.AR.Subsystems.Semantics;
 using Niantic.Lightship.AR.Subsystems.PersistentAnchor;
@@ -22,9 +23,9 @@ namespace Niantic.Lightship.AR.Loader
         private readonly List<XRMeshSubsystemDescriptor> _meshingSubsystemDescriptors = new();
         private readonly List<XRObjectDetectionSubsystemDescriptor> _objectDetectionSubsystemDescriptors = new();
 
-        internal bool Initialize(ILightshipInternalLoaderSupport loader, LightshipSettings settings, bool isLidarSupported, bool isTest)
+        internal bool Initialize(ILightshipInternalLoaderSupport loader, LightshipSettings settings, bool isLidarSupported)
         {
-            LightshipUnityContext.Initialize(settings, isLidarSupported, isTest);
+            LightshipUnityContext.Initialize(settings, isLidarSupported, settings.TestSettings.DisableTelemetry);
 
             Log.Info("Initialize native subsystems");
 
@@ -89,9 +90,9 @@ namespace Niantic.Lightship.AR.Loader
                 );
             }
 
-
             if (settings.UseLightshipObjectDetection)
             {
+                Log.Info("Creating " + nameof(LightshipObjectDetectionSubsystem));
                 loader.CreateSubsystem<XRObjectDetectionSubsystemDescriptor, XRObjectDetectionSubsystem>
                 (
                     _objectDetectionSubsystemDescriptors,

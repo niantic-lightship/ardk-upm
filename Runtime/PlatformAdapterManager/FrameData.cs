@@ -22,7 +22,7 @@ namespace Niantic.Lightship.AR.PAM
         private NativeArray<float> _rgba256x144CameraIntrinsicsData;
         private readonly Vector2Int _rgba256x144ImageResolution =
             new(DataFormatConstants.Rgba_256_144_ImgWidth, DataFormatConstants.Rgba_256_144_ImgHeight);
-        
+
         // RGB 256x256 image data
         private NativeArray<byte> _rgb256x256ImageData;
         private NativeArray<float> _rgb256x256CameraIntrinsicsData;
@@ -86,7 +86,7 @@ namespace Niantic.Lightship.AR.PAM
         {
             set => _frameCStruct.CpuRgba256x144ImageDataLength = value;
         }
-        
+
         public Vector2Int Rgb256x256ImageResolution => _rgb256x256ImageResolution;
 
         public NativeArray<float> Rgb256x256CameraIntrinsicsData => _rgb256x256CameraIntrinsicsData;
@@ -202,9 +202,9 @@ namespace Niantic.Lightship.AR.PAM
             set => _frameCStruct.CameraPoseLength = value;
         }
 
-        public UInt32 DeviceOrientation
+        public UInt32 ScreenOrientation
         {
-            set => _frameCStruct.DeviceOrientation = value;
+            set => _frameCStruct.ScreenOrientation = value;
         }
 
         public UInt32 TrackingState
@@ -221,7 +221,7 @@ namespace Niantic.Lightship.AR.PAM
             }
         }
 
-        public UInt64 FrameId
+        public UInt32 FrameId
         {
             set => _frameCStruct.FrameId = value;
         }
@@ -234,10 +234,10 @@ namespace Niantic.Lightship.AR.PAM
                 _rgba256x144ImageData.Dispose();
 
             _rgba256x144CameraIntrinsicsData.Dispose();
-            
+
             if (_rgb256x256ImageData.IsCreated)
                 _rgb256x256ImageData.Dispose();
-            
+
             _rgb256x256CameraIntrinsicsData.Dispose();
 
             _cpuJpeg720X540ImageData.Dispose();
@@ -267,7 +267,7 @@ namespace Niantic.Lightship.AR.PAM
 
             _rgba256x144CameraIntrinsicsData =
                 new NativeArray<float>((int)DataFormatConstants.FlatMatrix3x3Length, Allocator.Persistent);
-            
+
             _rgb256x256CameraIntrinsicsData =
                 new NativeArray<float>((int)DataFormatConstants.FlatMatrix3x3Length, Allocator.Persistent);
 

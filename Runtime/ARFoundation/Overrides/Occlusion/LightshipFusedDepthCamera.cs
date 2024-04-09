@@ -1,6 +1,5 @@
 // Copyright 2022-2024 Niantic.
 
-using Niantic.Lightship.AR.Utilities.Logging;
 using UnityEngine;
 
 namespace Niantic.Lightship.AR.Occlusion
@@ -12,15 +11,8 @@ namespace Niantic.Lightship.AR.Occlusion
         /// </summary>
         internal RenderTexture GpuTexture { get; private set; }
 
-        /// <summary>
-        /// The name of the shader that captures mesh depth.
-        /// </summary>
-        private const string k_ShaderName = "Lightship/FusedDepthRenderer";
-
         // Resources
         private Camera _camera;
-        private Shader _shader;
-        private Material _material;
 
         /// <summary>
         /// Configures the camera for capturing depth.
@@ -55,7 +47,7 @@ namespace Niantic.Lightship.AR.Occlusion
             cameraTransform.localScale = Vector3.one;
 
             // Allocate GPU texture
-            GpuTexture = new RenderTexture(256, 256, 24, RenderTextureFormat.Depth)
+            GpuTexture = new RenderTexture(1024, 1024, 16, RenderTextureFormat.Depth)
             {
                 filterMode = FilterMode.Point, wrapMode = TextureWrapMode.Clamp
             };
@@ -65,23 +57,6 @@ namespace Niantic.Lightship.AR.Occlusion
             // Allocate a camera
             _camera = gameObject.AddComponent<Camera>();
             _camera.targetTexture = GpuTexture;
-
-            _shader = Shader.Find(k_ShaderName);
-            if (_shader == null)
-            {
-                Log.Error("Cannot locate the specified shader for rendering fused depth.");
-            }
-
-            _material = new Material(_shader)
-            {
-                hideFlags = HideFlags.HideAndDontSave
-            };
-        }
-
-        private void OnRenderImage(RenderTexture src, RenderTexture dest)
-        {
-            // Capture depth
-            Graphics.Blit(src, dest, _material);
         }
 
         private void OnDestroy()
@@ -91,11 +66,6 @@ namespace Niantic.Lightship.AR.Occlusion
             if (GpuTexture != null)
             {
                 Destroy(GpuTexture);
-            }
-
-            if (_material != null)
-            {
-                Destroy(_material);
             }
         }
     }

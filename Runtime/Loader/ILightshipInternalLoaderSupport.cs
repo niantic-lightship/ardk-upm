@@ -10,11 +10,7 @@ namespace Niantic.Lightship.AR.Loader
         void InjectLightshipLoaderHelper(LightshipLoaderHelper lightshipLoaderHelper);
 
         // this is so we can write tests
-        public bool InitializeWithLightshipHelper
-        (
-            LightshipLoaderHelper lightshipLoaderHelper,
-            bool isTest = false
-        );
+        public bool InitializeWithLightshipHelper(LightshipLoaderHelper lightshipLoaderHelper);
 
         bool InitializePlatform();
 

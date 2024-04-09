@@ -1,4 +1,5 @@
 // Copyright 2022-2024 Niantic.
+
 using System;
 using System.Runtime.InteropServices;
 using Niantic.Lightship.AR.Utilities;
@@ -67,33 +68,33 @@ namespace Niantic.Lightship.AR.XRSubsystems
         /// <summary>
         /// Get the <see cref="TrackableId"/> associated with this anchor.
         /// </summary>
-        public TrackableId trackableId => m_Id;
+        public readonly TrackableId trackableId => m_Id;
 
         /// <summary>
         /// Get the <c>Pose</c>, in session space, for this anchor.
         /// </summary>
-        public Pose pose => m_Pose;
+        public readonly Pose pose => m_Pose;
 
         /// <summary>
         /// Get the <see cref="TrackingState"/> of this anchor.
         /// </summary>
-        public TrackingState trackingState => m_TrackingState;
+        public readonly TrackingState trackingState => m_TrackingState;
 
         /// <summary>
         /// Get the <see cref="trackingStateReason"/> of this anchor.
         /// </summary>
-        public TrackingStateReason trackingStateReason => m_TrackingStateReason;
+        public readonly TrackingStateReason trackingStateReason => m_TrackingStateReason;
 
         /// <summary>
         /// The payload for this anchor
         /// </summary>
-        public XRPersistentAnchorPayload xrPersistentAnchorPayload => m_XRPersistentAnchorPayload;
+        public readonly XRPersistentAnchorPayload xrPersistentAnchorPayload => m_XRPersistentAnchorPayload;
 
         /// <summary>
         /// Get the timestamp in miliseconds of the latest update for this anchor.
         /// The timestamp has the same base as the frame.
         /// </summary>
-        public UInt64 timestampMs => m_timestampMs;
+        public readonly UInt64 timestampMs => m_timestampMs;
 
         /// <summary>
         /// A native pointer associated with the anchor.

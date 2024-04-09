@@ -60,7 +60,7 @@ namespace Niantic.Lightship.AR.Loader
         /// Initializes the loader with an injected LightshipLoaderHelper. This is a helper to initialize manually from tests.
         /// </summary>
         /// <returns>`True` if the session subsystems were successfully created, otherwise `false`.</returns>
-        public bool InitializeWithLightshipHelper(LightshipLoaderHelper lightshipLoaderHelper, bool isTest = false)
+        public bool InitializeWithLightshipHelper(LightshipLoaderHelper lightshipLoaderHelper)
         {
 #if NIANTIC_LIGHTSHIP_ARKIT_LOADER_ENABLED
             _lightshipLoaderHelper = lightshipLoaderHelper;

@@ -4,8 +4,6 @@ using System;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
-using UnityEngine.SubsystemsImplementation;
-using UnityEngine.XR.ARSubsystems;
 
 namespace Niantic.Lightship.AR.XRSubsystems
 {
@@ -17,7 +15,7 @@ namespace Niantic.Lightship.AR.XRSubsystems
         /// <summary>
         /// Contains the world position of each point in the voxel cloud.
         /// </summary>
-        public NativeArray<Vector3> Positions
+        public readonly NativeArray<Vector3> Positions
         {
             get => _positions;
         }
@@ -27,7 +25,7 @@ namespace Niantic.Lightship.AR.XRSubsystems
         /// <summary>
         /// Continas the RGBA color of each point in the voxel cloud.
         /// </summary>
-        public NativeArray<Color32> Colors
+        public readonly NativeArray<Color32> Colors
         {
             get => _colors;
         }
@@ -55,18 +53,18 @@ namespace Niantic.Lightship.AR.XRSubsystems
             this.nativeHandle = nativeHandle;
         }
 
-        public bool Equals(XRScanningVoxelData other)
+        public readonly bool Equals(XRScanningVoxelData other)
         {
             return Positions.Equals(other.Positions) && Colors.Equals(other.Colors)
                 && nativeHandle.Equals(other.nativeHandle);
         }
 
-        public override bool Equals(object obj)
+        public override readonly bool Equals(object obj)
         {
             return obj is XRScanningVoxelData other && Equals(other);
         }
 
-        public override int GetHashCode()
+        public override readonly int GetHashCode()
         {
             return HashCode.Combine(Positions, Colors, nativeHandle);
         }

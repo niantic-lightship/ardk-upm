@@ -1,13 +1,15 @@
 // Copyright 2022-2024 Niantic.
 using System;
-using static Niantic.Lightship.AR.Utilities.Logging.Log;
 using Niantic.Lightship.AR.Subsystems;
 using Niantic.Lightship.AR.Subsystems.Meshing;
+using Niantic.Lightship.AR.Subsystems.ObjectDetection;
 using Niantic.Lightship.AR.Subsystems.Occlusion;
 using Niantic.Lightship.AR.Subsystems.Semantics;
+using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.XRSubsystems;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.SubsystemsImplementation.Extensions;
 using UnityEngine.XR;
 using UnityEngine.XR.ARFoundation;
 using UnityEngine.XR.ARSubsystems;
@@ -23,6 +25,7 @@ namespace Niantic.Lightship.AR.Utilities.Metrics
         private XROcclusionSubsystem _occlusionSubsystem;
         private LightshipSemanticsSubsystem _semanticsSubsystem;
         private LightshipMeshingProvider _meshingProvider;
+        private LightshipObjectDetectionSubsystem.LightshipObjectDetectionProvider _objectDetectionProvider;
 
         private bool _automaticallyTrackFPS;
         private bool _canAutomaticallyTrackFPS;
@@ -30,14 +33,17 @@ namespace Niantic.Lightship.AR.Utilities.Metrics
         private bool _usingDepth;
         private bool _usingSemantics;
         private bool _usingMesh;
+        private bool _usingObjectDetection;
 
         private ulong _lastTimeDepth;
         private ulong _lastTimeSemantics;
         private ulong _lastTimeMesh;
+        private ulong _lastTimeObjectDetection;
 
         private float _instantDepthFPS;
         private float _instantSemanticsFPS;
         private float _instantMeshFPS;
+        private float _instantObjectDetectionFPS;
 
         private uint? _latestSemanticsFrameId;
 
@@ -45,39 +51,49 @@ namespace Niantic.Lightship.AR.Utilities.Metrics
             bool usingDepth = true,
             bool usingSemantics = true,
             bool usingMesh = true,
+            bool usingObjectDetection = true,
             bool automaticallyTrackFPS = true)
         {
             _usingDepth = usingDepth;
             _usingSemantics = usingSemantics;
             _usingMesh = usingMesh;
+            _usingObjectDetection = usingObjectDetection;
             _automaticallyTrackFPS = automaticallyTrackFPS;
 
             var xrManager = XRGeneralSettings.Instance.Manager;
             if (!xrManager.isInitializationComplete)
             {
-                Warning("XRManager is not initialized yet: cannot get subsystems");
+                Log.Warning("XRManager is not initialized yet: cannot get subsystems");
                 return;
             }
 
             _occlusionSubsystem = xrManager.activeLoader.GetLoadedSubsystem<XROcclusionSubsystem>();
             if (_occlusionSubsystem is null)
             {
-                Warning("Depth FPS not being tracked");
+                Log.Debug("Depth FPS not being tracked");
                 _usingDepth = false;
             }
 
             _semanticsSubsystem = xrManager.activeLoader.GetLoadedSubsystem<XRSemanticsSubsystem>() as LightshipSemanticsSubsystem;
             if (_semanticsSubsystem is null)
             {
-                Warning("Semantics FPS not being tracked");
+                Log.Debug("Semantics FPS not being tracked");
                 _usingSemantics = false;
             }
 
             var activeMeshSubsystem = xrManager.activeLoader.GetLoadedSubsystem<XRMeshSubsystem>();
             if (activeMeshSubsystem is null || activeMeshSubsystem.SubsystemDescriptor.id != "LightshipMeshing")
             {
-                Warning("Mesh FPS not being tracked");
+                Log.Debug("Mesh FPS not being tracked");
                 _usingMesh = false;
+            }
+
+            var activeObjectDetectionSubsystem = xrManager.activeLoader.GetLoadedSubsystem<XRObjectDetectionSubsystem>() as LightshipObjectDetectionSubsystem;
+            _objectDetectionProvider = activeObjectDetectionSubsystem?.GetProvider() as LightshipObjectDetectionSubsystem.LightshipObjectDetectionProvider;
+            if (activeObjectDetectionSubsystem is null || _objectDetectionProvider is null)
+            {
+                Log.Debug("Object Detection FPS not being tracked");
+                _usingObjectDetection = false;
             }
 
             TryAutomaticallyTrackFPS();
@@ -101,7 +117,7 @@ namespace Niantic.Lightship.AR.Utilities.Metrics
 
                 if (_cameraManager == null)
                 {
-                    Warning("Cannot track FPS: No ARCameraManager found in scene");
+                    Log.Warning("Cannot track FPS: No ARCameraManager found in scene");
                     _canAutomaticallyTrackFPS = false;
                     SceneManager.sceneLoaded += OnSceneLoaded;
                     return;
@@ -112,23 +128,20 @@ namespace Niantic.Lightship.AR.Utilities.Metrics
 
                 // Check if we can actually track the depth fps using the AROcclusionManager
                 var arOcclusionManager = Object.FindObjectOfType<AROcclusionManager>(includeInactive: true);
-                if (arOcclusionManager == null)
+                if (_usingDepth && arOcclusionManager == null)
                 {
-                    Warning("Cannot track depth FPS: No AROcclusionManager found in scene");
+                    Log.Debug("Cannot track depth FPS: No AROcclusionManager found in scene");
                     _usingDepth = false;
                     return;
                 }
 
-                if (arOcclusionManager.currentOcclusionPreferenceMode !=
+                if (_usingDepth && arOcclusionManager.currentOcclusionPreferenceMode !=
                     OcclusionPreferenceMode.PreferEnvironmentOcclusion)
                 {
-                    Warning("Cannot track depth FPS: " +
+                    Log.Debug("Cannot track depth FPS: " +
                         "AROcclusionManager is not set to PreferEnvironmentOcclusion");
                     _usingDepth = false;
-                    return;
                 }
-
-                _usingDepth = true;
             }
         }
 
@@ -173,11 +186,26 @@ namespace Niantic.Lightship.AR.Utilities.Metrics
                     _lastTimeMesh = thisTimeMesh;
                 }
             }
+
+            if (_usingObjectDetection)
+            {
+                var thisTimeObjectDetection = GetLatestObjectDetectionTimestamp();
+                if (_usingObjectDetection && thisTimeObjectDetection != _lastTimeObjectDetection)
+                {
+                    _instantObjectDetectionFPS = (1.0f / (Math.Abs((long)(thisTimeObjectDetection - _lastTimeObjectDetection)) / 1000.0f));
+                    _lastTimeObjectDetection = thisTimeObjectDetection;
+                }
+            }
         }
 
         public ulong GetLatestDepthTimestamp()
         {
             ulong depthTimestampMs = 0;
+
+            if (!_usingDepth)
+            {
+                return depthTimestampMs;
+            }
 
             if (_occlusionSubsystem.TryAcquireEnvironmentDepthCpuImage(out XRCpuImage depthBuffer))
             {
@@ -201,6 +229,11 @@ namespace Niantic.Lightship.AR.Utilities.Metrics
         public ulong GetLatestSemanticsTimestamp()
         {
             ulong semanticsTimestampMs = 0;
+
+            if (!_usingSemantics)
+            {
+                return semanticsTimestampMs;
+            }
 
             // If we have already acquired the latest frame, return the last timestamp
             if (_latestSemanticsFrameId == _semanticsSubsystem.LatestFrameId)
@@ -230,6 +263,11 @@ namespace Niantic.Lightship.AR.Utilities.Metrics
 
         public ulong GetLatestMeshTimestamp()
         {
+            if (!_usingMesh)
+            {
+                return 0;
+            }
+
             return LightshipMeshingProvider.GetLastMeshUpdateTime();
         }
 
@@ -238,6 +276,21 @@ namespace Niantic.Lightship.AR.Utilities.Metrics
             if (_usingMesh && _canAutomaticallyTrackFPS)
             {
                 return _instantMeshFPS;
+            }
+
+            return 0;
+        }
+
+        public ulong GetLatestObjectDetectionTimestamp()
+        {
+            return _objectDetectionProvider?.LatestTimestamp ?? 0;
+        }
+
+        public float GetInstantObjectDetectionFPS()
+        {
+            if (_usingObjectDetection && _canAutomaticallyTrackFPS)
+            {
+                return _instantObjectDetectionFPS;
             }
 
             return 0;

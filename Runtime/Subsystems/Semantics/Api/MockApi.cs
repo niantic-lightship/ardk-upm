@@ -21,13 +21,18 @@ namespace Niantic.Lightship.AR.Subsystems.Semantics
         private const int TextureBufferSize = 2;
         private readonly BufferedTextureCache _semanticsChannelBufferedTextureCache = new (TextureBufferSize);
         private readonly BufferedTextureCache _packedSemanticsBufferedTextureCache = new (TextureBufferSize);
+		private readonly BufferedTextureCache _suppressionMaskTextureBufferedTextureCache = new (TextureBufferSize);
 
         private NativeArray<float> _semanticsChannelCpu;
         private NativeArray<Int32> _packedSemanticsCpu;
+		private NativeArray<UInt32> _suppressionMaskCpu;
+        private NativeArray<byte> _binaryMaskCpu;
         private bool _initializedPackedBuffer;
 
         private const string TextureMockSemanticChannelPropertyName = "_SemanticSegmentationChannel";
         private const string TextureMockSemanticPackedPropertyName = "_SemanticSegmentationThresholdBitmask";
+        private const string TextureMockSemanticBinaryMaskPropertyName = "_SemanticSegmentationBinaryMask";
+		private const string TextureMockSuppressionMaskPropertyName = "_SemanticSegmentationSuppressionMask";
 
         private uint _frameNumber = 0;
         private readonly Random _random = new();
@@ -38,12 +43,16 @@ namespace Niantic.Lightship.AR.Subsystems.Semantics
         private bool _hasMetadata = false;
         private float _startTime;
 
+		private UInt32 _suppressionMaskChannels = 0;
+
         private XRCpuImage.Api _cpuImageApi => LightshipCpuImageApi.instance;
 
         public MockApi()
         {
             _semanticsChannelCpu = new NativeArray<float>(_width * _height, Allocator.Persistent);
             _packedSemanticsCpu = new NativeArray<Int32>(_width * _height, Allocator.Persistent);
+			_suppressionMaskCpu = new NativeArray<UInt32>(_width * _height, Allocator.Persistent);
+            _binaryMaskCpu = new NativeArray<byte>(_width * _height, Allocator.Persistent);
 
             SetSemanticChannelToValue(1.0f);
         }
@@ -83,18 +92,30 @@ namespace Niantic.Lightship.AR.Subsystems.Semantics
             _frameNumber += 1;
         }
 
-        public void Configure(IntPtr nativeProviderHandle, UInt32 framesPerSecond, UInt32 numThresholds, IntPtr thresholds) {}
+        public void Configure(IntPtr nativeProviderHandle, UInt32 framesPerSecond, UInt32 numThresholds, IntPtr thresholds, List<string> suppressionMaskChannelNames) {
+            InitializeSuppressionMaskBuffer(GetFlags(suppressionMaskChannelNames));
+		}
 
         public void Destruct(IntPtr nativeProviderHandle)
         {
             _started = false;
             _packedSemanticsCpu.Dispose();
             _semanticsChannelCpu.Dispose();
+            _suppressionMaskCpu.Dispose();
+            _binaryMaskCpu.Dispose();
             _packedSemanticsBufferedTextureCache.Dispose();
             _semanticsChannelBufferedTextureCache.Dispose();
         }
 
-        public bool TryGetSemanticChannel(IntPtr nativeProviderHandle, string channelName, XRCameraParams? cameraParams, out XRTextureDescriptor semanticsChannelDescriptor, out Matrix4x4 samplerMatrix)
+        public bool TryGetSemanticChannel
+        (
+            IntPtr nativeProviderHandle,
+            string channelName,
+            XRCameraParams? cameraParams,
+            Matrix4x4? currentPose,
+            out XRTextureDescriptor semanticsChannelDescriptor,
+            out Matrix4x4 samplerMatrix
+        )
         {
             semanticsChannelDescriptor = default;
             samplerMatrix = Matrix4x4.identity;
@@ -123,8 +144,16 @@ namespace Niantic.Lightship.AR.Subsystems.Semantics
                 if (cameraParams.HasValue)
                 {
                     var viewport = cameraParams.Value;
-                    samplerMatrix = CameraMath.CalculateDisplayMatrix(_width, _height, (int)viewport.screenWidth,
-                        (int)viewport.screenHeight, viewport.screenOrientation, true);
+                    samplerMatrix =
+                        CameraMath.CalculateDisplayMatrix
+                        (
+                            _width,
+                            _height,
+                            (int)viewport.screenWidth,
+                            (int)viewport.screenHeight,
+                            viewport.screenOrientation,
+                            true
+                        );
                 }
 
                 semanticsChannelDescriptor =
@@ -151,6 +180,7 @@ namespace Niantic.Lightship.AR.Subsystems.Semantics
             IntPtr nativeProviderHandle,
             string channelName,
             XRCameraParams? cameraParams,
+            Matrix4x4? currentPose,
             out XRCpuImage cpuImage,
             out Matrix4x4 samplerMatrix
         )
@@ -182,6 +212,7 @@ namespace Niantic.Lightship.AR.Subsystems.Semantics
         (
             IntPtr nativeProviderHandle,
             XRCameraParams? cameraParams,
+            Matrix4x4? currentPose,
             out XRTextureDescriptor packedSemanticsDescriptor,
             out Matrix4x4 samplerMatrix
         )
@@ -209,8 +240,15 @@ namespace Niantic.Lightship.AR.Subsystems.Semantics
                 if (cameraParams.HasValue)
                 {
                     var viewport = cameraParams.Value;
-                    samplerMatrix = CameraMath.CalculateDisplayMatrix(_width, _height, (int)viewport.screenWidth,
-                        (int)viewport.screenHeight, viewport.screenOrientation, true);
+                    samplerMatrix = CameraMath.CalculateDisplayMatrix
+                    (
+                        _width,
+                        _height,
+                        (int)viewport.screenWidth,
+                        (int)viewport.screenHeight,
+                        viewport.screenOrientation,
+                        true
+                    );
                 }
 
                 packedSemanticsDescriptor =
@@ -236,6 +274,7 @@ namespace Niantic.Lightship.AR.Subsystems.Semantics
         (
             IntPtr nativeProviderHandle,
             XRCameraParams? cameraParams,
+            Matrix4x4? currentPose,
             out XRCpuImage cpuImage,
             out Matrix4x4 samplerMatrix
         )
@@ -335,6 +374,94 @@ namespace Niantic.Lightship.AR.Subsystems.Semantics
             return _hasMetadata;
         }
 
+        public bool TryGetSuppressionMaskTexture
+		(
+			IntPtr nativeProviderHandle,
+			XRCameraParams? cameraParams,
+            Matrix4x4? currentPose,
+			out XRTextureDescriptor suppressionMaskDescriptor,
+            out Matrix4x4 samplerMatrix)
+        {
+			suppressionMaskDescriptor = default;
+            samplerMatrix = Matrix4x4.identity;
+
+            if (!_hasMetadata)
+                return false;
+
+            unsafe
+            {
+                var nativePtr = (IntPtr)_binaryMaskCpu.GetUnsafePtr();
+
+				var tex = _suppressionMaskTextureBufferedTextureCache.GetUpdatedTextureFromBuffer
+				(
+	                nativePtr,
+					_suppressionMaskCpu.Length * sizeof(UInt32),
+					_width,
+					_height,
+					TextureFormat.R8,
+					_frameNumber
+				);
+
+				if (cameraParams.HasValue)
+                {
+                    var viewport = cameraParams.Value;
+                    samplerMatrix = CameraMath.CalculateDisplayMatrix(_width, _height, (int)viewport.screenWidth,
+                        (int)viewport.screenHeight, viewport.screenOrientation, true);
+                }
+
+				suppressionMaskDescriptor =
+                    new XRTextureDescriptor
+                    (
+                        tex.GetNativeTexturePtr(),
+                        _width,
+                        _height,
+                        0,
+                        TextureFormat.R8,
+                        Shader.PropertyToID(TextureMockSuppressionMaskPropertyName),
+                        0,
+                        TextureDimension.Tex2D
+                    );
+            }
+
+            _frameNumber++;
+
+            return true;
+        }
+
+        public bool TryAcquireSuppressionMaskCpuImage
+		(
+			IntPtr nativeProviderHandle,
+			XRCameraParams? cameraParams,
+            Matrix4x4? currentPose,
+            out XRCpuImage cpuImage,
+			out Matrix4x4 samplerMatrix
+		)
+        {
+            cpuImage = default;
+            samplerMatrix = Matrix4x4.identity;
+
+            if (!_hasMetadata)
+            {
+
+                return false;
+            }
+
+            unsafe
+            {
+                var nativePtr = (int) _suppressionMaskCpu.GetUnsafePtr();
+                var dimensions = new Vector2Int(_width, _height);
+                var cinfo = new XRCpuImage.Cinfo(nativePtr, dimensions, 1, Time.unscaledTime, XRCpuImage.Format.OneComponent8);
+                cpuImage = new XRCpuImage(_cpuImageApi, cinfo);
+            }
+
+            return true;
+        }
+
+        public uint GetFlags(IEnumerable<string> channels)
+        {
+            return UInt32.MaxValue;
+        }
+
         private void SetSemanticChannelToValue(float value)
         {
             for (int y = 0; y < _height; y++)
@@ -377,5 +504,20 @@ namespace Niantic.Lightship.AR.Subsystems.Semantics
 
             _initializedPackedBuffer = true;
         }
+
+		private void InitializeSuppressionMaskBuffer(UInt32 suppressionMaskChannels)
+	    {
+			for (int y=0; y < _height; y++)
+            {
+                for (int x=0; x < _width; x++)
+                {
+                    // Mark the center third as a different value for a visual check if the texture is updating
+                    if (x > _width * .33f && x < _width * .66f && y > _height * .33f && y < _height * .66f)
+                        _suppressionMaskCpu[y * _width + x] = suppressionMaskChannels;
+                    else
+                        _suppressionMaskCpu[y * _width + x] = 0;
+                }
+            }
+		}
     }
 }

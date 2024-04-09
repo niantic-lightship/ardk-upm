@@ -41,11 +41,13 @@ namespace Niantic.Lightship.AR.Loader
         /// Initializes the loader. Additionally added external loader will be loaded after this core loader is done.
         /// </summary>
         /// <returns>`True` if the session subsystems were successfully created, otherwise `false`.</returns>
-        internal bool Initialize(ILightshipInternalLoaderSupport loader, bool isTest = false)
+        internal bool Initialize(ILightshipInternalLoaderSupport loader)
         {
 #if NIANTIC_LIGHTSHIP_AR_LOADER_ENABLED
             _loader = loader;
             var initializationSuccess = true;
+
+            InputReader.Initialize();
 
             if (_initializationSettings.UsePlayback)
             {
@@ -69,7 +71,7 @@ namespace Niantic.Lightship.AR.Loader
                 ? _playbackLoaderHelper.DatasetReader.GetIsLidarAvailable()
                 : _loader.IsPlatformDepthAvailable();
 
-            initializationSuccess &= _nativeLoaderHelper.Initialize(_loader, _initializationSettings, isLidarSupported, isTest);
+            initializationSuccess &= _nativeLoaderHelper.Initialize(_loader, _initializationSettings, isLidarSupported);
 
             if (_initializationSettings.UsePlayback)
             {
@@ -106,6 +108,8 @@ namespace Niantic.Lightship.AR.Loader
             {
                 return _loader.DeinitializePlatform();
             }
+
+            InputReader.Shutdown();
 #endif
             return true;
         }

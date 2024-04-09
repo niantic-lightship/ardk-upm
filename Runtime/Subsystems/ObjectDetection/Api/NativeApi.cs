@@ -168,7 +168,7 @@ namespace Niantic.Lightship.AR.Subsystems.ObjectDetection
                 if (interpolate)
                 {
                     // Acquire the current device pose
-                    var poseAcquired = PoseProvider.TryAcquireCurrentPose(out var poseMatrix);
+                    var poseAcquired = InputReader.TryGetPose(out var poseMatrix);
 
                     var gotInterpolationMatrix = false;
 
@@ -186,7 +186,7 @@ namespace Niantic.Lightship.AR.Subsystems.ObjectDetection
                             nativeProviderHandle,
                             resourceHandle,
                             poseArray,
-                            OcclusionContext.Shared.OccludeeEyeDepth,
+                            XRDisplayContext.OccludeeEyeDepth,
                             outMatrix
                         );
 

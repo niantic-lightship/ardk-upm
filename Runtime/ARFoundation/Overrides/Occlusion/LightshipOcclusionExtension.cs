@@ -1,18 +1,15 @@
 // Copyright 2022-2024 Niantic.
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.Semantics;
 using Niantic.Lightship.AR.Subsystems.Occlusion;
 using Niantic.Lightship.AR.Subsystems.Playback;
-using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.XR.ARFoundation;
 using UnityEngine.XR.ARSubsystems;
 using UnityEngine.XR.Management;
-
 using Niantic.Lightship.AR.Utilities;
 
 namespace Niantic.Lightship.AR.Occlusion
@@ -28,6 +25,8 @@ namespace Niantic.Lightship.AR.Occlusion
     [DefaultExecutionOrder(ARUpdateOrder.k_OcclusionManager - 1)]
     public class LightshipOcclusionExtension : MonoBehaviour
     {
+        #region Nested Types
+
         /// <summary>
         /// The sampling mode for determining the distance to the occluder.
         /// This distance is used to transform the depth buffer to provide
@@ -56,10 +55,269 @@ namespace Niantic.Lightship.AR.Occlusion
             Static,
         }
 
+        #endregion
+
+        #region Constants
+
+        /// <summary>
+        /// Name of the default Lightship Occlusion Extension shader.
+        /// </summary>
+        public const string DefaultShaderName = "Lightship/OcclusionExtension";
+
+        /// <summary>
+        /// Name for the custom rendering command buffer.
+        /// </summary>
+        private const string k_CustomRenderPassName = "LightshipOcclusionExtension Pass (LegacyRP)";
+
+        /// <summary>
+        /// Message logged when the extension tries to set a frame rate that is not supported by the subsystem.
+        /// </summary>
+        private const string k_TargetFrameRateNotSupportedMessage =
+            "TargetFrameRate is not supported on non-Lightship implementations of the XROcclusionSubsystem.";
+
+        /// <summary>
+        /// Message logged when the LatestInrinsicsMatrix API is not supported by the subsystem.
+        /// </summary>
+        private const string k_LatestIntrinsicsMatrixNotSupportedMessage =
+            "LatestInrinsicsMatrix is not supported on non-Lightship implementations of the XROcclusionSubsystem.";
+
+        /// <summary>
+        /// Message logged when the extension tries to use the cpu image it failed to acquire.
+        /// </summary>
+        private const string k_MissingCpuImageMessage = "Could not acquire the cpu depth image.";
+
+        /// <summary>
+        /// Message logged when there has been an error updating the suppression texture.
+        /// </summary>
+        private const string k_SuppressionTextureErrorMessage = "Unable to update the depth suppresion texture.";
+
+        /// <summary>
+        /// Message logged when the OptimalOcclusionDistanceMode is invalidly set to SpecifiedGameObject.
+        /// </summary>
+        private const string k_MissingOccludeeMessage =
+            "Active OptimalOcclusionDistanceMode is SpecifiedGameObject but the Principal Occludee " +
+            "object is null. Falling back to the ClosestOccluder mode.";
+
+        /// <summary>
+        /// Message logged when the semantic depth suppression is enabled without the required components in the scene.
+        /// </summary>
+        private const string k_MissingSemanticManagerMessage =
+            "Missing ARSemanticSegmentationManager component reference. " +
+            "One in the scene is required to enable semantic depth suppression.";
+
+        /// <summary>
+        /// Message logged when the occlusion stabilization feature is enabled without the required components in the scene.
+        /// </summary>
+        private const string k_MissingMeshManagerMessage =
+            "Missing ARMeshManager component reference. " +
+            "One in the scene is required to enable occlusion stabilization.";
+
+        /// <summary>
+        /// Message logged when the occlusion extension shader is missing from the project.
+        /// </summary>
+        private const string k_MissingShaderResourceMessage =
+            "Missing " + DefaultShaderName + " shader resource.";
+
+        /// <summary>
+        /// Message logged when the component is set to use a custom material, but the the material resource is null.
+        /// </summary>
+        private const string k_MissingCustomBackgroundMaterialMessage =
+            "Set to use a custom background material without a valid reference.";
+
+        /// <summary>
+        /// Shader keyword for occlusion stabilization.
+        /// </summary>
+        private const string k_OcclusionStabilizationFeature = "FEATURE_STABILIZATION";
+
+        /// <summary>
+        /// Shader keyword for semantic suppression.
+        /// </summary>
+        private const string k_OcclusionSuppressionFeature = "FEATURE_SUPPRESSION";
+
+        /// <summary>
+        /// Shader keyword for depth edge smoothing.
+        /// </summary>
+        private const string k_DepthEdgeSmoothingFeature = "FEATURE_EDGE_SMOOTHING";
+
+        /// <summary>
+        /// Shader keyword for debug view.
+        /// </summary>
+        private const string k_DebugViewFeature = "FEATURE_DEBUG";
+
+        /// <summary>
+        /// Minimum possible value for the optimal occlusion depth.
+        /// </summary>
+        private const float k_MinimumDepthSample = 0.2f;
+
+        /// <summary>
+        /// Maximum possible value for the optimal occlusion depth.
+        /// </summary>
+        private const float k_MaximumDepthSample = 100.0f;
+
+        /// <summary>
+        /// Value used to exclude the edges of the image from 'ClosestOccluder' occlusion mode, since objects at
+        /// the edges should be ignored for the calculation.
+        /// </summary>
+        private const float k_FullScreenSampleBorder = 0.2f;
+
+        /// <summary>
+        /// Rectangle used to sample the depth buffer for the optimal occlusion depth.
+        /// </summary>
+        private static readonly Rect s_fullScreenRect = new
+        (
+            k_FullScreenSampleBorder,
+            k_FullScreenSampleBorder,
+            1 - k_FullScreenSampleBorder,
+            1 - k_FullScreenSampleBorder
+        );
+
+        /// <summary>
+        /// ARFoundation's renderer gets added to the camera on the first AR frame, so this component needs
+        ///  to wait this number of AR frames before attaching its command buffers.
+        /// </summary>
+        private const int k_attachDelay = 2;
+
+        #endregion
+
+        #region Serialized Fields
+
         [SerializeField]
         [Tooltip("Frame rate that depth inference will aim to run at")]
         [Range(1, 90)]
         private uint _targetFrameRate = LightshipOcclusionSubsystem.MaxRecommendedFrameRate;
+
+        [SerializeField]
+        [Tooltip("The current method used for determining the distance at which occlusions "
+            + "will have the best visual quality.\n\n"
+            + "ClosestOccluder -- average depth from the whole field of view.\n"
+            + "SpecifiedGameObject -- depth of the specified object.")]
+        private OptimalOcclusionDistanceMode _optimalOcclusionDistanceMode =
+            OptimalOcclusionDistanceMode.ClosestOccluder;
+
+        [SerializeField]
+        [Tooltip("When enabled, will employ bilinear sampling on the depth texture for smoother occlusion edges.")]
+        private bool _preferSmoothEdges;
+
+        [SerializeField]
+        [Tooltip("The principal virtual object being occluded in SpecifiedGameObject mode. "
+            + "Occlusions will look most effective for this object, so it should be the "
+            + "visual focal point of the experience.")]
+        private Renderer _principalOccludee;
+
+        [SerializeField]
+        [Tooltip("When enabled, the occlusions use the combination of the fused mesh and depth image to "
+            + "achieve more stable results while still accounting for moving objects.")]
+        private bool _isOcclusionStabilizationEnabled;
+
+        [SerializeField]
+        [Tooltip("When enabled, rendering will be altered so that it virtual objects will not be occluded in "
+            + "pixels that contain the specified semantic suppression channels. It is recommended to use this "
+            + " feature to reduce visual artifacts such as objects being clipped by the floor or the sky.")]
+        private bool _isOcclusionSuppressionEnabled;
+
+        [SerializeField]
+        [Tooltip("The list of semantic channels to be suppressed in the depth buffer. "
+            + "Pixels classified as any of these channels will not occlude virtual objects.")]
+        private List<string> _suppressionChannels = new();
+
+        [SerializeField]
+        [Tooltip("Whether to use the custom material for processing the AR background depth buffer.")]
+        private bool _useCustomBackgroundMaterial;
+
+        [SerializeField]
+        private Material _customBackgroundMaterial;
+
+        [SerializeField]
+        private bool _bypassOcclusionManagerUpdates;
+
+        [SerializeField]
+        private ARSemanticSegmentationManager _semanticSegmentationManager;
+
+        [SerializeField]
+        private ARMeshManager _meshManager;
+
+        #endregion
+
+        #region Private Fields
+
+        /// <summary>
+        /// Whether the application is using the default render pipeline.
+        /// </summary>
+        private static bool IsUsingLegacyRenderPipeline => GraphicsSettings.currentRenderPipeline == null;
+
+        // Required components
+        private Camera _camera;
+        private ARCameraManager _cameraManager;
+        private XROcclusionSubsystem _occlusionSubsystem;
+        private AROcclusionManager _occlusionManager;
+
+        // Resources
+        private XRCpuImage _cpuDepth;
+        private Texture2D _gpuDepth;
+        private Texture2D _gpuSuppression;
+        private Texture2D _defaultDepthTexture;
+        private Texture2D _defaultNonLinearDepthTexture;
+        private Matrix4x4 _depthTransform;
+        private CommandBuffer _backgroundCommandBuffer;
+        private Material _backgroundMaterial;
+        private LightshipFusedDepthCamera _fusedDepthCamera;
+
+        // The number of AR frames received while waiting to attach command buffers.
+        private int _numberOfARFramesReceived;
+
+        // Additional helpers
+        private bool _isValidated;
+        private bool _isVisualizationEnabled;
+        private bool _areCommandBuffersAttached;
+        private bool _showedTargetFrameRateNotSupportedMessage;
+
+        #endregion
+
+        #region Shader Properties
+
+        /// <summary>
+        /// Property ID for the shader parameter for the depth texture.
+        /// </summary>
+        private static readonly int s_depthTextureId = Shader.PropertyToID("_Depth");
+
+        /// <summary>
+        /// Property ID for the shader parameter for the semantics texture.
+        /// </summary>
+        private static readonly int s_suppressionTextureId = Shader.PropertyToID("_Suppression");
+
+        /// <summary>
+        /// Property ID for the shader parameter for the fused depth texture (generated from the mesh).
+        /// </summary>
+        private static readonly int s_fusedDepthTextureId = Shader.PropertyToID("_FusedDepth");
+
+        /// <summary>
+        /// Property ID for the shader parameter for the depth display matrix.
+        /// </summary>
+        private static readonly int s_depthTransformId = Shader.PropertyToID("_DepthTransform");
+
+        /// <summary>
+        /// Property ID for the shader parameter for the semantics display matrix.
+        /// </summary>
+        private static readonly int s_suppressionTransformId = Shader.PropertyToID("_SuppressionTransform");
+
+        /// <summary>
+        /// Property ID for the shader parameter used to linearize (compressed) depth.
+        /// </summary>
+        private static readonly int s_depthTextureParams = Shader.PropertyToID("_DepthTextureParams");
+
+        /// <summary>
+        /// Property ID for the shader parameter that controls the blending between instant depth and fused depth.
+        /// </summary>
+        private static readonly int s_stabilizationThreshold = Shader.PropertyToID("_StabilizationThreshold");
+
+        /// <summary>
+        /// Property ID for the shader parameter for the Unity camera forward scale.
+        /// </summary>
+        private static readonly int s_cameraForwardScaleId = Shader.PropertyToID("_UnityCameraForwardScale");
+
+        #endregion
+
+        #region Properties
 
         /// <summary>
         /// Get or set the frame rate that depth inference will aim to run at
@@ -97,9 +355,68 @@ namespace Niantic.Lightship.AR.Occlusion
             }
         }
 
-        private bool _showedTargetFrameRateNotSupportedMessage;
-        private const string k_TargetFrameRateNotSupportedMessage =
-            "TargetFrameRate is not supported on non-Lightship implementations of the XROcclusionSubsystem.";
+        /// <summary>
+        /// When enabled, the component displays the depth image used for occlusions.
+        /// Note that visualization can only be used if a custom occlusion feature is
+        /// active, e.g. suppression or stabilization.
+        /// </summary>
+        public bool Visualization
+        {
+            get { return _isVisualizationEnabled; }
+            set
+            {
+                if (_isVisualizationEnabled != value)
+                {
+                    if (value)
+                    {
+                        BackgroundMaterial.EnableKeyword(k_DebugViewFeature);
+                    }
+                    else
+                    {
+                        BackgroundMaterial.DisableKeyword(k_DebugViewFeature);
+                    }
+
+                    _isVisualizationEnabled = value;
+                }
+            }
+        }
+
+        /// <summary>
+        /// When enabled, the depth image will be sampled bilinearly during rendering.
+        /// </summary>
+        public bool PreferSmoothEdges
+        {
+            get { return _preferSmoothEdges; }
+            set
+            {
+                var enableFeature = value && EligibleForEdgeSmoothing;
+
+                if (_preferSmoothEdges != enableFeature)
+                {
+                    if (enableFeature)
+                    {
+                        BackgroundMaterial.EnableKeyword(k_DepthEdgeSmoothingFeature);
+                    }
+                    else
+                    {
+                        BackgroundMaterial.DisableKeyword(k_DepthEdgeSmoothingFeature);
+                    }
+
+                    _preferSmoothEdges = enableFeature;
+                }
+            }
+        }
+
+        /// <summary>
+        /// The occlusion edge smoothing feature should only be used with low resolution depth images.
+        /// This property returns whether the current settings qualify to enable edge smoothing.
+        /// </summary>
+        private bool EligibleForEdgeSmoothing
+        {
+            // Low resolution images are produced using lightship or lidar with fastest setting
+            get => _occlusionSubsystem is LightshipOcclusionSubsystem ||
+                _occlusionSubsystem.currentEnvironmentDepthMode == EnvironmentDepthMode.Fastest;
+        }
 
         /// <summary>
         /// Returns the intrinsics matrix of the most recent semantic segmentation prediction. Contains values
@@ -115,29 +432,18 @@ namespace Niantic.Lightship.AR.Occlusion
         {
             get
             {
-                if (_occlusionSubsystem is LightshipOcclusionSubsystem lightshipOcclusionSubsystem)
+                switch (_occlusionSubsystem)
                 {
-                    return lightshipOcclusionSubsystem.LatestIntrinsicsMatrix;
+                    case LightshipOcclusionSubsystem lightshipOcclusionSubsystem:
+                        return lightshipOcclusionSubsystem.LatestIntrinsicsMatrix;
+                    case LightshipPlaybackOcclusionSubsystem lightshipPlaybackOcclusionSubsystem:
+                        return lightshipPlaybackOcclusionSubsystem.LatestIntrinsicsMatrix;
+                    default:
+                        Log.Warning(k_LatestIntrinsicsMatrixNotSupportedMessage);
+                        return default;
                 }
-                if (_occlusionSubsystem is LightshipPlaybackOcclusionSubsystem lightshipPlaybackOcclusionSubsystem)
-                {
-                    return lightshipPlaybackOcclusionSubsystem.LatestIntrinsicsMatrix;
-                }
-
-                Log.Warning(k_LatestIntrinsicsMatrixNotSupportedMessage);
-                return default;
             }
         }
-
-        private const string k_LatestIntrinsicsMatrixNotSupportedMessage =
-            "LatestInrinsicsMatrix is not supported on non-Lightship implementations of the XROcclusionSubsystem.";
-
-        [SerializeField]
-        [Tooltip("The current method used for determining the distance at which occlusions "
-                  + "will have the best visual quality.\n\n"
-                  + "ClosestOccluder -- average depth from the whole field of view.\n"
-                  + "SpecifiedGameObject -- depth of the specified object.")]
-        private OptimalOcclusionDistanceMode _optimalOcclusionDistanceMode = OptimalOcclusionDistanceMode.ClosestOccluder;
 
         /// <summary>
         /// Get or set the current mode in use for determining the distance at which occlusions
@@ -149,7 +455,9 @@ namespace Niantic.Lightship.AR.Occlusion
             set
             {
                 if (_optimalOcclusionDistanceMode == value)
+                {
                     return;
+                }
 
                 if (value == OptimalOcclusionDistanceMode.SpecifiedGameObject && _principalOccludee == null)
                 {
@@ -166,75 +474,12 @@ namespace Niantic.Lightship.AR.Occlusion
             }
         }
 
-        [SerializeField]
-        [Tooltip("The principal virtual object being occluded in SpecifiedGameObject mode. "
-                 + "Occlusions will look most effective for this object, so it should be the "
-                 + "visual focal point of the experience.")]
-        private Renderer _principalOccludee;
-
-        /// <summary>
-        /// Message logged when the OptimalOcclusionDistanceMode is invalidly set to SpecifiedGameObject.
-        /// </summary>
-        private const string k_MissingOccludeeMessage =
-            "Active OptimalOcclusionDistanceMode is SpecifiedGameObject but the Principal Occludee " +
-            "object is null. Falling back to the ClosestOccluder mode.";
-
-        /// <summary>
-        /// Shader keyword for occlusion stabilization.
-        /// </summary>
-        private const string k_OcclusionStabilizationFeature = "FEATURE_STABILIZATION";
-
-        /// <summary>
-        /// Shader keyword for semantic suppression.
-        /// </summary>
-        private const string k_OcclusionSuppressionFeature = "FEATURE_SUPPRESSION";
-
-        /// <summary>
-        /// Shader keyword for debug view.
-        /// </summary>
-        private const string k_DebugViewFeature = "FEATURE_DEBUG";
-
-        /// <summary>
-        /// Minimum possible value for the optimal occlusion depth.
-        /// </summary>
-        private const float k_MinimumDepthSample = 0.2f;
-
-        /// <summary>
-        /// Maximum possible value for the optimal occlusion depth.
-        /// </summary>
-        private const float k_MaximumDepthSample = 100.0f;
-
-        /// <summary>
-        /// Value used to exclude the edges of the image from 'ClosestOccluder' occlusion mode, since objects at
-        /// the edges should be ignored for the calculation.
-        /// </summary>
-        private const float k_FullScreenSampleBorder = 0.2f;
-
-        /// <summary>
-        /// Rectangle used to sample the depth buffer for the optimal occlusion depth.
-        /// </summary>
-        private static readonly Rect s_fullScreenRect =
-            new
-            (
-                k_FullScreenSampleBorder,
-                k_FullScreenSampleBorder,
-                1 - k_FullScreenSampleBorder,
-                1 - k_FullScreenSampleBorder
-            );
-
-        [SerializeField]
-        [Tooltip("When enabled, rendering will be altered so that it virtual objects will not be occluded in "
-                  + "pixels that contain the specified semantic suppression channels. It is recommended to use this "
-                  + " feature to reduce visual artifacts such as objects being clipped by the floor or the sky.")]
-        private bool _isOcclusionSuppressionEnabled;
-
         /// <summary>
         /// Get or set whether semantic segmentation based occlusion suppression is enabled.
         /// </summary>
         public bool IsOcclusionSuppressionEnabled
         {
             get { return _isOcclusionSuppressionEnabled; }
-
             set
             {
                 if (_isOcclusionSuppressionEnabled != value)
@@ -251,99 +496,20 @@ namespace Niantic.Lightship.AR.Occlusion
                                 return;
                             }
                         }
-                        UpdateSemanticsMask();
+
                         BackgroundMaterial.EnableKeyword(k_OcclusionSuppressionFeature);
+                        _semanticSegmentationManager.SuppressionMaskChannels = _suppressionChannels;
                     }
                     else
                     {
                         BackgroundMaterial.DisableKeyword(k_OcclusionSuppressionFeature);
+                        _semanticSegmentationManager.SuppressionMaskChannels = new List<string>();
                     }
 
                     _isOcclusionSuppressionEnabled = value;
-                    ConfigureRendering();
                 }
             }
         }
-
-        /// <summary>
-        /// This component must be active in the scene for semantic depth suppression to function.
-        /// </summary>
-        [SerializeField]
-        private ARSemanticSegmentationManager _semanticSegmentationManager;
-
-        [SerializeField]
-        [Tooltip("The list of semantic channels to be suppressed in the depth buffer. "
-                  + "Pixels classified as any of these channels will not occlude virtual objects.")]
-        private List<string> _suppressionChannels = new();
-
-        /// <summary>
-        /// Adds a semantic segmentation channel to the collection of channels that are suppressed in the depth
-        /// buffer.
-        /// </summary>
-        /// <param name="channelName">Semantic segmentation channel to add</param>
-        /// <returns>True if the channel was successfully added.</returns>
-        public bool AddSemanticSuppressionChannel(string channelName)
-        {
-            if (_suppressionChannels.Contains(channelName))
-            {
-                return false;
-            }
-
-            _suppressionChannels.Add(channelName);
-            _suppressionChannelsMaskOutdated = true;
-            return true;
-        }
-
-        /// <summary>
-        /// Removes a semantic segmentation channel, if it exists, from the collection of channels
-        /// that are suppressed in the depth buffer.
-        /// </summary>
-        /// <param name="channelName">Semantic segmentation channel to remove</param>
-        /// <returns></returns>
-        public void RemoveSemanticSuppressionChannel(string channelName)
-        {
-            if (_suppressionChannels.Remove(channelName))
-            {
-                _suppressionChannelsMaskOutdated = true;
-            }
-        }
-
-        /// <summary>
-        /// A bitmask covering which semantic channels are suppressed.
-        /// </summary>
-        private int _suppressionChannelsMask;
-
-        /// <summary>
-        /// Whether the suppression channels mask needs to be updated. The mask is updated in the Update method
-        /// rather than directly by when it becomes outdated in because semantic channel data may not be available
-        /// at that time.
-        /// </summary>
-        private bool _suppressionChannelsMaskOutdated;
-
-        /// <summary>
-        /// Message logged when the semantic depth suppression is enabled without the required components in the scene.
-        /// </summary>
-        private const string k_MissingSemanticManagerMessage =
-            "Missing ARSemanticSegmentationManager component reference. " +
-            "One in the scene is required to enable semantic depth suppression.";
-
-        /// <summary>
-        /// Message logged when the occlusion stabilization feature is enabled without the required components in the scene.
-        /// </summary>
-        private const string k_MissingMeshManagerMessage =
-            "Missing ARMeshManager component reference. " +
-            "One in the scene is required to enable occlusion stabilization.";
-
-        /// <summary>
-        /// Message logged when the occlusion extension shader is missing from the project.
-        /// </summary>
-        private const string k_MissingShaderResourceMessage =
-            "Missing " + k_LightshipOcclusionExtensionShaderName + " shader resource.";
-
-        [SerializeField]
-        [Tooltip("When enabled, the occlusions use the combination of the fused mesh and depth image to "
-                  + "achieve more stable results while still accounting for moving objects.")]
-        private bool _isOcclusionStabilizationEnabled;
 
         /// <summary>
         /// Get or set whether meshing based occlusion stabilization is enabled.
@@ -351,7 +517,6 @@ namespace Niantic.Lightship.AR.Occlusion
         public bool IsOcclusionStabilizationEnabled
         {
             get { return _isOcclusionStabilizationEnabled; }
-
             set
             {
                 if (_isOcclusionStabilizationEnabled != value)
@@ -379,7 +544,6 @@ namespace Niantic.Lightship.AR.Occlusion
                     }
 
                     _isOcclusionStabilizationEnabled = value;
-                    ConfigureRendering();
                 }
             }
         }
@@ -389,78 +553,8 @@ namespace Niantic.Lightship.AR.Occlusion
         /// </summary>
         public float StabilizationThreshold
         {
-            get
-            {
-                return BackgroundMaterial.GetFloat(s_stabilizationThreshold);
-            }
-
-            set
-            {
-                BackgroundMaterial.SetFloat(s_stabilizationThreshold, Mathf.Clamp(value, 0.0f, 1.0f));
-            }
-        }
-
-        /// <summary>
-        /// This component must be active in the scene for occlusion stabilization to function.
-        /// </summary>
-        [SerializeField]
-        private ARMeshManager _meshManager;
-
-        /// <summary>
-        /// The camera that captures the depth of the fused mesh for occlusion stabilization.
-        /// </summary>
-        private LightshipFusedDepthCamera _fusedDepthCamera;
-
-        [SerializeField]
-        [Tooltip("Whether to use the custom material for processing the AR background depth buffer.")]
-        private bool _useCustomBackgroundMaterial;
-
-        /// <summary>
-        /// Get or set whether to use the custom material for processing the AR background depth buffer.
-        /// </summary>
-        public bool UseCustomBackgroundMaterial
-        {
-            get => _useCustomBackgroundMaterial;
-            set
-            {
-                _useCustomBackgroundMaterial = value;
-                if (value)
-                {
-                    if (_backgroundMaterial != null)
-                    {
-                        Destroy(_backgroundMaterial);
-                    }
-
-                    _backgroundMaterial = CustomBackgroundMaterial;
-                }
-            }
-        }
-
-        /// <summary>
-        /// The custom material used for processing the AR background depth buffer.
-        /// </summary>
-        [SerializeField]
-        private Material _customBackgroundMaterial;
-
-        /// <summary>
-        /// Get or set the custom material used for processing the AR background depth buffer.
-        /// </summary>
-        public Material CustomBackgroundMaterial
-        {
-            get => _customBackgroundMaterial;
-            set
-            {
-                _customBackgroundMaterial = value;
-                if (_useCustomBackgroundMaterial)
-                {
-                    if (_backgroundMaterial != null)
-                    {
-                        Destroy(_backgroundMaterial);
-                    }
-
-                    _backgroundMaterial = _customBackgroundMaterial;
-                }
-            }
+            get { return BackgroundMaterial.GetFloat(s_stabilizationThreshold); }
+            set { BackgroundMaterial.SetFloat(s_stabilizationThreshold, Mathf.Clamp(value, 0.0f, 1.0f)); }
         }
 
         /// <summary>
@@ -468,114 +562,57 @@ namespace Niantic.Lightship.AR.Occlusion
         /// </summary>
         public bool IsRenderingActive
         {
-            get
+            get => (_areCommandBuffersAttached || !IsUsingLegacyRenderPipeline) && IsAnyFeatureEnabled;
+        }
+
+        /// <summary>
+        /// Whether any feature provided by the occlusion extension is enabled.
+        /// </summary>
+        private bool IsAnyFeatureEnabled
+        {
+            get { return _isOcclusionSuppressionEnabled || _isOcclusionStabilizationEnabled || _preferSmoothEdges; }
+        }
+
+        /// <summary>
+        /// Whether to disable automatically updating the depth texture of
+        /// the occlusion manager. This feature can be used to avoid
+        /// redundant texture operations since depth is ultimately going
+        /// to be overriden by the Lightship Occlusion Extension anyway.
+        /// Not using this setting may result in undesired synchronization
+        /// with the rendering thread that impacts performance.
+        /// </summary>
+        public bool BypassOcclusionManagerUpdates
+        {
+            get => _bypassOcclusionManagerUpdates;
+            set
             {
-                return (_areCommandBuffersAdded || !IsUsingLegacyRenderPipeline) &&
-                    (_isOcclusionSuppressionEnabled || _isOcclusionStabilizationEnabled);
+                _bypassOcclusionManagerUpdates = value;
+                ReconfigureSubsystem();
             }
         }
 
         /// <summary>
-        /// Name of the default Lightship Occlusion Extension shader.
+        /// Returns the depth texture used to render occlusions.
         /// </summary>
-        private const string k_LightshipOcclusionExtensionShaderName = "Lightship/OcclusionExtension";
+        public Texture2D DepthTexture
+        {
+            get
+            {
+                return _occlusionSubsystem is not LightshipOcclusionSubsystem
+                    ? _occlusionManager.environmentDepthTexture
+                    : _gpuDepth;
+            }
+        }
 
         /// <summary>
-        /// Name of the default Lightship Occlusion Extension shader.
+        /// Returns a transform for converting between normalized image
+        /// coordinates and a coordinate space appropriate for rendering
+        /// the depth texture onscreen.
         /// </summary>
-        public const string occlusionExtensionShaderName = k_LightshipOcclusionExtensionShaderName;
-
-        /// <summary>
-        /// Material used for processing the AR background depth buffer.
-        /// </summary>
-        private Material _backgroundMaterial;
-
-        /// <summary>
-        /// Property ID for the shader parameter for the depth texture.
-        /// </summary>
-        private static readonly int s_depthTextureId = Shader.PropertyToID("_Depth");
-
-        /// <summary>
-        /// Property ID for the shader parameter for the fused depth texture (generated from the mesh).
-        /// </summary>
-        private static readonly int s_fusedDepthTextureId = Shader.PropertyToID("_FusedDepth");
-
-        /// <summary>
-        /// Property ID for the shader parameter for the semantics texture.
-        /// </summary>
-        private static readonly int s_semanticsTextureId = Shader.PropertyToID("_Semantics");
-
-        /// <summary>
-        /// Property ID for the shader parameter for the semantics display matrix.
-        /// </summary>
-        private static readonly int s_semanticsTransformId = Shader.PropertyToID("_SemanticsTransform");
-
-        /// <summary>
-        /// Property ID for the shader parameter for the depth display matrix.
-        /// </summary>
-        private static readonly int s_displayMatrixId = Shader.PropertyToID("_DisplayMatrix");
-
-        /// <summary>
-        /// Property ID for the shader parameter for the semantic channel bit mark.
-        /// </summary>
-        private static readonly int s_bitMaskId = Shader.PropertyToID("_BitMask");
-
-        /// <summary>
-        ///
-        /// </summary>
-        private static readonly int s_stabilizationThreshold = Shader.PropertyToID("_StabilizationThreshold");
-
-        /// <summary>
-        /// Property ID for the shader parameter for the Unity camera forward scale.
-        /// </summary>
-        private static readonly int s_cameraForwardScaleId = Shader.PropertyToID("_UnityCameraForwardScale");
-
-        /// <summary>
-        /// Name for the custom rendering command buffer.
-        /// </summary>
-        private const string k_CustomRenderPassName = "LightshipOcclusionExtension Pass (LegacyRP)";
-
-        /// <summary>
-        /// The command buffer attached to the AR camera in order to suppress semantic channels.
-        /// </summary>
-        private CommandBuffer _backgroundCommandBuffer;
-
-        /// <summary>
-        /// Whether the command buffer is attached to the main camera.
-        /// </summary>
-        private bool _areCommandBuffersAdded;
-
-        /// <summary>
-        /// Whether we are currently trying to attach the command buffer.
-        /// </summary>
-        private bool _isAttachingCommandBuffer;
-
-        /// <summary>
-        /// Whether the application is using the default render pipeline.
-        /// </summary>
-        private static bool IsUsingLegacyRenderPipeline => GraphicsSettings.currentRenderPipeline == null;
-
-        /// <summary>
-        /// ARFoundation's renderer gets added to the camera on the first AR frame, so this component needs
-        ///  to wait this number of AR frames before attaching its command buffers.
-        /// </summary>
-        private const int k_attachDelay = 2;
-
-        /// <summary>
-        /// The number of AR frames received while waiting to attach command buffers.
-        /// </summary>
-        private int _numberOfARFramesReceived;
-
-        // Required components
-        private Camera _camera;
-        private ARCameraManager _cameraManager;
-        private XROcclusionSubsystem _occlusionSubsystem;
-        private AROcclusionManager _occlusionManager;
-
-        // Helpers
-        private bool _isValidated;
-        private Matrix4x4? _displayMatrix;
-        private ScreenOrientation _screenOrientation;
+        public Matrix4x4 DepthTransform
+        {
+            get { return _depthTransform; }
+        }
 
         /// <summary>
         /// The default texture bound to the depth property on the material.
@@ -599,26 +636,167 @@ namespace Niantic.Lightship.AR.Occlusion
                 return _defaultDepthTexture;
             }
         }
-        private Texture2D _defaultDepthTexture;
 
         /// <summary>
-        /// Verifies the state of the component and enables or disables custom rendering accordingly.
+        /// The default texture bound to the fused depth property on the material.
+        /// It let's every pixel pass through until the real depth texture is ready to use.
+        /// This resource only gets allocated if custom occlusion features are used during
+        /// the lifetime of the occlusion extension component.
         /// </summary>
-        private void ConfigureRendering()
+        private Texture2D DefaultNonLinearDepthTexture
         {
-            if (gameObject.activeInHierarchy && enabled &&
-                (_isOcclusionSuppressionEnabled || _isOcclusionStabilizationEnabled))
+            get
             {
-                // Enable rendering
-                if(!_isAttachingCommandBuffer) { // Only try and attach if not already attaching
-                  ScheduleCommandBufferAdditions();
+                // Lazy
+                if (_defaultNonLinearDepthTexture == null)
+                {
+                    var val = LightshipOcclusionExtensionUtils.IsDepthReversed() ? 0.0f : 1.0f;
+                    _defaultNonLinearDepthTexture = new Texture2D(2, 2, TextureFormat.RFloat, mipChain: false);
+                    _defaultNonLinearDepthTexture.SetPixelData(new[] {val, val, val, val}, 0);
+                    _defaultNonLinearDepthTexture.Apply(false);
+                }
+
+                return _defaultNonLinearDepthTexture;
+            }
+        }
+
+        /// <summary>
+        /// Get or set whether to use the custom material for processing the AR background depth buffer.
+        /// </summary>
+        public bool UseCustomBackgroundMaterial
+        {
+            get => _useCustomBackgroundMaterial;
+            set
+            {
+                _useCustomBackgroundMaterial = value;
+                if (value)
+                {
+                    // Release the unused material
+                    if (_backgroundMaterial != null)
+                    {
+                        Destroy(_backgroundMaterial);
+                    }
                 }
             }
-            else
+        }
+
+        /// <summary>
+        /// Get or set the custom material used for processing the AR background depth buffer.
+        /// </summary>
+        public Material CustomBackgroundMaterial
+        {
+            get => _customBackgroundMaterial;
+            set => _customBackgroundMaterial = value;
+        }
+
+        /// <summary>
+        /// The background rendering material in use.
+        /// </summary>
+        /// <exception cref="InvalidOperationException">Thrown if the the background shader resource cannot be found.</exception>
+        public Material BackgroundMaterial
+        {
+            get
             {
-                // Disable rendering
-                ConfigureCameraCommandBuffers(false);
+                var result = _useCustomBackgroundMaterial ? _customBackgroundMaterial : _backgroundMaterial;
+                if (result == null)
+                {
+                    if (!_useCustomBackgroundMaterial)
+                    {
+                        // Load the background material for the first time
+                        var shader = Shader.Find(DefaultShaderName);
+                        if (shader == null)
+                        {
+                            throw new InvalidOperationException
+                            (
+                                $"Could not find shader named '{DefaultShaderName}' required " +
+                                "for depth processing."
+                            );
+                        }
+
+                        _backgroundMaterial = new Material(shader);
+                        result = _backgroundMaterial;
+                    }
+                    else
+                    {
+                        Log.Error(k_MissingCustomBackgroundMaterialMessage);
+                    }
+                }
+
+                return result;
             }
+        }
+
+        #endregion
+
+        #region Public API
+
+        /// <summary>
+        /// Adds a semantic segmentation channel to the collection of channels that are suppressed in the depth
+        /// buffer.
+        /// </summary>
+        /// <param name="channelName">Semantic segmentation channel to add</param>
+        /// <returns>True if the channel was successfully added.</returns>
+        public bool AddSemanticSuppressionChannel(string channelName)
+        {
+            if (_suppressionChannels.Contains(channelName))
+            {
+                return false;
+            }
+
+            _suppressionChannels.Add(channelName);
+            if (IsOcclusionSuppressionEnabled)
+            {
+                _semanticSegmentationManager.SuppressionMaskChannels = _suppressionChannels;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Removes a semantic segmentation channel, if it exists, from the collection of channels
+        /// that are suppressed in the depth buffer.
+        /// </summary>
+        /// <param name="channelName">Semantic segmentation channel to remove</param>
+        public void RemoveSemanticSuppressionChannel(string channelName)
+        {
+            _suppressionChannels.Remove(channelName);
+            if (IsOcclusionSuppressionEnabled)
+            {
+                _semanticSegmentationManager.SuppressionMaskChannels = _suppressionChannels;
+            }
+        }
+
+        /// <summary>
+        /// Returns the metric eye depth at the specified pixel coordinates.
+        /// </summary>
+        /// <param name="screenX">The x position on the screen.</param>
+        /// <param name="screenY">The y position on the screen.</param>
+        /// <param name="depth">The resulting depth value.</param>
+        /// <returns>Whether retrieving the depth value was successful.</returns>
+        public bool TryGetDepth(int screenX, int screenY, out float depth)
+        {
+            // Check if we have a valid cpu image
+            if (!_cpuDepth.valid)
+            {
+                Log.Warning(k_MissingCpuImageMessage);
+                depth = float.NaN;
+                return false;
+            }
+
+            // Acquire the image data
+            var data = ImageSamplingUtils.AcquireDataBuffer<float>(_cpuDepth);
+            if (!data.HasValue)
+            {
+                depth = float.NaN;
+                return false;
+            }
+
+            // Sample the image
+            var uv = new Vector2(screenX / (float)Screen.width, screenY / (float)Screen.height);
+            depth = data.Value.Sample(_cpuDepth.width, _cpuDepth.height, uv, _depthTransform);
+
+            // Success
+            return true;
         }
 
         /// <summary>
@@ -628,75 +806,90 @@ namespace Niantic.Lightship.AR.Occlusion
         public void TrackOccludee(Renderer occludee)
         {
             if (occludee == null)
+            {
                 throw new ArgumentNullException(nameof(occludee));
+            }
 
             _principalOccludee = occludee;
             Mode = OptimalOcclusionDistanceMode.SpecifiedGameObject;
         }
 
-        /// <summary>
-        /// When enabled, the component displays the depth image used for occlusions.
-        /// Note that visualization can only be used if a custom occlusion feature is
-        /// active, e.g. suppression or stabilization.
-        /// </summary>
-        public bool Visualization
-        {
-            get { return _isVisualizationEnabled; }
-            set
-            {
-                if (_isVisualizationEnabled != value)
-                {
-                    if (value)
-                    {
-                        BackgroundMaterial.EnableKeyword(k_DebugViewFeature);
-                    }
-                    else
-                    {
-                        BackgroundMaterial.DisableKeyword(k_DebugViewFeature);
-                    }
+        #endregion
 
-                    _isVisualizationEnabled = value;
-                }
-            }
-        }
-        private bool _isVisualizationEnabled;
+        #region Unity Engine Callbacks
 
         private void Awake()
         {
-            var (isLoaderInitialized, isValidSubsystemLoaded) = ValidateSubsystem();
-            if (isLoaderInitialized && !isValidSubsystemLoaded)
-                return;
-
             // Acquire components
             _camera = GetComponent<Camera>();
             _cameraManager = GetComponent<ARCameraManager>();
             _occlusionManager = GetComponent<AROcclusionManager>();
-            _screenOrientation = Screen.orientation;
 
+            // Acquire the subsystem
+            if (ValidateSubsystem() == (true, true))
+            {
+                ReconfigureSubsystem();
+            }
+
+            // Validate settings
             ValidateOcclusionDistanceMode();
             ValidateFeatures();
+        }
 
-            // Update the subsystem's value before it's started in the Enable tick
-            TargetFrameRate = _targetFrameRate;
+        private void OnDestroy()
+        {
+            _backgroundCommandBuffer?.Dispose();
+
+            if (_backgroundMaterial)
+            {
+                Destroy(_backgroundMaterial);
+            }
+
+            if (_fusedDepthCamera != null)
+            {
+                Destroy(_fusedDepthCamera.gameObject);
+            }
+
+            if (_defaultDepthTexture != null)
+            {
+                Destroy(_defaultDepthTexture);
+            }
+
+            if (_defaultNonLinearDepthTexture != null)
+            {
+                Destroy(_defaultNonLinearDepthTexture);
+            }
+
+            if (_gpuDepth != null)
+            {
+                Destroy(_gpuDepth);
+            }
+
+            if (_cpuDepth.valid)
+            {
+                _cpuDepth.Dispose();
+            }
+
+            if (_gpuSuppression != null)
+            {
+                Destroy(_gpuSuppression);
+            }
         }
 
         private void OnEnable()
         {
-            // Check whether it's needed to enable the second render pass for occlusion
-            if (_isOcclusionSuppressionEnabled || _isOcclusionStabilizationEnabled)
-            {
-                _suppressionChannelsMaskOutdated = _isOcclusionSuppressionEnabled;
-                ScheduleCommandBufferAdditions();
-            }
+            _cameraManager.frameReceived += CameraManager_OnFrameReceived;
+            HandleCommandBufferBehaviour();
         }
 
         private void OnDisable()
         {
-            if (_cameraManager != null && _isAttachingCommandBuffer)
-              _cameraManager.frameReceived -= TryAttachCommandBuffer;
+            if (_cameraManager != null)
+            {
+                _cameraManager.frameReceived -= CameraManager_OnFrameReceived;
+            }
 
-            // Disable custom background rendering
-            ConfigureCameraCommandBuffers(false);
+            HandleCommandBufferBehaviour();
         }
 
         private void Update()
@@ -711,6 +904,9 @@ namespace Niantic.Lightship.AR.Occlusion
                 {
                     return;
                 }
+
+                // Reconfigure after validation
+                ReconfigureSubsystem();
             }
 
             if (!_occlusionSubsystem.running ||
@@ -719,114 +915,240 @@ namespace Niantic.Lightship.AR.Occlusion
                 return;
             }
 
-            // Acquire the depth texture
-            var gpuDepth = _occlusionManager.environmentDepthTexture;
-            if (gpuDepth == null)
-                return;
-
-            // Update the display transform if necessary
-            if (!_displayMatrix.HasValue || _screenOrientation != Screen.orientation)
+            if (FetchDepthData(out Texture2D depthTexture))
             {
-                _screenOrientation = Screen.orientation;
-                _displayMatrix = CameraMath.CalculateDisplayMatrix
-                (
-                    gpuDepth.width,
-                    gpuDepth.height,
-                    Screen.width,
-                    Screen.height,
-                    _screenOrientation
-                );
+                HandleOcclusionDistance();
+                HandleOcclusionRendering(depthTexture);
+            }
+        }
+
+        private void CameraManager_OnFrameReceived(ARCameraFrameEventArgs args)
+        {
+            if (!_areCommandBuffersAttached)
+            {
+                // Accumulate the number of frames
+                _numberOfARFramesReceived = (_numberOfARFramesReceived + 1) % int.MaxValue;
             }
 
-            UpdateOcclusionDistance();
+            // Handle automatic command buffer attachment
+            HandleCommandBufferBehaviour();
+        }
 
-            // Handle custom rendering
-            if (_areCommandBuffersAdded || !IsUsingLegacyRenderPipeline)
+        #endregion
+
+        /// <summary>
+        /// Updates the XRCpuImage reference by fetching the latest depth image on cpu memory.
+        /// If the XRCpuImage already exists, it will be disposed before updating. Finally,
+        /// the function will output a reference to the depth image on gpu that is most
+        /// appropriate for the current configuration.
+        /// </summary>
+        /// <param name="outDepth">A reference to the latest depth texture.</param>
+        /// <returns>Whether an appropriate depth texture could be acquired.</returns>>
+        private bool FetchDepthData(out Texture2D outDepth)
+        {
+            // Defaults
+            outDepth = null;
+
+            // Specify the screen as the viewport
+            var viewport = new XRCameraParams
             {
+                screenWidth = Screen.width,
+                screenHeight = Screen.height,
+                screenOrientation = XRDisplayContext.GetScreenOrientation()
+            };
+
+            // Using Lightship occlusion subsystem
+            if (_occlusionSubsystem is LightshipOcclusionSubsystem lsSubsystem)
+            {
+                // When using lightship depth, we acquire the image in its native container
+                // and use a custom matrix to fit it to the viewport. This matrix may contain
+                // re-projection (warping) as well.
+                if (lsSubsystem.TryAcquireEnvironmentDepthCpuImage(viewport, out var image, out _depthTransform))
+                {
+                    // Release the previous image
+                    if (_cpuDepth.valid)
+                    {
+                        _cpuDepth.Dispose();
+                    }
+
+                    // Cache the reference to the new image
+                    _cpuDepth = image;
+
+                    // Update the depth texture from the cpu image
+                    var gotGpuImage = ImageSamplingUtils.CreateOrUpdateTexture(
+                        source: _cpuDepth,
+                        destination: ref _gpuDepth,
+                        linearColorSpace: true, // avoid gamma correction on depth values
+                        destinationFilter: FilterMode.Point,
+                        pushToGpu: true
+                    );
+
+                    outDepth = gotGpuImage ? _gpuDepth : null;
+                    return gotGpuImage;
+                }
+            }
+            // Using foreign occlusion subsystem
+            else if (_occlusionSubsystem != null)
+            {
+                if (_occlusionSubsystem.TryAcquireEnvironmentDepthCpuImage(out var image))
+                {
+                    // Release the previous image
+                    if (_cpuDepth.valid)
+                    {
+                        _cpuDepth.Dispose();
+                    }
+
+                    // Cache the reference to the new image
+                    _cpuDepth = image;
+
+                    // When using lidar, the image container will have the same aspect ratio
+                    // as the camera image, according to ARFoundation standards. For the matrix
+                    // here, we do not warp, just use an affine display matrix which is the same
+                    // that is used to display the camera image.
+                    _depthTransform = CameraMath.CalculateDisplayMatrix
+                    (
+                        image.width,
+                        image.height,
+                        (int)viewport.screenWidth,
+                        (int)viewport.screenHeight,
+                        viewport.screenOrientation
+                    );
+
+                    // We make a special case for Lidar on fastest setting, because there is
+                    // a bug in ARFoundation that makes the manager owned texture flicker.
+                    // By creating a texture from the cpu image and retaining ourself, the
+                    // image becomes stable. This issue is probably due to the changes introduced
+                    // in iOS 16 where the metal command buffer do not implicitly retain textures.
+                    if (_occlusionSubsystem.currentEnvironmentDepthMode == EnvironmentDepthMode.Fastest)
+                    {
+                        // Update the depth texture from the cpu image
+                        var gotGpuImage = ImageSamplingUtils.CreateOrUpdateTexture(
+                            source: _cpuDepth,
+                            destination: ref _gpuDepth,
+                            linearColorSpace: true, // avoid gamma correction on depth values
+                            destinationFilter: FilterMode.Point,
+                            pushToGpu: true
+                        );
+
+                        outDepth = gotGpuImage ? _gpuDepth : null;
+                        return gotGpuImage;
+                    }
+
+                    // We rely on the foreign occlusion subsystem to manage the gpu image
+                    outDepth = _occlusionManager.environmentDepthTexture;
+                    return outDepth is not null;
+                }
+            }
+
+            // Could not acquire the latest cpu image
+            return false;
+        }
+
+        private void HandleOcclusionDistance()
+        {
+            if (Mode == OptimalOcclusionDistanceMode.Static || _occlusionSubsystem is not LightshipOcclusionSubsystem)
+            {
+                return;
+            }
+
+            if (!_cpuDepth.valid)
+            {
+                Log.Warning(k_MissingCpuImageMessage);
+                return;
+            }
+
+            // Acquire the image subregion to sample
+            Rect region;
+            if (Mode != OptimalOcclusionDistanceMode.SpecifiedGameObject)
+            {
+                // Use full image
+                region = s_fullScreenRect;
+            }
+            else
+            {
+                if (_principalOccludee != null)
+                {
+                    // Calculate subregion
+                    region = LightshipOcclusionExtensionUtils.CalculateScreenRect(_principalOccludee, _camera);
+                }
+                else
+                {
+                    // Use full image
+                    region = s_fullScreenRect;
+
+                    // Set fallback
+                    Mode = OptimalOcclusionDistanceMode.ClosestOccluder;
+                    Log.Warning(k_MissingOccludeeMessage);
+                }
+            }
+
+            // Sparsely sample depth within bounds
+            var depth = LightshipOcclusionExtensionUtils.SampleImageSubregion(_cpuDepth, _depthTransform, region);
+
+            // Cache result
+            XRDisplayContext.OccludeeEyeDepth = Mathf.Clamp(depth, k_MinimumDepthSample, k_MaximumDepthSample);
+        }
+
+        private void HandleOcclusionRendering(Texture2D depthTexture)
+        {
+            // Handle custom rendering
+            if (_areCommandBuffersAttached || !IsUsingLegacyRenderPipeline)
+            {
+                // Acquire the material in use
+                var material = BackgroundMaterial;
+
                 // Bind depth
-                _backgroundMaterial.SetTexture(s_depthTextureId, gpuDepth);
-                _backgroundMaterial.SetMatrix(s_displayMatrixId, _displayMatrix.Value);
+                material.SetTexture(s_depthTextureId, depthTexture);
+                material.SetMatrix(s_depthTransformId, _depthTransform);
 
                 // Set scale: this computes the affect the camera's localToWorld has on the the length of the
                 // forward vector, i.e., how much farther from the camera are things than with unit scale.
                 var forward = transform.localToWorldMatrix.GetColumn(2);
                 var scale = forward.magnitude;
-                _backgroundMaterial.SetFloat(s_cameraForwardScaleId, scale);
+                material.SetFloat(s_cameraForwardScaleId, scale);
 
                 // Semantic depth suppression
                 if (_isOcclusionSuppressionEnabled)
                 {
-                    var semantics = _semanticSegmentationManager.GetPackedSemanticsChannelsTexture(out var samplerMatrix);
-                    if (semantics != null)
-                    {
-                        if (_suppressionChannelsMaskOutdated)
-                            UpdateSemanticsMask();
+                    // Let the manager know which channels do we want to suppress with
+                    _semanticSegmentationManager.SuppressionMaskChannels = _suppressionChannels;
 
-                        // Bind semantics
-                        _backgroundMaterial.SetTexture(s_semanticsTextureId, semantics);
-                        _backgroundMaterial.SetMatrix(s_semanticsTransformId, samplerMatrix);
-                        _backgroundMaterial.SetInteger(s_bitMaskId, _suppressionChannelsMask);
+                    // Update the suppression mask texture
+                    if (_semanticSegmentationManager.TryAcquireSuppressionMaskCpuImage(out var cpuSuppression,
+                            out var suppressionTransform))
+                    {
+                        // Copy to gpu
+                        if (ImageSamplingUtils.CreateOrUpdateTexture(cpuSuppression, ref _gpuSuppression))
+                        {
+                            // Bind the gpu image
+                            material.SetTexture(s_suppressionTextureId, _gpuSuppression);
+                            material.SetMatrix(s_suppressionTransformId, suppressionTransform);
+                        }
+                        else
+                        {
+                            Log.Error(k_SuppressionTextureErrorMessage);
+                        }
+
+                        // Release the cpu image
+                        cpuSuppression.Dispose();
                     }
                 }
 
+                // Occlusion stabilization with mesh
                 if (_isOcclusionStabilizationEnabled)
                 {
-                    // Sync pose
+                    // Sync pose and bind mesh depth
                     _fusedDepthCamera.SetViewProjection(_camera.worldToCameraMatrix, _camera.projectionMatrix);
-
-                    // Bind mesh depth
-                    _backgroundMaterial.SetTexture(s_fusedDepthTextureId, _fusedDepthCamera.GpuTexture);
+                    material.SetTexture(s_fusedDepthTextureId, _fusedDepthCamera.GpuTexture);
                 }
-            }
-        }
 
-        private void UpdateOcclusionDistance()
-        {
-            if (Mode != OptimalOcclusionDistanceMode.Static && _occlusionSubsystem is LightshipOcclusionSubsystem)
-            {
-                if (_occlusionSubsystem.TryAcquireEnvironmentDepthCpuImage(out var cpuDepth))
+                if (_preferSmoothEdges)
                 {
-                    ValidateOcclusionDistanceMode();
-
-                    // Acquire sample bounds
-                    var region =
-                        (Mode == OptimalOcclusionDistanceMode.SpecifiedGameObject && _principalOccludee != null)
-                            ? CalculateScreenRect(_principalOccludee, _camera)
-                            : s_fullScreenRect;
-
-                    // Sparsely sample depth within bounds
-                    var depth = SampleSubregion(cpuDepth, _displayMatrix.Value, region);
-
-                    // Cache result
-                    OcclusionContext.Shared.OccludeeEyeDepth =
-                        Mathf.Clamp(depth, k_MinimumDepthSample, k_MaximumDepthSample);
-
-                    cpuDepth.Dispose();
+                    var width = depthTexture.width;
+                    var height = depthTexture.height;
+                    _backgroundMaterial.SetVector(s_depthTextureParams,
+                        new Vector4(1.0f / width, 1.0f / height, width, height));
                 }
-            }
-        }
-
-        private void OnDestroy()
-        {
-            // Release the command buffer
-            _backgroundCommandBuffer?.Dispose();
-
-            // Destroy the material
-            if (_backgroundMaterial)
-            {
-                Destroy(_backgroundMaterial);
-            }
-
-            // Destroy the secondary camera
-            if (_fusedDepthCamera != null)
-            {
-                Destroy(_fusedDepthCamera.gameObject);
-            }
-
-            // Destroy additional resources
-            if (_defaultDepthTexture != null)
-            {
-                Destroy(_defaultDepthTexture);
             }
         }
 
@@ -841,6 +1163,40 @@ namespace Niantic.Lightship.AR.Occlusion
                 Log.Warning(k_MissingOccludeeMessage);
                 Mode = OptimalOcclusionDistanceMode.ClosestOccluder;
             }
+        }
+
+        /// <summary>
+        /// Returns (isLoaderInitialized, isValidSubsystemLoaded)
+        /// </summary>
+        private (bool, bool) ValidateSubsystem()
+        {
+            if (_isValidated)
+            {
+                return (true, true);
+            }
+
+            var xrManager = XRGeneralSettings.Instance.Manager;
+            if (!xrManager.isInitializationComplete)
+            {
+                return (false, false);
+            }
+
+            _occlusionSubsystem = xrManager.activeLoader.GetLoadedSubsystem<XROcclusionSubsystem>();
+            if (_occlusionSubsystem == null)
+            {
+                Log.Warning
+                (
+                    "Destroying LightshipOcclusionExtension component because " +
+                    $"no active {typeof(XROcclusionSubsystem).FullName} is available. " +
+                    "Please ensure that a valid loader configuration exists in the XR project settings."
+                );
+
+                Destroy(this);
+                return (true, false);
+            }
+
+            _isValidated = true;
+            return (true, true);
         }
 
         /// <summary>
@@ -887,38 +1243,19 @@ namespace Niantic.Lightship.AR.Occlusion
                 BackgroundMaterial.DisableKeyword(k_OcclusionStabilizationFeature);
                 ToggleFusedDepthCamera(false);
             }
-        }
 
-        /// <summary>
-        /// Returns (isLoaderInitialized, isValidSubsystemLoaded)
-        /// </summary>
-        private (bool, bool) ValidateSubsystem()
-        {
-            if (_isValidated)
-                return (true, true);
-
-            var xrManager = XRGeneralSettings.Instance.Manager;
-            if (!xrManager.isInitializationComplete)
-                return (false, false);
-
-            _occlusionSubsystem =
-                xrManager.activeLoader.GetLoadedSubsystem<XROcclusionSubsystem>();
-
-            if (_occlusionSubsystem == null)
+            // Recompile the shader for depth compression
+            if (_preferSmoothEdges && _occlusionSubsystem is LightshipOcclusionSubsystem)
             {
-                Log.Warning
-                (
-                    "Destroying LightshipOcclusionExtension component because " +
-                    $"no active {typeof(XROcclusionSubsystem).FullName} is available. " +
-                    "Please ensure that a valid loader configuration exists in the XR project settings."
-                );
-
-                Destroy(this);
-                return (true, false);
+                BackgroundMaterial.EnableKeyword(k_DepthEdgeSmoothingFeature);
             }
+            else
+            {
+                BackgroundMaterial.DisableKeyword(k_DepthEdgeSmoothingFeature);
 
-            _isValidated = true;
-            return (true, true);
+                // Bypass this feature on foreign occlusion subsystems
+                _preferSmoothEdges = false;
+            }
         }
 
         /// <summary>
@@ -951,25 +1288,48 @@ namespace Niantic.Lightship.AR.Occlusion
             }
         }
 
-        private void ScheduleCommandBufferAdditions()
+        /// <summary>
+        /// Refreshes the configuration of the occlusion subsystem.
+        /// </summary>
+        private void ReconfigureSubsystem()
         {
-          _numberOfARFramesReceived = 0;
-          _cameraManager.frameReceived += TryAttachCommandBuffer;
+            // Custom settings for the lightship occlusion subsystem
+            if (_occlusionSubsystem is LightshipOcclusionSubsystem lsSubsystem)
+            {
+                // Set target frame rate
+                lsSubsystem.TargetFrameRate = _targetFrameRate;
+
+                // Bypass occlusion manager updates
+                lsSubsystem.RequestDisableFetchTextureDescriptors =
+                    _areCommandBuffersAttached && _bypassOcclusionManagerUpdates;
+            }
         }
 
-        private void TryAttachCommandBuffer(ARCameraFrameEventArgs args)
+        /// <summary>
+        /// Verifies the state of the component and enables or disables custom rendering accordingly.
+        /// </summary>
+        private void HandleCommandBufferBehaviour()
         {
-            _isAttachingCommandBuffer = true;
-            // Accumulate the number of frames
-            _numberOfARFramesReceived++;
-            if (_numberOfARFramesReceived > k_attachDelay)
-            {
-                // Enable custom background rendering
-                ConfigureCameraCommandBuffers(true);
+            // Evaluate state
+            var canAttachCommandBuffer = _numberOfARFramesReceived > k_attachDelay;
+            var shouldAttachCommandBuffer = gameObject.activeInHierarchy && enabled && IsAnyFeatureEnabled;
 
-                // Stop tracking the number of frames received
-                _cameraManager.frameReceived -= TryAttachCommandBuffer;
-                _isAttachingCommandBuffer = false;
+            if (!_areCommandBuffersAttached)
+            {
+                // Attach?
+                if (canAttachCommandBuffer && shouldAttachCommandBuffer)
+                {
+                    ConfigureCameraCommandBuffers(addBuffers: true);
+                }
+            }
+            else
+            {
+                // Detach?
+                if (!shouldAttachCommandBuffer)
+                {
+                    _numberOfARFramesReceived = 0;
+                    ConfigureCameraCommandBuffers(addBuffers: false);
+                }
             }
         }
 
@@ -986,7 +1346,7 @@ namespace Niantic.Lightship.AR.Occlusion
             }
 
             Log.Info("ConfigureCameraCommandBuffers: " + addBuffers);
-            if (addBuffers == _areCommandBuffersAdded)
+            if (addBuffers == _areCommandBuffersAttached)
             {
                 return;
             }
@@ -999,6 +1359,10 @@ namespace Niantic.Lightship.AR.Occlusion
                 // Attach to the camera
                 _camera.AddCommandBuffer(CameraEvent.BeforeForwardOpaque, commandBuffer);
                 _camera.AddCommandBuffer(CameraEvent.BeforeGBuffer, commandBuffer);
+
+                // Bind pass-through texture by default
+                BackgroundMaterial.SetTexture(s_depthTextureId, DefaultDepthTexture);
+                BackgroundMaterial.SetTexture(s_fusedDepthTextureId, DefaultNonLinearDepthTexture);
             }
             else if (_backgroundCommandBuffer != null)
             {
@@ -1011,41 +1375,7 @@ namespace Niantic.Lightship.AR.Occlusion
                 _backgroundCommandBuffer = null;
             }
 
-            _areCommandBuffersAdded = addBuffers;
-        }
-
-        /// <summary>
-        /// The background rendering material in use.
-        /// </summary>
-        /// <exception cref="InvalidOperationException"></exception>
-        public Material BackgroundMaterial
-        {
-            get
-            {
-                if (_backgroundMaterial == null)
-                {
-                    if (UseCustomBackgroundMaterial)
-                    {
-                        _backgroundMaterial = CustomBackgroundMaterial;
-                    }
-                    else
-                    {
-                        var shader = Shader.Find(k_LightshipOcclusionExtensionShaderName);
-                        if (shader == null)
-                        {
-                            throw new InvalidOperationException
-                            (
-                                $"Could not find shader named '{k_LightshipOcclusionExtensionShaderName}' required " +
-                                "for depth processing."
-                            );
-                        }
-
-                        _backgroundMaterial = new Material(shader);
-                    }
-                }
-
-                return _backgroundMaterial;
-            }
+            _areCommandBuffersAttached = addBuffers;
         }
 
         /// <summary>
@@ -1058,127 +1388,9 @@ namespace Niantic.Lightship.AR.Occlusion
                 _backgroundCommandBuffer = new CommandBuffer();
                 _backgroundCommandBuffer.name = k_CustomRenderPassName;
                 _backgroundCommandBuffer.Blit(null, BuiltinRenderTextureType.CameraTarget, BackgroundMaterial);
-
-                // Bind passthrough texture by default
-                BackgroundMaterial.SetTexture(s_depthTextureId, DefaultDepthTexture);
             }
 
             return _backgroundCommandBuffer;
         }
-
-        private void UpdateSemanticsMask()
-        {
-            uint mask = 0u;
-            const int bitsPerPixel = sizeof(UInt32) * 8;
-
-            UInt32 GetChannelTextureMask(int channelIndex)
-            {
-                if (channelIndex is < 0 or >= bitsPerPixel)
-                    return 0u;
-
-                return 1u << (bitsPerPixel - 1 - channelIndex);
-            }
-
-            for (var i = 0; i < _suppressionChannels.Count; i++)
-            {
-                var cIdx = _semanticSegmentationManager.GetChannelIndex(_suppressionChannels[i]);
-                mask |= GetChannelTextureMask(cIdx);
-            }
-
-            _suppressionChannelsMask = (int)mask;
-        }
-
-        #region Utils
-
-        /// <summary>
-        /// Sparsely samples the specified subregion for the closest depth value.
-        /// </summary>
-        private static float SampleSubregion
-        (
-            XRCpuImage depthImage,
-            Matrix4x4 imageTransform,
-            Rect region
-        )
-        {
-            using (var data = depthImage.GetPlane(0)
-                       .data.Reinterpret<float>(UnsafeUtility.SizeOf<byte>()))
-            {
-                // Inspect the image
-                var width = depthImage.width;
-                var height = depthImage.height;
-                var depth = 100.0f;
-
-                // Helpers
-                const int numSamples = 5;
-                var position = region.position;
-                var center = region.center;
-                var stepX = region.width * (1.0f / numSamples);
-                var stepY = region.height * (1.0f / numSamples);
-
-                // Sample
-                var uv = new Vector2();
-                for (int i = 0; i <= numSamples; i++)
-                {
-                    // Sample horizontally
-                    uv.x = position.x + i * stepX;
-                    uv.y = center.y;
-
-                    var horizontal = data.Sample(width, height, uv, imageTransform);
-                    if (horizontal < depth) depth = horizontal;
-
-                    // Sample vertically
-                    uv.x = center.x;
-                    uv.y = position.y + i * stepY;
-
-                    var vertical = data.Sample(width, height, uv, imageTransform);
-                    if (vertical < depth) depth = vertical;
-                }
-
-                return depth;
-            }
-        }
-
-        private static Rect CalculateScreenRect
-        (
-            Renderer forRenderer,
-            Camera usingCamera
-        )
-        {
-            var bounds = forRenderer.bounds;
-            Vector3 c = bounds.center;
-            Vector3 e = bounds.extents;
-            Vector3[] points = {
-                usingCamera.WorldToViewportPoint(new Vector3( c.x + e.x, c.y + e.y, c.z + e.z )),
-                usingCamera.WorldToViewportPoint(new Vector3( c.x + e.x, c.y + e.y, c.z - e.z )),
-                usingCamera.WorldToViewportPoint(new Vector3( c.x + e.x, c.y - e.y, c.z + e.z )),
-                usingCamera.WorldToViewportPoint(new Vector3( c.x + e.x, c.y - e.y, c.z - e.z )),
-                usingCamera.WorldToViewportPoint(new Vector3( c.x - e.x, c.y + e.y, c.z + e.z )),
-                usingCamera.WorldToViewportPoint(new Vector3( c.x - e.x, c.y + e.y, c.z - e.z )),
-                usingCamera.WorldToViewportPoint(new Vector3( c.x - e.x, c.y - e.y, c.z + e.z )),
-                usingCamera.WorldToViewportPoint(new Vector3( c.x - e.x, c.y - e.y, c.z - e.z ))
-            };
-
-            float maxX = 0.0f;
-            float maxY = 0.0f;
-            float minX = 1.0f;
-            float minY = 1.0f;
-            for (var i = 0; i < points.Length; i++)
-            {
-                Vector3 entry = points[i];
-                maxX = Mathf.Max(entry.x, maxX);
-                maxY = Mathf.Max(entry.y, maxY);
-                minX = Mathf.Min(entry.x, minX);
-                minY = Mathf.Min(entry.y, minY);
-            }
-
-            maxX = Mathf.Clamp(maxX, 0.0f, 1.0f);
-            minX = Mathf.Clamp(minX, 0.0f, 1.0f);
-            maxY = Mathf.Clamp(maxY, 0.0f, 1.0f);
-            minY = Mathf.Clamp(minY, 0.0f, 1.0f);
-
-            return Rect.MinMaxRect(minX, minY, maxX, maxY);
-        }
-
-        #endregion
     }
 }

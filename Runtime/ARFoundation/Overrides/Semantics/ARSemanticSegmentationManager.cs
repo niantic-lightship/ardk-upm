@@ -3,18 +3,14 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using Niantic.Lightship.AR.Utilities.Logging;
-using Niantic.Lightship.AR.ARFoundation;
+using Niantic.Lightship.AR.ARFoundation.Unity;
 using Niantic.Lightship.AR.Common;
 using Niantic.Lightship.AR.Subsystems.Common;
 using Niantic.Lightship.AR.Subsystems.Semantics;
 using Niantic.Lightship.AR.Utilities;
-using Niantic.Lightship.AR.Utilities.Textures;
+using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.XRSubsystems;
-using Unity.Collections;
-using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
-using UnityEngine.Profiling;
 using UnityEngine.Rendering;
 using UnityEngine.XR.ARFoundation;
 using UnityEngine.XR.ARSubsystems;
@@ -57,6 +53,36 @@ namespace Niantic.Lightship.AR.Semantics
                 if (subsystem != null)
                 {
                     subsystem.TargetFrameRate = value;
+                }
+            }
+        }
+
+        // This is used to cache the suppression mask channels until metadata is available
+        private List<string> _cachedSuppressionMaskChannels = new List<string>();
+
+        internal List<string> SuppressionMaskChannels
+        {
+            get
+            {
+                if (subsystem.IsMetadataAvailable)
+                {
+                    return subsystem?.SuppressionMaskChannels ?? new List<string>();
+                }
+                else
+                {
+                    return _cachedSuppressionMaskChannels;
+                }
+            }
+            set
+            {
+                if (subsystem != null && subsystem.IsMetadataAvailable)
+                {
+                    subsystem.SuppressionMaskChannels = value;
+                    _cachedSuppressionMaskChannels = value;
+                }
+                else
+                {
+                    _cachedSuppressionMaskChannels = value;
                 }
             }
         }
@@ -129,6 +155,14 @@ namespace Niantic.Lightship.AR.Semantics
         private ARTextureInfo _packedBitmaskTextureInfo;
 
         /// <summary>
+        /// The suppression mask texture info.
+        /// </summary>
+        /// <value>
+        ///The suppression mask texture info.
+        /// </value>
+        private ARTextureInfo _suppressionMaskTextureInfo;
+
+        /// <summary>
         /// Frequently updated information about the viewport.
         /// </summary>
         private XRCameraParams _viewport;
@@ -153,8 +187,14 @@ namespace Niantic.Lightship.AR.Semantics
         /// </summary>
         protected override void OnDisable()
         {
+            // Reset suppression channels before
+            // shutting down the subsystem
+            SuppressionMaskChannels = null;
+
+            // Stop the subsystem
             base.OnDisable();
 
+            // Reset textures and meta data
             ResetTextureInfos();
             ResetModelMetadata();
         }
@@ -177,6 +217,7 @@ namespace Niantic.Lightship.AR.Semantics
                 if (!subsystem.TryGetChannelNames(out var channelNames))
                     return;
 
+                subsystem.SuppressionMaskChannels = _cachedSuppressionMaskChannels;
                 SetModelMetadata(channelNames);
 
                 var args =
@@ -195,7 +236,7 @@ namespace Niantic.Lightship.AR.Semantics
             // Update viewport info
             _viewport.screenWidth = Screen.width;
             _viewport.screenHeight = Screen.height;
-            _viewport.screenOrientation = Screen.orientation;
+            _viewport.screenOrientation = XRDisplayContext.GetScreenOrientation();
 
             // Invoke event if new keyframe is available
             var currentFrameId = subsystem.LatestFrameId;
@@ -339,6 +380,28 @@ namespace Niantic.Lightship.AR.Semantics
         }
 
         /// <summary>
+        /// Retrieves the suppression mask texture, where each pixel contains a uint which can be used to interpolate
+        /// between the predicted depth and the far field depth of the scene. This is useful for enabling smooth occlusion suppression.
+        /// </summary>
+        /// <param name="samplerMatrix">A matrix that converts from viewport to image coordinates according to the latest pose.</param>
+        /// <param name="cameraParams">Params of the viewport to sample with. Defaults to current screen dimensions if null.</param>
+        /// <returns>The suppression mask texture, owned by the manager, if any. Otherwise, <c>null</c>.</returns>
+        public Texture2D GetSuppressionMaskTexture(out Matrix4x4 samplerMatrix, XRCameraParams? cameraParams = null)
+        {
+            cameraParams ??= _viewport;
+
+            if (subsystem.TryGetSuppressionMaskTexture(out var textureDescriptor, out samplerMatrix, cameraParams))
+            {
+                _suppressionMaskTextureInfo = ARTextureInfo.GetUpdatedTextureInfo(_suppressionMaskTextureInfo,
+                    textureDescriptor, samplerMatrix, cameraParams.Value);
+                return _suppressionMaskTextureInfo.Texture as Texture2D;
+            }
+
+            samplerMatrix = default;
+            return null;
+        }
+
+        /// <summary>
         /// Attempt to acquire the latest semantic segmentation XRCpuImage for the specified semantic class. This
         /// provides direct access to the raw pixel data.
         /// </summary>
@@ -373,6 +436,21 @@ namespace Niantic.Lightship.AR.Semantics
         {
             cameraParams ??= _viewport;
             return subsystem.TryAcquirePackedSemanticChannelsCpuImage(out cpuImage, out samplerMatrix, cameraParams);
+        }
+
+        /// <summary>
+        /// Tries to acquire the latest suppression mask XRCpuImage. Each element of the XRCpuImage is a uint32 value
+        /// which can be used to interpolate between instantaneous depth and far field depth.
+        /// </summary>
+        /// <param name="cpuImage">If this method returns `true`, an acquired <see cref="XRCpuImage"/>. The CPU image
+        /// must be disposed by the caller.</param>
+        /// <param name="samplerMatrix">A matrix that converts from viewport to image coordinates according to the latest pose.</param>
+        /// <param name="cameraParams">Params of the viewport to sample with. Defaults to current screen dimensions if null.</param>
+        /// <returns>True if the CPU image was acquired. Otherwise, false</returns>
+        public bool TryAcquireSuppressionMaskCpuImage(out XRCpuImage cpuImage, out Matrix4x4 samplerMatrix, XRCameraParams? cameraParams = null)
+        {
+            cameraParams ??= _viewport;
+            return subsystem.TryAcquireSuppressionMaskCpuImage(out cpuImage, out samplerMatrix, cameraParams);
         }
 
         /// <summary>

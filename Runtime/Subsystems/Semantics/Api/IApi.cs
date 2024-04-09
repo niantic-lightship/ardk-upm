@@ -15,7 +15,7 @@ namespace Niantic.Lightship.AR.Subsystems.Semantics
 
         public void Stop(IntPtr nativeProviderHandle);
 
-        public void Configure(IntPtr nativeProviderHandle, UInt32 framesPerSecond, UInt32 numThresholds, IntPtr thresholds);
+        public void Configure(IntPtr nativeProviderHandle, UInt32 framesPerSecond, UInt32 numThresholds, IntPtr thresholds, List<string>suppressionMaskChannelNames);
 
         public void Destruct(IntPtr nativeProviderHandle);
 
@@ -24,6 +24,7 @@ namespace Niantic.Lightship.AR.Subsystems.Semantics
             IntPtr nativeProviderHandle,
             string channelName,
             XRCameraParams? cameraParams,
+            Matrix4x4? currentPose,
             out XRTextureDescriptor semanticsChannelDescriptor,
             out Matrix4x4 samplerMatrix
         );
@@ -33,6 +34,7 @@ namespace Niantic.Lightship.AR.Subsystems.Semantics
             IntPtr nativeProviderHandle,
             string channelName,
             XRCameraParams? cameraParams,
+            Matrix4x4? currentPose,
             out XRCpuImage cpuImage,
             out Matrix4x4 samplerMatrix
         );
@@ -41,6 +43,7 @@ namespace Niantic.Lightship.AR.Subsystems.Semantics
         (
             IntPtr nativeProviderHandle,
             XRCameraParams? cameraParams,
+            Matrix4x4? currentPose,
             out XRTextureDescriptor packedSemanticsDescriptor,
             out Matrix4x4 samplerMatrix
         );
@@ -49,9 +52,28 @@ namespace Niantic.Lightship.AR.Subsystems.Semantics
         (
             IntPtr nativeProviderHandle,
             XRCameraParams? cameraParams,
+            Matrix4x4? currentPose,
             out XRCpuImage cpuImage,
             out Matrix4x4 samplerMatrix
         );
+
+		public bool TryGetSuppressionMaskTexture
+		(
+			IntPtr nativeProviderHandle,
+			XRCameraParams? cameraParams,
+            Matrix4x4? currentPose,
+			out XRTextureDescriptor suppressionMaskDescriptor,
+			out Matrix4x4 samplerMatrix
+		);
+
+		public bool TryAcquireSuppressionMaskCpuImage
+		(
+			IntPtr nativeProviderHandle,
+			XRCameraParams? cameraParams,
+            Matrix4x4? currentPose,
+			out XRCpuImage cpuImage,
+			out Matrix4x4 samplerMatrix
+		);
 
         public bool TryGetChannelNames(IntPtr nativeProviderHandle, out List<string> semanticChannelNames);
 
@@ -60,5 +82,7 @@ namespace Niantic.Lightship.AR.Subsystems.Semantics
         public bool TryGetLatestIntrinsicsMatrix(IntPtr nativeProviderHandle, out Matrix4x4 intrinsicsMatrix);
 
         public bool HasMetadata(IntPtr nativeProviderHandle);
+
+        public UInt32 GetFlags(IEnumerable<string> channels);
     }
 }

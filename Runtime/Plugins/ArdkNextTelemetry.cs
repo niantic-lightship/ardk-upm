@@ -24,7 +24,7 @@ namespace Niantic.Lightship.AR.Protobuf {
           string.Concat(
             "Cjdhcmdlby9hcmRrLW5leHQvY29tbW9uL3Byb3Rvcy9hcmRrX25leHRfdGVs",
             "ZW1ldHJ5LnByb3RvEg5hcmRrLnRlbGVtZXRyeRo2YXJnZW8vYXJkay1uZXh0",
-            "L2NvbW1vbi9wcm90b3MvYXJfY29tbW9uX21ldGFkYXRhLnByb3RvIrkIChpB",
+            "L2NvbW1vbi9wcm90b3MvYXJfY29tbW9uX21ldGFkYXRhLnByb3RvIpcOChpB",
             "cmRrTmV4dFRlbGVtZXRyeU9tbmlQcm90bxJDChRpbml0aWFsaXphdGlvbl9l",
             "dmVudBgBIAEoCzIjLmFyZGsudGVsZW1ldHJ5LkluaXRpYWxpemF0aW9uRXZl",
             "bnRIABJLChlzY2FuX3JlY29yZGVyX3N0YXJ0X2V2ZW50GAIgASgLMiYuYXJk",
@@ -46,63 +46,92 @@ namespace Niantic.Lightship.AR.Protobuf {
             "dnBzX3Nlc3Npb25fZW5kZWRfZXZlbnQYCyABKAsyJC5hcmRrLnRlbGVtZXRy",
             "eS5WcHNTZXNzaW9uRW5kZWRFdmVudEgAEkUKFmFyX3Nlc3Npb25fc3RhcnRf",
             "ZXZlbnQYDCABKAsyIy5hcmRrLnRlbGVtZXRyeS5BclNlc3Npb25TdGFydEV2",
-            "ZW50SAASPAoSYXJfY29tbW9uX21ldGFkYXRhGOgHIAEoCzIfLm5hci50ZWxl",
-            "bWV0cnkuQVJDb21tb25NZXRhZGF0YRIWCg1kZXZlbG9wZXJfa2V5GOkHIAEo",
-            "CRIVCgx0aW1lc3RhbXBfbXMY6gcgASgDQhEKD3RlbGVtZXRyeV9ldmVudCI+",
-            "ChNJbml0aWFsaXphdGlvbkV2ZW50EhQKDGluc3RhbGxfbW9kZRgBIAEoCRIR",
-            "Cglwcm9jZXNzb3IYAiABKAkiVgobVnBzTG9jYWxpemF0aW9uU3RhcnRlZEV2",
-            "ZW50Eh8KF2xvY2FsaXphdGlvbl90YXJnZXRfaWRzGAEgAygJEhYKDnZwc19z",
-            "ZXNzaW9uX2lkGAIgASgJIo8BChtWcHNMb2NhbGl6YXRpb25TdWNjZXNzRXZl",
-            "bnQSHgoWbG9jYWxpemF0aW9uX3RhcmdldF9pZBgBIAEoCRIWCg52cHNfc2Vz",
-            "c2lvbl9pZBgCIAEoCRIbChN0aW1lX3RvX2xvY2FsaXplX21zGAMgASgDEhsK",
-            "E251bV9zZXJ2ZXJfcmVxdWVzdHMYBCABKAUilwIKFFZwc1Nlc3Npb25FbmRl",
-            "ZEV2ZW50EhYKDnZwc19zZXNzaW9uX2lkGAEgASgJEhsKE251bV9zZXJ2ZXJf",
-            "cmVxdWVzdHMYAiABKAUSFwoPdGltZV90cmFja2VkX21zGAMgASgDEh0KFXRv",
-            "dGFsX3Nlc3Npb25fdGltZV9tcxgEIAEoAxJYChNuZXR3b3JrX2Vycm9yX2Nv",
-            "ZGVzGAUgAygLMjsuYXJkay50ZWxlbWV0cnkuVnBzU2Vzc2lvbkVuZGVkRXZl",
-            "bnQuTmV0d29ya0Vycm9yQ29kZXNFbnRyeRo4ChZOZXR3b3JrRXJyb3JDb2Rl",
-            "c0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoBToCOAEigQIKFlNj",
-            "YW5SZWNvcmRlclN0YXJ0RXZlbnQSDwoHc2Nhbl9pZBgBIAEoCRJICgxkZXB0",
-            "aF9zb3VyY2UYAiABKA4yMi5hcmRrLnRlbGVtZXRyeS5TY2FuUmVjb3JkZXJT",
-            "dGFydEV2ZW50LkRlcHRoU291cmNlEhEKCWZyYW1lcmF0ZRgDIAEoDRIYChBp",
-            "c192b3hlbF9lbmFibGVkGAQgASgIEhoKEmlzX3JheWNhc3RfZW5hYmxlZBgF",
-            "IAEoCCJDCgtEZXB0aFNvdXJjZRILCgdVTktOT1dOEAASCQoFTElEQVIQARIO",
-            "CgpNVUxUSURFUFRIEAISDAoITk9fREVQVEgQAyLLAQoVU2NhblJlY29yZGVy",
-            "U3RvcEV2ZW50Eg8KB3NjYW5faWQYASABKAkSQgoJb3BlcmF0aW9uGAIgASgO",
-            "Mi8uYXJkay50ZWxlbWV0cnkuU2NhblJlY29yZGVyU3RvcEV2ZW50Lk9wZXJh",
-            "dGlvbhIYChBzY2FuX2R1cmF0aW9uX21zGAMgASgNEh8KF251bWVyX29mX2Zy",
-            "YW1lc19pbl9zY2FuGAQgASgNIiIKCU9wZXJhdGlvbhIICgRTQVZFEAASCwoH",
-            "RElTQ0FSRBABIiIKD1NjYW5TUUNSdW5FdmVudBIPCgdzY2FuX2lkGAEgASgJ",
-            "IrgDChBTY2FuU1FDRG9uZUV2ZW50Eg8KB3NjYW5faWQYASABKAkSFQoNb3Zl",
-            "cmFsbF9zY29yZRgCIAEoAhIWCg50aW1lX2VsYXBzZV9tcxgDIAEoDRJMCg5m",
-            "YWlsZWRfcmVhc29ucxgEIAMoCzI0LmFyZGsudGVsZW1ldHJ5LlNjYW5TUUNE",
-            "b25lRXZlbnQuU2NhblNRQ0ZhaWxlZFJlYXNvbhqVAgoTU2NhblNRQ0ZhaWxl",
-            "ZFJlYXNvbhJYCg1mYWlsZWRfcmVhc29uGAEgASgOMkEuYXJkay50ZWxlbWV0",
-            "cnkuU2NhblNRQ0RvbmVFdmVudC5TY2FuU1FDRmFpbGVkUmVhc29uLkZhaWxl",
-            "ZFJlYXNvbhINCgVzY29yZRgCIAEoAiKUAQoMRmFpbGVkUmVhc29uEgoKBkJM",
-            "VVJSWRAAEgkKBURBUkRLEAESDwoLQkFEX1FVQUxJVFkQAhISCg5HUk9VTkRf",
-            "T1JfRkVFVBADEhIKDklORE9PUl9VTkNMRUFSEAQSDAoIRlJPTV9DQVIQBRIO",
-            "CgpPQlNUUlVDVEVEEAYSFgoSVEFSR0VUX05PVF9WSVNJQkxFEAcitAIKDlNj",
-            "YW5FcnJvckV2ZW50Eg8KB3NjYW5faWQYASABKAkSOAoKZXJyb3JfY29kZRgC",
-            "IAEoDjIkLmFyZGsudGVsZW1ldHJ5LlNjYW5FcnJvckV2ZW50LkVycm9yEhUK",
-            "DWVycm9yX21lc3NhZ2UYAyABKAkivwEKBUVycm9yEgsKB1VOS05PV04QABIR",
-            "Cg1TUUNfTk9UX1JFQURZEAESEQoNU1FDX0JBRF9JTlBVVBACEhEKDVNRQ19C",
-            "QURfTU9ERUwQAxIXChNTUUNfTU9ERUxfUkVBRF9GQUlMEAQSFAoQU1FDX0RF",
-            "Q1JZUFRfRkFJTBAFEhMKD1NRQ19VTlBBQ0tfRkFJTBAGEhcKE1NRQ19OT19J",
-            "TlBVVF9GUkFNRVMQBxITCg9TUUNfSU5URVJSVVBURUQQCCKCAQojU2NhbkFy",
-            "Y2hpdmVCdWlsZGVyR2V0TmV4dENodW5rRXZlbnQSDwoHc2Nhbl9pZBgBIAEo",
-            "CRIgChhjaHVua19maWxlX3NpemVfaW5fYnl0ZXMYAiABKAQSEAoIY2h1bmtf",
-            "aWQYAyABKA0SFgoOdGltZV9lbGFwc2VfbXMYBCABKA0iWgodU2NhbkFyY2hp",
-            "dmVCdWlsZGVyQ2FuY2VsRXZlbnQSDwoHc2Nhbl9pZBgBIAEoCRIQCghjaHVu",
-            "a19pZBgCIAEoDRIWCg50aW1lX2VsYXBzZV9tcxgDIAEoDSIqChNBclNlc3Np",
-            "b25TdGFydEV2ZW50EhMKC2VtcHR5X2ZpZWxkGGMgASgIQmIKHmNvbS5uaWFu",
-            "dGljbGFicy5hcmRrLnRlbGVtZXRyeVogbmlhbnRpYy9saWdodHNoaXAvYXJk",
-            "ay90ZWxlbWV0cnmqAh1OaWFudGljLkxpZ2h0c2hpcC5BUi5Qcm90b2J1ZmIG",
-            "cHJvdG8z"));
+            "ZW50SAASPAoRZGVwdGhfc3RhcnRfZXZlbnQYDSABKAsyHy5hcmRrLnRlbGVt",
+            "ZXRyeS5EZXB0aFN0YXJ0RXZlbnRIABI6ChBkZXB0aF9zdG9wX2V2ZW50GA4g",
+            "ASgLMh4uYXJkay50ZWxlbWV0cnkuRGVwdGhTdG9wRXZlbnRIABJEChVzZW1h",
+            "bnRpY3Nfc3RhcnRfZXZlbnQYDyABKAsyIy5hcmRrLnRlbGVtZXRyeS5TZW1h",
+            "bnRpY3NTdGFydEV2ZW50SAASQgoUc2VtYW50aWNzX3N0b3BfZXZlbnQYECAB",
+            "KAsyIi5hcmRrLnRlbGVtZXRyeS5TZW1hbnRpY3NTdG9wRXZlbnRIABJAChNt",
+            "ZXNoaW5nX3N0YXJ0X2V2ZW50GBEgASgLMiEuYXJkay50ZWxlbWV0cnkuTWVz",
+            "aGluZ1N0YXJ0RXZlbnRIABI+ChJtZXNoaW5nX3N0b3BfZXZlbnQYEiABKAsy",
+            "IC5hcmRrLnRlbGVtZXRyeS5NZXNoaW5nU3RvcEV2ZW50SAASUQocb2JqZWN0",
+            "X2RldGVjdGlvbl9zdGFydF9ldmVudBgTIAEoCzIpLmFyZGsudGVsZW1ldHJ5",
+            "Lk9iamVjdERldGVjdGlvblN0YXJ0RXZlbnRIABJPChtvYmplY3RfZGV0ZWN0",
+            "aW9uX3N0b3BfZXZlbnQYFCABKAsyKC5hcmRrLnRlbGVtZXRyeS5PYmplY3RE",
+            "ZXRlY3Rpb25TdG9wRXZlbnRIABI4Cg93cHNfc3RhcnRfZXZlbnQYFSABKAsy",
+            "HS5hcmRrLnRlbGVtZXRyeS5XcHNTdGFydEV2ZW50SAASQAoTd3BzX2F2YWls",
+            "YWJsZV9ldmVudBgWIAEoCzIhLmFyZGsudGVsZW1ldHJ5Lldwc0F2YWlsYWJs",
+            "ZUV2ZW50SAASNgoOd3BzX3N0b3BfZXZlbnQYFyABKAsyHC5hcmRrLnRlbGVt",
+            "ZXRyeS5XcHNTdG9wRXZlbnRIABI8ChJhcl9jb21tb25fbWV0YWRhdGEY6Acg",
+            "ASgLMh8ubmFyLnRlbGVtZXRyeS5BUkNvbW1vbk1ldGFkYXRhEhYKDWRldmVs",
+            "b3Blcl9rZXkY6QcgASgJEhUKDHRpbWVzdGFtcF9tcxjqByABKANCEQoPdGVs",
+            "ZW1ldHJ5X2V2ZW50Ij4KE0luaXRpYWxpemF0aW9uRXZlbnQSFAoMaW5zdGFs",
+            "bF9tb2RlGAEgASgJEhEKCXByb2Nlc3NvchgCIAEoCSJWChtWcHNMb2NhbGl6",
+            "YXRpb25TdGFydGVkRXZlbnQSHwoXbG9jYWxpemF0aW9uX3RhcmdldF9pZHMY",
+            "ASADKAkSFgoOdnBzX3Nlc3Npb25faWQYAiABKAkijwEKG1Zwc0xvY2FsaXph",
+            "dGlvblN1Y2Nlc3NFdmVudBIeChZsb2NhbGl6YXRpb25fdGFyZ2V0X2lkGAEg",
+            "ASgJEhYKDnZwc19zZXNzaW9uX2lkGAIgASgJEhsKE3RpbWVfdG9fbG9jYWxp",
+            "emVfbXMYAyABKAMSGwoTbnVtX3NlcnZlcl9yZXF1ZXN0cxgEIAEoBSKXAgoU",
+            "VnBzU2Vzc2lvbkVuZGVkRXZlbnQSFgoOdnBzX3Nlc3Npb25faWQYASABKAkS",
+            "GwoTbnVtX3NlcnZlcl9yZXF1ZXN0cxgCIAEoBRIXCg90aW1lX3RyYWNrZWRf",
+            "bXMYAyABKAMSHQoVdG90YWxfc2Vzc2lvbl90aW1lX21zGAQgASgDElgKE25l",
+            "dHdvcmtfZXJyb3JfY29kZXMYBSADKAsyOy5hcmRrLnRlbGVtZXRyeS5WcHNT",
+            "ZXNzaW9uRW5kZWRFdmVudC5OZXR3b3JrRXJyb3JDb2Rlc0VudHJ5GjgKFk5l",
+            "dHdvcmtFcnJvckNvZGVzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIg",
+            "ASgFOgI4ASKBAgoWU2NhblJlY29yZGVyU3RhcnRFdmVudBIPCgdzY2FuX2lk",
+            "GAEgASgJEkgKDGRlcHRoX3NvdXJjZRgCIAEoDjIyLmFyZGsudGVsZW1ldHJ5",
+            "LlNjYW5SZWNvcmRlclN0YXJ0RXZlbnQuRGVwdGhTb3VyY2USEQoJZnJhbWVy",
+            "YXRlGAMgASgNEhgKEGlzX3ZveGVsX2VuYWJsZWQYBCABKAgSGgoSaXNfcmF5",
+            "Y2FzdF9lbmFibGVkGAUgASgIIkMKC0RlcHRoU291cmNlEgsKB1VOS05PV04Q",
+            "ABIJCgVMSURBUhABEg4KCk1VTFRJREVQVEgQAhIMCghOT19ERVBUSBADIssB",
+            "ChVTY2FuUmVjb3JkZXJTdG9wRXZlbnQSDwoHc2Nhbl9pZBgBIAEoCRJCCglv",
+            "cGVyYXRpb24YAiABKA4yLy5hcmRrLnRlbGVtZXRyeS5TY2FuUmVjb3JkZXJT",
+            "dG9wRXZlbnQuT3BlcmF0aW9uEhgKEHNjYW5fZHVyYXRpb25fbXMYAyABKA0S",
+            "HwoXbnVtZXJfb2ZfZnJhbWVzX2luX3NjYW4YBCABKA0iIgoJT3BlcmF0aW9u",
+            "EggKBFNBVkUQABILCgdESVNDQVJEEAEiIgoPU2NhblNRQ1J1bkV2ZW50Eg8K",
+            "B3NjYW5faWQYASABKAkiuAMKEFNjYW5TUUNEb25lRXZlbnQSDwoHc2Nhbl9p",
+            "ZBgBIAEoCRIVCg1vdmVyYWxsX3Njb3JlGAIgASgCEhYKDnRpbWVfZWxhcHNl",
+            "X21zGAMgASgNEkwKDmZhaWxlZF9yZWFzb25zGAQgAygLMjQuYXJkay50ZWxl",
+            "bWV0cnkuU2NhblNRQ0RvbmVFdmVudC5TY2FuU1FDRmFpbGVkUmVhc29uGpUC",
+            "ChNTY2FuU1FDRmFpbGVkUmVhc29uElgKDWZhaWxlZF9yZWFzb24YASABKA4y",
+            "QS5hcmRrLnRlbGVtZXRyeS5TY2FuU1FDRG9uZUV2ZW50LlNjYW5TUUNGYWls",
+            "ZWRSZWFzb24uRmFpbGVkUmVhc29uEg0KBXNjb3JlGAIgASgCIpQBCgxGYWls",
+            "ZWRSZWFzb24SCgoGQkxVUlJZEAASCQoFREFSREsQARIPCgtCQURfUVVBTElU",
+            "WRACEhIKDkdST1VORF9PUl9GRUVUEAMSEgoOSU5ET09SX1VOQ0xFQVIQBBIM",
+            "CghGUk9NX0NBUhAFEg4KCk9CU1RSVUNURUQQBhIWChJUQVJHRVRfTk9UX1ZJ",
+            "U0lCTEUQByK0AgoOU2NhbkVycm9yRXZlbnQSDwoHc2Nhbl9pZBgBIAEoCRI4",
+            "CgplcnJvcl9jb2RlGAIgASgOMiQuYXJkay50ZWxlbWV0cnkuU2NhbkVycm9y",
+            "RXZlbnQuRXJyb3ISFQoNZXJyb3JfbWVzc2FnZRgDIAEoCSK/AQoFRXJyb3IS",
+            "CwoHVU5LTk9XThAAEhEKDVNRQ19OT1RfUkVBRFkQARIRCg1TUUNfQkFEX0lO",
+            "UFVUEAISEQoNU1FDX0JBRF9NT0RFTBADEhcKE1NRQ19NT0RFTF9SRUFEX0ZB",
+            "SUwQBBIUChBTUUNfREVDUllQVF9GQUlMEAUSEwoPU1FDX1VOUEFDS19GQUlM",
+            "EAYSFwoTU1FDX05PX0lOUFVUX0ZSQU1FUxAHEhMKD1NRQ19JTlRFUlJVUFRF",
+            "RBAIIoIBCiNTY2FuQXJjaGl2ZUJ1aWxkZXJHZXROZXh0Q2h1bmtFdmVudBIP",
+            "CgdzY2FuX2lkGAEgASgJEiAKGGNodW5rX2ZpbGVfc2l6ZV9pbl9ieXRlcxgC",
+            "IAEoBBIQCghjaHVua19pZBgDIAEoDRIWCg50aW1lX2VsYXBzZV9tcxgEIAEo",
+            "DSJaCh1TY2FuQXJjaGl2ZUJ1aWxkZXJDYW5jZWxFdmVudBIPCgdzY2FuX2lk",
+            "GAEgASgJEhAKCGNodW5rX2lkGAIgASgNEhYKDnRpbWVfZWxhcHNlX21zGAMg",
+            "ASgNIioKE0FyU2Vzc2lvblN0YXJ0RXZlbnQSEwoLZW1wdHlfZmllbGQYYyAB",
+            "KAgiJgoPRGVwdGhTdGFydEV2ZW50EhMKC2VtcHR5X2ZpZWxkGGMgASgIIikK",
+            "DkRlcHRoU3RvcEV2ZW50EhcKD3RpbWVfZWxhcHNlZF9tcxgBIAEoDSIqChNT",
+            "ZW1hbnRpY3NTdGFydEV2ZW50EhMKC2VtcHR5X2ZpZWxkGGMgASgIIi0KElNl",
+            "bWFudGljc1N0b3BFdmVudBIXCg90aW1lX2VsYXBzZWRfbXMYASABKA0iKAoR",
+            "TWVzaGluZ1N0YXJ0RXZlbnQSEwoLZW1wdHlfZmllbGQYYyABKAgiKwoQTWVz",
+            "aGluZ1N0b3BFdmVudBIXCg90aW1lX2VsYXBzZWRfbXMYASABKA0iMAoZT2Jq",
+            "ZWN0RGV0ZWN0aW9uU3RhcnRFdmVudBITCgtlbXB0eV9maWVsZBhjIAEoCCIz",
+            "ChhPYmplY3REZXRlY3Rpb25TdG9wRXZlbnQSFwoPdGltZV9lbGFwc2VkX21z",
+            "GAEgASgNIicKDVdwc1N0YXJ0RXZlbnQSFgoOd3BzX3Nlc3Npb25faWQYASAB",
+            "KAkiagoRV3BzQXZhaWxhYmxlRXZlbnQSFgoOd3BzX3Nlc3Npb25faWQYASAB",
+            "KAkSHAoUdGltZV90b19hdmFpbGFibGVfbXMYAiABKAMSHwoXZGlzdGFuY2Vf",
+            "dG9fYXZhaWxhYmxlX20YAyABKAIiWwoMV3BzU3RvcEV2ZW50EhYKDndwc19z",
+            "ZXNzaW9uX2lkGAEgASgJEhcKD3Nlc3Npb25fdGltZV9tcxgCIAEoAxIaChJz",
+            "ZXNzaW9uX2Rpc3RhbmNlX20YAyABKAJCYgoeY29tLm5pYW50aWNsYWJzLmFy",
+            "ZGsudGVsZW1ldHJ5WiBuaWFudGljL2xpZ2h0c2hpcC9hcmRrL3RlbGVtZXRy",
+            "eaoCHU5pYW50aWMuTGlnaHRzaGlwLkFSLlByb3RvYnVmYgZwcm90bzM="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Niantic.ARDK.AR.Protobuf.ArCommonMetadataReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.Lightship.AR.Protobuf.ArdkNextTelemetryOmniProto), global::Niantic.Lightship.AR.Protobuf.ArdkNextTelemetryOmniProto.Parser, new[]{ "InitializationEvent", "ScanRecorderStartEvent", "ScanRecorderStopEvent", "ScanSqcRunEvent", "ScanSqcDoneEvent", "ScanErrorEvent", "ScanArchiveBuilderGetNextChunkEvent", "ScanArchiveBuilderCancelEvent", "VpsLocalizationStartedEvent", "VpsLocalizationSuccessEvent", "VpsSessionEndedEvent", "ArSessionStartEvent", "ArCommonMetadata", "DeveloperKey", "TimestampMs" }, new[]{ "TelemetryEvent" }, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.Lightship.AR.Protobuf.ArdkNextTelemetryOmniProto), global::Niantic.Lightship.AR.Protobuf.ArdkNextTelemetryOmniProto.Parser, new[]{ "InitializationEvent", "ScanRecorderStartEvent", "ScanRecorderStopEvent", "ScanSqcRunEvent", "ScanSqcDoneEvent", "ScanErrorEvent", "ScanArchiveBuilderGetNextChunkEvent", "ScanArchiveBuilderCancelEvent", "VpsLocalizationStartedEvent", "VpsLocalizationSuccessEvent", "VpsSessionEndedEvent", "ArSessionStartEvent", "DepthStartEvent", "DepthStopEvent", "SemanticsStartEvent", "SemanticsStopEvent", "MeshingStartEvent", "MeshingStopEvent", "ObjectDetectionStartEvent", "ObjectDetectionStopEvent", "WpsStartEvent", "WpsAvailableEvent", "WpsStopEvent", "ArCommonMetadata", "DeveloperKey", "TimestampMs" }, new[]{ "TelemetryEvent" }, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.Lightship.AR.Protobuf.InitializationEvent), global::Niantic.Lightship.AR.Protobuf.InitializationEvent.Parser, new[]{ "InstallMode", "Processor" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.Lightship.AR.Protobuf.VpsLocalizationStartedEvent), global::Niantic.Lightship.AR.Protobuf.VpsLocalizationStartedEvent.Parser, new[]{ "LocalizationTargetIds", "VpsSessionId" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.Lightship.AR.Protobuf.VpsLocalizationSuccessEvent), global::Niantic.Lightship.AR.Protobuf.VpsLocalizationSuccessEvent.Parser, new[]{ "LocalizationTargetId", "VpsSessionId", "TimeToLocalizeMs", "NumServerRequests" }, null, null, null),
@@ -114,7 +143,18 @@ namespace Niantic.Lightship.AR.Protobuf {
             new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.Lightship.AR.Protobuf.ScanErrorEvent), global::Niantic.Lightship.AR.Protobuf.ScanErrorEvent.Parser, new[]{ "ScanId", "ErrorCode", "ErrorMessage" }, null, new[]{ typeof(global::Niantic.Lightship.AR.Protobuf.ScanErrorEvent.Types.Error) }, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.Lightship.AR.Protobuf.ScanArchiveBuilderGetNextChunkEvent), global::Niantic.Lightship.AR.Protobuf.ScanArchiveBuilderGetNextChunkEvent.Parser, new[]{ "ScanId", "ChunkFileSizeInBytes", "ChunkId", "TimeElapseMs" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.Lightship.AR.Protobuf.ScanArchiveBuilderCancelEvent), global::Niantic.Lightship.AR.Protobuf.ScanArchiveBuilderCancelEvent.Parser, new[]{ "ScanId", "ChunkId", "TimeElapseMs" }, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.Lightship.AR.Protobuf.ArSessionStartEvent), global::Niantic.Lightship.AR.Protobuf.ArSessionStartEvent.Parser, new[]{ "EmptyField" }, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.Lightship.AR.Protobuf.ArSessionStartEvent), global::Niantic.Lightship.AR.Protobuf.ArSessionStartEvent.Parser, new[]{ "EmptyField" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.Lightship.AR.Protobuf.DepthStartEvent), global::Niantic.Lightship.AR.Protobuf.DepthStartEvent.Parser, new[]{ "EmptyField" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.Lightship.AR.Protobuf.DepthStopEvent), global::Niantic.Lightship.AR.Protobuf.DepthStopEvent.Parser, new[]{ "TimeElapsedMs" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.Lightship.AR.Protobuf.SemanticsStartEvent), global::Niantic.Lightship.AR.Protobuf.SemanticsStartEvent.Parser, new[]{ "EmptyField" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.Lightship.AR.Protobuf.SemanticsStopEvent), global::Niantic.Lightship.AR.Protobuf.SemanticsStopEvent.Parser, new[]{ "TimeElapsedMs" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.Lightship.AR.Protobuf.MeshingStartEvent), global::Niantic.Lightship.AR.Protobuf.MeshingStartEvent.Parser, new[]{ "EmptyField" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.Lightship.AR.Protobuf.MeshingStopEvent), global::Niantic.Lightship.AR.Protobuf.MeshingStopEvent.Parser, new[]{ "TimeElapsedMs" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.Lightship.AR.Protobuf.ObjectDetectionStartEvent), global::Niantic.Lightship.AR.Protobuf.ObjectDetectionStartEvent.Parser, new[]{ "EmptyField" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.Lightship.AR.Protobuf.ObjectDetectionStopEvent), global::Niantic.Lightship.AR.Protobuf.ObjectDetectionStopEvent.Parser, new[]{ "TimeElapsedMs" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.Lightship.AR.Protobuf.WpsStartEvent), global::Niantic.Lightship.AR.Protobuf.WpsStartEvent.Parser, new[]{ "WpsSessionId" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.Lightship.AR.Protobuf.WpsAvailableEvent), global::Niantic.Lightship.AR.Protobuf.WpsAvailableEvent.Parser, new[]{ "WpsSessionId", "TimeToAvailableMs", "DistanceToAvailableM" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.Lightship.AR.Protobuf.WpsStopEvent), global::Niantic.Lightship.AR.Protobuf.WpsStopEvent.Parser, new[]{ "WpsSessionId", "SessionTimeMs", "SessionDistanceM" }, null, null, null)
           }));
     }
     #endregion
@@ -187,6 +227,39 @@ namespace Niantic.Lightship.AR.Protobuf {
           break;
         case TelemetryEventOneofCase.ArSessionStartEvent:
           ArSessionStartEvent = other.ArSessionStartEvent.Clone();
+          break;
+        case TelemetryEventOneofCase.DepthStartEvent:
+          DepthStartEvent = other.DepthStartEvent.Clone();
+          break;
+        case TelemetryEventOneofCase.DepthStopEvent:
+          DepthStopEvent = other.DepthStopEvent.Clone();
+          break;
+        case TelemetryEventOneofCase.SemanticsStartEvent:
+          SemanticsStartEvent = other.SemanticsStartEvent.Clone();
+          break;
+        case TelemetryEventOneofCase.SemanticsStopEvent:
+          SemanticsStopEvent = other.SemanticsStopEvent.Clone();
+          break;
+        case TelemetryEventOneofCase.MeshingStartEvent:
+          MeshingStartEvent = other.MeshingStartEvent.Clone();
+          break;
+        case TelemetryEventOneofCase.MeshingStopEvent:
+          MeshingStopEvent = other.MeshingStopEvent.Clone();
+          break;
+        case TelemetryEventOneofCase.ObjectDetectionStartEvent:
+          ObjectDetectionStartEvent = other.ObjectDetectionStartEvent.Clone();
+          break;
+        case TelemetryEventOneofCase.ObjectDetectionStopEvent:
+          ObjectDetectionStopEvent = other.ObjectDetectionStopEvent.Clone();
+          break;
+        case TelemetryEventOneofCase.WpsStartEvent:
+          WpsStartEvent = other.WpsStartEvent.Clone();
+          break;
+        case TelemetryEventOneofCase.WpsAvailableEvent:
+          WpsAvailableEvent = other.WpsAvailableEvent.Clone();
+          break;
+        case TelemetryEventOneofCase.WpsStopEvent:
+          WpsStopEvent = other.WpsStopEvent.Clone();
           break;
       }
 
@@ -329,6 +402,127 @@ namespace Niantic.Lightship.AR.Protobuf {
       }
     }
 
+    /// <summary>Field number for the "depth_start_event" field.</summary>
+    public const int DepthStartEventFieldNumber = 13;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public global::Niantic.Lightship.AR.Protobuf.DepthStartEvent DepthStartEvent {
+      get { return telemetryEventCase_ == TelemetryEventOneofCase.DepthStartEvent ? (global::Niantic.Lightship.AR.Protobuf.DepthStartEvent) telemetryEvent_ : null; }
+      set {
+        telemetryEvent_ = value;
+        telemetryEventCase_ = value == null ? TelemetryEventOneofCase.None : TelemetryEventOneofCase.DepthStartEvent;
+      }
+    }
+
+    /// <summary>Field number for the "depth_stop_event" field.</summary>
+    public const int DepthStopEventFieldNumber = 14;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public global::Niantic.Lightship.AR.Protobuf.DepthStopEvent DepthStopEvent {
+      get { return telemetryEventCase_ == TelemetryEventOneofCase.DepthStopEvent ? (global::Niantic.Lightship.AR.Protobuf.DepthStopEvent) telemetryEvent_ : null; }
+      set {
+        telemetryEvent_ = value;
+        telemetryEventCase_ = value == null ? TelemetryEventOneofCase.None : TelemetryEventOneofCase.DepthStopEvent;
+      }
+    }
+
+    /// <summary>Field number for the "semantics_start_event" field.</summary>
+    public const int SemanticsStartEventFieldNumber = 15;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public global::Niantic.Lightship.AR.Protobuf.SemanticsStartEvent SemanticsStartEvent {
+      get { return telemetryEventCase_ == TelemetryEventOneofCase.SemanticsStartEvent ? (global::Niantic.Lightship.AR.Protobuf.SemanticsStartEvent) telemetryEvent_ : null; }
+      set {
+        telemetryEvent_ = value;
+        telemetryEventCase_ = value == null ? TelemetryEventOneofCase.None : TelemetryEventOneofCase.SemanticsStartEvent;
+      }
+    }
+
+    /// <summary>Field number for the "semantics_stop_event" field.</summary>
+    public const int SemanticsStopEventFieldNumber = 16;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public global::Niantic.Lightship.AR.Protobuf.SemanticsStopEvent SemanticsStopEvent {
+      get { return telemetryEventCase_ == TelemetryEventOneofCase.SemanticsStopEvent ? (global::Niantic.Lightship.AR.Protobuf.SemanticsStopEvent) telemetryEvent_ : null; }
+      set {
+        telemetryEvent_ = value;
+        telemetryEventCase_ = value == null ? TelemetryEventOneofCase.None : TelemetryEventOneofCase.SemanticsStopEvent;
+      }
+    }
+
+    /// <summary>Field number for the "meshing_start_event" field.</summary>
+    public const int MeshingStartEventFieldNumber = 17;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public global::Niantic.Lightship.AR.Protobuf.MeshingStartEvent MeshingStartEvent {
+      get { return telemetryEventCase_ == TelemetryEventOneofCase.MeshingStartEvent ? (global::Niantic.Lightship.AR.Protobuf.MeshingStartEvent) telemetryEvent_ : null; }
+      set {
+        telemetryEvent_ = value;
+        telemetryEventCase_ = value == null ? TelemetryEventOneofCase.None : TelemetryEventOneofCase.MeshingStartEvent;
+      }
+    }
+
+    /// <summary>Field number for the "meshing_stop_event" field.</summary>
+    public const int MeshingStopEventFieldNumber = 18;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public global::Niantic.Lightship.AR.Protobuf.MeshingStopEvent MeshingStopEvent {
+      get { return telemetryEventCase_ == TelemetryEventOneofCase.MeshingStopEvent ? (global::Niantic.Lightship.AR.Protobuf.MeshingStopEvent) telemetryEvent_ : null; }
+      set {
+        telemetryEvent_ = value;
+        telemetryEventCase_ = value == null ? TelemetryEventOneofCase.None : TelemetryEventOneofCase.MeshingStopEvent;
+      }
+    }
+
+    /// <summary>Field number for the "object_detection_start_event" field.</summary>
+    public const int ObjectDetectionStartEventFieldNumber = 19;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public global::Niantic.Lightship.AR.Protobuf.ObjectDetectionStartEvent ObjectDetectionStartEvent {
+      get { return telemetryEventCase_ == TelemetryEventOneofCase.ObjectDetectionStartEvent ? (global::Niantic.Lightship.AR.Protobuf.ObjectDetectionStartEvent) telemetryEvent_ : null; }
+      set {
+        telemetryEvent_ = value;
+        telemetryEventCase_ = value == null ? TelemetryEventOneofCase.None : TelemetryEventOneofCase.ObjectDetectionStartEvent;
+      }
+    }
+
+    /// <summary>Field number for the "object_detection_stop_event" field.</summary>
+    public const int ObjectDetectionStopEventFieldNumber = 20;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public global::Niantic.Lightship.AR.Protobuf.ObjectDetectionStopEvent ObjectDetectionStopEvent {
+      get { return telemetryEventCase_ == TelemetryEventOneofCase.ObjectDetectionStopEvent ? (global::Niantic.Lightship.AR.Protobuf.ObjectDetectionStopEvent) telemetryEvent_ : null; }
+      set {
+        telemetryEvent_ = value;
+        telemetryEventCase_ = value == null ? TelemetryEventOneofCase.None : TelemetryEventOneofCase.ObjectDetectionStopEvent;
+      }
+    }
+
+    /// <summary>Field number for the "wps_start_event" field.</summary>
+    public const int WpsStartEventFieldNumber = 21;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public global::Niantic.Lightship.AR.Protobuf.WpsStartEvent WpsStartEvent {
+      get { return telemetryEventCase_ == TelemetryEventOneofCase.WpsStartEvent ? (global::Niantic.Lightship.AR.Protobuf.WpsStartEvent) telemetryEvent_ : null; }
+      set {
+        telemetryEvent_ = value;
+        telemetryEventCase_ = value == null ? TelemetryEventOneofCase.None : TelemetryEventOneofCase.WpsStartEvent;
+      }
+    }
+
+    /// <summary>Field number for the "wps_available_event" field.</summary>
+    public const int WpsAvailableEventFieldNumber = 22;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public global::Niantic.Lightship.AR.Protobuf.WpsAvailableEvent WpsAvailableEvent {
+      get { return telemetryEventCase_ == TelemetryEventOneofCase.WpsAvailableEvent ? (global::Niantic.Lightship.AR.Protobuf.WpsAvailableEvent) telemetryEvent_ : null; }
+      set {
+        telemetryEvent_ = value;
+        telemetryEventCase_ = value == null ? TelemetryEventOneofCase.None : TelemetryEventOneofCase.WpsAvailableEvent;
+      }
+    }
+
+    /// <summary>Field number for the "wps_stop_event" field.</summary>
+    public const int WpsStopEventFieldNumber = 23;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public global::Niantic.Lightship.AR.Protobuf.WpsStopEvent WpsStopEvent {
+      get { return telemetryEventCase_ == TelemetryEventOneofCase.WpsStopEvent ? (global::Niantic.Lightship.AR.Protobuf.WpsStopEvent) telemetryEvent_ : null; }
+      set {
+        telemetryEvent_ = value;
+        telemetryEventCase_ = value == null ? TelemetryEventOneofCase.None : TelemetryEventOneofCase.WpsStopEvent;
+      }
+    }
+
     /// <summary>Field number for the "ar_common_metadata" field.</summary>
     public const int ArCommonMetadataFieldNumber = 1000;
     private global::Niantic.ARDK.AR.Protobuf.ARCommonMetadata arCommonMetadata_;
@@ -387,6 +581,17 @@ namespace Niantic.Lightship.AR.Protobuf {
       VpsLocalizationSuccessEvent = 10,
       VpsSessionEndedEvent = 11,
       ArSessionStartEvent = 12,
+      DepthStartEvent = 13,
+      DepthStopEvent = 14,
+      SemanticsStartEvent = 15,
+      SemanticsStopEvent = 16,
+      MeshingStartEvent = 17,
+      MeshingStopEvent = 18,
+      ObjectDetectionStartEvent = 19,
+      ObjectDetectionStopEvent = 20,
+      WpsStartEvent = 21,
+      WpsAvailableEvent = 22,
+      WpsStopEvent = 23,
     }
     private TelemetryEventOneofCase telemetryEventCase_ = TelemetryEventOneofCase.None;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -425,6 +630,17 @@ namespace Niantic.Lightship.AR.Protobuf {
       if (!object.Equals(VpsLocalizationSuccessEvent, other.VpsLocalizationSuccessEvent)) return false;
       if (!object.Equals(VpsSessionEndedEvent, other.VpsSessionEndedEvent)) return false;
       if (!object.Equals(ArSessionStartEvent, other.ArSessionStartEvent)) return false;
+      if (!object.Equals(DepthStartEvent, other.DepthStartEvent)) return false;
+      if (!object.Equals(DepthStopEvent, other.DepthStopEvent)) return false;
+      if (!object.Equals(SemanticsStartEvent, other.SemanticsStartEvent)) return false;
+      if (!object.Equals(SemanticsStopEvent, other.SemanticsStopEvent)) return false;
+      if (!object.Equals(MeshingStartEvent, other.MeshingStartEvent)) return false;
+      if (!object.Equals(MeshingStopEvent, other.MeshingStopEvent)) return false;
+      if (!object.Equals(ObjectDetectionStartEvent, other.ObjectDetectionStartEvent)) return false;
+      if (!object.Equals(ObjectDetectionStopEvent, other.ObjectDetectionStopEvent)) return false;
+      if (!object.Equals(WpsStartEvent, other.WpsStartEvent)) return false;
+      if (!object.Equals(WpsAvailableEvent, other.WpsAvailableEvent)) return false;
+      if (!object.Equals(WpsStopEvent, other.WpsStopEvent)) return false;
       if (!object.Equals(ArCommonMetadata, other.ArCommonMetadata)) return false;
       if (DeveloperKey != other.DeveloperKey) return false;
       if (TimestampMs != other.TimestampMs) return false;
@@ -447,6 +663,17 @@ namespace Niantic.Lightship.AR.Protobuf {
       if (telemetryEventCase_ == TelemetryEventOneofCase.VpsLocalizationSuccessEvent) hash ^= VpsLocalizationSuccessEvent.GetHashCode();
       if (telemetryEventCase_ == TelemetryEventOneofCase.VpsSessionEndedEvent) hash ^= VpsSessionEndedEvent.GetHashCode();
       if (telemetryEventCase_ == TelemetryEventOneofCase.ArSessionStartEvent) hash ^= ArSessionStartEvent.GetHashCode();
+      if (telemetryEventCase_ == TelemetryEventOneofCase.DepthStartEvent) hash ^= DepthStartEvent.GetHashCode();
+      if (telemetryEventCase_ == TelemetryEventOneofCase.DepthStopEvent) hash ^= DepthStopEvent.GetHashCode();
+      if (telemetryEventCase_ == TelemetryEventOneofCase.SemanticsStartEvent) hash ^= SemanticsStartEvent.GetHashCode();
+      if (telemetryEventCase_ == TelemetryEventOneofCase.SemanticsStopEvent) hash ^= SemanticsStopEvent.GetHashCode();
+      if (telemetryEventCase_ == TelemetryEventOneofCase.MeshingStartEvent) hash ^= MeshingStartEvent.GetHashCode();
+      if (telemetryEventCase_ == TelemetryEventOneofCase.MeshingStopEvent) hash ^= MeshingStopEvent.GetHashCode();
+      if (telemetryEventCase_ == TelemetryEventOneofCase.ObjectDetectionStartEvent) hash ^= ObjectDetectionStartEvent.GetHashCode();
+      if (telemetryEventCase_ == TelemetryEventOneofCase.ObjectDetectionStopEvent) hash ^= ObjectDetectionStopEvent.GetHashCode();
+      if (telemetryEventCase_ == TelemetryEventOneofCase.WpsStartEvent) hash ^= WpsStartEvent.GetHashCode();
+      if (telemetryEventCase_ == TelemetryEventOneofCase.WpsAvailableEvent) hash ^= WpsAvailableEvent.GetHashCode();
+      if (telemetryEventCase_ == TelemetryEventOneofCase.WpsStopEvent) hash ^= WpsStopEvent.GetHashCode();
       if (arCommonMetadata_ != null) hash ^= ArCommonMetadata.GetHashCode();
       if (DeveloperKey.Length != 0) hash ^= DeveloperKey.GetHashCode();
       if (TimestampMs != 0L) hash ^= TimestampMs.GetHashCode();
@@ -509,6 +736,50 @@ namespace Niantic.Lightship.AR.Protobuf {
         output.WriteRawTag(98);
         output.WriteMessage(ArSessionStartEvent);
       }
+      if (telemetryEventCase_ == TelemetryEventOneofCase.DepthStartEvent) {
+        output.WriteRawTag(106);
+        output.WriteMessage(DepthStartEvent);
+      }
+      if (telemetryEventCase_ == TelemetryEventOneofCase.DepthStopEvent) {
+        output.WriteRawTag(114);
+        output.WriteMessage(DepthStopEvent);
+      }
+      if (telemetryEventCase_ == TelemetryEventOneofCase.SemanticsStartEvent) {
+        output.WriteRawTag(122);
+        output.WriteMessage(SemanticsStartEvent);
+      }
+      if (telemetryEventCase_ == TelemetryEventOneofCase.SemanticsStopEvent) {
+        output.WriteRawTag(130, 1);
+        output.WriteMessage(SemanticsStopEvent);
+      }
+      if (telemetryEventCase_ == TelemetryEventOneofCase.MeshingStartEvent) {
+        output.WriteRawTag(138, 1);
+        output.WriteMessage(MeshingStartEvent);
+      }
+      if (telemetryEventCase_ == TelemetryEventOneofCase.MeshingStopEvent) {
+        output.WriteRawTag(146, 1);
+        output.WriteMessage(MeshingStopEvent);
+      }
+      if (telemetryEventCase_ == TelemetryEventOneofCase.ObjectDetectionStartEvent) {
+        output.WriteRawTag(154, 1);
+        output.WriteMessage(ObjectDetectionStartEvent);
+      }
+      if (telemetryEventCase_ == TelemetryEventOneofCase.ObjectDetectionStopEvent) {
+        output.WriteRawTag(162, 1);
+        output.WriteMessage(ObjectDetectionStopEvent);
+      }
+      if (telemetryEventCase_ == TelemetryEventOneofCase.WpsStartEvent) {
+        output.WriteRawTag(170, 1);
+        output.WriteMessage(WpsStartEvent);
+      }
+      if (telemetryEventCase_ == TelemetryEventOneofCase.WpsAvailableEvent) {
+        output.WriteRawTag(178, 1);
+        output.WriteMessage(WpsAvailableEvent);
+      }
+      if (telemetryEventCase_ == TelemetryEventOneofCase.WpsStopEvent) {
+        output.WriteRawTag(186, 1);
+        output.WriteMessage(WpsStopEvent);
+      }
       if (arCommonMetadata_ != null) {
         output.WriteRawTag(194, 62);
         output.WriteMessage(ArCommonMetadata);
@@ -561,6 +832,39 @@ namespace Niantic.Lightship.AR.Protobuf {
       }
       if (telemetryEventCase_ == TelemetryEventOneofCase.ArSessionStartEvent) {
         size += 1 + pb::CodedOutputStream.ComputeMessageSize(ArSessionStartEvent);
+      }
+      if (telemetryEventCase_ == TelemetryEventOneofCase.DepthStartEvent) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(DepthStartEvent);
+      }
+      if (telemetryEventCase_ == TelemetryEventOneofCase.DepthStopEvent) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(DepthStopEvent);
+      }
+      if (telemetryEventCase_ == TelemetryEventOneofCase.SemanticsStartEvent) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(SemanticsStartEvent);
+      }
+      if (telemetryEventCase_ == TelemetryEventOneofCase.SemanticsStopEvent) {
+        size += 2 + pb::CodedOutputStream.ComputeMessageSize(SemanticsStopEvent);
+      }
+      if (telemetryEventCase_ == TelemetryEventOneofCase.MeshingStartEvent) {
+        size += 2 + pb::CodedOutputStream.ComputeMessageSize(MeshingStartEvent);
+      }
+      if (telemetryEventCase_ == TelemetryEventOneofCase.MeshingStopEvent) {
+        size += 2 + pb::CodedOutputStream.ComputeMessageSize(MeshingStopEvent);
+      }
+      if (telemetryEventCase_ == TelemetryEventOneofCase.ObjectDetectionStartEvent) {
+        size += 2 + pb::CodedOutputStream.ComputeMessageSize(ObjectDetectionStartEvent);
+      }
+      if (telemetryEventCase_ == TelemetryEventOneofCase.ObjectDetectionStopEvent) {
+        size += 2 + pb::CodedOutputStream.ComputeMessageSize(ObjectDetectionStopEvent);
+      }
+      if (telemetryEventCase_ == TelemetryEventOneofCase.WpsStartEvent) {
+        size += 2 + pb::CodedOutputStream.ComputeMessageSize(WpsStartEvent);
+      }
+      if (telemetryEventCase_ == TelemetryEventOneofCase.WpsAvailableEvent) {
+        size += 2 + pb::CodedOutputStream.ComputeMessageSize(WpsAvailableEvent);
+      }
+      if (telemetryEventCase_ == TelemetryEventOneofCase.WpsStopEvent) {
+        size += 2 + pb::CodedOutputStream.ComputeMessageSize(WpsStopEvent);
       }
       if (arCommonMetadata_ != null) {
         size += 2 + pb::CodedOutputStream.ComputeMessageSize(ArCommonMetadata);
@@ -627,6 +931,39 @@ namespace Niantic.Lightship.AR.Protobuf {
           break;
         case TelemetryEventOneofCase.ArSessionStartEvent:
           ArSessionStartEvent = other.ArSessionStartEvent;
+          break;
+        case TelemetryEventOneofCase.DepthStartEvent:
+          DepthStartEvent = other.DepthStartEvent;
+          break;
+        case TelemetryEventOneofCase.DepthStopEvent:
+          DepthStopEvent = other.DepthStopEvent;
+          break;
+        case TelemetryEventOneofCase.SemanticsStartEvent:
+          SemanticsStartEvent = other.SemanticsStartEvent;
+          break;
+        case TelemetryEventOneofCase.SemanticsStopEvent:
+          SemanticsStopEvent = other.SemanticsStopEvent;
+          break;
+        case TelemetryEventOneofCase.MeshingStartEvent:
+          MeshingStartEvent = other.MeshingStartEvent;
+          break;
+        case TelemetryEventOneofCase.MeshingStopEvent:
+          MeshingStopEvent = other.MeshingStopEvent;
+          break;
+        case TelemetryEventOneofCase.ObjectDetectionStartEvent:
+          ObjectDetectionStartEvent = other.ObjectDetectionStartEvent;
+          break;
+        case TelemetryEventOneofCase.ObjectDetectionStopEvent:
+          ObjectDetectionStopEvent = other.ObjectDetectionStopEvent;
+          break;
+        case TelemetryEventOneofCase.WpsStartEvent:
+          WpsStartEvent = other.WpsStartEvent;
+          break;
+        case TelemetryEventOneofCase.WpsAvailableEvent:
+          WpsAvailableEvent = other.WpsAvailableEvent;
+          break;
+        case TelemetryEventOneofCase.WpsStopEvent:
+          WpsStopEvent = other.WpsStopEvent;
           break;
       }
 
@@ -746,6 +1083,105 @@ namespace Niantic.Lightship.AR.Protobuf {
             }
             input.ReadMessage(subBuilder);
             ArSessionStartEvent = subBuilder;
+            break;
+          }
+          case 106: {
+            global::Niantic.Lightship.AR.Protobuf.DepthStartEvent subBuilder = new global::Niantic.Lightship.AR.Protobuf.DepthStartEvent();
+            if (telemetryEventCase_ == TelemetryEventOneofCase.DepthStartEvent) {
+              subBuilder.MergeFrom(DepthStartEvent);
+            }
+            input.ReadMessage(subBuilder);
+            DepthStartEvent = subBuilder;
+            break;
+          }
+          case 114: {
+            global::Niantic.Lightship.AR.Protobuf.DepthStopEvent subBuilder = new global::Niantic.Lightship.AR.Protobuf.DepthStopEvent();
+            if (telemetryEventCase_ == TelemetryEventOneofCase.DepthStopEvent) {
+              subBuilder.MergeFrom(DepthStopEvent);
+            }
+            input.ReadMessage(subBuilder);
+            DepthStopEvent = subBuilder;
+            break;
+          }
+          case 122: {
+            global::Niantic.Lightship.AR.Protobuf.SemanticsStartEvent subBuilder = new global::Niantic.Lightship.AR.Protobuf.SemanticsStartEvent();
+            if (telemetryEventCase_ == TelemetryEventOneofCase.SemanticsStartEvent) {
+              subBuilder.MergeFrom(SemanticsStartEvent);
+            }
+            input.ReadMessage(subBuilder);
+            SemanticsStartEvent = subBuilder;
+            break;
+          }
+          case 130: {
+            global::Niantic.Lightship.AR.Protobuf.SemanticsStopEvent subBuilder = new global::Niantic.Lightship.AR.Protobuf.SemanticsStopEvent();
+            if (telemetryEventCase_ == TelemetryEventOneofCase.SemanticsStopEvent) {
+              subBuilder.MergeFrom(SemanticsStopEvent);
+            }
+            input.ReadMessage(subBuilder);
+            SemanticsStopEvent = subBuilder;
+            break;
+          }
+          case 138: {
+            global::Niantic.Lightship.AR.Protobuf.MeshingStartEvent subBuilder = new global::Niantic.Lightship.AR.Protobuf.MeshingStartEvent();
+            if (telemetryEventCase_ == TelemetryEventOneofCase.MeshingStartEvent) {
+              subBuilder.MergeFrom(MeshingStartEvent);
+            }
+            input.ReadMessage(subBuilder);
+            MeshingStartEvent = subBuilder;
+            break;
+          }
+          case 146: {
+            global::Niantic.Lightship.AR.Protobuf.MeshingStopEvent subBuilder = new global::Niantic.Lightship.AR.Protobuf.MeshingStopEvent();
+            if (telemetryEventCase_ == TelemetryEventOneofCase.MeshingStopEvent) {
+              subBuilder.MergeFrom(MeshingStopEvent);
+            }
+            input.ReadMessage(subBuilder);
+            MeshingStopEvent = subBuilder;
+            break;
+          }
+          case 154: {
+            global::Niantic.Lightship.AR.Protobuf.ObjectDetectionStartEvent subBuilder = new global::Niantic.Lightship.AR.Protobuf.ObjectDetectionStartEvent();
+            if (telemetryEventCase_ == TelemetryEventOneofCase.ObjectDetectionStartEvent) {
+              subBuilder.MergeFrom(ObjectDetectionStartEvent);
+            }
+            input.ReadMessage(subBuilder);
+            ObjectDetectionStartEvent = subBuilder;
+            break;
+          }
+          case 162: {
+            global::Niantic.Lightship.AR.Protobuf.ObjectDetectionStopEvent subBuilder = new global::Niantic.Lightship.AR.Protobuf.ObjectDetectionStopEvent();
+            if (telemetryEventCase_ == TelemetryEventOneofCase.ObjectDetectionStopEvent) {
+              subBuilder.MergeFrom(ObjectDetectionStopEvent);
+            }
+            input.ReadMessage(subBuilder);
+            ObjectDetectionStopEvent = subBuilder;
+            break;
+          }
+          case 170: {
+            global::Niantic.Lightship.AR.Protobuf.WpsStartEvent subBuilder = new global::Niantic.Lightship.AR.Protobuf.WpsStartEvent();
+            if (telemetryEventCase_ == TelemetryEventOneofCase.WpsStartEvent) {
+              subBuilder.MergeFrom(WpsStartEvent);
+            }
+            input.ReadMessage(subBuilder);
+            WpsStartEvent = subBuilder;
+            break;
+          }
+          case 178: {
+            global::Niantic.Lightship.AR.Protobuf.WpsAvailableEvent subBuilder = new global::Niantic.Lightship.AR.Protobuf.WpsAvailableEvent();
+            if (telemetryEventCase_ == TelemetryEventOneofCase.WpsAvailableEvent) {
+              subBuilder.MergeFrom(WpsAvailableEvent);
+            }
+            input.ReadMessage(subBuilder);
+            WpsAvailableEvent = subBuilder;
+            break;
+          }
+          case 186: {
+            global::Niantic.Lightship.AR.Protobuf.WpsStopEvent subBuilder = new global::Niantic.Lightship.AR.Protobuf.WpsStopEvent();
+            if (telemetryEventCase_ == TelemetryEventOneofCase.WpsStopEvent) {
+              subBuilder.MergeFrom(WpsStopEvent);
+            }
+            input.ReadMessage(subBuilder);
+            WpsStopEvent = subBuilder;
             break;
           }
           case 8002: {
@@ -3131,6 +3567,1426 @@ namespace Niantic.Lightship.AR.Protobuf {
             break;
           case 792: {
             EmptyField = input.ReadBool();
+            break;
+          }
+        }
+      }
+    }
+
+  }
+
+  public sealed partial class DepthStartEvent : pb::IMessage<DepthStartEvent> {
+    private static readonly pb::MessageParser<DepthStartEvent> _parser = new pb::MessageParser<DepthStartEvent>(() => new DepthStartEvent());
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public static pb::MessageParser<DepthStartEvent> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Niantic.Lightship.AR.Protobuf.ArdkNextTelemetryReflection.Descriptor.MessageTypes[13]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public DepthStartEvent() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public DepthStartEvent(DepthStartEvent other) : this() {
+      emptyField_ = other.emptyField_;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public DepthStartEvent Clone() {
+      return new DepthStartEvent(this);
+    }
+
+    /// <summary>Field number for the "empty_field" field.</summary>
+    public const int EmptyFieldFieldNumber = 99;
+    private bool emptyField_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public bool EmptyField {
+      get { return emptyField_; }
+      set {
+        emptyField_ = value;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override bool Equals(object other) {
+      return Equals(other as DepthStartEvent);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public bool Equals(DepthStartEvent other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (EmptyField != other.EmptyField) return false;
+      return true;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (EmptyField != false) hash ^= EmptyField.GetHashCode();
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void WriteTo(pb::CodedOutputStream output) {
+      if (EmptyField != false) {
+        output.WriteRawTag(152, 6);
+        output.WriteBool(EmptyField);
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public int CalculateSize() {
+      int size = 0;
+      if (EmptyField != false) {
+        size += 2 + 1;
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void MergeFrom(DepthStartEvent other) {
+      if (other == null) {
+        return;
+      }
+      if (other.EmptyField != false) {
+        EmptyField = other.EmptyField;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void MergeFrom(pb::CodedInputStream input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            input.SkipLastField();
+            break;
+          case 792: {
+            EmptyField = input.ReadBool();
+            break;
+          }
+        }
+      }
+    }
+
+  }
+
+  public sealed partial class DepthStopEvent : pb::IMessage<DepthStopEvent> {
+    private static readonly pb::MessageParser<DepthStopEvent> _parser = new pb::MessageParser<DepthStopEvent>(() => new DepthStopEvent());
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public static pb::MessageParser<DepthStopEvent> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Niantic.Lightship.AR.Protobuf.ArdkNextTelemetryReflection.Descriptor.MessageTypes[14]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public DepthStopEvent() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public DepthStopEvent(DepthStopEvent other) : this() {
+      timeElapsedMs_ = other.timeElapsedMs_;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public DepthStopEvent Clone() {
+      return new DepthStopEvent(this);
+    }
+
+    /// <summary>Field number for the "time_elapsed_ms" field.</summary>
+    public const int TimeElapsedMsFieldNumber = 1;
+    private uint timeElapsedMs_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public uint TimeElapsedMs {
+      get { return timeElapsedMs_; }
+      set {
+        timeElapsedMs_ = value;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override bool Equals(object other) {
+      return Equals(other as DepthStopEvent);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public bool Equals(DepthStopEvent other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (TimeElapsedMs != other.TimeElapsedMs) return false;
+      return true;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (TimeElapsedMs != 0) hash ^= TimeElapsedMs.GetHashCode();
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void WriteTo(pb::CodedOutputStream output) {
+      if (TimeElapsedMs != 0) {
+        output.WriteRawTag(8);
+        output.WriteUInt32(TimeElapsedMs);
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public int CalculateSize() {
+      int size = 0;
+      if (TimeElapsedMs != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(TimeElapsedMs);
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void MergeFrom(DepthStopEvent other) {
+      if (other == null) {
+        return;
+      }
+      if (other.TimeElapsedMs != 0) {
+        TimeElapsedMs = other.TimeElapsedMs;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void MergeFrom(pb::CodedInputStream input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            input.SkipLastField();
+            break;
+          case 8: {
+            TimeElapsedMs = input.ReadUInt32();
+            break;
+          }
+        }
+      }
+    }
+
+  }
+
+  public sealed partial class SemanticsStartEvent : pb::IMessage<SemanticsStartEvent> {
+    private static readonly pb::MessageParser<SemanticsStartEvent> _parser = new pb::MessageParser<SemanticsStartEvent>(() => new SemanticsStartEvent());
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public static pb::MessageParser<SemanticsStartEvent> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Niantic.Lightship.AR.Protobuf.ArdkNextTelemetryReflection.Descriptor.MessageTypes[15]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public SemanticsStartEvent() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public SemanticsStartEvent(SemanticsStartEvent other) : this() {
+      emptyField_ = other.emptyField_;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public SemanticsStartEvent Clone() {
+      return new SemanticsStartEvent(this);
+    }
+
+    /// <summary>Field number for the "empty_field" field.</summary>
+    public const int EmptyFieldFieldNumber = 99;
+    private bool emptyField_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public bool EmptyField {
+      get { return emptyField_; }
+      set {
+        emptyField_ = value;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override bool Equals(object other) {
+      return Equals(other as SemanticsStartEvent);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public bool Equals(SemanticsStartEvent other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (EmptyField != other.EmptyField) return false;
+      return true;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (EmptyField != false) hash ^= EmptyField.GetHashCode();
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void WriteTo(pb::CodedOutputStream output) {
+      if (EmptyField != false) {
+        output.WriteRawTag(152, 6);
+        output.WriteBool(EmptyField);
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public int CalculateSize() {
+      int size = 0;
+      if (EmptyField != false) {
+        size += 2 + 1;
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void MergeFrom(SemanticsStartEvent other) {
+      if (other == null) {
+        return;
+      }
+      if (other.EmptyField != false) {
+        EmptyField = other.EmptyField;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void MergeFrom(pb::CodedInputStream input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            input.SkipLastField();
+            break;
+          case 792: {
+            EmptyField = input.ReadBool();
+            break;
+          }
+        }
+      }
+    }
+
+  }
+
+  public sealed partial class SemanticsStopEvent : pb::IMessage<SemanticsStopEvent> {
+    private static readonly pb::MessageParser<SemanticsStopEvent> _parser = new pb::MessageParser<SemanticsStopEvent>(() => new SemanticsStopEvent());
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public static pb::MessageParser<SemanticsStopEvent> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Niantic.Lightship.AR.Protobuf.ArdkNextTelemetryReflection.Descriptor.MessageTypes[16]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public SemanticsStopEvent() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public SemanticsStopEvent(SemanticsStopEvent other) : this() {
+      timeElapsedMs_ = other.timeElapsedMs_;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public SemanticsStopEvent Clone() {
+      return new SemanticsStopEvent(this);
+    }
+
+    /// <summary>Field number for the "time_elapsed_ms" field.</summary>
+    public const int TimeElapsedMsFieldNumber = 1;
+    private uint timeElapsedMs_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public uint TimeElapsedMs {
+      get { return timeElapsedMs_; }
+      set {
+        timeElapsedMs_ = value;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override bool Equals(object other) {
+      return Equals(other as SemanticsStopEvent);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public bool Equals(SemanticsStopEvent other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (TimeElapsedMs != other.TimeElapsedMs) return false;
+      return true;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (TimeElapsedMs != 0) hash ^= TimeElapsedMs.GetHashCode();
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void WriteTo(pb::CodedOutputStream output) {
+      if (TimeElapsedMs != 0) {
+        output.WriteRawTag(8);
+        output.WriteUInt32(TimeElapsedMs);
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public int CalculateSize() {
+      int size = 0;
+      if (TimeElapsedMs != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(TimeElapsedMs);
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void MergeFrom(SemanticsStopEvent other) {
+      if (other == null) {
+        return;
+      }
+      if (other.TimeElapsedMs != 0) {
+        TimeElapsedMs = other.TimeElapsedMs;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void MergeFrom(pb::CodedInputStream input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            input.SkipLastField();
+            break;
+          case 8: {
+            TimeElapsedMs = input.ReadUInt32();
+            break;
+          }
+        }
+      }
+    }
+
+  }
+
+  public sealed partial class MeshingStartEvent : pb::IMessage<MeshingStartEvent> {
+    private static readonly pb::MessageParser<MeshingStartEvent> _parser = new pb::MessageParser<MeshingStartEvent>(() => new MeshingStartEvent());
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public static pb::MessageParser<MeshingStartEvent> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Niantic.Lightship.AR.Protobuf.ArdkNextTelemetryReflection.Descriptor.MessageTypes[17]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public MeshingStartEvent() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public MeshingStartEvent(MeshingStartEvent other) : this() {
+      emptyField_ = other.emptyField_;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public MeshingStartEvent Clone() {
+      return new MeshingStartEvent(this);
+    }
+
+    /// <summary>Field number for the "empty_field" field.</summary>
+    public const int EmptyFieldFieldNumber = 99;
+    private bool emptyField_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public bool EmptyField {
+      get { return emptyField_; }
+      set {
+        emptyField_ = value;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override bool Equals(object other) {
+      return Equals(other as MeshingStartEvent);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public bool Equals(MeshingStartEvent other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (EmptyField != other.EmptyField) return false;
+      return true;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (EmptyField != false) hash ^= EmptyField.GetHashCode();
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void WriteTo(pb::CodedOutputStream output) {
+      if (EmptyField != false) {
+        output.WriteRawTag(152, 6);
+        output.WriteBool(EmptyField);
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public int CalculateSize() {
+      int size = 0;
+      if (EmptyField != false) {
+        size += 2 + 1;
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void MergeFrom(MeshingStartEvent other) {
+      if (other == null) {
+        return;
+      }
+      if (other.EmptyField != false) {
+        EmptyField = other.EmptyField;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void MergeFrom(pb::CodedInputStream input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            input.SkipLastField();
+            break;
+          case 792: {
+            EmptyField = input.ReadBool();
+            break;
+          }
+        }
+      }
+    }
+
+  }
+
+  public sealed partial class MeshingStopEvent : pb::IMessage<MeshingStopEvent> {
+    private static readonly pb::MessageParser<MeshingStopEvent> _parser = new pb::MessageParser<MeshingStopEvent>(() => new MeshingStopEvent());
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public static pb::MessageParser<MeshingStopEvent> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Niantic.Lightship.AR.Protobuf.ArdkNextTelemetryReflection.Descriptor.MessageTypes[18]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public MeshingStopEvent() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public MeshingStopEvent(MeshingStopEvent other) : this() {
+      timeElapsedMs_ = other.timeElapsedMs_;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public MeshingStopEvent Clone() {
+      return new MeshingStopEvent(this);
+    }
+
+    /// <summary>Field number for the "time_elapsed_ms" field.</summary>
+    public const int TimeElapsedMsFieldNumber = 1;
+    private uint timeElapsedMs_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public uint TimeElapsedMs {
+      get { return timeElapsedMs_; }
+      set {
+        timeElapsedMs_ = value;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override bool Equals(object other) {
+      return Equals(other as MeshingStopEvent);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public bool Equals(MeshingStopEvent other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (TimeElapsedMs != other.TimeElapsedMs) return false;
+      return true;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (TimeElapsedMs != 0) hash ^= TimeElapsedMs.GetHashCode();
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void WriteTo(pb::CodedOutputStream output) {
+      if (TimeElapsedMs != 0) {
+        output.WriteRawTag(8);
+        output.WriteUInt32(TimeElapsedMs);
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public int CalculateSize() {
+      int size = 0;
+      if (TimeElapsedMs != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(TimeElapsedMs);
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void MergeFrom(MeshingStopEvent other) {
+      if (other == null) {
+        return;
+      }
+      if (other.TimeElapsedMs != 0) {
+        TimeElapsedMs = other.TimeElapsedMs;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void MergeFrom(pb::CodedInputStream input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            input.SkipLastField();
+            break;
+          case 8: {
+            TimeElapsedMs = input.ReadUInt32();
+            break;
+          }
+        }
+      }
+    }
+
+  }
+
+  public sealed partial class ObjectDetectionStartEvent : pb::IMessage<ObjectDetectionStartEvent> {
+    private static readonly pb::MessageParser<ObjectDetectionStartEvent> _parser = new pb::MessageParser<ObjectDetectionStartEvent>(() => new ObjectDetectionStartEvent());
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public static pb::MessageParser<ObjectDetectionStartEvent> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Niantic.Lightship.AR.Protobuf.ArdkNextTelemetryReflection.Descriptor.MessageTypes[19]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public ObjectDetectionStartEvent() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public ObjectDetectionStartEvent(ObjectDetectionStartEvent other) : this() {
+      emptyField_ = other.emptyField_;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public ObjectDetectionStartEvent Clone() {
+      return new ObjectDetectionStartEvent(this);
+    }
+
+    /// <summary>Field number for the "empty_field" field.</summary>
+    public const int EmptyFieldFieldNumber = 99;
+    private bool emptyField_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public bool EmptyField {
+      get { return emptyField_; }
+      set {
+        emptyField_ = value;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override bool Equals(object other) {
+      return Equals(other as ObjectDetectionStartEvent);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public bool Equals(ObjectDetectionStartEvent other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (EmptyField != other.EmptyField) return false;
+      return true;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (EmptyField != false) hash ^= EmptyField.GetHashCode();
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void WriteTo(pb::CodedOutputStream output) {
+      if (EmptyField != false) {
+        output.WriteRawTag(152, 6);
+        output.WriteBool(EmptyField);
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public int CalculateSize() {
+      int size = 0;
+      if (EmptyField != false) {
+        size += 2 + 1;
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void MergeFrom(ObjectDetectionStartEvent other) {
+      if (other == null) {
+        return;
+      }
+      if (other.EmptyField != false) {
+        EmptyField = other.EmptyField;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void MergeFrom(pb::CodedInputStream input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            input.SkipLastField();
+            break;
+          case 792: {
+            EmptyField = input.ReadBool();
+            break;
+          }
+        }
+      }
+    }
+
+  }
+
+  public sealed partial class ObjectDetectionStopEvent : pb::IMessage<ObjectDetectionStopEvent> {
+    private static readonly pb::MessageParser<ObjectDetectionStopEvent> _parser = new pb::MessageParser<ObjectDetectionStopEvent>(() => new ObjectDetectionStopEvent());
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public static pb::MessageParser<ObjectDetectionStopEvent> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Niantic.Lightship.AR.Protobuf.ArdkNextTelemetryReflection.Descriptor.MessageTypes[20]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public ObjectDetectionStopEvent() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public ObjectDetectionStopEvent(ObjectDetectionStopEvent other) : this() {
+      timeElapsedMs_ = other.timeElapsedMs_;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public ObjectDetectionStopEvent Clone() {
+      return new ObjectDetectionStopEvent(this);
+    }
+
+    /// <summary>Field number for the "time_elapsed_ms" field.</summary>
+    public const int TimeElapsedMsFieldNumber = 1;
+    private uint timeElapsedMs_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public uint TimeElapsedMs {
+      get { return timeElapsedMs_; }
+      set {
+        timeElapsedMs_ = value;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override bool Equals(object other) {
+      return Equals(other as ObjectDetectionStopEvent);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public bool Equals(ObjectDetectionStopEvent other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (TimeElapsedMs != other.TimeElapsedMs) return false;
+      return true;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (TimeElapsedMs != 0) hash ^= TimeElapsedMs.GetHashCode();
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void WriteTo(pb::CodedOutputStream output) {
+      if (TimeElapsedMs != 0) {
+        output.WriteRawTag(8);
+        output.WriteUInt32(TimeElapsedMs);
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public int CalculateSize() {
+      int size = 0;
+      if (TimeElapsedMs != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(TimeElapsedMs);
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void MergeFrom(ObjectDetectionStopEvent other) {
+      if (other == null) {
+        return;
+      }
+      if (other.TimeElapsedMs != 0) {
+        TimeElapsedMs = other.TimeElapsedMs;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void MergeFrom(pb::CodedInputStream input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            input.SkipLastField();
+            break;
+          case 8: {
+            TimeElapsedMs = input.ReadUInt32();
+            break;
+          }
+        }
+      }
+    }
+
+  }
+
+  public sealed partial class WpsStartEvent : pb::IMessage<WpsStartEvent> {
+    private static readonly pb::MessageParser<WpsStartEvent> _parser = new pb::MessageParser<WpsStartEvent>(() => new WpsStartEvent());
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public static pb::MessageParser<WpsStartEvent> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Niantic.Lightship.AR.Protobuf.ArdkNextTelemetryReflection.Descriptor.MessageTypes[21]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public WpsStartEvent() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public WpsStartEvent(WpsStartEvent other) : this() {
+      wpsSessionId_ = other.wpsSessionId_;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public WpsStartEvent Clone() {
+      return new WpsStartEvent(this);
+    }
+
+    /// <summary>Field number for the "wps_session_id" field.</summary>
+    public const int WpsSessionIdFieldNumber = 1;
+    private string wpsSessionId_ = "";
+    /// <summary>
+    ///  Unique ID for the WPS session
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public string WpsSessionId {
+      get { return wpsSessionId_; }
+      set {
+        wpsSessionId_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override bool Equals(object other) {
+      return Equals(other as WpsStartEvent);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public bool Equals(WpsStartEvent other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (WpsSessionId != other.WpsSessionId) return false;
+      return true;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (WpsSessionId.Length != 0) hash ^= WpsSessionId.GetHashCode();
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void WriteTo(pb::CodedOutputStream output) {
+      if (WpsSessionId.Length != 0) {
+        output.WriteRawTag(10);
+        output.WriteString(WpsSessionId);
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public int CalculateSize() {
+      int size = 0;
+      if (WpsSessionId.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(WpsSessionId);
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void MergeFrom(WpsStartEvent other) {
+      if (other == null) {
+        return;
+      }
+      if (other.WpsSessionId.Length != 0) {
+        WpsSessionId = other.WpsSessionId;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void MergeFrom(pb::CodedInputStream input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            input.SkipLastField();
+            break;
+          case 10: {
+            WpsSessionId = input.ReadString();
+            break;
+          }
+        }
+      }
+    }
+
+  }
+
+  public sealed partial class WpsAvailableEvent : pb::IMessage<WpsAvailableEvent> {
+    private static readonly pb::MessageParser<WpsAvailableEvent> _parser = new pb::MessageParser<WpsAvailableEvent>(() => new WpsAvailableEvent());
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public static pb::MessageParser<WpsAvailableEvent> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Niantic.Lightship.AR.Protobuf.ArdkNextTelemetryReflection.Descriptor.MessageTypes[22]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public WpsAvailableEvent() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public WpsAvailableEvent(WpsAvailableEvent other) : this() {
+      wpsSessionId_ = other.wpsSessionId_;
+      timeToAvailableMs_ = other.timeToAvailableMs_;
+      distanceToAvailableM_ = other.distanceToAvailableM_;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public WpsAvailableEvent Clone() {
+      return new WpsAvailableEvent(this);
+    }
+
+    /// <summary>Field number for the "wps_session_id" field.</summary>
+    public const int WpsSessionIdFieldNumber = 1;
+    private string wpsSessionId_ = "";
+    /// <summary>
+    ///  Unique ID for the WPS session
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public string WpsSessionId {
+      get { return wpsSessionId_; }
+      set {
+        wpsSessionId_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
+    /// <summary>Field number for the "time_to_available_ms" field.</summary>
+    public const int TimeToAvailableMsFieldNumber = 2;
+    private long timeToAvailableMs_;
+    /// <summary>
+    ///  Time required for the first transition to 'Available' status (milliseconds)
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public long TimeToAvailableMs {
+      get { return timeToAvailableMs_; }
+      set {
+        timeToAvailableMs_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "distance_to_available_m" field.</summary>
+    public const int DistanceToAvailableMFieldNumber = 3;
+    private float distanceToAvailableM_;
+    /// <summary>
+    ///  Distance walked before the first transition to 'Available' status (metres)
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public float DistanceToAvailableM {
+      get { return distanceToAvailableM_; }
+      set {
+        distanceToAvailableM_ = value;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override bool Equals(object other) {
+      return Equals(other as WpsAvailableEvent);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public bool Equals(WpsAvailableEvent other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (WpsSessionId != other.WpsSessionId) return false;
+      if (TimeToAvailableMs != other.TimeToAvailableMs) return false;
+      if (DistanceToAvailableM != other.DistanceToAvailableM) return false;
+      return true;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (WpsSessionId.Length != 0) hash ^= WpsSessionId.GetHashCode();
+      if (TimeToAvailableMs != 0L) hash ^= TimeToAvailableMs.GetHashCode();
+      if (DistanceToAvailableM != 0F) hash ^= DistanceToAvailableM.GetHashCode();
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void WriteTo(pb::CodedOutputStream output) {
+      if (WpsSessionId.Length != 0) {
+        output.WriteRawTag(10);
+        output.WriteString(WpsSessionId);
+      }
+      if (TimeToAvailableMs != 0L) {
+        output.WriteRawTag(16);
+        output.WriteInt64(TimeToAvailableMs);
+      }
+      if (DistanceToAvailableM != 0F) {
+        output.WriteRawTag(29);
+        output.WriteFloat(DistanceToAvailableM);
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public int CalculateSize() {
+      int size = 0;
+      if (WpsSessionId.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(WpsSessionId);
+      }
+      if (TimeToAvailableMs != 0L) {
+        size += 1 + pb::CodedOutputStream.ComputeInt64Size(TimeToAvailableMs);
+      }
+      if (DistanceToAvailableM != 0F) {
+        size += 1 + 4;
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void MergeFrom(WpsAvailableEvent other) {
+      if (other == null) {
+        return;
+      }
+      if (other.WpsSessionId.Length != 0) {
+        WpsSessionId = other.WpsSessionId;
+      }
+      if (other.TimeToAvailableMs != 0L) {
+        TimeToAvailableMs = other.TimeToAvailableMs;
+      }
+      if (other.DistanceToAvailableM != 0F) {
+        DistanceToAvailableM = other.DistanceToAvailableM;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void MergeFrom(pb::CodedInputStream input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            input.SkipLastField();
+            break;
+          case 10: {
+            WpsSessionId = input.ReadString();
+            break;
+          }
+          case 16: {
+            TimeToAvailableMs = input.ReadInt64();
+            break;
+          }
+          case 29: {
+            DistanceToAvailableM = input.ReadFloat();
+            break;
+          }
+        }
+      }
+    }
+
+  }
+
+  public sealed partial class WpsStopEvent : pb::IMessage<WpsStopEvent> {
+    private static readonly pb::MessageParser<WpsStopEvent> _parser = new pb::MessageParser<WpsStopEvent>(() => new WpsStopEvent());
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public static pb::MessageParser<WpsStopEvent> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Niantic.Lightship.AR.Protobuf.ArdkNextTelemetryReflection.Descriptor.MessageTypes[23]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public WpsStopEvent() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public WpsStopEvent(WpsStopEvent other) : this() {
+      wpsSessionId_ = other.wpsSessionId_;
+      sessionTimeMs_ = other.sessionTimeMs_;
+      sessionDistanceM_ = other.sessionDistanceM_;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public WpsStopEvent Clone() {
+      return new WpsStopEvent(this);
+    }
+
+    /// <summary>Field number for the "wps_session_id" field.</summary>
+    public const int WpsSessionIdFieldNumber = 1;
+    private string wpsSessionId_ = "";
+    /// <summary>
+    ///  Unique ID for the WPS session
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public string WpsSessionId {
+      get { return wpsSessionId_; }
+      set {
+        wpsSessionId_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
+    /// <summary>Field number for the "session_time_ms" field.</summary>
+    public const int SessionTimeMsFieldNumber = 2;
+    private long sessionTimeMs_;
+    /// <summary>
+    ///  Total time session enabled for (milliseconds)
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public long SessionTimeMs {
+      get { return sessionTimeMs_; }
+      set {
+        sessionTimeMs_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "session_distance_m" field.</summary>
+    public const int SessionDistanceMFieldNumber = 3;
+    private float sessionDistanceM_;
+    /// <summary>
+    ///  Distance walked during the session (metres)
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public float SessionDistanceM {
+      get { return sessionDistanceM_; }
+      set {
+        sessionDistanceM_ = value;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override bool Equals(object other) {
+      return Equals(other as WpsStopEvent);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public bool Equals(WpsStopEvent other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (WpsSessionId != other.WpsSessionId) return false;
+      if (SessionTimeMs != other.SessionTimeMs) return false;
+      if (SessionDistanceM != other.SessionDistanceM) return false;
+      return true;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (WpsSessionId.Length != 0) hash ^= WpsSessionId.GetHashCode();
+      if (SessionTimeMs != 0L) hash ^= SessionTimeMs.GetHashCode();
+      if (SessionDistanceM != 0F) hash ^= SessionDistanceM.GetHashCode();
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void WriteTo(pb::CodedOutputStream output) {
+      if (WpsSessionId.Length != 0) {
+        output.WriteRawTag(10);
+        output.WriteString(WpsSessionId);
+      }
+      if (SessionTimeMs != 0L) {
+        output.WriteRawTag(16);
+        output.WriteInt64(SessionTimeMs);
+      }
+      if (SessionDistanceM != 0F) {
+        output.WriteRawTag(29);
+        output.WriteFloat(SessionDistanceM);
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public int CalculateSize() {
+      int size = 0;
+      if (WpsSessionId.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(WpsSessionId);
+      }
+      if (SessionTimeMs != 0L) {
+        size += 1 + pb::CodedOutputStream.ComputeInt64Size(SessionTimeMs);
+      }
+      if (SessionDistanceM != 0F) {
+        size += 1 + 4;
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void MergeFrom(WpsStopEvent other) {
+      if (other == null) {
+        return;
+      }
+      if (other.WpsSessionId.Length != 0) {
+        WpsSessionId = other.WpsSessionId;
+      }
+      if (other.SessionTimeMs != 0L) {
+        SessionTimeMs = other.SessionTimeMs;
+      }
+      if (other.SessionDistanceM != 0F) {
+        SessionDistanceM = other.SessionDistanceM;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public void MergeFrom(pb::CodedInputStream input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            input.SkipLastField();
+            break;
+          case 10: {
+            WpsSessionId = input.ReadString();
+            break;
+          }
+          case 16: {
+            SessionTimeMs = input.ReadInt64();
+            break;
+          }
+          case 29: {
+            SessionDistanceM = input.ReadFloat();
             break;
           }
         }

@@ -1,7 +1,7 @@
 // Copyright 2022-2024 Niantic.
 using System;
 using System.Collections.Generic;
-using Niantic.Lightship.AR.Subsystems.Common;
+using Niantic.Lightship.AR.Subsystems.XR;
 using Niantic.Lightship.AR.Utilities;
 using UnityEngine;
 using UnityEngine.SubsystemsImplementation;
@@ -14,7 +14,8 @@ namespace Niantic.Lightship.AR.XRSubsystems
     /// </summary>
     [PublicAPI]
     public class XRSemanticsSubsystem
-        : SubsystemWithProvider<XRSemanticsSubsystem, XRSemanticsSubsystemDescriptor, XRSemanticsSubsystem.Provider>
+        : SubsystemWithProvider<XRSemanticsSubsystem, XRSemanticsSubsystemDescriptor, XRSemanticsSubsystem.Provider>,
+            ISubsystemWithModelMetadata
     {
 
         /// <summary>
@@ -82,6 +83,35 @@ namespace Niantic.Lightship.AR.XRSubsystems
             => provider.TryAcquirePackedSemanticChannelsCpuImage(out cpuImage, out samplerMatrix, cameraParams);
 
         /// <summary>
+        /// Tries to generate a semantic suppression mask texture descriptor from the latest semantics.
+        /// </summary>
+        /// <param name="suppressionMaskDescriptor">The semantic suppression mask texture descriptor to be populated, if
+        ///     available from the provider.</param>
+        /// <param name="samplerMatrix">A matrix that converts from viewport to texture coordinates.</param>
+        /// <param name="cameraParams">Describes the viewport.</param>
+        /// <returns>
+        /// <c>true</c> if the suppression mask texture descriptor is available and is returned. Otherwise,
+        /// <c>false</c>.
+        /// </returns>
+        /// <exception cref="System.NotSupportedException">Thrown if the implementation does not support semantic suppression mask
+        /// textures.</exception>
+        public bool TryGetSuppressionMaskTexture(out XRTextureDescriptor suppressionMaskDescriptor,
+            out Matrix4x4 samplerMatrix, XRCameraParams? cameraParams = null)
+            => provider.TryGetSuppressionMaskTexture(out suppressionMaskDescriptor, out samplerMatrix, cameraParams);
+
+        /// <summary>
+        ///  Tries to generate a suppression mask XRCpuImage from the latest semantics.
+        /// </summary>
+        /// <param name="cpuImage">If this method returns `true`, an acquired <see cref="XRCpuImage"/>. The XRCpuImage
+        ///     must be disposed by the caller.</param>
+        /// <param name="samplerMatrix">A matrix that converts from viewport to texture coordinates.</param>
+        /// <param name="cameraParams">Describes the viewport.</param>
+        /// <returns></returns>
+        public bool TryAcquireSuppressionMaskCpuImage(out XRCpuImage cpuImage,
+            out Matrix4x4 samplerMatrix, XRCameraParams? cameraParams = null)
+            => provider.TryAcquireSuppressionMaskCpuImage(out cpuImage, out samplerMatrix, cameraParams);
+
+        /// <summary>
         /// Register the descriptor for the semantics subsystem implementation.
         /// </summary>
         /// <param name="semanticsSubsystemCinfo">The semantics subsystem implementation construction information.
@@ -108,6 +138,12 @@ namespace Niantic.Lightship.AR.XRSubsystems
         {
             get => provider.TargetFrameRate;
             set => provider.TargetFrameRate = value;
+        }
+
+        public List<string> SuppressionMaskChannels
+        {
+            get => provider.SuppressionMaskChannels;
+            set => provider.SuppressionMaskChannels = value;
         }
 
         /// <summary>
@@ -263,6 +299,37 @@ namespace Niantic.Lightship.AR.XRSubsystems
                 => throw new NotSupportedException("Packed Semantic channels cpu image is not supported by this implementation");
 
             /// <summary>
+            /// Get a semantic suppression texture descriptor
+            /// </summary>
+            /// <param name="suppressionMaskDescriptor">The suppression mask texture descriptor to be populated, if available from the provider.</param>
+            /// <param name="samplerMatrix">A matrix that converts from viewport to texture coordinates.</param>
+            /// <param name="cameraParams">Describes the viewport.</param>
+            /// <returns>
+            /// <c>true</c> if the suppression mask texture descriptor is available and is returned. Otherwise,
+            /// <c>false</c>.
+            /// </returns>
+            /// <exception cref="System.NotSupportedException">Thrown if the implementation does not support suppression mask texture.</exception>
+            public virtual bool TryGetSuppressionMaskTexture(
+                out XRTextureDescriptor suppressionMaskDescriptor,
+                out Matrix4x4 samplerMatrix,
+                XRCameraParams? cameraParams = null)
+                => throw new NotSupportedException("Generating a suppression mask is not supported by this implementation");
+
+            /// <summary>
+            ///  Tries to acquire the latest suppression mask XRCpuImage.
+            /// </summary>
+            /// <param name="cpuImage">If this method returns `true`, an acquired <see cref="XRCpuImage"/>. The XRCpuImage
+            /// must be disposed by the caller.</param>
+            /// <param name="samplerMatrix">A matrix that converts from viewport to texture coordinates.</param>
+            /// <param name="cameraParams">Describes the viewport.</param>
+            /// <returns></returns>
+            public virtual bool TryAcquireSuppressionMaskCpuImage(
+                out XRCpuImage cpuImage,
+                out Matrix4x4 samplerMatrix,
+                XRCameraParams? cameraParams = null)
+                => throw new NotSupportedException("Generating a suppression mask is not supported by this implementation");
+
+            /// <summary>
             /// Property to be implemented by the provider to get or set the frame rate for the platform's semantic
             /// segmentation feature.
             /// </summary>
@@ -277,6 +344,24 @@ namespace Niantic.Lightship.AR.XRSubsystems
                 set
                 {
                     throw new NotSupportedException("Setting semantic segmentation frame rate is not "
+                        + "supported by this implementation");
+                }
+            }
+
+            /// <summary>
+            /// Property to be implemented by the provider to get or set the list of suppression channels for the platform's semantic
+            /// segmentation feature.
+            /// </summary>
+            /// <value>
+            /// The requested list of suppression channels
+            /// </value>
+            /// <exception cref="System.NotSupportedException">Thrown if the list of channels is not supported by this implementation.</exception>
+            public virtual List<string> SuppressionMaskChannels
+            {
+                get => new List<string>();
+                set
+                {
+                    throw new NotSupportedException("Setting suppression mask channels is not "
                         + "supported by this implementation");
                 }
             }

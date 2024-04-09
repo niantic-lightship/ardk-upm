@@ -1,0 +1,30 @@
+{
+    "name": "Niantic.Lightship.Simulation.Editor",
+    "rootNamespace": "Niantic.Lightship.Simulation.Editor",
+    "references": [
+        "Unity.EditorCoroutines.Editor",
+        "Unity.XR.ARSubsystems",
+        "Unity.XR.Management",
+        "Unity.XR.CoreUtils",
+        "Unity.XR.CoreUtils.Editor",
+        "Unity.XR.Management.Editor",
+        "Niantic.Lightship.AR",
+        "Unity.XR.ARCore",
+        "Unity.XR.ARKit",
+        "Unity.XR.ARSubsystems.Editor",
+        "Unity.XR.ARFoundation",
+        "Niantic.Lightship.AR.Editor",
+        "Unity.XR.Simulation"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

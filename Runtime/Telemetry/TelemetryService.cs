@@ -23,7 +23,7 @@ namespace Niantic.Lightship.AR.Telemetry
         private readonly ITelemetryPublisher _telemetryPublisher;
         private readonly CancellationTokenSource _cancellationTokenSource;
         private readonly MessageParser<ArdkNextTelemetryOmniProto> _protoMessageParser;
-        private readonly string _apiKey;
+        private readonly string _lightshipApiKey;
         private readonly IntPtr _telemetryServiceHandle = IntPtr.Zero;
         private static readonly ConcurrentQueue<ArdkNextTelemetryOmniProto> s_messagesToBeSent;
 
@@ -35,11 +35,11 @@ namespace Niantic.Lightship.AR.Telemetry
             s_messagesToBeSent = new ConcurrentQueue<ArdkNextTelemetryOmniProto>();
         }
 
-        public TelemetryService(IntPtr lightshipUnityContext, ITelemetryPublisher telemetryPublisher, string apiKey)
+        public TelemetryService(IntPtr lightshipUnityContext, ITelemetryPublisher telemetryPublisher, string lightshipApiKey)
         {
             _protoMessageParser = new MessageParser<ArdkNextTelemetryOmniProto>(() => new ArdkNextTelemetryOmniProto());
             _telemetryPublisher = telemetryPublisher;
-            _apiKey = apiKey;
+            _lightshipApiKey = lightshipApiKey;
 
             // Do not initialise native layer for Windows
             if (lightshipUnityContext.IsValidHandle())
@@ -68,6 +68,12 @@ namespace Niantic.Lightship.AR.Telemetry
                 }
                 catch (Exception e)
                 {
+                    if (e is TaskCanceledException or OperationCanceledException)
+                    {
+                        // expected exception. No need to log.
+                        return;
+                    }
+                    
                     Log.Debug($"Encountered exception: {e} while running the timed telemetry native poller");
                 }
             }
@@ -153,7 +159,7 @@ namespace Niantic.Lightship.AR.Telemetry
 
                                 omniProto.ArCommonMetadata =
                                     Metadata.GetArCommonMetadata(omniProto.ArCommonMetadata.RequestId);
-                                omniProto.DeveloperKey = _apiKey;
+                                omniProto.DeveloperKey = _lightshipApiKey;
 
                                 // userId can be changed by the time the event has made it from the C++ layer to the C# layer
                                 omniProto.ArCommonMetadata.UserId = userId;
@@ -221,6 +227,12 @@ namespace Niantic.Lightship.AR.Telemetry
                 }
                 catch (Exception e)
                 {
+                    if (e is TaskCanceledException or OperationCanceledException)
+                    {
+                        // expected exception. No need to log.
+                        return;
+                    }
+
                     Log.Debug($"Encountered exception: {e} while running the timed telemetry loop");
                 }
             }
@@ -232,7 +244,7 @@ namespace Niantic.Lightship.AR.Telemetry
             {
                 if (s_messagesToBeSent.TryDequeue(out var eventToPublish))
                 {
-                    eventToPublish.DeveloperKey = _apiKey;
+                    eventToPublish.DeveloperKey = _lightshipApiKey;
                     _telemetryPublisher.RecordEvent(eventToPublish);
                 }
             }
@@ -246,10 +258,14 @@ namespace Niantic.Lightship.AR.Telemetry
         public void Dispose()
         {
             MonoBehaviourEventDispatcher.OnApplicationFocusLost.RemoveListener(FlushTelemetry);
-
+            
             // stop async tasks
             _cancellationTokenSource?.Cancel();
             _cancellationTokenSource?.Dispose();
+            
+            // Flush any remaining events
+            // Note: This does not guarantee that all events will be sent
+            FlushTelemetry();
 
             // stop the native telemetry service
             if (_telemetryServiceHandle != default)

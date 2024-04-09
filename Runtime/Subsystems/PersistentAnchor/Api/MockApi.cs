@@ -24,8 +24,17 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
             throw new NotImplementedException();
         }
 
-        public void Configure(IntPtr anchorProviderHandle, bool enableContinuousLocalization, bool enableTemporalFusion, bool enableSlickLocalization,
-                float cloudLocalizerMaxRequestsPerSecond, float slickLocalizerFps, UInt32 cloudTemporalFusionWindowSize, UInt32 slickTemporalFusionWindowSize, bool diagnosticsEnabled)
+        public void Configure(IntPtr anchorProviderHandle,
+            bool enableContinuousLocalization,
+            bool enableTemporalFusion,
+            bool enableTransformSmoothing,
+            bool enableSlickLocalization,
+            float cloudLocalizerInitialRequestsPerSecond,
+            float cloudLocalizerContinuousRequestsPerSecond,
+            float slickLocalizerFps,
+            UInt32 cloudTemporalFusionWindowSize,
+            UInt32 slickTemporalFusionWindowSize,
+            bool diagnosticsEnabled)
         {
             throw new NotImplementedException();
         }
@@ -94,7 +103,7 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
             out ulong startTimeMsOut,
             out ulong endTimeMsOut,
             out UInt64 frameIdOut
-        ) 
+        )
         {
             throw new NotImplementedException();
         }
@@ -132,15 +141,15 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
             IntPtr diagnosticsHandle,
             out UInt64 frameId,
             out UInt64 timestampMs,
-            out IntPtr labelNameList, 
-            out IntPtr labelScoreList, 
+            out IntPtr labelNameList,
+            out IntPtr labelScoreList,
             out UInt32 labelCount
         )
         {
             throw new NotImplementedException();
         }
 
-        public bool GetVpsSessionId (IntPtr anchorProviderHandle, out string vpsSessionId) 
+        public bool GetVpsSessionId (IntPtr anchorProviderHandle, out string vpsSessionId)
         {
             throw new NotImplementedException();
         }

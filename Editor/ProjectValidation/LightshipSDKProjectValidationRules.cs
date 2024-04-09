@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using Niantic.Lightship.AR.Loader;
 using Unity.XR.CoreUtils.Editor;
 using UnityEditor;
@@ -12,6 +11,7 @@ using UnityEngine.Rendering;
 using UnityEngine.XR.ARKit;
 using JetBrains.Annotations;
 using System.Text.RegularExpressions;
+using UnityEditor.XR.Management.Metadata;
 
 namespace Niantic.Lightship.AR.Editor
 {
@@ -68,7 +68,8 @@ namespace Niantic.Lightship.AR.Editor
                 GetStandaloneIsLightshipPluginEnabled,
                 GetUnityVersion);
             var standaloneRules = CreateStandaloneRules(
-                GetStandaloneIsLightshipPluginEnabled);
+                GetStandaloneIsLightshipPluginEnabled,
+                GetSimulationPluginsStatusMatches);
 
             var androidGlobalRules = CreateGlobalRules(
                 s_settings,
@@ -218,10 +219,18 @@ namespace Niantic.Lightship.AR.Editor
                     FixItMessage = "Open `Project Settings` > `XR Plug-in Management` > `iOS settings` and enable the 'Niantic Lightship SDK' plug-in.",
                     FixIt = () =>
                     {
-                        SettingsService.OpenProjectSettings(XRPlugInManagementPath);
+                        var generalSettings = XRGeneralSettingsPerBuildTarget.XRGeneralSettingsForBuildTarget(BuildTargetGroup.iOS);
+                        if (null == generalSettings)
+                            return;
+
+                        var managerSettings = generalSettings.AssignedSettings;
+                        if (null == managerSettings)
+                            return;
+
+                        XRPackageMetadataStore.AssignLoader(managerSettings, typeof(LightshipARKitLoader).FullName, BuildTargetGroup.iOS);
                     },
-                    Error = false,
-                    FixItAutomatic = false
+                    FixItAutomatic = true,
+                    Error = false
                 },
                 new BuildValidationRule
                 {
@@ -307,10 +316,18 @@ namespace Niantic.Lightship.AR.Editor
                     CheckPredicate = getAndroidIsLightshipPluginEnabled.Invoke,
                     FixIt = () =>
                     {
-                        SettingsService.OpenProjectSettings(XRPlugInManagementPath);
+                        var generalSettings = XRGeneralSettingsPerBuildTarget.XRGeneralSettingsForBuildTarget(BuildTargetGroup.Android);
+                        if (null == generalSettings)
+                            return;
+
+                        var managerSettings = generalSettings.AssignedSettings;
+                        if (null == managerSettings)
+                            return;
+
+                        XRPackageMetadataStore.AssignLoader(managerSettings, typeof(LightshipARCoreLoader).FullName, BuildTargetGroup.Android);
                     },
                     FixItMessage = "Open `Project Settings` > `XR Plug-in Management` > `Android settings` and enable the 'Niantic Lightship SDK' plug-in.",
-                    FixItAutomatic = false,
+                    FixItAutomatic = true,
                     Error = false,
                 },
                 new BuildValidationRule
@@ -393,21 +410,64 @@ namespace Niantic.Lightship.AR.Editor
         }
 
         internal static BuildValidationRule[] CreateStandaloneRules(
-            [NotNull] Func<bool> getStandaloneIsLightshipPluginEnabled)
+            [NotNull] Func<bool> getStandaloneIsLightshipPluginEnabled,
+            [NotNull] Func<bool> getSimulationPluginsStatusMatches)
         {
             var standaloneRules = new[]
             {
                 new BuildValidationRule
                 {
                     Category = Category,
-                    Message = "If using Lightship ARDK for Standalone, enable the 'Niantic Lightship SDK' plug-in.",
+                    Message = "If using Lightship ARDK for Standalone with a playback dataset, enable the 'Niantic Lightship SDK' plug-in.",
                     CheckPredicate = getStandaloneIsLightshipPluginEnabled.Invoke,
                     FixIt = () =>
                     {
-                        SettingsService.OpenProjectSettings(XRPlugInManagementPath);
+                        var generalSettings = XRGeneralSettingsPerBuildTarget.XRGeneralSettingsForBuildTarget(BuildTargetGroup.Standalone);
+                        if (null == generalSettings)
+                            return;
+
+                        var managerSettings = generalSettings.AssignedSettings;
+                        if (null == managerSettings)
+                            return;
+
+                        XRPackageMetadataStore.AssignLoader(managerSettings, typeof(LightshipStandaloneLoader).FullName, BuildTargetGroup.Standalone);
                     },
                     FixItMessage = "Open `Project Settings` > `XR Plug-in Management` > `Standalone settings` and enable the 'Niantic Lightship SDK' plug-in.",
-                    FixItAutomatic = false,
+                    FixItAutomatic = true,
+                    Error = false,
+                },
+                new BuildValidationRule
+                {
+                    Category = Category,
+                    Message = "If using Lightship ARDK for Simulation, enable both the 'Niantic Lightship Simulation' and 'XR Simulation' plug-ins.",
+                    CheckPredicate = getSimulationPluginsStatusMatches.Invoke,
+                    FixIt = () =>
+                    {
+                        var generalSettings = XRGeneralSettingsPerBuildTarget.XRGeneralSettingsForBuildTarget(BuildTargetGroup.Standalone);
+                        if (null == generalSettings)
+                            return;
+
+                        var managerSettings = generalSettings.AssignedSettings;
+                        if (null == managerSettings)
+                            return;
+
+                        if (LightshipEditorUtilities.IsUnitySimulationPluginEnabled())
+                        {
+                            // Lightship Simulation Loader needs to be enabled and must take precedence
+                            XRPackageMetadataStore.AssignLoader(managerSettings,
+                                "Niantic.Lightship.AR.Loader.LightshipSimulationLoader", BuildTargetGroup.Standalone);
+                        }
+                        else
+                        {
+                            // Unity's XR Simulation Loader needs to be added to the list but will not be used.
+                            // This is to unlock the XR Simulation UI menus.
+                            XRPackageMetadataStore.AssignLoader(managerSettings,
+                                "UnityEngine.XR.Simulation.SimulationLoader", BuildTargetGroup.Standalone);
+                        }
+                    },
+                    FixItMessage = "Open `Project Settings` > `XR Plug-in Management` > `Standalone settings` and enable " +
+                        "both the 'Niantic Lightship Simulation' and 'XR Simulation' plug-ins.",
+                    FixItAutomatic = true,
                     Error = false,
                 },
             };
@@ -426,7 +486,16 @@ namespace Niantic.Lightship.AR.Editor
 
         private static bool GetStandaloneIsLightshipPluginEnabled()
         {
-            return LightshipEditorUtilities.GetStandaloneIsLightshipPluginEnabled();
+            // Standalone mode is used for both playback and simulation.
+            // If the Lightship Simulation plugin is enabled, don't display a warning about the standalone plugin.
+            return LightshipEditorUtilities.GetStandaloneIsLightshipPluginEnabled()
+                || LightshipEditorUtilities.GetSimulationIsLightshipPluginEnabled();
+        }
+
+        // When using simulation, both the Lightship and Unity simulation plugins must be enabled to unlock the XR Environment UI menus.
+        private static bool GetSimulationPluginsStatusMatches()
+        {
+            return !(LightshipEditorUtilities.GetSimulationIsLightshipPluginEnabled() ^ LightshipEditorUtilities.IsUnitySimulationPluginEnabled());
         }
 
         private static string GetAndroidGradleVersion()

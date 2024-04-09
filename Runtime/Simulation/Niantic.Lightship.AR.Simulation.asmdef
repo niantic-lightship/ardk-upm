@@ -1,0 +1,32 @@
+{
+    "name": "Niantic.Lightship.AR.Simulation",
+    "rootNamespace": "Niantic.Lightship.AR.Simulation",
+    "references": [
+        "Unity.XR.ARSubsystems",
+        "Unity.XR.Management",
+        "Unity.XR.CoreUtils",
+        "Unity.XR.ARFoundation",
+        "Unity.XR.ARCore",
+        "Unity.XR.ARKit",
+        "Unity.InputSystem",
+        "Niantic.Lightship.AR",
+        "Unity.XR.Simulation"
+    ],
+    "includePlatforms": [
+        "Editor",
+        "macOSStandalone",
+        "WindowsStandalone64"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "Niantic.Platform.Analytics.NATelemetry.dll",
+        "Niantic.Google.Protobuf.dll",
+        "Newtonsoft.Json.dll"
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -1,11 +1,12 @@
 // Copyright 2022-2024 Niantic.
+
 using System.IO;
 using System.Threading.Tasks;
-using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.ARDK.AR.Scanning;
-using Niantic.Lightship.AR.ARFoundation;
+using Niantic.Lightship.AR.ARFoundation.Unity;
 using Niantic.Lightship.AR.Common;
 using Niantic.Lightship.AR.Utilities;
+using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.XRSubsystems;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -260,7 +261,7 @@ namespace Niantic.Lightship.AR.Scanning
             {
                 return Application.persistentDataPath;
             }
-            if (System.IO.Path.IsPathRooted(ScanPath))
+            if (Path.IsPathRooted(ScanPath))
             {
                 return ScanPath;
             }

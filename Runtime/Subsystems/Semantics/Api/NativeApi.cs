@@ -27,8 +27,10 @@ namespace  Niantic.Lightship.AR.Subsystems.Semantics
         private readonly Dictionary<string, BufferedTextureCache> _semanticsBufferedTextureCaches = new ();
 
         private readonly int _packedSemanticsPropertyNameID =  Shader.PropertyToID(TexturePackedSemanticChannelPropertyName);
+		private readonly int _suppressionMaskPropertyNameID = Shader.PropertyToID("_SuppressionMask");
         private BufferedTextureCache _packedSemanticsBufferedTextureCache = new BufferedTextureCache(FramesInMemory);
-        private uint _latestTimestampMs;
+		private BufferedTextureCache _suppressionMaskBufferedTextureCache = new BufferedTextureCache(FramesInMemory);
+        private ulong _latestTimestampMs;
 
         private bool _initializedMetadataDependencies = false;
 
@@ -65,10 +67,15 @@ namespace  Niantic.Lightship.AR.Subsystems.Semantics
         /// array of semantic channels returned by <c>TryGetChannelNames</c>. A negative value will have no effect and will
         /// leave the threshold at the default or previously set value. A new threshold setting must be between 0 and
         /// 1, inclusive.</param>
-        public void Configure(IntPtr nativeProviderHandle, UInt32 framesPerSecond, UInt32 numThresholds, IntPtr thresholds)
+        public void Configure(IntPtr nativeProviderHandle, UInt32 framesPerSecond, UInt32 numThresholds, IntPtr thresholds, List<string> suppressionMaskChannelNames)
         {
+            if (!_initializedMetadataDependencies && HasMetadata(nativeProviderHandle))
+            {
+                SetMetadataDependencies(nativeProviderHandle);
+            }
+
             // TODO(rbarnes): expose semantics mode in Lightship settings UI
-            Native.Configure(nativeProviderHandle, framesPerSecond, numThresholds, thresholds, 0);
+            Native.Configure(nativeProviderHandle, framesPerSecond, numThresholds, thresholds, 0, GetFlags(suppressionMaskChannelNames));
         }
 
         public void Destruct(IntPtr nativeProviderHandle)
@@ -93,6 +100,7 @@ namespace  Niantic.Lightship.AR.Subsystems.Semantics
             IntPtr nativeProviderHandle,
             string channelName,
             XRCameraParams? cameraParams,
+            Matrix4x4? currentPose,
             out XRTextureDescriptor semanticsChannelDescriptor,
             out Matrix4x4 samplerMatrix
         )
@@ -139,7 +147,7 @@ namespace  Niantic.Lightship.AR.Subsystems.Semantics
                     frameId
                 );
 
-            samplerMatrix = GetSamplerMatrix(nativeProviderHandle, resourceHandle, cameraParams, width, height);
+            samplerMatrix = GetSamplerMatrix(nativeProviderHandle, resourceHandle, cameraParams, currentPose, width, height);
 
             Native.DisposeResource(nativeProviderHandle, resourceHandle);
 
@@ -174,6 +182,7 @@ namespace  Niantic.Lightship.AR.Subsystems.Semantics
             IntPtr nativeProviderHandle,
             string channelName,
             XRCameraParams? cameraParams,
+            Matrix4x4? currentPose,
             out XRCpuImage cpuImage,
             out Matrix4x4 samplerMatrix
         )
@@ -221,7 +230,7 @@ namespace  Niantic.Lightship.AR.Subsystems.Semantics
                     out var cinfo
                 );
 
-            samplerMatrix = GetSamplerMatrix(nativeProviderHandle, resourceHandle, cameraParams, width, height);
+            samplerMatrix = GetSamplerMatrix(nativeProviderHandle, resourceHandle, cameraParams, currentPose, width, height);
 
             Native.DisposeResource(nativeProviderHandle, resourceHandle);
 
@@ -249,6 +258,7 @@ namespace  Niantic.Lightship.AR.Subsystems.Semantics
         (
             IntPtr nativeProviderHandle,
             XRCameraParams? cameraParams,
+            Matrix4x4? currentPose,
             out XRTextureDescriptor packedSemanticsDescriptor,
             out Matrix4x4 samplerMatrix
         )
@@ -282,7 +292,7 @@ namespace  Niantic.Lightship.AR.Subsystems.Semantics
                 frameId
             );
 
-            samplerMatrix = GetSamplerMatrix(nativeProviderHandle, resourceHandle, cameraParams, width, height);
+            samplerMatrix = GetSamplerMatrix(nativeProviderHandle, resourceHandle, cameraParams, currentPose, width, height);
 
             Native.DisposeResource(nativeProviderHandle, resourceHandle);
 
@@ -314,6 +324,7 @@ namespace  Niantic.Lightship.AR.Subsystems.Semantics
         (
             IntPtr nativeProviderHandle,
             XRCameraParams? cameraParams,
+            Matrix4x4? currentPose,
             out XRCpuImage cpuImage,
             out Matrix4x4 samplerMatrix
         )
@@ -349,7 +360,7 @@ namespace  Niantic.Lightship.AR.Subsystems.Semantics
                     out var cinfo
                 );
 
-            samplerMatrix = GetSamplerMatrix(nativeProviderHandle, resourceHandle, cameraParams, width, height);
+            samplerMatrix = GetSamplerMatrix(nativeProviderHandle, resourceHandle, cameraParams, currentPose, width, height);
 
             Native.DisposeResource(nativeProviderHandle, resourceHandle);
 
@@ -360,6 +371,131 @@ namespace  Niantic.Lightship.AR.Subsystems.Semantics
             }
 
             return true;
+        }
+
+        public bool TryGetSuppressionMaskTexture
+        (
+			IntPtr nativeProviderHandle,
+			XRCameraParams? cameraParams,
+            Matrix4x4? currentPose,
+			out XRTextureDescriptor suppressionMaskDescriptor,
+            out Matrix4x4 samplerMatrix
+        )
+        {
+			suppressionMaskDescriptor = default;
+            samplerMatrix = Matrix4x4.identity;
+
+            var resourceHandle =
+                Native.GetSuppressionMask
+                (
+                    nativeProviderHandle,
+                    out var memoryBuffer,
+                    out var size,
+                    out var width,
+                    out var height,
+                    out var format,
+                    out var frameId,
+                    out _latestTimestampMs
+                );
+
+            if (resourceHandle == IntPtr.Zero || memoryBuffer == IntPtr.Zero)
+            {
+                return false;
+            }
+
+			var texture = _suppressionMaskBufferedTextureCache.GetUpdatedTextureFromBuffer
+            (
+                memoryBuffer,
+                size,
+                width,
+                height,
+                format,
+                frameId
+            );
+
+            // Calculate the appropriate viewport mapping
+            samplerMatrix = GetSamplerMatrix(nativeProviderHandle, resourceHandle, cameraParams, currentPose, width, height);
+
+            // Release the native data
+            Native.DisposeResource(nativeProviderHandle, resourceHandle);
+
+	        suppressionMaskDescriptor = new XRTextureDescriptor
+            (
+                texture.GetNativeTexturePtr(),
+                width,
+                height,
+                0,
+                format,
+                _suppressionMaskPropertyNameID,
+                depth: 0,
+                dimension: TextureDimension.Tex2D
+            );
+
+            return true;
+        }
+
+        /// <summary>
+        /// Get the XRCpuImage for the masked semantic channels
+        /// </summary>
+        /// <param name="nativeProviderHandle"> The handle to the semantics native API </param>
+        /// <param name="cameraParams">Describes the viewport.</param>
+        /// <param name="cpuImage">If this method returns `true`, an acquired <see cref="XRCpuImage"/>. The XRCpuImage
+        /// must be disposed by the caller.</param>
+        /// <param name="samplerMatrix">A matrix that converts from viewport to texture coordinates.</param>
+        /// <returns>Whether the XRCpuImage was successfully acquired.</returns>
+        public bool TryAcquireSuppressionMaskCpuImage
+        (
+			IntPtr nativeProviderHandle,
+			XRCameraParams? cameraParams,
+            Matrix4x4? currentPose,
+            out XRCpuImage cpuImage,
+			out Matrix4x4 samplerMatrix
+        )
+        {
+            cpuImage = default;
+            samplerMatrix = Matrix4x4.identity;
+
+            var resourceHandle =
+                Native.GetSuppressionMask
+                (
+                    nativeProviderHandle,
+                    out var memoryBuffer,
+                    out var size,
+                    out var width,
+                    out var height,
+                    out var format,
+                    out uint _,
+                    out _latestTimestampMs
+                );
+
+            if (resourceHandle == IntPtr.Zero || memoryBuffer == IntPtr.Zero)
+            {
+                return false;
+            }
+
+            var gotCpuImage =
+                _cpuImageApi.TryAddManagedXRCpuImage
+                (
+                    memoryBuffer,
+                    size,
+                    width,
+                    height,
+                    format,
+                    _latestTimestampMs,
+                    out var cinfo
+                );
+
+            samplerMatrix = GetSamplerMatrix(nativeProviderHandle, resourceHandle, cameraParams, currentPose, width, height);
+
+            Native.DisposeResource(nativeProviderHandle, resourceHandle);
+
+            if (gotCpuImage)
+            {
+                cpuImage = new XRCpuImage(_cpuImageApi, cinfo);
+                return true;
+            }
+
+            return false;
         }
 
         private List<string> _cachedSemanticChannelNames = new();
@@ -448,6 +584,35 @@ namespace  Niantic.Lightship.AR.Subsystems.Semantics
             return Native.HasMetadata(nativeProviderHandle);
         }
 
+        public uint GetFlags(IEnumerable<string> channels)
+        {
+            if (channels == null)
+            {
+                return 0u;
+            }
+
+            uint flags = 0u;
+            const int bitsPerPixel = sizeof(UInt32) * 8;
+
+            UInt32 GetChannelTextureMask(int channelIndex)
+            {
+                if (channelIndex is < 0 or >= bitsPerPixel)
+                    return 0u;
+
+                return 1u << (bitsPerPixel - 1 - channelIndex);
+            }
+
+            foreach (var channel in channels)
+            {
+                if (_semanticsNameToIndexMap.TryGetValue(channel, out var cIdx))
+                {
+                    flags |= GetChannelTextureMask(cIdx);
+                }
+            }
+
+            return flags;
+        }
+
         private void SetMetadataDependencies(IntPtr nativeProviderHandle)
         {
             if (_initializedMetadataDependencies)
@@ -456,10 +621,8 @@ namespace  Niantic.Lightship.AR.Subsystems.Semantics
                 return;
             }
 
-            if (TryGetChannelNames(nativeProviderHandle, out var semanticChannelNames))
-            {
-                SetMetadataDependencies(semanticChannelNames);
-            }
+            // Getting the channel names successfully will initialize metadata dependencies
+            TryGetChannelNames(nativeProviderHandle, out _);
         }
 
         private void SetMetadataDependencies(List<string> semanticChannelNames)
@@ -493,6 +656,7 @@ namespace  Niantic.Lightship.AR.Subsystems.Semantics
             _initializedMetadataDependencies = false;
 
             _packedSemanticsBufferedTextureCache?.Dispose();
+			_suppressionMaskBufferedTextureCache?.Dispose();
 
             foreach (var bufferedTextureCache in _semanticsBufferedTextureCaches.Values)
                 bufferedTextureCache.Dispose();
@@ -509,6 +673,7 @@ namespace  Niantic.Lightship.AR.Subsystems.Semantics
             IntPtr nativeProviderHandle,
             IntPtr resourceHandle,
             XRCameraParams? cameraParams,
+            Matrix4x4? currentPose,
             int imageWidth,
             int imageHeight
         )
@@ -523,15 +688,15 @@ namespace  Niantic.Lightship.AR.Subsystems.Semantics
 
             var viewport = cameraParams.Value;
 
-            if (PoseProvider.TryAcquireCurrentPose(out var currentPose))
+            if (currentPose.HasValue)
             {
                 TryCalculateSamplerMatrixWithInterpolationMatrix
                 (
                     nativeProviderHandle,
                     resourceHandle,
                     viewport,
-                    currentPose,
-                    OcclusionContext.Shared.OccludeeEyeDepth,
+                    currentPose.Value,
+                    XRDisplayContext.OccludeeEyeDepth,
                     out samplerMatrix
                 );
             }
@@ -620,7 +785,7 @@ namespace  Niantic.Lightship.AR.Subsystems.Semantics
             public static extern void Stop(IntPtr nativeProviderHandle);
 
             [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_SemanticsProvider_Configure")]
-            public static extern void Configure(IntPtr nativeProviderHandle, UInt32 framesPerSecond, UInt32 numThresholds, IntPtr thresholds, byte mode);
+            public static extern void Configure(IntPtr nativeProviderHandle, UInt32 framesPerSecond, UInt32 numThresholds, IntPtr thresholds, byte mode, UInt32 suppressionMaskChannels);
 
             [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_SemanticsProvider_Destruct")]
             public static extern void Destruct(IntPtr nativeProviderHandle);
@@ -636,7 +801,7 @@ namespace  Niantic.Lightship.AR.Subsystems.Semantics
                 out int height,
                 out TextureFormat format,
                 out uint frameId,
-                out uint timestamp
+                out ulong timestamp
             );
 
             [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_SemanticsProvider_GetPackedSemanticsChannel")]
@@ -649,7 +814,20 @@ namespace  Niantic.Lightship.AR.Subsystems.Semantics
                 out int height,
                 out TextureFormat format,
                 out uint frameId,
-                out uint timestamp
+                out ulong timestamp
+            );
+
+            [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_SemanticsProvider_GetSuppressionMask")]
+            public static extern IntPtr GetSuppressionMask
+            (
+                IntPtr nativeProviderHandle,
+                out IntPtr memoryBuffer,
+                out int size,
+                out int width,
+                out int height,
+                out TextureFormat format,
+                out uint frameId,
+                out ulong timestamp
             );
 
             [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_SemanticsProvider_CalculateSamplerMatrix")]

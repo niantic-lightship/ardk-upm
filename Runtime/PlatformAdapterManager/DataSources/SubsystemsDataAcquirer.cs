@@ -25,7 +25,6 @@ namespace Niantic.Lightship.AR.PAM
         private XRSessionSubsystem _sessionSubsystem;
         private XRCameraSubsystem _cameraSubsystem;
         private XROcclusionSubsystem _occlusionSubsystem;
-        private XRInputSubsystem _inputSubsystem;
 
         private bool _usingLightshipOcclusion;
         private bool _locationServiceNeedsToStart = false;
@@ -36,8 +35,6 @@ namespace Niantic.Lightship.AR.PAM
 
         private const float DefaultAccuracyMeters = 0.01f;
         private const float DefaultDistanceMeters = 0.01f;
-
-        protected InputDevice? InputDevice;
 
         private bool _autoEnabledLocationServices;
         private bool _autoEnabledCompass;
@@ -55,12 +52,10 @@ namespace Niantic.Lightship.AR.PAM
         public SubsystemsDataAcquirer()
         {
             SetupSubsystemReferences();
-            InputDevices.deviceConnected += OnInputDeviceConnected;
         }
 
         public override void Dispose()
         {
-            InputDevices.deviceConnected -= OnInputDeviceConnected;
             DestroyTexture(_gpuImageTex);
             DestroyTexture(_gpuDepthImageTex);
             DestroyTexture(_gpuDepthConfidenceTex);
@@ -101,12 +96,6 @@ namespace Niantic.Lightship.AR.PAM
             }
         }
 
-        private void OnInputDeviceConnected(InputDevice device)
-        {
-            Log.Info($"Input device detected with name {device.name}");
-            CheckConnectedDevice(device);
-        }
-
         // Uses the XRGeneralSettings.instance singleton to connect to all subsystem references.
         protected void SetupSubsystemReferences()
         {
@@ -119,14 +108,7 @@ namespace Niantic.Lightship.AR.PAM
                     _cameraSubsystem = loader.GetLoadedSubsystem<XRCameraSubsystem>();
                     _sessionSubsystem = loader.GetLoadedSubsystem<XRSessionSubsystem>();
                     _occlusionSubsystem = loader.GetLoadedSubsystem<XROcclusionSubsystem>();
-                    _usingLightshipOcclusion = _occlusionSubsystem is Niantic.Lightship.AR.Subsystems.Occlusion.LightshipOcclusionSubsystem;
-
-                    List<InputDevice> devices = new List<InputDevice>();
-                    InputDevices.GetDevicesWithCharacteristics(InputDeviceCharacteristics.TrackedDevice, devices);
-                    foreach (var device in devices)
-                    {
-                        CheckConnectedDevice(device, false);
-                    }
+                    _usingLightshipOcclusion = _occlusionSubsystem is LightshipOcclusionSubsystem;
                 }
             }
         }
@@ -147,19 +129,9 @@ namespace Niantic.Lightship.AR.PAM
             return _sessionSubsystem.trackingState;
         }
 
-        public override DeviceOrientation GetDeviceOrientation()
+        public override ScreenOrientation GetScreenOrientation()
         {
-            return Input.deviceOrientation;
-        }
-
-        protected virtual ScreenOrientation GetScreenOrientation()
-        {
-#if NIANTIC_LIGHTSHIP_SPACES_ENABLED
-            //TODO: fix this properly to account for head tilt
-            return ScreenOrientation.LandscapeLeft;
-#else
-            return Screen.orientation;
-#endif
+            return XRDisplayContext.GetScreenOrientation();
         }
 
         public override bool TryGetCameraFrame(out XRCameraFrame frame)
@@ -179,60 +151,9 @@ namespace Niantic.Lightship.AR.PAM
         }
 
         /// Returns the camera pose
-        /// Note:
-        ///     ARKit returns (presumably) best guess poses even when tracking state is Limited (i.e. sliding the
-        ///     phone with the camera face down will change the translation value). However, ARCore "freezes"
-        ///     the device pose while the tracking state is Limited.
         public override bool TryGetCameraPose(out Matrix4x4 pose)
         {
-            if (InputDevice != null &&
-                GetPositionAndRotation(InputDevice.Value, out Vector3 position, out Quaternion rotation))
-            {
-                var displayToLocal = Matrix4x4.TRS(position, rotation, Vector3.one);
-                var screenOrientation = GetScreenOrientation();
-                var cameraToDisplay = Matrix4x4.Rotate(CameraMath.CameraToDisplayRotation(screenOrientation));
-
-                var cameraToLocal = displayToLocal * cameraToDisplay;
-                pose = cameraToLocal;
-                return true;
-            }
-
-            pose = Matrix4x4.zero;
-            return false;
-        }
-
-        private void CheckConnectedDevice(InputDevice device, bool displayWarning = true)
-        {
-            if (GetPositionAndRotation(device, out Vector3 p, out Quaternion r))
-            {
-                if (InputDevice == null)
-                {
-                    InputDevice = device;
-                }
-                else if (displayWarning)
-                {
-                    Log.Warning
-                    (
-                        $"An input device {device.name} with the TrackedDevice characteristic was registered but " +
-                        $"the {nameof(SubsystemsDataAcquirer)} is already consuming data from {InputDevice.Value.name}."
-                    );
-                }
-            }
-        }
-
-        private bool GetPositionAndRotation(InputDevice device, out Vector3 position, out Quaternion rotation)
-        {
-            var positionSuccess = false;
-            var rotationSuccess = false;
-            if (!(positionSuccess = device.TryGetFeatureValue(CommonUsages.centerEyePosition, out position)))
-            {
-                positionSuccess = device.TryGetFeatureValue(CommonUsages.colorCameraPosition, out position);
-            }
-
-            if (!(rotationSuccess = device.TryGetFeatureValue(CommonUsages.centerEyeRotation, out rotation)))
-                rotationSuccess = device.TryGetFeatureValue(CommonUsages.colorCameraRotation, out rotation);
-
-            return positionSuccess && rotationSuccess;
+            return InputReader.TryGetPose(out pose);
         }
 
         /// Will return the latest XRCpuImage acquired through the XRCameraSubsystem. The returned image can be invalid,

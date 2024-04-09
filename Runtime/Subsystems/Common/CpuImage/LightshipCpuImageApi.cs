@@ -213,6 +213,17 @@ namespace Niantic.Lightship.AR.Subsystems.Common
             _convertedTexture.filterMode = FilterMode.Bilinear;
             Blit(sourceTexture, _convertedTexture, conversionParams.transformation);
 
+#if UNITY_EDITOR
+            if (!Application.isPlaying)
+            {
+                UnityEngine.Object.DestroyImmediate(sourceTexture);  // Edit-mode tests need DestroyImmediate.
+            }
+            else
+#endif
+            {
+                UnityEngine.Object.Destroy(sourceTexture);
+            }
+
             var convertedData = _convertedTexture.GetRawTextureData<byte>();
 
             unsafe

@@ -6,8 +6,6 @@ using Niantic.Lightship.AR.Core;
 using Niantic.Lightship.AR.Utilities;
 using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.XRSubsystems;
-using Unity.Collections;
-using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 using UnityEngine.XR.ARSubsystems;
 
@@ -147,6 +145,7 @@ namespace Niantic.Lightship.AR.Subsystems.ObjectDetection
             private DisplayHelper _displayHelper;
 
             private uint _targetFrameRate = MaxRecommendedFrameRate;
+            private ulong _latestTimestamp = 0;
 
             /// <summary>
             /// Property to get or set the target frame rate for the semantic segmentation feature.
@@ -199,6 +198,14 @@ namespace Niantic.Lightship.AR.Subsystems.ObjectDetection
                     }
 
                     return null;
+                }
+            }
+            
+            public ulong LatestTimestamp
+            {
+                get
+                {
+                    return _latestTimestamp;
                 }
             }
 
@@ -336,7 +343,7 @@ namespace Niantic.Lightship.AR.Subsystems.ObjectDetection
                         out float[] boxLocationsList,
                         out float[] probabilitiesList,
                         out uint _,
-                        out ulong _,
+                        out _latestTimestamp,
                         true,
                         out var interpolationMatrix
                     );

@@ -18,9 +18,6 @@ using Matrix4x4 = UnityEngine.Matrix4x4;
 
 namespace Niantic.Lightship.AR.PAM
 {
-    // TODO [AR-15859]:
-    //  Temporarily implemented _IPlaybackDatasetIngester to pass the dataset reader to the
-    //  SubsystemDataAcquirer until pose input is implemented via playback. Remove once ticket is resolved.
     internal class PlatformAdapterManager : IDisposable
     {
         public Action<PamEventArgs> SentData;
@@ -34,7 +31,7 @@ namespace Niantic.Lightship.AR.PAM
         private NativeArray<DataFormat> _readyDataFormats;
         private NativeArray<DataFormat> _removedDataFormats;
 
-        private ulong _frameCounter;
+        private uint _frameCounter;
         private bool _alreadyDisposed;
 
         internal enum ImageProcessingMode
@@ -51,27 +48,28 @@ namespace Niantic.Lightship.AR.PAM
         public static PlatformAdapterManager Create<TApi, TXRDataAcquirer>
         (
             IntPtr contextHandle,
-            ImageProcessingMode imageProcessingMode
-        )
+            ImageProcessingMode imageProcessingMode,
+            bool isLidarDepthEnabled,
+            bool trySendOnUpdate
+            )
             where TApi : IApi, new()
             where TXRDataAcquirer : PlatformDataAcquirer, new()
         {
-            return new PlatformAdapterManager(new TApi(), new TXRDataAcquirer(), contextHandle, imageProcessingMode);
+            return new PlatformAdapterManager(new TApi(), new TXRDataAcquirer(), contextHandle, imageProcessingMode, isLidarDepthEnabled, trySendOnUpdate);
         }
 
-        internal PlatformAdapterManager
+        public PlatformAdapterManager
         (
             IApi api,
             PlatformDataAcquirer platformDataAcquirer,
             IntPtr unityContext,
-            ImageProcessingMode imageProcessingMode = ImageProcessingMode.CPU
+            ImageProcessingMode imageProcessingMode,
+            bool isLidarDepthEnabled,
+            bool trySendOnUpdate = true
         )
         {
             _api = api;
             _platformDataAcquirer = platformDataAcquirer;
-
-            var isLidarDepthEnabled = LightshipSettings.Instance.PreferLidarIfAvailable &&
-                LightshipUnityContext.s_isDeviceLidarSupported;
             _nativeHandle = _api.Lightship_ARDK_Unity_PAM_Create(unityContext, isLidarDepthEnabled);
 
             var numFormats = Enum.GetValues(typeof(DataFormat)).Length;
@@ -98,7 +96,11 @@ namespace Niantic.Lightship.AR.PAM
                 $"with nativeHandle ({_nativeHandle})"
             );
 
-            MonoBehaviourEventDispatcher.Updating.AddListener(SendUpdatedFrameData);
+            if (trySendOnUpdate)
+            {
+                MonoBehaviourEventDispatcher.Updating.AddListener(SendUpdatedFrameData);
+            }
+
             Application.onBeforeRender += OnBeforeRender;
         }
 
@@ -275,7 +277,7 @@ namespace Niantic.Lightship.AR.PAM
             _currentFrameData.CpuJpegFullResImageDataLength = 0;
         }
 
-        private void SendUpdatedFrameData()
+        public void SendUpdatedFrameData()
         {
             const string name = "SendUpdatedFrameData";
             if (!_platformDataAcquirer.TryToBeReady())
@@ -292,9 +294,6 @@ namespace Niantic.Lightship.AR.PAM
                 out var removedDataFormatsSize
             );
 
-            if (readyDataFormatsSize == 0)
-                return;
-
             for (int i = 0; i < addedDataFormatsSize; ++i)
             {
                 _platformDataAcquirer.OnFormatAdded(_addedDataFormats[i]);
@@ -304,6 +303,9 @@ namespace Niantic.Lightship.AR.PAM
             {
                 _platformDataAcquirer.OnFormatRemoved(_removedDataFormats[i]);
             }
+
+            if (readyDataFormatsSize == 0)
+                return;
 
             ProfilerUtility.EventBegin(TraceCategory, name, "formatsize", readyDataFormatsSize.ToString());
 
@@ -363,7 +365,8 @@ namespace Niantic.Lightship.AR.PAM
 
             _currentFrameData.TimestampMs = (ulong)_abstractTexturesSetter.GetCurrentTimestampMs();
 
-            _currentFrameData.DeviceOrientation = _platformDataAcquirer.GetDeviceOrientation().FromUnityToArdk();
+            _currentFrameData.ScreenOrientation = _platformDataAcquirer.GetScreenOrientation().FromUnityToArdk();
+
             _currentFrameData.TrackingState = _platformDataAcquirer.GetTrackingState().FromUnityToArdk();
             _currentFrameData.FrameId = _frameCounter++;
             _currentFrameData.CameraImageResolution = _platformDataAcquirer.TryGetCameraIntrinsics(out var intrinsics)
@@ -385,6 +388,17 @@ namespace Niantic.Lightship.AR.PAM
             if (SentData != null)
             {
                 DataFormat[] sentDataFormats = CollateSentDataFormats();
+
+                if (sentDataFormats.Length > 0)
+                {
+                    Log.Debug
+                        (
+                            $"PAM sending data: {string.Join(',', sentDataFormats)}, " +
+                            $"orientation: {_platformDataAcquirer.GetScreenOrientation()}, " +
+                            $"time: ulong={(ulong)_abstractTexturesSetter.GetCurrentTimestampMs()}"
+                        );
+                }
+
                 SentData?.Invoke(new PamEventArgs(sentDataFormats));
             }
 

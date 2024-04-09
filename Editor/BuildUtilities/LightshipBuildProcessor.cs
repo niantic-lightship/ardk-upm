@@ -61,7 +61,15 @@ namespace Niantic.Lightship.AR.Editor
 
             private static void PostProcessIosUnityAppControllerFix(string buildPath)
             {
-                // Apply patch for Unity timing bug: https://support.unity.com/hc/en-us/requests/1630624
+                Log.Info
+                (
+                    "Lightship has identified this version of Unity as having a bug that affects the " +
+                    "initialization of custom-defined integrated subsystems, and has applied a fix for it."
+                );
+
+                // Apply patch for Unity timing bug:
+                //  Initial: https://support.unity.com/hc/en-us/requests/1630624
+                //  Reopened: https://support.unity.com/hc/en-us/requests/1745237
                 // We're going to do a simple replace for any UnityAppController.mm which includes the buggy line.
                 // Affects release versions 2021.3.24-29, 2022.2.13-21,3.0-6, 2023.1.0-7
                 const string buggyLine = "[self startUnity: application];";
@@ -126,19 +134,11 @@ namespace Niantic.Lightship.AR.Editor
                 }
 
                 project.WriteToFile(projectPath);
-
-// Begin Unity minor version gating
-// Unfortunately this is necessary since the _OR_NEWER macros only cover major versions.
-#if UNITY_2021_3_24 || UNITY_2021_3_25 || UNITY_2021_3_26 || UNITY_2021_3_27 || UNITY_2021_3_28 || UNITY_2021_3_29 || UNITY_2021_3_32 || UNITY_2021_3_33
-                PostProcessIosUnityAppControllerFix(buildPath);
-#elif UNITY_2022_2_13 || UNITY_2022_2_14 || UNITY_2022_2_15 || UNITY_2022_2_16 || UNITY_2022_2_17 || UNITY_2022_2_18 || UNITY_2022_2_19 || UNITY_2022_2_20 || UNITY_2022_2_21
-                PostProcessIosUnityAppControllerFix(buildPath);
-#elif UNITY_2022_3_0 || UNITY_2022_3_1 || UNITY_2022_3_2 || UNITY_2022_3_3 || UNITY_2022_3_4 || UNITY_2022_3_5 || UNITY_2022_3_6 || UNITY_2022_3_13 || UNITY_2022_3_14 || UNITY_2022_3_15 || UNITY_2022_3_16
+                
+#if (FIX_INTEGRATED_SUBSYSTEM_2021 && UNITY_2021_3_OR_NEWER && !UNITY_2022) || (FIX_INTEGRATED_SUBSYSTEM_2022 && UNITY_2022)
                 PostProcessIosUnityAppControllerFix(buildPath);
 #endif
-// End Unity minor version gating
-
-#endif
+#endif // UNITY_IOS
             }
         }
 
@@ -192,7 +192,7 @@ namespace Niantic.Lightship.AR.Editor
                     BuildHelper.AddBackgroundShaderToProject(backgroundShaderName);
                 }
 
-                BuildHelper.AddBackgroundShaderToProject(LightshipOcclusionExtension.occlusionExtensionShaderName);
+                BuildHelper.AddBackgroundShaderToProject(LightshipOcclusionExtension.DefaultShaderName);
 
                 // TODO: Things that ARKit and ARCore BuildProcessor implementations doe
                 // - Check camera usage description

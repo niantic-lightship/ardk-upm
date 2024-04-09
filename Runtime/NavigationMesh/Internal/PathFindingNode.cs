@@ -33,7 +33,7 @@ namespace Niantic.Lightship.AR.NavigationMesh.Internal
     public readonly Surface Surface;
 
     /// Combined cost of this node.
-    public float Cost
+    public readonly float Cost
     {
       get
       {
@@ -81,7 +81,7 @@ namespace Niantic.Lightship.AR.NavigationMesh.Internal
       return Coordinates.GetHashCode();
     }
 
-    public int CompareTo(PathFindingNode other)
+    public readonly int CompareTo(PathFindingNode other)
     {
       return Cost.CompareTo(other.Cost);
     }

@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using Niantic.Lightship.AR.Subsystems.XR;
 using Niantic.Lightship.AR.Utilities;
 using UnityEngine;
 using UnityEngine.SubsystemsImplementation;
@@ -17,7 +18,8 @@ namespace Niantic.Lightship.AR.XRSubsystems
     /// </remarks>
     [PublicAPI]
     public class XRObjectDetectionSubsystem
-        : SubsystemWithProvider<XRObjectDetectionSubsystem, XRObjectDetectionSubsystemDescriptor, XRObjectDetectionSubsystem.Provider>
+        : SubsystemWithProvider<XRObjectDetectionSubsystem, XRObjectDetectionSubsystemDescriptor, XRObjectDetectionSubsystem.Provider>,
+            ISubsystemWithModelMetadata
     {
         /// <summary>
         /// Specifies the target frame rate for the platform to target running the object detection algorithm at.

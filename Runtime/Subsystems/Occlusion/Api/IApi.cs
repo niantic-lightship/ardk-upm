@@ -2,6 +2,7 @@
 
 using System;
 using UnityEngine;
+using UnityEngine.XR.ARSubsystems;
 
 namespace Niantic.Lightship.AR.Subsystems.Occlusion
 {
@@ -23,6 +24,16 @@ namespace Niantic.Lightship.AR.Subsystems.Occlusion
             out TextureFormat format,
             out uint frameId,
             out ulong frameTimestamp
+        );
+
+        public Matrix4x4 AcquireSamplerMatrix
+        (
+            IntPtr nativeProviderHandle,
+            IntPtr resourceHandle,
+            XRCameraParams? cameraParams,
+            Matrix4x4? currentPose,
+            int imageWidth,
+            int imageHeight
         );
 
         public IntPtr Warp

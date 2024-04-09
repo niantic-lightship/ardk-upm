@@ -28,7 +28,7 @@ namespace Niantic.Lightship.AR.PAM
         public virtual double GetCurrentTimestampMs()
         {
             if (PlatformDataAcquirer.TryGetCameraFrame(out XRCameraFrame frame))
-                return frame.timestampNs / MillisecondToNanosecondFactor;
+                return (double)frame.timestampNs / MillisecondToNanosecondFactor;
 
             return 0;
         }

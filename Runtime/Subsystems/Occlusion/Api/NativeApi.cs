@@ -3,7 +3,11 @@
 using System;
 using System.Runtime.InteropServices;
 using Niantic.Lightship.AR.Core;
+using Niantic.Lightship.AR.Occlusion;
+using Niantic.Lightship.AR.Utilities;
+using Niantic.Lightship.AR.Utilities.Logging;
 using UnityEngine;
+using UnityEngine.XR.ARSubsystems;
 
 namespace Niantic.Lightship.AR.Subsystems.Occlusion
 {
@@ -126,6 +130,123 @@ namespace Niantic.Lightship.AR.Subsystems.Occlusion
             return true;
         }
 
+        /// <summary>
+        /// Returns a 3x3 transformation matrix for converting between
+        /// normalized image coordinates and a coordinate space appropriate
+        /// for rendering the image onscreen.
+        /// </summary>
+        /// <param name="nativeProviderHandle">The handle to the native provider.</param>
+        /// <param name="resourceHandle">The handle to the native image buffer resource.</param>
+        /// <param name="cameraParams">Describes the viewport.</param>
+        /// <param name="imageWidth">The width of the image container.</param>
+        /// <param name="imageHeight">The height of the image container.</param>
+        /// <returns>The transformation used to display the image on the viewport.</returns>
+        public Matrix4x4 AcquireSamplerMatrix
+        (
+            IntPtr nativeProviderHandle,
+            IntPtr resourceHandle,
+            XRCameraParams? cameraParams,
+            Matrix4x4? currentPose,
+            int imageWidth,
+            int imageHeight
+        )
+        {
+            // Bypass the transform until the viewport becomes available
+            if (!cameraParams.HasValue)
+            {
+                return Matrix4x4.identity;
+            }
+
+            // Extract the viewport
+            var viewport = cameraParams.Value;
+
+            Matrix4x4 result;
+            if (currentPose.HasValue)
+            {
+                // If the pose is available, calculate a viewport mapping with warping included
+                TryCalculateSamplerMatrix
+                (
+                    nativeProviderHandle,
+                    resourceHandle,
+                    viewport,
+                    currentPose.Value,
+                    XRDisplayContext.OccludeeEyeDepth,
+                    out result
+                );
+            }
+            else
+            {
+                // If the pose is unavailable, calculate only a viewport mapping
+                result = CameraMath.CalculateDisplayMatrix
+                (
+                    imageWidth,
+                    imageHeight,
+                    (int)viewport.screenWidth,
+                    (int)viewport.screenHeight,
+                    viewport.screenOrientation,
+                    invertVertically: true
+                );
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Calculates a 3x3 transformation matrix that when applied to the image,
+        /// aligns its pixels such that the image was taken from the specified pose.
+        /// </summary>
+        /// <param name="nativeProviderHandle">The handle to the occlusion native API </param>
+        /// <param name="resourceHandle">The handle to the semantics buffer resource.</param>
+        /// <param name="cameraParams">Describes the viewport.</param>
+        /// <param name="pose">The camera pose the image needs to align with.</param>
+        /// <param name="backProjectionPlane">The distance from the camera to the plane that
+        /// the image should be projected onto (in meters).</param>
+        /// <param name="result"></param>
+        /// <returns>True, if the matrix could be calculated, otherwise false (in case the </returns>
+        private bool TryCalculateSamplerMatrix
+        (
+            IntPtr nativeProviderHandle,
+            IntPtr resourceHandle,
+            XRCameraParams cameraParams,
+            Matrix4x4 pose,
+            float backProjectionPlane,
+            out Matrix4x4 result
+        )
+        {
+            var outMatrix = new float[9];
+            var poseArray = MatrixConversionHelper.Matrix4x4ToInternalArray(pose.FromUnityToArdk());
+
+            var gotMatrix =
+                Native.CalculateSamplerMatrix
+                (
+                    nativeProviderHandle,
+                    resourceHandle,
+                    (int)cameraParams.screenWidth,
+                    (int)cameraParams.screenHeight,
+                    cameraParams.screenOrientation.FromUnityToArdk(),
+                    poseArray,
+                    backProjectionPlane,
+                    outMatrix
+                );
+
+            if (gotMatrix)
+            {
+                result = new Matrix4x4
+                (
+                    new Vector4(outMatrix[0], outMatrix[1], outMatrix[2], 0),
+                    new Vector4(outMatrix[3], outMatrix[4], outMatrix[5], 0),
+                    new Vector4(outMatrix[6], outMatrix[7], outMatrix[8], 0),
+                    new Vector4(0, 0, 0, 1)
+                );
+
+                return true;
+            }
+
+            Log.Warning("Interpolation matrix for depth prediction could not be calculated.");
+            result = Matrix4x4.identity;
+            return false;
+        }
+
         public void DisposeResource(IntPtr nativeProviderHandle, IntPtr resourceHandle)
         {
             Native.DisposeResource(nativeProviderHandle, resourceHandle);
@@ -188,6 +309,19 @@ namespace Niantic.Lightship.AR.Subsystems.Occlusion
 
             [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_OcclusionProvider_TryGetLatestIntrinsics")]
             public static extern bool TryGetLatestIntrinsics(IntPtr nativeProviderHandle, float[] intrinsics);
+
+            [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_OcclusionProvider_CalculateSamplerMatrix")]
+            public static extern bool CalculateSamplerMatrix
+            (
+                IntPtr nativeProviderHandle,
+                IntPtr nativeResourceHandle,
+                int viewportWidth,
+                int viewportHeight,
+                uint orientation,
+                float[] poseMatrix,
+                float backProjectionPlane,
+                float[] outMatrix3X3
+            );
 
             [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_OcclusionProvider_ReleaseResource")]
             public static extern void DisposeResource(IntPtr depthApiHandle, IntPtr resourceHandle);

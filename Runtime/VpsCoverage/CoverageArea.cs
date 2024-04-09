@@ -46,17 +46,17 @@ namespace Niantic.Lightship.AR.VpsCoverage
         }
 
         /// Identifiers of all LocalizationTargets within the CoverageArea.
-        public string[] LocalizationTargetIdentifiers => _localizationTargetIdentifiers;
+        public readonly string[] LocalizationTargetIdentifiers => _localizationTargetIdentifiers;
 
         /// Polygon outlining the CoverageArea.
-        public LatLng[] Shape => _shape;
+        public readonly LatLng[] Shape => _shape;
 
         /// Centroid of the Shape polygon.
         public LatLng Centroid { get; private set; }
 
         /// The localizability quality gives information about the chances of a successful localization
         /// in this CoverageArea.
-        public Localizability LocalizabilityQuality => _localizabilityQuality;
+        public readonly Localizability LocalizabilityQuality => _localizabilityQuality;
 
         // taken from https://stackoverflow.com/questions/6671183/calculate-the-center-point-of-multiple-latitude-longitude-coordinate-pairs
         private static LatLng CalculateCentroid(params LatLng[] points)

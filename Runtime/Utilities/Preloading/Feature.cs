@@ -90,4 +90,17 @@ namespace Niantic.Lightship.AR.Utilities.Preloading
         Smooth = 4,
     }
 
+    /// <summary>
+    /// The Lightship object detection model to use.
+    /// </summary>
+    [PublicAPI]
+    public enum ObjectDetectionMode : byte
+    {
+        /// <summary>
+        /// The default model will be used.
+        /// </summary>
+        [Description("Default model")]
+        Default = 0,
+    }
+
 }

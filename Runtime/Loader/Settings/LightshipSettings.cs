@@ -160,6 +160,11 @@ namespace Niantic.Lightship.AR.Loader
         /// </summary>
         internal LogLevel StdOutLightshipLogLevel => _stdoutLogLevel;
 
+        [SerializeField]
+        private LightshipSimulationParams _lightshipSimulationParams;
+
+        public LightshipSimulationParams LightshipSimulationParams => _lightshipSimulationParams;
+
         /// <summary>
         /// All Settings for Playback in the Unity Editor
         /// </summary>
@@ -221,6 +226,20 @@ namespace Niantic.Lightship.AR.Loader
             }
         }
 
+        private LightshipTestSettings _testSettings;
+
+        internal LightshipTestSettings TestSettings
+        {
+            get
+            {
+                if (_testSettings == null)
+                {
+                    _testSettings = new LightshipTestSettings(false, true);
+                }
+
+                return _testSettings;
+            }
+        }
 
 #if !UNITY_EDITOR
         /// <summary>
@@ -258,11 +277,15 @@ namespace Niantic.Lightship.AR.Loader
 #endif
             if (settings._ardkConfiguration == null)
             {
-                settings._ardkConfiguration = ArdkConfiguration.TryGetConfigurationFromJson(
-                    Path.Combine(Application.streamingAssetsPath, ConfigFileName),
-                    out ArdkConfiguration parsedConfig) ?
-                        parsedConfig :
-                        ArdkConfiguration.GetDefaultEnvironmentConfig();
+                var gotConfigurationFromJson =
+                    ArdkConfiguration.TryGetConfigurationFromJson
+                    (
+                        Path.Combine(Application.streamingAssetsPath, ConfigFileName),
+                        out ArdkConfiguration parsedConfig
+                    );
+
+                settings._ardkConfiguration =
+                    gotConfigurationFromJson ? parsedConfig : ArdkConfiguration.GetDefaultEnvironmentConfig();
             }
 
             ValidateApiKey(settings.ApiKey);
@@ -295,13 +318,13 @@ namespace Niantic.Lightship.AR.Loader
         }
 
         [MenuItem("Lightship/XR Plug-in Management", false, 0)]
-        private static void OpenProjectValidation()
+        private static void OpenXRPluginManagement()
         {
             SettingsService.OpenProjectSettings("Project/XR Plug-in Management");
         }
 
         [MenuItem("Lightship/Project Validation", false, 2)]
-        private static void OpenXRPluginManagement()
+        private static void OpenProjectValidation()
         {
             SettingsService.OpenProjectSettings("Project/XR Plug-in Management/Project Validation");
         }
@@ -353,8 +376,13 @@ namespace Niantic.Lightship.AR.Loader
             bool preferLidarIfAvailable = false,
             bool enableScanning = false,
             bool enableObjectDetection = false,
-            LogLevel logLevel = LogLevel.Debug,
-            ArdkConfiguration ardkConfiguration = null)
+            LogLevel unityLogLevel = LogLevel.Debug,
+            ArdkConfiguration ardkConfiguration = null,
+            LogLevel stdoutLogLevel = LogLevel.Off,
+            LogLevel fileLogLevel = LogLevel.Off,
+            bool disableTelemetry = true,
+            bool tickPamOnUpdate = true
+        )
         {
             var settings = CreateInstance<LightshipSettings>();
 
@@ -365,9 +393,9 @@ namespace Niantic.Lightship.AR.Loader
             settings._useLightshipSemanticSegmentation = enableSemanticSegmentation;
             settings._useLightshipScanning = enableScanning;
             settings._useLightshipObjectDetection = enableObjectDetection;
-            settings._unityLogLevel = logLevel;
-            settings._fileLogLevel = logLevel;
-            settings._stdoutLogLevel = logLevel;
+            settings._unityLogLevel = unityLogLevel;
+            settings._fileLogLevel = fileLogLevel;
+            settings._stdoutLogLevel = stdoutLogLevel;
 
             settings._overloadPlaybackSettings =
                 new OverloadPlaybackSettings
@@ -378,7 +406,6 @@ namespace Niantic.Lightship.AR.Loader
                     LoopInfinitely = loopPlaybackInfinitely,
                     NumberOfIterations = numberOfPlaybackLoops
                 };
-
 
             settings._preferLidarIfAvailable = preferLidarIfAvailable;
 
@@ -395,7 +422,16 @@ namespace Niantic.Lightship.AR.Loader
                 settings._ardkConfiguration = ardkConfiguration;
             }
 
+            settings._testSettings = new LightshipTestSettings(disableTelemetry, tickPamOnUpdate);
+
             return settings;
         }
+
+#if UNITY_EDITOR
+        private void OnValidate()
+        {
+            _lightshipSimulationParams.OnValidate();
+        }
+#endif
     }
 }

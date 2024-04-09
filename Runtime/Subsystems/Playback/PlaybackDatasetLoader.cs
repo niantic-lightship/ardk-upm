@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using Niantic.Lightship.AR.Utilities.Logging;
+using Niantic.Lightship.AR.Utilities;
 using Niantic.Lightship.Utilities.UnityAssets;
 using UnityEngine;
 
@@ -42,9 +43,26 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
             if (!string.IsNullOrEmpty(content))
             {
                 var dataset = new PlaybackDataset(content, datasetPath);
-                Log.Info($"Loaded dataset with {dataset.FrameCount} frames from {datasetPath}");
+                if (dataset.FrameCount == 0)
+                {
+                    Log.Error($"Loaded dataset from {datasetPath} but found 0 frames.");
+                }
+                else
+                {
+                    var datasetOrientation = dataset.Frames[0].Orientation;
+                    var liveOrientation = GameViewUtils.GetEditorScreenOrientation();
+                    if (datasetOrientation != liveOrientation)
+                    {
+                        Log.Warning
+                        (
+                            $"The dataset was recorded in {datasetOrientation} orientation but the game display " +
+                            $"is currently in {liveOrientation}. This may result in visual discrepancies."
+                        );
+                    }
 
-                return dataset;
+                    Log.Info($"Successfully dataset with {dataset.FrameCount} frames from {datasetPath}");
+                    return dataset;
+                }
             }
 
             return null;

@@ -2,6 +2,7 @@
 
 using System;
 using System.IO;
+using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.Utilities.Profiling;
 using Niantic.Lightship.Utilities.UnityAssets;
 using UnityEngine;
@@ -54,6 +55,7 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
                 return false;
             }
 
+            Log.Debug("Playback moved to frame " + _currentFrameIndex);
             return true;
         }
 

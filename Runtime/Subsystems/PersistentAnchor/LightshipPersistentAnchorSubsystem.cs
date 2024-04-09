@@ -608,13 +608,21 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
                 set
                 {
                     _currentConfiguration = value;
+                    if (running)
+                    {
+                        Log.Warning("Configuration changed while running, stop and restart the " +
+                            "PersistentAnchorSubsystem to use the new configuration");
+                    }
+
                     _api.Configure
                     (
                         _nativeProviderHandle,
                         _currentConfiguration.ContinuousLocalizationEnabled,
                         _currentConfiguration.TemporalFusionEnabled,
+                        _currentConfiguration.TransformUpdateSmoothingEnabled,
                         _currentConfiguration.SlickLocalizationEnabled,
-                        _currentConfiguration.CloudLocalizerMaxRequestsPerSecond,
+                        _currentConfiguration.CloudLocalizerInitialRequestsPerSecond,
+                        _currentConfiguration.CloudLocalizerContinuousRequestsPerSecond,
                         _currentConfiguration.SlickLocalizationFps,
                         _currentConfiguration.CloudLocalizationTemporalFusionWindowSize,
                         _currentConfiguration.SlickLocalizationTemporalFusionWindowSize,
