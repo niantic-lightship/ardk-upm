@@ -2,7 +2,7 @@
 ardk-upm
 
 ## Description
-The ARDK UPM is Unity package needed in order to use the ARDK and its features in your Unity application. This file can be be brought into your project by using the Unity Package Manager. You can install the ARDK UPM package via a git URL, or from a Tarball (`.tgz`) file. Details steps to install the ARDK UPM can be found in our [developer documentation for Installing the ARDK Plugin](https://lightship.dev/docs/ardk/setup/#installing-the-ardk-plugin-with-a-url). These steps are also noted below:
+The ARDK UPM is Unity package needed in order to use the ARDK and its features in your Unity application. This file can be be brought into your project by using the Unity Package Manager. You can install the ARDK UPM package via a git URL, or from a Tarball (`.tgz`) file. Detailed steps to install the ARDK UPM can be found in our [developer documentation for Installing the ARDK Plugin](https://lightship.dev/docs/ardk/setup/#installing-the-ardk-plugin-with-a-url). These steps are also noted below:
 
 ### Installing the ARDK Plugin with a URL
 1. In your Unity project open the **Package Manager** by selection **Window > Package Manager**. 
