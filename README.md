@@ -5,7 +5,7 @@ ardk-upm
 The ARDK UPM is Unity package needed in order to use the ARDK and its features in your Unity application. This file can be be brought into your project by using the Unity Package Manager. You can install the ARDK UPM package via a git URL, or from a Tarball (`.tgz`) file. Detailed steps to install the ARDK UPM can be found in our [developer documentation for Installing the ARDK Plugin](https://lightship.dev/docs/ardk/setup/#installing-the-ardk-plugin-with-a-url). These steps are also noted below:
 
 ### Installing the ARDK Plugin with a URL
-1. In your Unity project open the **Package Manager** by selection **Window > Package Manager**. 
+1. In your Unity project open the **Package Manager** by selecting **Window > Package Manager**. 
 	- From the plus menu on the Package Manager tab, select **Add package from git URL...**
 	- Enter `https://github.com/niantic-lightship/ardk-upm.git`. 
 	- Click **Yes** to activate the new Input System Package for AR Foundation 5.0 (if prompted)
@@ -13,7 +13,7 @@ The ARDK UPM is Unity package needed in order to use the ARDK and its features i
 ### Installing the ARDK Plugin from Tarball
 1. Download the plugin packages (`.tgz`) from the latest release
 	- [ardk-upm](https://github.com/niantic-lightship/ardk-upm/releases/latest)
-2. In your Unity project open the **Package Manager** by selection **Window > Package Manager**. 
+2. In your Unity project open the **Package Manager** by selecting **Window > Package Manager**. 
 	- From the plus menu on the Package Manager tab, select **Add package from tarball...**
 	- Navigate to where you downloaded the ARDK, select the `.tgz` file you downloaded, and press **Open**. This will install the package in your project's **Packages** folder as the **Niantic Lightship AR Plugin** folder. 
 	- Click **Yes** to activate the new Input System Package for AR Foundation 5.0 (if prompted). 
