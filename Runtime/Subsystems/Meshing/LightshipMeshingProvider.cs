@@ -15,6 +15,7 @@ namespace Niantic.Lightship.AR.Subsystems.Meshing
         public static bool Configure
         (
             int frameRate,
+            bool fuseKeyframesOnly,
             float maximumIntegrationDistance,
             float voxelSize,
             bool enableDistanceBasedVolumetricCleanup,
@@ -31,6 +32,7 @@ namespace Niantic.Lightship.AR.Subsystems.Meshing
             return Lightship_ARDK_Unity_Meshing_Provider_Configure
             (
                 frameRate,
+                fuseKeyframesOnly,
                 maximumIntegrationDistance,
                 voxelSize,
                 enableDistanceBasedVolumetricCleanup,
@@ -60,6 +62,7 @@ namespace Niantic.Lightship.AR.Subsystems.Meshing
         private static extern bool Lightship_ARDK_Unity_Meshing_Provider_Configure
         (
             int frameRate,
+            bool fuseKeyframesOnly,
             float maximumIntegrationDistance,
             float voxelSize,
             bool enableDistanceBasedVolumetricCleanup,

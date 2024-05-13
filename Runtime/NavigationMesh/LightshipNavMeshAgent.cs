@@ -15,7 +15,7 @@ namespace Niantic.Lightship.AR.NavigationMesh
     /// For example you may want to use physics/forces or add splines rather than straight lines.
     /// This is a basic example that uses linear interpolation and coroutines.
     /// </summary>
-    [PublicAPI]
+    [PublicAPI("apiref/Niantic/Lightship/AR/NavigationMesh/LightshipNavMeshAgent/")]
     public class LightshipNavMeshAgent : MonoBehaviour
     {
         [Header("Agent Settings")]

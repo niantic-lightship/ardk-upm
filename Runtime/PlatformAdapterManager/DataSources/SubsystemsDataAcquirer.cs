@@ -6,6 +6,7 @@ using Niantic.Lightship.AR.Subsystems.Occlusion;
 using Niantic.Lightship.AR.Utilities;
 using Niantic.Lightship.AR.Utilities.Textures;
 using Unity.Collections;
+using Unity.XR.CoreUtils;
 using UnityEngine;
 using UnityEngine.XR;
 using UnityEngine.XR.ARSubsystems;
@@ -29,9 +30,13 @@ namespace Niantic.Lightship.AR.PAM
         private bool _usingLightshipOcclusion;
         private bool _locationServiceNeedsToStart = false;
 
+        // Textures
         private Texture2D _gpuImageTex;
         private Texture2D _gpuDepthImageTex;
         private Texture2D _gpuDepthConfidenceTex;
+
+        // Descriptors
+        private XRTextureDescriptor _gpuImageDescriptor;
 
         private const float DefaultAccuracyMeters = 0.01f;
         private const float DefaultDistanceMeters = 0.01f;
@@ -56,9 +61,13 @@ namespace Niantic.Lightship.AR.PAM
 
         public override void Dispose()
         {
-            DestroyTexture(_gpuImageTex);
-            DestroyTexture(_gpuDepthImageTex);
-            DestroyTexture(_gpuDepthConfidenceTex);
+            // Release textures
+            UnityObjectUtils.Destroy(_gpuImageTex);
+            UnityObjectUtils.Destroy(_gpuDepthImageTex);
+            UnityObjectUtils.Destroy(_gpuDepthConfidenceTex);
+
+            // Reset the descriptors
+            _gpuImageDescriptor.Reset();
 
             if (_autoEnabledLocationServices)
             {
@@ -78,21 +87,6 @@ namespace Niantic.Lightship.AR.PAM
                     "ARDK is now shutting down. If the compass data is no longer required, it must be " +
                     "separately disabled."
                 );
-            }
-        }
-
-        private void DestroyTexture(Texture2D tex)
-        {
-            if (tex != null)
-            {
-                if (Application.isPlaying)
-                {
-                    GameObject.Destroy(tex);
-                }
-                else
-                {
-                    GameObject.DestroyImmediate(tex);
-                }
             }
         }
 
@@ -166,7 +160,6 @@ namespace Niantic.Lightship.AR.PAM
         public override bool TryGetGpuImage(out Texture2D gpuImage)
         {
             var descriptors = _cameraSubsystem.GetTextureDescriptors(Allocator.Temp);
-
             if (descriptors.Length == 0)
             {
                 gpuImage = null;
@@ -176,15 +169,32 @@ namespace Niantic.Lightship.AR.PAM
             // TODO: ARKit returns two textures (Y and CbCr) while ARCore and Playback returns just one
             var descriptor = descriptors[0];
 
-            if (_gpuImageTex != null)
+            // Nothing to update if the descriptor is the same as the last one
+            if (_gpuImageDescriptor.Equals(descriptor))
+            {
+                gpuImage = _gpuImageTex;
+                return true;
+            }
+
+            // If the texture already exists, update it
+            if (_gpuImageTex != null && _gpuImageDescriptor.hasIdenticalTextureMetadata(descriptor))
             {
                 _gpuImageTex.UpdateExternalTexture(descriptor.nativeTexture);
             }
             else
             {
+                // Destroy any old texture
+                if (_gpuImageTex != null)
+                {
+                    UnityObjectUtils.Destroy(_gpuImageTex);
+                    _gpuImageTex = null;
+                }
+
+                // Create a new texture
                 _gpuImageTex = ExternalTextureUtils.CreateExternalTexture2D(descriptor);
             }
 
+            _gpuImageDescriptor = descriptor;
             gpuImage = _gpuImageTex;
             return true;
         }

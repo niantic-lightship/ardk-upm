@@ -38,18 +38,18 @@ namespace Niantic.Lightship.AR.Utilities.Profiling
             return id;
         }
 
-        public void EventBegin(string category, string name)
+        public void EventAsyncBegin(string category, string name)
         {
             Native.Lightship_ARDK_Unity_TraceEventAsyncBegin0(category, name, GetOrAddId(category, name));
         }
 
-        public void EventBegin(string category, string name, string arg1_name, string arg1_val)
+        public void EventAsyncBegin(string category, string name, string arg1_name, string arg1_val)
         {
             var id = GetOrAddId(category, name);
             Native.Lightship_ARDK_Unity_TraceEventAsyncBegin1(category, name, id, arg1_name, arg1_val);
         }
 
-        public void EventBegin
+        public void EventAsyncBegin
         (
             string category,
             string name,
@@ -75,16 +75,64 @@ namespace Niantic.Lightship.AR.Utilities.Profiling
             Native.Lightship_ARDK_Unity_TraceEventAsyncStep1(category, name, id, step, arg1_name, arg1_val);
         }
 
-        public void EventEnd(string category, string name)
+        public void EventAsyncEnd(string category, string name)
         {
             var id = GetOrAddId(category, name);
             Native.Lightship_ARDK_Unity_TraceEventAsyncEnd0(category, name, id);
         }
 
-        public void EventEnd(string category, string name, string arg1Name, string arg1Val)
+        public void EventAsyncEnd(string category, string name, string arg1Name, string arg1Val)
         {
             var id = GetOrAddId(category, name);
             Native.Lightship_ARDK_Unity_TraceEventAsyncEnd1(category, name, id, arg1Name, arg1Val);
+        }
+
+        public void EventAsyncEnd
+        (
+            string category,
+            string name,
+            string arg1Name,
+            string arg1Val,
+            string arg2Name,
+            string arg2Val
+        )
+        {
+            var id = GetOrAddId(category, name);
+            Native.Lightship_ARDK_Unity_TraceEventAsyncEnd2(category, name, id, arg1Name, arg1Val, arg2Name, arg2Val);
+        }
+
+        // Sync Events
+        public void EventBegin(string category, string name)
+        {
+            Native.Lightship_ARDK_Unity_TraceEventBegin0(category, name);
+        }
+
+        public void EventBegin(string category, string name, string arg1_name, string arg1_val)
+        {
+            Native.Lightship_ARDK_Unity_TraceEventBegin1(category, name, arg1_name, arg1_val);
+        }
+
+        public void EventBegin
+        (
+            string category,
+            string name,
+            string arg1Name,
+            string arg1Val,
+            string arg2Name,
+            string arg2Val
+        )
+        {
+            Native.Lightship_ARDK_Unity_TraceEventBegin2(category, name, arg1Name, arg1Val, arg2Name, arg2Val);
+        }
+
+        public void EventEnd(string category, string name)
+        {
+            Native.Lightship_ARDK_Unity_TraceEventEnd0(category, name);
+        }
+
+        public void EventEnd(string category, string name, string arg1Name, string arg1Val)
+        {
+            Native.Lightship_ARDK_Unity_TraceEventEnd1(category, name, arg1Name, arg1Val);
         }
 
         public void EventEnd
@@ -98,7 +146,7 @@ namespace Niantic.Lightship.AR.Utilities.Profiling
         )
         {
             var id = GetOrAddId(category, name);
-            Native.Lightship_ARDK_Unity_TraceEventAsyncEnd2(category, name, id, arg1Name, arg1Val, arg2Name, arg2Val);
+            Native.Lightship_ARDK_Unity_TraceEventEnd2(category, name, arg1Name, arg1Val, arg2Name, arg2Val);
         }
 
         public void EventInstance(string category, string name)
@@ -201,6 +249,56 @@ namespace Niantic.Lightship.AR.Utilities.Profiling
                 string category,
                 string name,
                 UInt64 id,
+                string arg1Name,
+                string arg1Val,
+                string arg2Name,
+                string arg2Val
+            );
+
+            [DllImport(LightshipPlugin.Name)]
+            public static extern void Lightship_ARDK_Unity_TraceEventBegin0
+            (
+                string category,
+                string name
+            );
+
+            [DllImport(LightshipPlugin.Name)]
+            public static extern void Lightship_ARDK_Unity_TraceEventBegin1
+            (
+                string category,
+                string name,
+                string arg1Name,
+                string arg1Val
+            );
+
+            [DllImport(LightshipPlugin.Name)]
+            public static extern void Lightship_ARDK_Unity_TraceEventBegin2
+            (
+                string category,
+                string name,
+                string arg1Name,
+                string arg1Val,
+                string arg2Name,
+                string arg2Val
+            );
+
+            [DllImport(LightshipPlugin.Name)]
+            public static extern void Lightship_ARDK_Unity_TraceEventEnd0(string category, string name);
+
+            [DllImport(LightshipPlugin.Name)]
+            public static extern void Lightship_ARDK_Unity_TraceEventEnd1
+            (
+                string category,
+                string name,
+                string arg1Name,
+                string arg1Val
+            );
+
+            [DllImport(LightshipPlugin.Name)]
+            public static extern void Lightship_ARDK_Unity_TraceEventEnd2
+            (
+                string category,
+                string name,
                 string arg1Name,
                 string arg1Val,
                 string arg2Name,

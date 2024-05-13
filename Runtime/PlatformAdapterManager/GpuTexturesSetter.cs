@@ -25,7 +25,14 @@ namespace Niantic.Lightship.AR.PAM
 
         private bool _isGpuImageValid;
 
+        // Trace Event Strings
         private const string TraceCategory = "GpuTexturesSetter";
+        private const string TryGetGpuImageEventName = "TryGetGpuImage";
+        private const string AllocateTextureEventName = "AllocateTexture";
+        private const string ConvertOnGpuAndCopyEventName = "ConvertOnGpuAndCopy";
+        private const string EncodeToJPGEventName = "EncodeToJPG";
+        private const string CopyJPGToFrameMemEventName = "CopyJPGToFrameMem";
+        private const string ReadFromExternalTextureEventName = "ReadFromExternalTexture";
 
         public GpuTexturesSetter(PlatformDataAcquirer dataAcquirer, FrameData frameData) : base(dataAcquirer, frameData)
         {
@@ -66,21 +73,25 @@ namespace Niantic.Lightship.AR.PAM
             const string traceEvent = "SetRgba256x144Image (GPU)";
             ProfilerUtility.EventBegin(TraceCategory, traceEvent);
 
-            ProfilerUtility.EventStep(TraceCategory, traceEvent, "TryGetGpuImage");
-            if (_isGpuImageValid || PlatformDataAcquirer.TryGetGpuImage(out _gpuImage))
+            ProfilerUtility.EventBegin(TraceCategory, TryGetGpuImageEventName);
+            bool canConvert = _isGpuImageValid || PlatformDataAcquirer.TryGetGpuImage(out _gpuImage);
+            ProfilerUtility.EventEnd(TraceCategory, TryGetGpuImageEventName, "GPUImageAlreadyValid", _isGpuImageValid.ToString(), "GotGPUImage", canConvert.ToString());
+
+            if (canConvert)
             {
                 _isGpuImageValid = true;
 
                 if (_awarenessOutputTexture == null)
                 {
-                    ProfilerUtility.EventStep(TraceCategory, traceEvent, "Allocate texture");
+                    ProfilerUtility.EventBegin(TraceCategory, AllocateTextureEventName);
                     var resolution = CurrentFrameData.Rgba256x144ImageResolution;
                     _awarenessOutputTexture = new Texture2D(resolution.x, resolution.y, TextureFormat.RGBA32, false);
+                    ProfilerUtility.EventEnd(TraceCategory, AllocateTextureEventName);
                 }
 
-                ProfilerUtility.EventStep(TraceCategory, traceEvent, "ConvertOnGpuAndCopy");
-
+                ProfilerUtility.EventBegin(TraceCategory, ConvertOnGpuAndCopyEventName);
                 _gpuImage.ConvertOnGpuAndCopy(_awarenessOutputTexture);
+                ProfilerUtility.EventEnd(TraceCategory, ConvertOnGpuAndCopyEventName);
 
                 unsafe
                 {
@@ -97,27 +108,31 @@ namespace Niantic.Lightship.AR.PAM
 
             ProfilerUtility.EventEnd(TraceCategory, traceEvent);
         }
-        
+
         public override void SetRgb256x256Image()
         {
             const string traceEvent = "SetRgb256x256Image (GPU)";
             ProfilerUtility.EventBegin(TraceCategory, traceEvent);
 
-            ProfilerUtility.EventStep(TraceCategory, traceEvent, "TryGetGpuImage");
-            if (_isGpuImageValid || PlatformDataAcquirer.TryGetGpuImage(out _gpuImage))
+            ProfilerUtility.EventBegin(TraceCategory, TryGetGpuImageEventName);
+            bool canConvert = _isGpuImageValid || PlatformDataAcquirer.TryGetGpuImage(out _gpuImage);
+            ProfilerUtility.EventEnd(TraceCategory, TryGetGpuImageEventName, "GPUImageAlreadyValid", _isGpuImageValid.ToString(), "GotGPUImage", canConvert.ToString());
+
+            if (canConvert)
             {
                 _isGpuImageValid = true;
 
                 if (_squareOutputTexture == null)
                 {
-                    ProfilerUtility.EventStep(TraceCategory, traceEvent, "Allocate texture");
+                    ProfilerUtility.EventBegin(TraceCategory, AllocateTextureEventName);
                     var resolution = CurrentFrameData.Rgb256x256ImageResolution;
                     _squareOutputTexture = new Texture2D(resolution.x, resolution.y, TextureFormat.RGB24, false);
+                    ProfilerUtility.EventEnd(TraceCategory, AllocateTextureEventName);
                 }
 
-                ProfilerUtility.EventStep(TraceCategory, traceEvent, "ConvertOnGpuAndCopy");
-
+                ProfilerUtility.EventBegin(TraceCategory, ConvertOnGpuAndCopyEventName);
                 _gpuImage.ConvertOnGpuAndCopy(_squareOutputTexture);
+                ProfilerUtility.EventEnd(TraceCategory, ConvertOnGpuAndCopyEventName);
 
                 unsafe
                 {
@@ -140,36 +155,42 @@ namespace Niantic.Lightship.AR.PAM
             const string traceEvent = "SetJpeg720x540Image (GPU)";
             ProfilerUtility.EventBegin(TraceCategory, traceEvent);
 
-            ProfilerUtility.EventStep(TraceCategory, traceEvent, "TryGetGpuImage");
-            if (_isGpuImageValid || PlatformDataAcquirer.TryGetGpuImage(out _gpuImage))
+            ProfilerUtility.EventBegin(TraceCategory, TryGetGpuImageEventName);
+            bool canConvert = _isGpuImageValid || PlatformDataAcquirer.TryGetGpuImage(out _gpuImage);
+            ProfilerUtility.EventEnd(TraceCategory, TryGetGpuImageEventName, "GPUImageAlreadyValid", _isGpuImageValid.ToString(), "GotGPUImage", canConvert.ToString());
+
+            if (canConvert)
             {
                 _isGpuImageValid = true;
                 if (_jpegOutputTexture == null)
                 {
-                    ProfilerUtility.EventStep(TraceCategory, traceEvent, "Allocate texture");
+                    ProfilerUtility.EventBegin(TraceCategory, AllocateTextureEventName);
                     var resolution = CurrentFrameData.Jpeg720x540ImageResolution;
                     _jpegOutputTexture = new Texture2D(resolution.x, resolution.y, TextureFormat.RGBA32, false);
+                    ProfilerUtility.EventEnd(TraceCategory, AllocateTextureEventName);
                 }
-
-                ProfilerUtility.EventStep(TraceCategory, traceEvent, "ConvertOnGpuAndCopy");
 
                 // Unity's EncodeToJPG method expects as input texture data formatted in Unity convention (first pixel
                 // bottom left), whereas the raw data of AR textures are in first pixel top left convention.
                 // Thus we invert the pixels in this step, so they are output correctly oriented in the encoding step.
+                ProfilerUtility.EventBegin(TraceCategory, ConvertOnGpuAndCopyEventName);
                 _gpuImage.ConvertOnGpuAndCopy(_jpegOutputTexture, mirrorX: true);
+                ProfilerUtility.EventEnd(TraceCategory, ConvertOnGpuAndCopyEventName);
 
                 // New buffer from Unity that contains the JPEG data
-                ProfilerUtility.EventStep(TraceCategory, traceEvent, "EncodeToJPG");
+                ProfilerUtility.EventBegin(TraceCategory, EncodeToJPGEventName);
                 var jpegArray = _jpegOutputTexture.EncodeToJPG(DataFormatConstants.JpegQuality);
+                ProfilerUtility.EventEnd(TraceCategory, EncodeToJPGEventName);
 
                 // Copy the JPEG byte array to the shared buffer in FrameCStruct
-                ProfilerUtility.EventStep(TraceCategory, traceEvent, "Copy JPG to frame mem");
+                ProfilerUtility.EventBegin(TraceCategory, CopyJPGToFrameMemEventName);
                 unsafe
                 {
                     void* managedJpeg = UnsafeUtility.AddressOf(ref jpegArray[0]);
                     void* nativeJpeg = (void*)CurrentFrameData.CpuJpeg720x540ImageDataPtr;
                     UnsafeUtility.MemCpy(nativeJpeg, managedJpeg, jpegArray.Length);
                 }
+                ProfilerUtility.EventEnd(TraceCategory, CopyJPGToFrameMemEventName);
 
                 CurrentFrameData.CpuJpeg720x540ImageDataLength = (uint)jpegArray.Length;
             }
@@ -188,35 +209,43 @@ namespace Niantic.Lightship.AR.PAM
 
             const string traceEvent = "PAM::JpegFullResImageWithGpu";
             ProfilerUtility.EventBegin(TraceCategory, traceEvent);
-            ProfilerUtility.EventStep(TraceCategory, traceEvent, "TryGetGpuImage");
 
-            if (_isGpuImageValid || PlatformDataAcquirer.TryGetGpuImage(out _gpuImage))
+            ProfilerUtility.EventBegin(TraceCategory, TryGetGpuImageEventName);
+            bool canConvert = _isGpuImageValid || PlatformDataAcquirer.TryGetGpuImage(out _gpuImage);
+            ProfilerUtility.EventEnd(TraceCategory, TryGetGpuImageEventName, "GPUImageAlreadyValid", _isGpuImageValid.ToString(), "GotGPUImage", canConvert.ToString());
+
+            if (canConvert)
             {
                 _isGpuImageValid = true;
-                ProfilerUtility.EventStep(TraceCategory, traceEvent, "ConvertOnGpuAndWriteToMemory");
                 if (_jpegFullResOutputTexture == null)
                 {
+                    ProfilerUtility.EventBegin(TraceCategory, AllocateTextureEventName);
                     var resolution = CurrentFrameData.JpegFullResImageResolution;
                     _jpegFullResOutputTexture = new Texture2D(resolution.x, resolution.y, TextureFormat.RGBA32, false);
+                    ProfilerUtility.EventEnd(TraceCategory, AllocateTextureEventName);
                 }
 
                 // Unity's EncodeToJPG method expects as input texture data formatted in Unity convention (first pixel
                 // bottom left), whereas the raw data of AR textures are in first pixel top left convention.
                 // Thus we invert the pixels in this step, so they are output correctly oriented in the encoding step.
+                ProfilerUtility.EventBegin(TraceCategory, ConvertOnGpuAndCopyEventName);
                 _gpuImage.ConvertOnGpuAndCopy(_jpegFullResOutputTexture, mirrorX: true);
+                ProfilerUtility.EventEnd(TraceCategory, ConvertOnGpuAndCopyEventName);
 
                 // New buffer from Unity that contains the JPEG data
-                ProfilerUtility.EventStep(TraceCategory, traceEvent, "EncodeToJPG");
+                ProfilerUtility.EventBegin(TraceCategory, EncodeToJPGEventName);
                 var jpegArray = _jpegFullResOutputTexture.EncodeToJPG(DataFormatConstants.JpegQuality);
+                ProfilerUtility.EventEnd(TraceCategory, EncodeToJPGEventName);
 
                 // Copy the JPEG byte array to the shared buffer in FrameCStruct
-                ProfilerUtility.EventStep(TraceCategory, traceEvent, "Copy");
+                ProfilerUtility.EventBegin(TraceCategory, CopyJPGToFrameMemEventName);
                 unsafe
                 {
                     void* managedJpeg = UnsafeUtility.AddressOf(ref jpegArray[0]);
                     void* nativeJpeg = (void*)CurrentFrameData.CpuJpegFullResImageDataPtr;
                     UnsafeUtility.MemCpy(nativeJpeg, managedJpeg, jpegArray.Length);
                 }
+                ProfilerUtility.EventEnd(TraceCategory, CopyJPGToFrameMemEventName);
 
                 CurrentFrameData.CpuJpegFullResImageDataLength = (uint)jpegArray.Length;
             }
@@ -233,23 +262,29 @@ namespace Niantic.Lightship.AR.PAM
             const string traceEvent = "SetPlatformDepthBuffer (GPU)";
             ProfilerUtility.EventBegin(TraceCategory, traceEvent);
 
-            ProfilerUtility.EventStep(TraceCategory, traceEvent, "TryGetGpuDepthImage");
-            if (PlatformDataAcquirer.TryGetGpuDepthImage(out _gpuDepthImage, out _gpuConfidenceImage))
+            ProfilerUtility.EventBegin(TraceCategory, TryGetGpuImageEventName);
+            bool gotDepthImage = PlatformDataAcquirer.TryGetGpuDepthImage(out _gpuDepthImage, out _gpuConfidenceImage);
+            ProfilerUtility.EventEnd(TraceCategory, TryGetGpuImageEventName, "GotGpuDepthImage", gotDepthImage.ToString());
+
+            if (gotDepthImage)
             {
                 if (_depthOutputTexture == null)
                 {
-                    ProfilerUtility.EventStep(TraceCategory, traceEvent, "Allocate textures");
+                    ProfilerUtility.EventBegin(TraceCategory, AllocateTextureEventName);
 
                     _depthOutputTexture =
                         new Texture2D(_gpuDepthImage.width, _gpuDepthImage.height, TextureFormat.RFloat, false);
 
                     _depthConfidenceOutputTexture =
                         new Texture2D(_gpuConfidenceImage.width, _gpuConfidenceImage.height, TextureFormat.R8, false);
+
+                    ProfilerUtility.EventEnd(TraceCategory, AllocateTextureEventName);
                 }
 
-                ProfilerUtility.EventStep(TraceCategory, traceEvent, "ReadFromExternalTexture");
+                ProfilerUtility.EventBegin(TraceCategory, ReadFromExternalTextureEventName);
                 _gpuDepthImage.ReadFromExternalTexture(_depthOutputTexture);
                 _gpuConfidenceImage.ReadFromExternalTexture(_depthConfidenceOutputTexture);
+                ProfilerUtility.EventEnd(TraceCategory, ReadFromExternalTextureEventName);
 
                 unsafe
                 {

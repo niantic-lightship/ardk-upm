@@ -13,7 +13,7 @@ namespace Niantic.Lightship.AR.NavigationMesh
     /// If you want to draw the <see cref="LightshipNavMesh"/> in a custom way you can create a similar renderer
     /// e.g. stylize the board as water/snow/sand etc.
     /// </summary>
-    [PublicAPI]
+    [PublicAPI("apiref/Niantic/Lightship/AR/NavigationMesh/LightshipNavMeshRenderer/")]
     public class LightshipNavMeshRenderer : MonoBehaviour
     {
         [FormerlySerializedAs("_navMeshManager")]

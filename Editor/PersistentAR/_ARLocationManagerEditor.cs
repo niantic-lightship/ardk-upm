@@ -92,12 +92,10 @@ internal class _ARLocationManagerEditor : Editor
 
         // Check for non-null and active locations
         List<int> activeLocationIndices = new List<int>();
-        int lastNonNull = 0;
         for (int i = 0; i < _arLocations.Length; i++)
         {
             if (_arLocations[i] != null)
             {
-                lastNonNull = i;
                 if (_arLocations[i].gameObject.activeSelf)
                 {
                     activeLocationIndices.Add(i);
@@ -108,8 +106,7 @@ internal class _ARLocationManagerEditor : Editor
         // Select the appropriate location and validate there is only one active
         switch (activeLocationIndices.Count)
         {
-            case 0: // No active locations, select the last non-null location (or "None" if there are none)
-                SelectLocationIndex(lastNonNull);
+            case 0: // No active locations, do nothing
                 break;
             case 1: // One active location, select it
                 SelectLocationIndex(activeLocationIndices[0]);
@@ -117,7 +114,6 @@ internal class _ARLocationManagerEditor : Editor
             case > 1: // Multiple active locations, deactivate all but the last one
                 for (int i = 0; i < activeLocationIndices.Count - 1; ++i)
                 {
-                    Log.Warning($"Multiple active {nameof(ARLocation)}s detected, deactivating all but one.");
                     ARLocation extraActiveLocation = _arLocations[activeLocationIndices[i]];
                     extraActiveLocation.gameObject.SetActive(false);
                     EditorUtility.SetDirty(extraActiveLocation);

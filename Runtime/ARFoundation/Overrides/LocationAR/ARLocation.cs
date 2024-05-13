@@ -10,7 +10,7 @@ namespace Niantic.Lightship.AR.LocationAR
     /// <summary>
     /// The ARLocation is the digital twin of the physical location
     /// </summary>
-    [PublicAPI]
+    [PublicAPI("apiref/Niantic/Lightship/AR/LocationAR/ARLocation")]
     public class ARLocation : MonoBehaviour
     {
         /// <summary>

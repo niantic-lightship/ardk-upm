@@ -6,6 +6,7 @@ using System;
 using Niantic.Lightship.AR.Meshing;
 using Niantic.Lightship.AR.Semantics;
 using Niantic.Lightship.AR.Subsystems.Meshing;
+using Unity.XR.CoreUtils;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.XR.ARFoundation;
@@ -16,6 +17,7 @@ namespace Niantic.Lightship.AR.Editor
     internal class LightshipMeshingExtensionEditor : UnityEditor.Editor
     {
         private SerializedProperty _targetFrameRate;
+        private SerializedProperty _fuseKeyframesOnly;
 
         private SerializedProperty _maximumIntegrationDistance;
         private SerializedProperty _voxelSize;
@@ -34,7 +36,7 @@ namespace Niantic.Lightship.AR.Editor
         private static class Contents
         {
             public static readonly string meshBlockSizeWarning =
-                "The Mesh Block Size will be automatically rounded to the closest multiple of the Voxel Size.";
+                "For best results, the mesh block size should be an exact multiple of the voxel size.";
 
             public static readonly string noSemanticSegmentationManagerWarning =
                 "There must be an active ARSemanticSegmentationManager in the scene to enable mesh filtering.";
@@ -43,13 +45,33 @@ namespace Niantic.Lightship.AR.Editor
         private bool _triedLookingForSemanticsManager = false;
         private ARSemanticSegmentationManager _segmentationManager = null;
 
+        private bool _triedLookingForMainCamera = false;
+        private Camera _mainCamera = null;
+
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
 
             EditorGUILayout.PropertyField(_targetFrameRate);
+            EditorGUILayout.PropertyField(_fuseKeyframesOnly);
 
             EditorGUILayout.PropertyField(_maximumIntegrationDistance);
+            if (_mainCamera == null && !_triedLookingForMainCamera)
+            {
+                _triedLookingForMainCamera = true;
+                _mainCamera = Camera.main;
+            }
+
+            if (_mainCamera != null)
+            {
+                if (_maximumIntegrationDistance.floatValue > _mainCamera.farClipPlane)
+                {
+                    EditorGUILayout.HelpBox(
+                        "The maximum integration distance is currently higher than the main camera's far clipping plane. Mesh beyond the far clipping plane will not be rendered.",
+                        MessageType.Warning);
+                }
+            }
+
             EditorGUILayout.PropertyField(_voxelSize);
             EditorGUILayout.PropertyField(_enableDistanceBasedVolumetricCleanup);
 
@@ -105,6 +127,7 @@ namespace Niantic.Lightship.AR.Editor
         private void OnEnable()
         {
             _targetFrameRate = serializedObject.FindProperty("_targetFrameRate");
+            _fuseKeyframesOnly = serializedObject.FindProperty("_fuseKeyframesOnly");
             _maximumIntegrationDistance = serializedObject.FindProperty("_maximumIntegrationDistance");
             _voxelSize = serializedObject.FindProperty("_voxelSize");
             _enableDistanceBasedVolumetricCleanup = serializedObject.FindProperty("_enableDistanceBasedVolumetricCleanup");

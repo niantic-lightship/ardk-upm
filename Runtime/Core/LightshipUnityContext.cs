@@ -73,6 +73,7 @@ namespace Niantic.Lightship.AR.Core
             s_userConfig = new UserConfig
             {
                 ApiKey = settings.ApiKey,
+                FeatureFlagFilePath = Path.Combine(Application.streamingAssetsPath, "featureFlag.json")
             };
 
             DeviceInfo deviceInfo = new DeviceInfo
@@ -196,6 +197,16 @@ namespace Niantic.Lightship.AR.Core
 #endif
         }
 
+        internal static bool FeatureEnabled(string featureName)
+        {
+            if (!UnityContextHandle.IsValidHandle())
+            {
+                return false;
+            }
+
+            return NativeApi.Lightship_ARDK_Unity_Context_FeatureEnabled(UnityContextHandle, featureName);
+        }
+
         /// <summary>
         /// Container to wrap the native Lightship C APIs
         /// </summary>
@@ -216,6 +227,9 @@ namespace Niantic.Lightship.AR.Core
 
             [DllImport(LightshipPlugin.Name)]
             public static extern bool Lightship_ARDK_Unity_Property_Bag_Put(IntPtr bagHandle, string key, string value);
+
+            [DllImport(LightshipPlugin.Name)]
+            public static extern bool Lightship_ARDK_Unity_Context_FeatureEnabled(IntPtr unityContext, string featureName);
 
         }
 
@@ -245,6 +259,7 @@ namespace Niantic.Lightship.AR.Core
         private struct UserConfig
         {
             public string ApiKey;
+            public string FeatureFlagFilePath;
         }
 
         [StructLayout(LayoutKind.Sequential)]

@@ -24,7 +24,7 @@ namespace Niantic.Lightship.AR.Semantics
     /// threshold per pixel. For cases where a semantic segmentation texture is overlaid on the screen, utilities are
     /// provided to read semantic properties at a given point on the screen.
     /// </summary>
-    [PublicAPI]
+    [PublicAPI("apiref/Niantic/Lightship/AR/Semantics/ARSemanticSegmentationManager/")]
     [DisallowMultipleComponent]
     [DefaultExecutionOrder(LightshipARUpdateOrder.SemanticSegmentationManager)]
     public class ARSemanticSegmentationManager :
@@ -64,7 +64,7 @@ namespace Niantic.Lightship.AR.Semantics
         {
             get
             {
-                if (subsystem.IsMetadataAvailable)
+                if (subsystem != null && subsystem.IsMetadataAvailable)
                 {
                     return subsystem?.SuppressionMaskChannels ?? new List<string>();
                 }

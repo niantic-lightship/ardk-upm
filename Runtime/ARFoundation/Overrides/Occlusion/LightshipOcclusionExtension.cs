@@ -18,7 +18,7 @@ namespace Niantic.Lightship.AR.Occlusion
     /// This component allows configuration of the additional functionality available in
     /// Lightship's implementation of <see cref="XROcclusionSubsystem"/>.
     /// </summary>
-    [PublicAPI]
+    [PublicAPI("apiref/Niantic/Lightship/AR/Occlusion/LightshipOcclusionExtension/")]
     [RequireComponent(typeof(Camera))]
     [RequireComponent(typeof(ARCameraManager))]
     [RequireComponent(typeof(AROcclusionManager))]
@@ -414,7 +414,7 @@ namespace Niantic.Lightship.AR.Occlusion
         private bool EligibleForEdgeSmoothing
         {
             // Low resolution images are produced using lightship or lidar with fastest setting
-            get => _occlusionSubsystem is LightshipOcclusionSubsystem ||
+            get => IsUsingLightshipOcclusionSubsystem ||
                 _occlusionSubsystem.currentEnvironmentDepthMode == EnvironmentDepthMode.Fastest;
         }
 
@@ -570,8 +570,30 @@ namespace Niantic.Lightship.AR.Occlusion
         /// </summary>
         private bool IsAnyFeatureEnabled
         {
-            get { return _isOcclusionSuppressionEnabled || _isOcclusionStabilizationEnabled || _preferSmoothEdges; }
+            get
+            {
+                return _isOcclusionSuppressionEnabled || _isOcclusionStabilizationEnabled || _preferSmoothEdges
+                    || (_optimalOcclusionDistanceMode != OptimalOcclusionDistanceMode.Static &&
+                        IsUsingLightshipOcclusionSubsystem);
+            }
         }
+
+        /// <summary>
+        /// Determines whether the occlusion manager is using the Lightship Occlusion Subsystem.
+        /// Caching this helps to avoid redundant type casting.
+        /// </summary>
+        private bool IsUsingLightshipOcclusionSubsystem
+        {
+            get
+            {
+                _usingLightshipOcclusionSubsystem ??= _occlusionSubsystem != null
+                    ? _occlusionSubsystem is LightshipOcclusionSubsystem
+                    : null;
+
+                return _usingLightshipOcclusionSubsystem ?? false;
+            }
+        }
+        private bool? _usingLightshipOcclusionSubsystem;
 
         /// <summary>
         /// Whether to disable automatically updating the depth texture of
@@ -978,8 +1000,7 @@ namespace Niantic.Lightship.AR.Occlusion
                     var gotGpuImage = ImageSamplingUtils.CreateOrUpdateTexture(
                         source: _cpuDepth,
                         destination: ref _gpuDepth,
-                        linearColorSpace: true, // avoid gamma correction on depth values
-                        destinationFilter: FilterMode.Point,
+                        destinationFilter: FilterMode.Bilinear,
                         pushToGpu: true
                     );
 
@@ -1025,8 +1046,7 @@ namespace Niantic.Lightship.AR.Occlusion
                         var gotGpuImage = ImageSamplingUtils.CreateOrUpdateTexture(
                             source: _cpuDepth,
                             destination: ref _gpuDepth,
-                            linearColorSpace: true, // avoid gamma correction on depth values
-                            destinationFilter: FilterMode.Point,
+                            destinationFilter: FilterMode.Bilinear,
                             pushToGpu: true
                         );
 
@@ -1046,7 +1066,7 @@ namespace Niantic.Lightship.AR.Occlusion
 
         private void HandleOcclusionDistance()
         {
-            if (Mode == OptimalOcclusionDistanceMode.Static || _occlusionSubsystem is not LightshipOcclusionSubsystem)
+            if (Mode == OptimalOcclusionDistanceMode.Static || !IsUsingLightshipOcclusionSubsystem)
             {
                 return;
             }
@@ -1181,6 +1201,7 @@ namespace Niantic.Lightship.AR.Occlusion
                 return (false, false);
             }
 
+            _usingLightshipOcclusionSubsystem = null;
             _occlusionSubsystem = xrManager.activeLoader.GetLoadedSubsystem<XROcclusionSubsystem>();
             if (_occlusionSubsystem == null)
             {
@@ -1245,7 +1266,7 @@ namespace Niantic.Lightship.AR.Occlusion
             }
 
             // Recompile the shader for depth compression
-            if (_preferSmoothEdges && _occlusionSubsystem is LightshipOcclusionSubsystem)
+            if (_preferSmoothEdges && IsUsingLightshipOcclusionSubsystem)
             {
                 BackgroundMaterial.EnableKeyword(k_DepthEdgeSmoothingFeature);
             }
@@ -1278,7 +1299,7 @@ namespace Niantic.Lightship.AR.Occlusion
                 }
 
                 // Configure the camera to capture mesh depth
-                _fusedDepthCamera.Configure(meshLayer: _meshManager.meshPrefab.gameObject.layer);
+                _fusedDepthCamera.Configure(meshLayer: _meshManager.meshPrefab.gameObject.layer, _camera.nearClipPlane, _camera.farClipPlane);
             }
 
             // Enable or disable the camera

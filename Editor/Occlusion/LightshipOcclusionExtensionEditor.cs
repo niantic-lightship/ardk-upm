@@ -38,10 +38,14 @@ namespace Niantic.Lightship.AR.Editor
                 "A target framerate over 20 could negatively affect performance on older devices.";
 
             public static readonly string noSemanticSegmentationManagerWarning =
-                "There must be an ARSemanticSegmentationManager in the scene to enable semantic depth suppression.";
+                "Create an ARSemanticSegmentationManager to enable semantic depth suppression.";
 
             public static readonly string noMeshManagerWarning =
-                "There must be an ARMeshManager in the scene to enable depth stabilization.";
+                "Place an ARMeshManager on a child object to enable depth stabilization.";
+
+            public static readonly string objectScaleWarning =
+                "The local scale of this object is not (1, 1, 1). " +
+                "This may cause unintended effects for rendering objects.";
 
             public static readonly string noPrincipalOccludeeWarning =
                 "Specify a GameObject with a renderer component in order to use " +
@@ -49,6 +53,9 @@ namespace Niantic.Lightship.AR.Editor
 
             public static GUIContent modeLabel = new GUIContent("Mode");
             public static GUIContent enabledLabel = new GUIContent("Enabled");
+
+            public static readonly string fusedMeshPrefabPath =
+                "Packages/com.nianticlabs.lightship/Assets/Prefabs/FusedMesh.prefab";
         }
 
         // Fields get reset whenever the object hierarchy changes, in addition to when this Editor loses focus,
@@ -117,6 +124,8 @@ namespace Niantic.Lightship.AR.Editor
                 if (_isOcclusionStabilizationEnabled.boolValue)
                 {
                     EditorGUILayout.PropertyField(_meshManager);
+                    var localTransform = Selection.activeGameObject.GetComponent<Transform>();
+                    bool isLocalTransformIdentity = localTransform.localScale == Vector3.one;
 
                     if (_meshManager.objectReferenceValue == null && !_triedLookingForMeshManager)
                     {
@@ -124,14 +133,44 @@ namespace Niantic.Lightship.AR.Editor
                         _meshManager.objectReferenceValue = FindObjectOfType<ARMeshManager>();
                     }
 
+                    if (!isLocalTransformIdentity)
+                    {
+                        EditorGUILayout.HelpBox(Contents.objectScaleWarning, MessageType.Warning);
+
+                        if (GUILayout.Button("Reset local scale"))
+                        {
+                            // Correct the scale on the current object
+                            localTransform.localScale = Vector3.one;
+                        }
+                    }
+
                     if (_meshManager.objectReferenceValue == null)
                     {
                         EditorGUILayout.HelpBox(Contents.noMeshManagerWarning, MessageType.Error);
+                        if (GUILayout.Button("Create an ARMeshManager"))
+                        {
+                            // Create an ARMeshManager on a child object to avoid re-scaling the current object
+                            var newObj = new GameObject("ARMeshManager");
+                            newObj.transform.SetParent(Selection.activeGameObject.transform);
+                            var meshManager = newObj.AddComponent<ARMeshManager>();
+                            // The Lightship fused mesh prefab is required in order to properly occlude
+                            meshManager.meshPrefab = AssetDatabase.LoadAssetAtPath<MeshFilter>(Contents.fusedMeshPrefabPath);
+
+                            _meshManager.objectReferenceValue = meshManager;
+                            lightshipRenderPassEnabled = true;
+                        }
                     }
                     else
                     {
                         lightshipRenderPassEnabled = true;
                     }
+                }
+
+                EditorGUILayout.LabelField("Prefer Smooth Edges", EditorStyles.boldLabel);
+                EditorGUILayout.PropertyField(_smoothEdgePreferred, Contents.enabledLabel);
+                if (_smoothEdgePreferred.boolValue)
+                {
+                    lightshipRenderPassEnabled = true;
                 }
 
                 if (lightshipRenderPassEnabled)
@@ -148,8 +187,6 @@ namespace Niantic.Lightship.AR.Editor
                     {
                         _customBackgroundMaterial.objectReferenceValue = null;
                     }
-
-                    EditorGUILayout.PropertyField(_smoothEdgePreferred);
                 }
             }
 

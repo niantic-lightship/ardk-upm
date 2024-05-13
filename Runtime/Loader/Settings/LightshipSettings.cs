@@ -426,12 +426,5 @@ namespace Niantic.Lightship.AR.Loader
 
             return settings;
         }
-
-#if UNITY_EDITOR
-        private void OnValidate()
-        {
-            _lightshipSimulationParams.OnValidate();
-        }
-#endif
     }
 }

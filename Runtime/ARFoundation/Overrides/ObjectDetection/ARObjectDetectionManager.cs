@@ -16,7 +16,7 @@ namespace Niantic.Lightship.AR.ObjectDetection
     /// <summary>
     /// The manager for the object detection subsystem.
     /// </summary>
-    [PublicAPI]
+    [PublicAPI("apiref/Niantic/Lightship/AR/ObjectDetection/ARObjectDetectionManager/")]
     [DisallowMultipleComponent]
     [DefaultExecutionOrder(LightshipARUpdateOrder.ObjectDetectionManager)]
     public class ARObjectDetectionManager:

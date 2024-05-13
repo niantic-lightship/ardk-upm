@@ -83,8 +83,13 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
             configurationCStruct.cloudLocalizerInitialRequestsPerSecond = cloudLocalizerInitialRequestsPerSecond;
             configurationCStruct.cloudLocalizerContinuousRequestsPerSecond = cloudLocalizerContinuousRequestsPerSecond;
             configurationCStruct.slickLocalizerFps = Convert.ToUInt32(Math.Ceiling(slickLocalizerFps));
-            configurationCStruct.cloudTemporalFusionWindowSize = cloudTemporalFusionWindowSize;
-            configurationCStruct.slickTemporalFusionWindowSize = slickTemporalFusionWindowSize;
+            configurationCStruct.cloudTemporalFusionWindowSize = cloudTemporalFusionWindowSize == 0
+                ? XRPersistentAnchorConfiguration.DefaultCloudLocalizationTemporalFusionWindowSize
+                : cloudTemporalFusionWindowSize;
+
+            configurationCStruct.slickTemporalFusionWindowSize = slickTemporalFusionWindowSize == 0
+                ? XRPersistentAnchorConfiguration.DefaultSlickLocalizationTemporalFusionWindowSize
+                : slickTemporalFusionWindowSize;
             configurationCStruct.enableDiagnostics = enableDiagnostics;
             Native.Configure(anchorProviderHandle, configurationCStruct);
         }
@@ -92,6 +97,20 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
         public void Destruct(IntPtr persistentAnchorApiHandle)
         {
             Native.Destruct(persistentAnchorApiHandle);
+        }
+
+        public bool TryAddMap(IntPtr anchorProviderHandle, byte[] dataBytes)
+        {
+            IntPtr dataPtr = IntPtr.Zero;
+            int dataSize = dataBytes.Length;
+            unsafe
+            {
+                fixed (byte* bytePtr = dataBytes)
+                {
+                    dataPtr = (IntPtr)bytePtr;
+                }
+            }
+            return Native.TryAddMap(anchorProviderHandle, dataPtr, dataSize);
         }
 
         public bool TryCreateAnchor(IntPtr anchorProviderHandle, Pose pose, out TrackableId anchorId)
@@ -334,6 +353,9 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
 
             [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_AnchorProvider_Destruct")]
             public static extern void Destruct(IntPtr anchorApiHandle);
+
+            [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_AnchorProvider_TryAddMap")]
+            public static extern bool TryAddMap(IntPtr anchorApiHandle, IntPtr dataPtr, int dataSize);
 
             [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_AnchorProvider_TryCreateAnchor")]
             public static extern bool TryCreateAnchor

@@ -6,6 +6,7 @@ using Niantic.Lightship.AR.Subsystems.Playback;
 using Niantic.Lightship.AR.Utilities;
 using Unity.Collections;
 using Unity.XR.CoreUtils;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.XR.ARSubsystems;
 using UnityEngine.XR.Simulation;
@@ -38,18 +39,6 @@ namespace Niantic.Lightship.AR.Simulation
         private int _sensorWidth = 720;
         private int _sensorHeight = 540;
         private float _sensorFocalLength = 623.5382f;
-
-        internal virtual void OnDestroy()
-        {
-            if (m_SimulationRenderCamera != null)
-                m_SimulationRenderCamera.targetTexture = null;
-
-            if (m_RenderTexture != null)
-                m_RenderTexture.Release();
-
-            if (m_ProviderTexture != null)
-                UnityObjectUtils.Destroy(m_ProviderTexture);
-        }
 
         private void Update()
         {
@@ -99,15 +88,28 @@ namespace Niantic.Lightship.AR.Simulation
             m_SimulationRenderCamera.ResetProjectionMatrix();
             var projectionMatrix = m_SimulationRenderCamera.projectionMatrix;
 
-            // because this camera is rotated 90 degrees we have to temporarily swap the field of view axis when we
-            // send the projection matrix to the ar camera.
+            // projectionMatrix dictates the AR camera's vertical FOV.
+            // we can calculate the corresponding matrix by temporarily setting the simulation camera's FOV
+            float originalVerticalFOV = m_SimulationRenderCamera.fieldOfView;
+            float originalHorizontalFOV = Camera.VerticalToHorizontalFieldOfView(originalVerticalFOV, m_SimulationRenderCamera.aspect);
+            float desiredVerticalFOV;
             if (orientation == ScreenOrientation.Portrait || orientation == ScreenOrientation.PortraitUpsideDown)
             {
-                var localFieldOfView = m_SimulationRenderCamera.fieldOfView;
-                m_SimulationRenderCamera.fieldOfView = Camera.VerticalToHorizontalFieldOfView(m_SimulationRenderCamera.fieldOfView, m_SimulationRenderCamera.aspect);
-                projectionMatrix = m_SimulationRenderCamera.projectionMatrix;
-                m_SimulationRenderCamera.fieldOfView = localFieldOfView;
+                // with tall aspect ratios, the simulation camera is rotated 90 degrees, so
+                // the ar camera's vertical FOV should match the simulation camera's horizontal FOV
+                desiredVerticalFOV = originalHorizontalFOV;
             }
+            else
+            {
+                // with wide aspect ratios, the simulation camera is not rotated, but we need to limit the horizontal FOV
+                // we do this by calculating the vertical FOV that corresponds to the simulation camera's horizontal FOV
+                desiredVerticalFOV = Camera.HorizontalToVerticalFieldOfView(originalHorizontalFOV, LightshipSimulationEditorUtility.GetGameViewAspectRatio());
+
+            }
+            m_SimulationRenderCamera.fieldOfView = desiredVerticalFOV;
+            projectionMatrix = m_SimulationRenderCamera.projectionMatrix;
+            // restore the original FOV
+            m_SimulationRenderCamera.fieldOfView = originalVerticalFOV;
 
             var frameEventArgs = new LightshipCameraTextureFrameEventArgs
             {
@@ -119,6 +121,30 @@ namespace Niantic.Lightship.AR.Simulation
             };
 
             frameReceived?.Invoke(frameEventArgs);
+        }
+
+        protected virtual void OnEnable()
+        {
+            preRenderCamera += OnPreRenderCamera;
+            postRenderCamera += OnPostRenderCamera;
+        }
+
+        protected virtual void OnDisable()
+        {
+            preRenderCamera -= OnPreRenderCamera;
+            postRenderCamera -= OnPostRenderCamera;
+        }
+
+        internal virtual void OnDestroy()
+        {
+            if (m_SimulationRenderCamera != null)
+                m_SimulationRenderCamera.targetTexture = null;
+
+            if (m_RenderTexture != null)
+                m_RenderTexture.Release();
+
+            if (m_ProviderTexture != null)
+                UnityObjectUtils.Destroy(m_ProviderTexture);
         }
 
         private XRCameraIntrinsics GetCameraIntrinsics()
@@ -174,21 +200,18 @@ namespace Niantic.Lightship.AR.Simulation
             return false;
         }
 
-        // upside down rendering to put first pixel top left (png convention) instead of bottom left (Unity texture)
-        private void OnPreCull () {
-            m_SimulationRenderCamera.ResetProjectionMatrix ();
-            m_SimulationRenderCamera.projectionMatrix *= Matrix4x4.Scale(new Vector3(1, -1, 1));
-        }
-
         // since we are inverting the projection matrix, we need to invert culling so normals are considered inverted.
         // this would normally be done to achieve reflection and mirroring effects
-        private void OnPreRender ()
+        private void OnPreRenderCamera(Camera renderCamera)
         {
+            renderCamera.ResetProjectionMatrix();
+            renderCamera.projectionMatrix *= Matrix4x4.Scale(new Vector3(1, -1, 1));
             GL.invertCulling = true;
         }
 
-        private void OnPostRender () {
+        private void OnPostRenderCamera(Camera renderCamera) {
             GL.invertCulling = false;
+            renderCamera.ResetProjectionMatrix();
         }
     }
 }

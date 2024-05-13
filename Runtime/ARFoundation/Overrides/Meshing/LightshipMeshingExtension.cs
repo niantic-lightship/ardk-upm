@@ -20,13 +20,17 @@ namespace Niantic.Lightship.AR.Meshing
     /// Lightship's implementation of <see cref="XRMeshingSubsystem"/>.
     /// </summary>
     [RequireComponent(typeof(ARMeshManager))]
-    [PublicAPI]
+    [PublicAPI("apiref/Niantic/Lightship/AR/Meshing/LightshipMeshingExtension/")]
     public class LightshipMeshingExtension : MonoBehaviour
     {
       [SerializeField]
       [Tooltip("Target number of times per second to run the mesh update routine.")]
       [FormerlySerializedAs("_frameRate")]
       private int _targetFrameRate = 10;
+
+      [SerializeField]
+      [Tooltip("Whether to only fuse depth keyframes into the mesh. This will improve accuracy at the cost of the mesh updating less frequently in response to changes in the environment.")]
+      private bool _fuseKeyframesOnly = false;
 
       [Header("AR Fusion Parameters")]
 
@@ -55,6 +59,33 @@ namespace Niantic.Lightship.AR.Meshing
       [Tooltip("Save memory by removing excess triangles from the mesh.")]
       private bool _enableMeshDecimation = true;
 
+      // Mesh Filtering
+      [Header("Mesh Filtering")]
+
+      [SerializeField]
+      [Tooltip("Enable mesh filtering to select which semantic segmentation channels to include in the mesh.")]
+      private bool _isMeshFilteringEnabled = false;
+
+      private ARSemanticSegmentationManager _semanticSegmentationManager;
+
+      [SerializeField]
+      [Tooltip("Enable an allow list to select channels which channels are included in the mesh. This can be used together with a block list.")]
+      private bool _isFilteringAllowListEnabled = false;
+
+      [SerializeField]
+      [Tooltip("List of channel names to include in the mesh.")]
+      private List<String> _allowList = new();
+      private int _packedAllowList = 0;
+
+      [SerializeField]
+      [Tooltip("Enable a block list to select channels which channels are excluded from the mesh. This can be used together with an allow list.")]
+      private bool _isFilteringBlockListEnabled = false;
+
+      [SerializeField]
+      [Tooltip("List of channel names to exclude from the mesh.")]
+      private List<String> _blockList = new();
+      private int _packedBlockList = 0;
+
       private bool _isDirty;
 
       /// <summary>
@@ -74,7 +105,24 @@ namespace Niantic.Lightship.AR.Meshing
       }
 
       /// <summary>
-      /// Get or set the maximum distance (in m) from the camera at which that the meshing system will integrate depth samples into the 3D scene representation.
+      /// Get or set whether only depth keyframes will be fused into the mesh.
+      /// </summary>
+      public bool FuseKeyframesOnly
+      {
+          get => _fuseKeyframesOnly;
+          set
+          {
+              if (value != _fuseKeyframesOnly)
+              {
+                  _fuseKeyframesOnly = value;
+                  _isDirty = true;
+              }
+          }
+      }
+
+      /// <summary>
+      /// Get or set the maximum distance (in m) from the camera at which that the meshing system will
+      /// integrate depth samples into the 3D scene representation.
       /// </summary>
       public float MaximumIntegrationDistance
       {
@@ -91,7 +139,8 @@ namespace Niantic.Lightship.AR.Meshing
       }
 
       /// <summary>
-      /// Get or set the size (in m) of individual voxel elements in the scene representation. Setting this to higher values will reduce memory usage but reduce the precision of the surface.
+      /// Get or set the size (in m) of individual voxel elements in the scene representation.
+      /// Setting this to higher values will reduce memory usage but reduce the precision of the surface.
       /// </summary>
       public float VoxelSize
       {
@@ -102,15 +151,14 @@ namespace Niantic.Lightship.AR.Meshing
               if (Math.Abs(value - _voxelSize) > tolerance)
               {
                   _voxelSize = value;
-                  _meshBlockSize = (float)Math.Round(_meshBlockSize / value) * value;
-                  Log.Info("Mesh block size rounded to " + _meshBlockSize + " m as the voxel block size was changed.");
                   _isDirty = true;
               }
           }
       }
 
       /// <summary>
-      /// Get or set the size (in m) of the Mesh Blocks used for generating the Mesh Filter and Mesh Collider. This value will be automatically rounded to be a multiple of the voxel size.
+      /// Get or set the size (in m) of the Mesh Blocks used for generating the Mesh Filter and Mesh Collider.
+      /// This value will be automatically rounded to be a multiple of the voxel size.
       /// </summary>
       public float MeshBlockSize
       {
@@ -161,7 +209,8 @@ namespace Niantic.Lightship.AR.Meshing
       }
 
       /// <summary>
-      /// Get or set whether the volumetric representation will be cleaned up once it moves outside the region where new mesh is currently being generated. This saves memory and smooths latency.
+      /// Get or set whether the volumetric representation will be cleaned up once it moves outside the region
+      /// where new mesh is currently being generated. This saves memory and smooths latency.
       /// </summary>
       public bool EnableDistanceBasedVolumetricCleanup
       {
@@ -171,6 +220,96 @@ namespace Niantic.Lightship.AR.Meshing
               if (value != _enableDistanceBasedVolumetricCleanup)
               {
                   _enableDistanceBasedVolumetricCleanup = value;
+                  _isDirty = true;
+              }
+          }
+      }
+
+      /// <summary>
+      /// Get or set whether filtering to select which semantic segmentation channels are included in the mesh
+      /// is currently enabled.
+      /// </summary>
+      public bool IsMeshFilteringEnabled
+      {
+          get => _isMeshFilteringEnabled;
+          set
+          {
+              if (value == true)
+              {
+                  value = ValidateSemanticSegmentationManager();
+              }
+
+              if (value != _isMeshFilteringEnabled)
+              {
+                  _isMeshFilteringEnabled = value;
+                  _isDirty = true;
+              }
+          }
+      }
+
+      /// <summary>
+      /// Get or set whether to use the AllowList to determine which channels are included in the mesh.
+      /// This property must be used in conjunction with the IsMeshFilteringEnabled property.
+      /// </summary>
+      public bool IsFilteringAllowListEnabled
+      {
+          get => _isFilteringAllowListEnabled;
+          set
+          {
+              if (value != _isFilteringAllowListEnabled)
+              {
+                  _isFilteringAllowListEnabled = value;
+                  _isDirty = true;
+              }
+          }
+      }
+
+      /// <summary>
+      /// The list of names of channels included in the mesh. Both the IsMeshFilteringEnabled and
+      /// IsFilteringAllowListEnabled values must be true in order for the allow list to have an effect.
+      /// </summary>
+      public List<string> AllowList
+      {
+          get => _allowList;
+          set
+          {
+              if (value != _allowList)
+              {
+                  _allowList = value;
+                  _isDirty = true;
+              }
+          }
+      }
+
+      /// <summary>
+      /// Get or set whether to use the BlockList to determine which channels are included in the mesh.
+      /// This property must be used in conjunction with the IsMeshFilteringEnabled property.
+      /// </summary>
+      public bool IsFilteringBlockListEnabled
+      {
+          get => _isFilteringBlockListEnabled;
+          set
+          {
+              if (value != _isFilteringBlockListEnabled)
+              {
+                  _isFilteringBlockListEnabled = value;
+                  _isDirty = true;
+              }
+          }
+      }
+
+      /// <summary>
+      /// The list of names of channels excluded from the mesh. Both the IsMeshFilteringEnabled and
+      /// IsFilteringBlockListEnabled values must be true in order for the block list to have an effect.
+      /// </summary>
+      public List<string> BlockList
+      {
+          get => _blockList;
+          set
+          {
+              if (value != _blockList)
+              {
+                  _blockList = value;
                   _isDirty = true;
               }
           }
@@ -199,8 +338,6 @@ namespace Niantic.Lightship.AR.Meshing
       {
           // Double check in case hierarchy changes, guaranteed to run only once when added to delayCall
           UnityEditor.EditorApplication.delayCall += ValidateHierarchy;
-
-          _meshBlockSize = (float)Math.Round(_meshBlockSize / _voxelSize) * _voxelSize;
       }
 #endif
 
@@ -281,6 +418,7 @@ namespace Niantic.Lightship.AR.Meshing
           LightshipMeshingProvider.Configure
           (
               _targetFrameRate,
+              _fuseKeyframesOnly,
               _maximumIntegrationDistance,
               _voxelSize,
               _enableDistanceBasedVolumetricCleanup,
@@ -300,98 +438,6 @@ namespace Niantic.Lightship.AR.Meshing
           if (_isDirty)
           {
               Configure();
-          }
-      }
-
-      // Mesh Filtering
-      [Header("Mesh Filtering")]
-
-      [SerializeField]
-      private bool _isMeshFilteringEnabled = false;
-
-      private ARSemanticSegmentationManager _semanticSegmentationManager;
-
-      [SerializeField]
-      private bool _isFilteringAllowListEnabled = false;
-
-      [SerializeField]
-      private List<String> _allowList = new();
-      private int _packedAllowList = 0;
-
-      [SerializeField]
-      private bool _isFilteringBlockListEnabled = false;
-
-      [SerializeField]
-      private List<String> _blockList = new();
-      private int _packedBlockList = 0;
-
-      public bool IsMeshFilteringEnabled
-      {
-          get => _isMeshFilteringEnabled;
-          set
-          {
-              if (value == true)
-              {
-                  value = ValidateSemanticSegmentationManager();
-              }
-
-              if (value != _isMeshFilteringEnabled)
-              {
-                  _isMeshFilteringEnabled = value;
-                  _isDirty = true;
-              }
-          }
-      }
-
-      public bool IsFilteringAllowListEnabled
-      {
-          get => _isFilteringAllowListEnabled;
-          set
-          {
-              if (value != _isFilteringAllowListEnabled)
-              {
-                  _isFilteringAllowListEnabled = value;
-                  _isDirty = true;
-              }
-          }
-      }
-
-      public List<string> AllowList
-      {
-          get => _allowList;
-          set
-          {
-              if (value != _allowList)
-              {
-                  _allowList = value;
-                  _isDirty = true;
-              }
-          }
-      }
-
-      public bool IsFilteringBlockListEnabled
-      {
-          get => _isFilteringBlockListEnabled;
-          set
-          {
-              if (value != _isFilteringBlockListEnabled)
-              {
-                  _isFilteringBlockListEnabled = value;
-                  _isDirty = true;
-              }
-          }
-      }
-
-      public List<string> BlockList
-      {
-          get => _blockList;
-          set
-          {
-              if (value != _blockList)
-              {
-                  _blockList = value;
-                  _isDirty = true;
-              }
           }
       }
 

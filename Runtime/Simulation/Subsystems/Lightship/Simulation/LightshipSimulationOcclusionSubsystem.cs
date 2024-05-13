@@ -113,7 +113,8 @@ namespace Niantic.Lightship.AR.Simulation
 
             public override void Stop()
             {
-
+                if (_mSimulationDepthTextureProvider != null)
+                    _mSimulationDepthTextureProvider.frameReceived -= CameraFrameReceived;
             }
 
             public override void Destroy()

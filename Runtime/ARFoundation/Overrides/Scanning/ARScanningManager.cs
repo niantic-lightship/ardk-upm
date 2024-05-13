@@ -20,7 +20,7 @@ namespace Niantic.Lightship.AR.Scanning
     /// The recording will start when the manager is enabled.
     /// Use SaveScan() to stop and save the recording into the ScanPath.
     /// </summary>
-    [PublicAPI]
+    [PublicAPI("apiref/Niantic/Lightship/AR/Scanning/ARScanningManager/")]
     [DisallowMultipleComponent]
     [DefaultExecutionOrder(LightshipARUpdateOrder.ScanningManager)]
     public class ARScanningManager

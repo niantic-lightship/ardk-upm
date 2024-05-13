@@ -38,7 +38,11 @@ namespace Niantic.Lightship.AR.PAM
         private const int SecondToMillisecondFactor = 1000;
 #endif
 
+        // Trace Event Strings
         private const string TraceCategory = "CpuTexturesSetter";
+        private const string TryGetCpuImageEventName = "TryGetCpuImage";
+        private const string ConvertOnCpuAndWriteToMemoryEventName = "ConvertOnCpuAndWriteToMemory";
+        private const string EncodeNativeArrayToJPGEventName = "EncodeNativeArrayToJPG";
 
         private void EnsureJpegInitialized()
         {
@@ -105,16 +109,19 @@ namespace Niantic.Lightship.AR.PAM
             const string traceEvent = "SetRgba256x144Image (CPU)";
             ProfilerUtility.EventBegin(TraceCategory, traceEvent);
 
-            ProfilerUtility.EventStep(TraceCategory, traceEvent, "TryGetCpuImage");
-            if (_cpuImage.valid || PlatformDataAcquirer.TryGetCpuImage(out _cpuImage))
-            {
-                ProfilerUtility.EventStep(TraceCategory, traceEvent, "ConvertOnCpuAndWriteToMemory");
+            ProfilerUtility.EventBegin(TraceCategory, TryGetCpuImageEventName);
+            bool canConvert = _cpuImage.valid || PlatformDataAcquirer.TryGetCpuImage(out _cpuImage);
+            ProfilerUtility.EventEnd(TraceCategory, TryGetCpuImageEventName, "CPUImageValid", _cpuImage.valid.ToString(), "GotCPUImage", canConvert.ToString());
 
+            if (canConvert)
+            {
+                ProfilerUtility.EventBegin(TraceCategory, ConvertOnCpuAndWriteToMemoryEventName);
                 _cpuImage.ConvertOnCpuAndWriteToMemory
                 (
                     CurrentFrameData.Rgba256x144ImageResolution,
                     CurrentFrameData.CpuRgba256x144ImageDataPtr
                 );
+                ProfilerUtility.EventEnd(TraceCategory, ConvertOnCpuAndWriteToMemoryEventName);
 
                 _currTimestampMs = _cpuImage.timestamp * SecondToMillisecondFactor;
                 CurrentFrameData.CpuRgba256x144ImageDataLength = DataFormatConstants.Rgba_256_144_DataLength;
@@ -125,20 +132,28 @@ namespace Niantic.Lightship.AR.PAM
                 CurrentFrameData.CpuRgba256x144ImageDataLength = 0;
             }
 
-
             ProfilerUtility.EventEnd(TraceCategory, traceEvent);
         }
 
         public override void SetRgb256x256Image()
         {
-            if (_cpuImage.valid || PlatformDataAcquirer.TryGetCpuImage(out _cpuImage))
+            const string traceEvent = "SetRgb256x256Image (CPU)";
+            ProfilerUtility.EventBegin(TraceCategory, traceEvent);
+
+            ProfilerUtility.EventBegin(TraceCategory, TryGetCpuImageEventName);
+            bool canConvert = _cpuImage.valid || PlatformDataAcquirer.TryGetCpuImage(out _cpuImage);
+            ProfilerUtility.EventEnd(TraceCategory, TryGetCpuImageEventName, "CPUImageValid", _cpuImage.valid.ToString(), "GotCPUImage", canConvert.ToString());
+
+            if (canConvert)
             {
+                ProfilerUtility.EventBegin(TraceCategory, ConvertOnCpuAndWriteToMemoryEventName);
                 _cpuImage.ConvertOnCpuAndWriteToMemory
                 (
                     CurrentFrameData.Rgb256x256ImageResolution,
                     CurrentFrameData.CpuRgb256x256ImageDataPtr,
                     TextureFormat.RGB24
                 );
+                ProfilerUtility.EventEnd(TraceCategory, ConvertOnCpuAndWriteToMemoryEventName);
 
                 _currTimestampMs = _cpuImage.timestamp * SecondToMillisecondFactor;
                 CurrentFrameData.CpuRgb256x256ImageDataLength = DataFormatConstants.Rgb_256_256_DataLength;
@@ -148,6 +163,8 @@ namespace Niantic.Lightship.AR.PAM
                 CurrentFrameData.TimestampMs = 0;
                 CurrentFrameData.CpuRgb256x256ImageDataLength = 0;
             }
+
+            ProfilerUtility.EventEnd(TraceCategory, traceEvent);
         }
 
         public override void SetJpeg720x540Image()
@@ -157,8 +174,11 @@ namespace Niantic.Lightship.AR.PAM
             const string traceEvent = "SetJpeg720x540Image (CPU)";
             ProfilerUtility.EventBegin(TraceCategory, traceEvent);
 
-            ProfilerUtility.EventStep(TraceCategory, traceEvent, "TryGetCpuImage");
-            if (_cpuImage.valid || PlatformDataAcquirer.TryGetCpuImage(out _cpuImage))
+            ProfilerUtility.EventBegin(TraceCategory, TryGetCpuImageEventName);
+            bool canConvert = _cpuImage.valid || PlatformDataAcquirer.TryGetCpuImage(out _cpuImage);
+            ProfilerUtility.EventEnd(TraceCategory, TryGetCpuImageEventName, "CPUImageValid", _cpuImage.valid.ToString(), "GotCPUImage", canConvert.ToString());
+
+            if (canConvert)
             {
                 if (_cpuImage.width < DataFormatConstants.Jpeg_720_540_ImgWidth ||
                     _cpuImage.height < DataFormatConstants.Jpeg_720_540_ImgHeight)
@@ -174,8 +194,7 @@ namespace Niantic.Lightship.AR.PAM
                 }
                 else
                 {
-                    ProfilerUtility.EventStep(TraceCategory, traceEvent, "ConvertOnCpuAndWriteToMemory");
-
+                    ProfilerUtility.EventBegin(TraceCategory, ConvertOnCpuAndWriteToMemoryEventName);
                     // With Lightship's jpeg encoding, Unity's default pixel coordinate convention
                     // (first pixel bottom left) can be passed straight to the Native code.
                     _cpuImage.ConvertOnCpuAndWriteToMemory
@@ -183,8 +202,9 @@ namespace Niantic.Lightship.AR.PAM
                         CurrentFrameData.Jpeg720x540ImageResolution,
                         _resizedJpegDataHolderPtr
                     );
+                    ProfilerUtility.EventEnd(TraceCategory, ConvertOnCpuAndWriteToMemoryEventName);
 
-                    ProfilerUtility.EventStep(TraceCategory, traceEvent, "EncodeNativeArrayToJPG");
+                    ProfilerUtility.EventBegin(TraceCategory, EncodeNativeArrayToJPGEventName);
                     UInt32 outSize;
                     unsafe
                     {
@@ -192,6 +212,8 @@ namespace Niantic.Lightship.AR.PAM
                             DataFormatConstants.Jpeg_720_540_ImgWidth, DataFormatConstants.Jpeg_720_540_ImgHeight, DataFormatConstants.JpegQuality,
                             (IntPtr)CurrentFrameData.CpuJpeg720x540ImageData.GetUnsafePtr(), out outSize);
                     }
+                    ProfilerUtility.EventEnd(TraceCategory, EncodeNativeArrayToJPGEventName);
+
                     CurrentFrameData.CpuJpeg720x540ImageDataLength = outSize;
 
                     _currTimestampMs = _cpuImage.timestamp * SecondToMillisecondFactor;
@@ -266,8 +288,11 @@ namespace Niantic.Lightship.AR.PAM
             const string traceEvent = "SetJpegFullResImage (CPU)";
             ProfilerUtility.EventBegin(TraceCategory, traceEvent);
 
-            ProfilerUtility.EventStep(TraceCategory, traceEvent, "TryGetCpuImage");
-            if (_cpuImage.valid || PlatformDataAcquirer.TryGetCpuImage(out _cpuImage))
+            ProfilerUtility.EventBegin(TraceCategory, TryGetCpuImageEventName);
+            var canConvert = _cpuImage.valid || PlatformDataAcquirer.TryGetCpuImage(out _cpuImage);
+            ProfilerUtility.EventEnd(TraceCategory, TryGetCpuImageEventName, "CPUImageValid", _cpuImage.valid.ToString(), "GotCPUImage", canConvert.ToString());
+
+            if (canConvert)
             {
                 if (_cpuImage.width != CurrentFrameData.JpegFullResImageResolution.x ||
                     _cpuImage.height != CurrentFrameData.JpegFullResImageResolution.y)
@@ -285,17 +310,17 @@ namespace Niantic.Lightship.AR.PAM
                 }
                 else
                 {
+                    ProfilerUtility.EventBegin(TraceCategory, ConvertOnCpuAndWriteToMemoryEventName);
                     // Buffer to hold the downscaled image (pre-JPEG formatting)
-                    ProfilerUtility.EventStep(TraceCategory, traceEvent, "ConvertOnCpuAndWriteToMemory");
-
                     _cpuImage.ConvertOnCpuAndWriteToMemory
                     (
                         CurrentFrameData.JpegFullResImageResolution,
                         _fullResJpegDataHolderPtr,
                         TextureFormat.RGBA32
                     );
+                    ProfilerUtility.EventEnd(TraceCategory, ConvertOnCpuAndWriteToMemoryEventName);
 
-                    ProfilerUtility.EventStep(TraceCategory, traceEvent, "EncodeNativeArrayToJPG");
+                    ProfilerUtility.EventBegin(TraceCategory, EncodeNativeArrayToJPGEventName);
                     UInt32 outSize;
                     unsafe
                     {
@@ -303,6 +328,8 @@ namespace Niantic.Lightship.AR.PAM
                             (UInt32)_cpuImage.width, (UInt32)_cpuImage.height, DataFormatConstants.JpegQuality,
                             (IntPtr)CurrentFrameData.CpuJpeg720x540ImageData.GetUnsafePtr(), out outSize);
                     }
+                    ProfilerUtility.EventEnd(TraceCategory, EncodeNativeArrayToJPGEventName);
+
                     CurrentFrameData.CpuJpeg720x540ImageDataLength = outSize;
                     _currTimestampMs = _cpuImage.timestamp * SecondToMillisecondFactor;
                 }
@@ -324,11 +351,14 @@ namespace Niantic.Lightship.AR.PAM
             const string traceEvent = "SetPlatformDepthBuffer (CPU)";
             ProfilerUtility.EventBegin(TraceCategory, traceEvent);
 
-            ProfilerUtility.EventStep(TraceCategory, traceEvent, "TryGetCpuDepthImage");
-            if (PlatformDataAcquirer.TryGetCpuDepthImage(out _depthCpuImage, out _depthConfidenceCpuImage))
-            {
-                ProfilerUtility.EventStep(TraceCategory, traceEvent, "ConvertOnCpuAndWriteToMemory");
+            const string tryGetCpuDepthImageEventName = "TryGetCpuDepthImage";
+            ProfilerUtility.EventBegin(TraceCategory, tryGetCpuDepthImageEventName);
+            bool gotDepthImage = PlatformDataAcquirer.TryGetCpuDepthImage(out _depthCpuImage, out _depthConfidenceCpuImage);
+            ProfilerUtility.EventEnd(TraceCategory, tryGetCpuDepthImageEventName, "GotCpuDepthImage", gotDepthImage.ToString());
 
+            if (gotDepthImage)
+            {
+                ProfilerUtility.EventBegin(TraceCategory, ConvertOnCpuAndWriteToMemoryEventName);
                 unsafe
                 {
                     CurrentFrameData.PlatformDepthDataPtr =
@@ -337,6 +367,7 @@ namespace Niantic.Lightship.AR.PAM
                     CurrentFrameData.PlatformDepthConfidencesDataPtr =
                         (IntPtr)_depthConfidenceCpuImage.GetPlane(0).data.GetUnsafeReadOnlyPtr();
                 }
+                ProfilerUtility.EventEnd(TraceCategory, ConvertOnCpuAndWriteToMemoryEventName);
 
                 _currTimestampMs = _depthCpuImage.timestamp * SecondToMillisecondFactor;
                 CurrentFrameData.PlatformDepthResolution = _depthCpuImage.dimensions;

@@ -2,9 +2,10 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using Niantic.Lightship.AR.Utilities.Logging;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using static Niantic.Lightship.AR.Utilities.Logging.Log;
+using UnityEngine.XR.Management;
 
 namespace Niantic.Lightship.AR.Utilities
 {
@@ -25,42 +26,69 @@ namespace Niantic.Lightship.AR.Utilities
         private static MonoBehaviourEventDispatcher s_instance;
 
         // This component's DefaultExecutionOrder is set to int.minValue, which is the same as ARFoundation's
-        // ARSession component and earlier than the other managers. This means that if a listener to the
-        // Updating event accesses a manager’s property (ex. a method subscribed to Update accesses the
-        // AROcclusionManager.environmentDepthTexture property), it won’t have the most up-to-date data. There are no
-        // current use cases like this in ARDK so we're leaving this class as is for now. If such a use case does
-        // appear, see if LateUpdating can be used instead of Updating.
+        // ARSession component's and earlier than the other managers' DefaultExecutionOrder. This means that
+        // if a listener to the Updating event accesses a manager’s property (ex. a method subscribed to Update
+        // accesses the AROcclusionManager.environmentDepthTexture property), it won’t have the most up-to-date data.
+        // There are no current use cases like this in ARDK, so we're leaving this class as is for now.
+        // If such a use case does appear, see if LateUpdating can be used instead of Updating.
         public static readonly PrioritizingEvent Updating = new ();
         public static readonly PrioritizingEvent LateUpdating = new ();
         public static readonly PrioritizingEvent OnApplicationFocusLost = new ();
 
         private static Thread s_mainThread;
-        private static readonly bool s_staticConstructorWasInvoked;
-
-        private bool _wasCreatedByInternalConstructor;
+        private static bool s_destroyedValidly;
 
         // Instantiation of the MonoBehaviourEventDispatcher component must be delayed until after scenes load.
-        // Therefore, if the static constructor is invoked before scenes are loaded, it'll mark itself as having
-        // been invoked, and the CreateAfterSceneLoad method will check if the static constructor was invoked and
-        // call Instantiate() if needed. If the static constructor is invoked after scenes are loaded, the
-        // CreateAfterSceneLoad will have no-oped, and Instantiate() will be called directly from the constructor.
-        static MonoBehaviourEventDispatcher()
+        public static void Create()
         {
-            s_staticConstructorWasInvoked = true;
-
             if (SceneManager.sceneCount > 0)
             {
                 Instantiate();
             }
+            else
+            {
+                SceneManager.sceneLoaded += OnSceneLoaded;
+            }
         }
 
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-        private static void CreateAfterSceneLoad()
+        private static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
-            if (s_staticConstructorWasInvoked && s_instance == null)
+            SceneManager.sceneLoaded -= OnSceneLoaded;
+            Instantiate();
+        }
+
+        private static void Instantiate()
+        {
+#if NIANTIC_LIGHTSHIP_AR_LOADER_ENABLED
+            if (s_instance != null)
             {
-                Instantiate();
+                return;
             }
+
+            Log.Info("Instantiating the MonoBehaviourEventDispatcher");
+
+            var go =
+                new GameObject(s_gameObjectName, typeof(MonoBehaviourEventDispatcher));
+
+            go.hideFlags = HideFlags.HideInHierarchy;
+
+            if (Application.isPlaying)
+            {
+                s_destroyedValidly = false;
+                DontDestroyOnLoad(go);
+            }
+#endif
+        }
+
+        public static void DestroySelf()
+        {
+            if (s_instance == null)
+            {
+                return;
+            }
+
+            s_destroyedValidly = true;
+            Destroy(s_instance.gameObject);
         }
 
         // Cache the current thread as the main thread for testing
@@ -86,26 +114,6 @@ namespace Niantic.Lightship.AR.Utilities
             }
 
             return s_mainThread == Thread.CurrentThread;
-        }
-
-        private static void Instantiate()
-        {
-#if NIANTIC_LIGHTSHIP_AR_LOADER_ENABLED
-            if (s_instance != null)
-            {
-                return;
-            }
-
-            var go =
-                new GameObject(s_gameObjectName, typeof(MonoBehaviourEventDispatcher));
-
-            go.hideFlags = HideFlags.HideInHierarchy;
-
-            if (Application.isPlaying)
-            {
-                DontDestroyOnLoad(go);
-            }
-#endif
         }
 
         private void Awake()
@@ -136,8 +144,31 @@ namespace Niantic.Lightship.AR.Utilities
 
         private void OnDestroy()
         {
+            Log.Info("Destroying the MonoBehaviourEventDispatcher");
+
+            // It is not guaranteed that the DestroyFromFactory method will run before the OnDestroy
+            // method runs, due to devs having the freedom to deinitialize the XR loader whenever they'd like.
+            // So we cover all cases:
+            // - Valid: This object is destroyed when the XR loader is deinitialized, while the DontDestroyOnLoad scene
+            //   remains loaded (DestroyFromFactory will be called first, and s_destroyedValidly == true)
+            // - Valid: As the application shuts down, the DontDestroyOnLoad scene is unloaded and this object
+            //   is destroyed before the XR loader is deinitialized (gameObject.scene.isLoaded == false)
+            // - Invalid (will log error): This component is destroyed without the XR loader being
+            //   deinitialized immediately afterward ((!s_destroyedValidly && gameObject.scene.isLoaded) == true)
+            if (!s_destroyedValidly && gameObject.scene.isLoaded)
+            {
+                Log.Error
+                (
+                    "The MonoBehaviourEventDispatcher was unexpectedly destroyed. " +
+                    "This will severely limit ARDK functionality until the XR loader is re-initialized " +
+                    "(which will recreate the component)."
+                );
+            }
+
             Updating.Clear();
             LateUpdating.Clear();
+            OnApplicationFocusLost.Clear();
+            s_instance = null;
         }
 
         /// <summary>
@@ -173,7 +204,7 @@ namespace Niantic.Lightship.AR.Utilities
                 // Cannot use IsMainThread because it returns false if the main thread has not yet been cached
                 if (s_mainThread != null && Thread.CurrentThread != s_mainThread)
                 {
-                    Error("AddListener can only be called from the main thread.");
+                    Log.Error("AddListener can only be called from the main thread.");
                     return;
                 }
 
@@ -206,7 +237,7 @@ namespace Niantic.Lightship.AR.Utilities
                 // Cannot use IsMainThread because it returns false if the main thread has not yet been cached
                 if (s_mainThread != null && Thread.CurrentThread != s_mainThread)
                 {
-                    Error("RemoveListener can only be called from the main thread.");
+                    Log.Error("RemoveListener can only be called from the main thread.");
                     return;
                 }
 
@@ -240,7 +271,7 @@ namespace Niantic.Lightship.AR.Utilities
                 // Cannot use IsMainThread because it returns false if the main thread has not yet been cached
                 if (s_mainThread != null && Thread.CurrentThread != s_mainThread)
                 {
-                    Error("InvokeListeners can only be called from the main thread.");
+                    Log.Error("InvokeListeners can only be called from the main thread.");
                     return;
                 }
 

@@ -279,9 +279,13 @@ namespace Niantic.Lightship.AR.PAM
 
         public void SendUpdatedFrameData()
         {
-            const string name = "SendUpdatedFrameData";
             if (!_platformDataAcquirer.TryToBeReady())
+            {
                 return;
+            }
+
+            const string getDataFormatUpdatesForNewFrameEventName = "GetDataFormatUpdatesForNewFrame";
+            ProfilerUtility.EventBegin(TraceCategory, getDataFormatUpdatesForNewFrameEventName);
 
             _api.Lightship_ARDK_Unity_PAM_GetDataFormatUpdatesForNewFrame
             (
@@ -304,10 +308,16 @@ namespace Niantic.Lightship.AR.PAM
                 _platformDataAcquirer.OnFormatRemoved(_removedDataFormats[i]);
             }
 
-            if (readyDataFormatsSize == 0)
-                return;
+            ProfilerUtility.EventEnd(TraceCategory, getDataFormatUpdatesForNewFrameEventName);
 
-            ProfilerUtility.EventBegin(TraceCategory, name, "formatsize", readyDataFormatsSize.ToString());
+            if (readyDataFormatsSize == 0)
+            {
+                return;
+            }
+
+            // Profile the avg cost across requested and ready formats
+            const string setReadyFormatsEventName = "SetReadyFormats";
+            ProfilerUtility.EventBegin(TraceCategory, setReadyFormatsEventName);
 
             for (var i = 0; i < readyDataFormatsSize; i++)
             {
@@ -343,7 +353,6 @@ namespace Niantic.Lightship.AR.PAM
                         SetCompass();
                         break;
 
-
                     case DataFormat.kJpeg_full_res_Uint8:
                         _abstractTexturesSetter.SetJpegFullResImage();
                         break;
@@ -353,18 +362,20 @@ namespace Niantic.Lightship.AR.PAM
 
                         // Need to acquire platform depth buffer first, so that resolution is known
                         if (_currentFrameData.PlatformDepthDataLength > 0)
+                        {
                             SetPlatformDepthCameraIntrinsics(_currentFrameData.PlatformDepthResolution);
-
+                        }
                         break;
                 }
             }
 
-            ProfilerUtility.EventStep(TraceCategory, name, "SetCommonData");
+            ProfilerUtility.EventEnd(TraceCategory, setReadyFormatsEventName);
+
+            const string setCommonDataEventName = "SetCommonData";
+            ProfilerUtility.EventBegin(TraceCategory, setCommonDataEventName);
 
             SetCameraPose();
-
             _currentFrameData.TimestampMs = (ulong)_abstractTexturesSetter.GetCurrentTimestampMs();
-
             _currentFrameData.ScreenOrientation = _platformDataAcquirer.GetScreenOrientation().FromUnityToArdk();
 
             _currentFrameData.TrackingState = _platformDataAcquirer.GetTrackingState().FromUnityToArdk();
@@ -373,20 +384,25 @@ namespace Niantic.Lightship.AR.PAM
                 ? intrinsics.resolution
                 : Vector2Int.zero;
 
+            ProfilerUtility.EventEnd(TraceCategory, setCommonDataEventName);
+
             // SAH handles checking if all required data is in this frame
-            ProfilerUtility.EventStep(TraceCategory, name, "SendData");
+            const string nativePamOnFrameEventName = "Native_OnFrame";
+            ProfilerUtility.EventBegin(TraceCategory, nativePamOnFrameEventName);
             unsafe
             {
                 fixed (void* pointerToFrameStruct = &_currentFrameData._frameCStruct)
                 {
-                    _api.Lightship_ARDK_Unity_PAM_OnFrame(_nativeHandle, (IntPtr)pointerToFrameStruct);
+                    _api.Lightship_ARDK_Unity_PAM_OnFrame_Deprecated(_nativeHandle, (IntPtr)pointerToFrameStruct);
                 }
             }
-
-            ProfilerUtility.EventEnd(TraceCategory, name);
+            ProfilerUtility.EventEnd(TraceCategory, nativePamOnFrameEventName);
 
             if (SentData != null)
             {
+                const string sentDataEventName = "SentData";
+                ProfilerUtility.EventBegin(TraceCategory, sentDataEventName);
+
                 DataFormat[] sentDataFormats = CollateSentDataFormats();
 
                 if (sentDataFormats.Length > 0)
@@ -400,6 +416,7 @@ namespace Niantic.Lightship.AR.PAM
                 }
 
                 SentData?.Invoke(new PamEventArgs(sentDataFormats));
+                ProfilerUtility.EventEnd(TraceCategory, sentDataEventName);
             }
 
             // Invalidate the data lengths so that SAH won't pick them up in the next frame.

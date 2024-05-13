@@ -35,7 +35,7 @@ namespace Niantic.Lightship.AR.PAM
             return _handle;
         }
 
-        public virtual void Lightship_ARDK_Unity_PAM_OnFrame(IntPtr handle, IntPtr frameData)
+        public virtual void Lightship_ARDK_Unity_PAM_OnFrame_Deprecated(IntPtr handle, IntPtr frameData)
         {
             if (handle == _handle)
             {

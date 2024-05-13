@@ -12,7 +12,7 @@ namespace Niantic.Lightship.AR.NavigationMesh
     /// while navigating the environment. You add it to the <see cref="LightshipNavMeshAgent"/> <see cref="GameObject"/> in your scene
     /// and it will draw that agent's current path.
     /// </summary>
-    [PublicAPI]
+    [PublicAPI("apiref/Niantic/Lightship/AR/NavigationMesh/LightshipNavMeshAgentPathRenderer/")]
     public class LightshipNavMeshAgentPathRenderer : MonoBehaviour
     {
         /// <summary>

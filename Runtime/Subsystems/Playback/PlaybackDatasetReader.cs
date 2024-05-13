@@ -39,9 +39,7 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
         // This function will try to go to the next frame depending on the current auto moving direction (_goingForward)
         public bool TryMoveToNextFrame()
         {
-            bool reachedNextFrame = false;
-
-            reachedNextFrame = _goingForward ? TryMoveForward() : TryMoveBackward();
+            bool reachedNextFrame = _goingForward ? TryMoveForward() : TryMoveBackward();
 
             if (!reachedNextFrame)
             {
@@ -49,6 +47,27 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
                 {
                     _goingForward = !_goingForward;
                     return TryMoveToNextFrame();
+                }
+
+                _finished = true;
+                return false;
+            }
+
+            Log.Debug("Playback moved to frame " + _currentFrameIndex);
+            return true;
+        }
+
+        // This function will try to go to the previous frame depending on the current auto moving direction (_goingForward)
+        public bool TryMoveToPreviousFrame()
+        {
+            bool reachedNextFrame = _goingForward ? TryMoveBackward() : TryMoveForward();
+
+            if (!reachedNextFrame)
+            {
+                if (_loopInfinitely)
+                {
+                    _goingForward = !_goingForward;
+                    return TryMoveToPreviousFrame();
                 }
 
                 _finished = true;
@@ -75,8 +94,8 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
         // This function will try to go to the next backward frame, so the t-1 frame while incrementing the timing offset
         public bool TryMoveBackward()
         {
-            // we have reached the start of the dataset
-            if (_currentFrameIndex == 0)
+            // we have reached the start of the dataset, <= is used for if we are at the initializeld _currentFrameIndex of -1
+            if (_currentFrameIndex <= 0)
             {
                 return false;
             }

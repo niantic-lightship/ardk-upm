@@ -1,13 +1,6 @@
 // Copyright 2022-2024 Niantic.
-
-using System;
 using System.Runtime.InteropServices;
-
-using System.Text;
-
 using Niantic.Lightship.AR.Utilities;
-using Niantic.Lightship.AR.Utilities.Logging;
-using UnityEngine;
 
 namespace Niantic.Lightship.AR.XRSubsystems
 {
@@ -119,6 +112,51 @@ namespace Niantic.Lightship.AR.XRSubsystems
             _cloudLocalizationTemporalFusionWindowSize = DefaultCloudLocalizationTemporalFusionWindowSize;
             _slickLocalizationTemporalFusionWindowSize = DefaultSlickLocalizationTemporalFusionWindowSize;
             _diagnosticsEnabled = DefaultDiagnosticsEnabled;
+        }
+
+        public XRPersistentAnchorConfiguration
+        (
+            bool continuousLocalizationEnabled = DefaultContinuousLocalizationEnabled,
+            bool temporalFusionEnabled = DefaultTemporalFusionEnabled,
+            bool transformUpdateSmoothingEnabled = DefaultTransformUpdateSmoothingEnabled,
+            bool slickLocalizationEnabled = DefaultSlickLocalizationEnabled,
+            float cloudLocalizerInitialRequestsPerSecond = DefaultCloudLocalizerInitialRequestsPerSecond,
+            float cloudLocalizerContinuousRequestsPerSecond = DefaultCloudLocalizerContinuousRequestsPerSecond,
+            float slickLocalizationFps = DefaultSlickLocalizationFps,
+            uint cloudLocalizationTemporalFusionWindowSize = DefaultCloudLocalizationTemporalFusionWindowSize,
+            uint slickLocalizationTemporalFusionWindowSize = DefaultSlickLocalizationTemporalFusionWindowSize,
+            bool diagnosticsEnabled = DefaultDiagnosticsEnabled
+        )
+        {
+            _continuousLocalizationEnabled = continuousLocalizationEnabled;
+            _temporalFusionEnabled = temporalFusionEnabled;
+            _transformUpdateSmoothingEnabled = transformUpdateSmoothingEnabled;
+            _slickLocalizationEnabled = slickLocalizationEnabled;
+            _cloudLocalizerInitialRequestsPerSecond = cloudLocalizerInitialRequestsPerSecond;
+            _cloudLocalizerContinuousRequestsPerSecond = cloudLocalizerContinuousRequestsPerSecond;
+            _slickLocalizationFps = slickLocalizationFps;
+            _cloudLocalizationTemporalFusionWindowSize = cloudLocalizationTemporalFusionWindowSize;
+            _slickLocalizationTemporalFusionWindowSize = slickLocalizationTemporalFusionWindowSize;
+            _diagnosticsEnabled = diagnosticsEnabled;
+        }
+
+        public XRPersistentAnchorConfiguration(XRPersistentAnchorConfiguration other) : this()
+        {
+            if (other == null)
+            {
+                return;
+            }
+
+            _continuousLocalizationEnabled = other._continuousLocalizationEnabled;
+            _temporalFusionEnabled = other._temporalFusionEnabled;
+            _transformUpdateSmoothingEnabled = other._transformUpdateSmoothingEnabled;
+            _slickLocalizationEnabled = other._slickLocalizationEnabled;
+            _cloudLocalizerInitialRequestsPerSecond = other._cloudLocalizerInitialRequestsPerSecond;
+            _cloudLocalizerContinuousRequestsPerSecond = other._cloudLocalizerContinuousRequestsPerSecond;
+            _slickLocalizationFps = other._slickLocalizationFps;
+            _cloudLocalizationTemporalFusionWindowSize = other._cloudLocalizationTemporalFusionWindowSize;
+            _slickLocalizationTemporalFusionWindowSize = other._slickLocalizationTemporalFusionWindowSize;
+            _diagnosticsEnabled = other._diagnosticsEnabled;
         }
 
         /// <summary>

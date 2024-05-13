@@ -35,7 +35,7 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
             /// <summary>
             /// Construct the implementation provider.
             /// </summary>
-            public LightshipProvider(): this(new NativeApi()) { }
+            public LightshipProvider() : this(new NativeApi()) { }
 
             public LightshipProvider(IApi api)
             {
@@ -91,7 +91,7 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
                 }
 
                 _api.Destruct(_nativeProviderHandle);
-                _nativeProviderHandle = IntPtr.Zero;;
+                _nativeProviderHandle = IntPtr.Zero; ;
             }
 
             [Obsolete]
@@ -343,6 +343,20 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
 
 #endif
 
+            public override bool TryAddMap(byte[] dataBytes)
+            {
+                if (!LightshipUnityContext.FeatureEnabled(SlickLocalizationFeatureFlagName))
+                {
+                    return false;
+                }
+                if (!_nativeProviderHandle.IsValidHandle())
+                {
+                    return false;
+                }
+
+                return _api.TryAddMap(_nativeProviderHandle, dataBytes);
+            }
+
             public override bool GetVpsSessionId(out string vpsSessionId)
             {
                 if (!_nativeProviderHandle.IsValidHandle())
@@ -369,7 +383,7 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
                     return true;
                 }
 
-                anchor = XRPersistentAnchor.defaultValue;;
+                anchor = XRPersistentAnchor.defaultValue;
                 return false;
             }
 
@@ -406,7 +420,7 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
                     return true;
                 }
 
-                anchor = XRPersistentAnchor.defaultValue;;
+                anchor = XRPersistentAnchor.defaultValue;
                 return false;
             }
 
@@ -648,12 +662,12 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
 
         void ISubsystemWithMutableApi<IApi>.SwitchApiImplementation(IApi api)
         {
-            ((LightshipProvider) provider).SwitchApiImplementation(api);
+            ((LightshipProvider)provider).SwitchApiImplementation(api);
         }
 
         void ISubsystemWithMutableApi<IApi>.SwitchToInternalMockImplementation()
         {
-            ((LightshipProvider) provider).SwitchApiImplementation(new MockApi());
+            ((LightshipProvider)provider).SwitchApiImplementation(new MockApi());
         }
     }
 }

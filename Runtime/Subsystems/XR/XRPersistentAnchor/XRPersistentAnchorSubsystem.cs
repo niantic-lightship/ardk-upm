@@ -1,6 +1,7 @@
 // Copyright 2022-2024 Niantic.
 using System;
 using System.Collections.Generic;
+using Niantic.Lightship.AR.Core;
 using Niantic.Lightship.AR.Utilities;
 using Unity.Collections;
 using UnityEngine;
@@ -25,6 +26,8 @@ namespace Niantic.Lightship.AR.XRSubsystems
         : TrackingSubsystem<XRPersistentAnchor, XRPersistentAnchorSubsystem, XRPersistentAnchorSubsystemDescriptor,
             XRPersistentAnchorSubsystem.Provider>
     {
+        internal const string SlickLocalizationFeatureFlagName = "SlickLocalization";
+
 #if DEVELOPMENT_BUILD || UNITY_EDITOR
         private ValidationUtility<XRPersistentAnchor> m_ValidationUtility;
 #endif
@@ -41,12 +44,37 @@ namespace Niantic.Lightship.AR.XRSubsystems
 
         /// <summary>
         /// Get or set configuration with <paramref> <name>XRPersistentAnchorConfiguration</name>
+        ///
+        /// @note This api calls into native, so getting or setting the configuration will return a deep copy
+        /// Updated configurations need to be set to take effect
         /// </paramref>
         /// </summary>
         public XRPersistentAnchorConfiguration CurrentConfiguration
         {
-            get => provider.CurrentConfiguration;
-            set => provider.CurrentConfiguration = value;
+            // XRPersistentAnchorConfiguration is a reference type, so make a deep copy to avoid confusion
+            get => new(provider.CurrentConfiguration);
+            set
+            {
+                if (value == null)
+                {
+                    Log.Debug("Applied a null configuration, ignoring");
+                    return;
+                }
+
+                // XRPersistentAnchorConfiguration is a reference type, so make a deep copy to avoid confusion
+                //  The params are going down into native when this is set, so we don't want to change them after this point
+                provider.CurrentConfiguration = new(value);
+
+                OnConfigurationChanged?.Invoke(value);
+            }
+        }
+
+        // Overloaded start to invoke the OnBeforeSubsystemStart event
+        // Different from base OnBeforeStart that is only invoked on MonoBehaviour OnEnable
+        public new void Start()
+        {
+            OnBeforeSubsystemStart?.Invoke();
+            base.Start();
         }
 
         protected override void OnStart()
@@ -67,7 +95,7 @@ namespace Niantic.Lightship.AR.XRSubsystems
 
         public bool IsMockProvider => provider.IsMockProvider;
 
-        /// </summary>
+        /// <summary>
         /// Called when debug info is available
         ///
         /// Each invocation of this event contains a XRPersistentAnchorDebugInfo object
@@ -75,6 +103,11 @@ namespace Niantic.Lightship.AR.XRSubsystems
         /// and (experimental) XRPersistentAnchorFrameDiagnostics
         /// </summary>
         public event Action<XRPersistentAnchorDebugInfo> debugInfoProvided;
+
+        /// <summary>
+        /// Called when the subsystem's configuration changes
+        /// </summary>
+        public event Action<XRPersistentAnchorConfiguration> OnConfigurationChanged;
 
         /// <summary>
         /// Get the changes to anchors (added, updated, and removed) since the last call
@@ -196,8 +229,27 @@ namespace Niantic.Lightship.AR.XRSubsystems
             return success;
         }
 
+        /// <summary>
+        /// Attempts to add map.
+        /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
+        /// </summary>
+        /// <param name="dataBytes">Byte array of map data</param>
+        /// <returns><c>true</c> if the new map was added, otherwise <c>false</c>.</returns>
+        public bool TryAddMap(byte[] dataBytes)
+        {
+            if (!LightshipUnityContext.FeatureEnabled(SlickLocalizationFeatureFlagName))
+            {
+                return false;
+            }
+            return provider.TryAddMap(dataBytes);
+        }
+
         // Invoked when the subsystem is stopped
         internal event Action OnSubsystemStop;
+
+        // Invoked when the subsystem is about to start. This is different from OnBeforeStart,
+        // which is only invoked on MonoBehaviour OnEnable
+        internal event Action OnBeforeSubsystemStart;
 
         internal int NumberServerRequests { get; private set; } = 0;
 
@@ -216,7 +268,7 @@ namespace Niantic.Lightship.AR.XRSubsystems
         public abstract class Provider : SubsystemProvider<XRPersistentAnchorSubsystem>
         {
             public virtual bool IsMockProvider { get; } = false;
-            
+
             /// <summary>
             /// Get or set configuration with <paramref> <name>XRPersistentAnchorConfiguration</name>
             /// </paramref>
@@ -263,6 +315,17 @@ namespace Niantic.Lightship.AR.XRSubsystems
             public virtual bool GetVpsSessionId(out string vpsSessionId)
             {
                 vpsSessionId = default;
+                return false;
+            }
+
+            /// <summary>
+            /// Attempts to add map.
+            /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
+            /// </summary>
+            /// <param name="dataBytes">Byte array of map data</param>
+            /// <returns><c>true</c> if the new map was added, otherwise <c>false</c>.</returns>
+            public virtual bool TryAddMap(byte[] dataBytes)
+            {
                 return false;
             }
 

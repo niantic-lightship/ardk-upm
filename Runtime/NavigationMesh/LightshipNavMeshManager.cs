@@ -11,7 +11,7 @@ namespace Niantic.Lightship.AR.NavigationMesh
     /// You can add this component to a <c>GameObject</c> in your scene to use the  <see cref="LightshipNavMesh"/> features.
     /// You can pass this to any <c>GameObject</c> s that may need the  <see cref="LightshipNavMesh"/> e.g. your agents that handle moving across the board.
     /// </summary>
-    [PublicAPI]
+    [PublicAPI("apiref/Niantic/Lightship/AR/NavigationMesh/LightshipNavMeshManager/")]
     public class LightshipNavMeshManager : MonoBehaviour
     {
         [Header("Camera")]

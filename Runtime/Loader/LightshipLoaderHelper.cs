@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using Niantic.Lightship.AR.Utilities;
 using Niantic.Lightship.AR.Utilities.Logging;
 
 namespace Niantic.Lightship.AR.Loader
@@ -47,6 +48,7 @@ namespace Niantic.Lightship.AR.Loader
             _loader = loader;
             var initializationSuccess = true;
 
+            MonoBehaviourEventDispatcher.Create();
             InputReader.Initialize();
 
             if (_initializationSettings.UsePlayback)
@@ -110,6 +112,7 @@ namespace Niantic.Lightship.AR.Loader
             }
 
             InputReader.Shutdown();
+            MonoBehaviourEventDispatcher.DestroySelf();
 #endif
             return true;
         }

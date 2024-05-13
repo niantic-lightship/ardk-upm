@@ -19,7 +19,7 @@ namespace Niantic.Lightship.AR.VpsCoverage
     /// Additionally, private VPS-scans can also be provided to this manager to have them be included in the query
     /// result for testing purposes (as private VPS-scans are not currently included in the query response).
     /// </summary>
-    [PublicAPI]
+    [PublicAPI("apiref/Niantic/Lightship/AR/VpsCoverage/CoverageClientManager/")]
     public class CoverageClientManager : MonoBehaviour
     {
         [SerializeField] [Tooltip("Radial distance from query location when querying coverage")] [Range(0,2000)]
@@ -163,10 +163,10 @@ namespace Niantic.Lightship.AR.VpsCoverage
                 yield break;
             }
 
-            bool wasLocationServicesAlreadyRunning = Input.location.status == LocationServiceStatus.Running;
+            bool wasLocationServicesStopped = Input.location.status == LocationServiceStatus.Stopped;
 
             // only turn on location services if location services were not enabled in the first place
-            if (!wasLocationServicesAlreadyRunning)
+            if (wasLocationServicesStopped)
             {
                 Input.location.Start(1);
             }
@@ -180,7 +180,7 @@ namespace Niantic.Lightship.AR.VpsCoverage
             var inputLocation = new LatLng(Input.location.lastData);
 
             // only turn off location services if location services were not enabled in the first place
-            if (!wasLocationServicesAlreadyRunning)
+            if (wasLocationServicesStopped)
             {
                 Input.location.Stop();
             }

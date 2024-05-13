@@ -37,7 +37,7 @@ namespace Niantic.Lightship.AR.Loader
         private readonly List<ILightshipExternalLoader> _externalLoaders = new List<ILightshipExternalLoader>();
         private bool _useZBufferDepth = true;
         private bool _useLightshipMeshing = false;
-        private bool _useLightshipPersistentAnchors = false;
+        private bool _useSimulationPersistentAnchors = true;
         private XRMeshSubsystem _xrSimulationMeshSubsystem;
         private XRMeshSubsystem _lightshipMeshSubsystem;
         private XRPersistentAnchorSubsystem _lightshipPersistentAnchorSubsystem;
@@ -50,7 +50,7 @@ namespace Niantic.Lightship.AR.Loader
         {
             var originalSettings = LightshipSettings.Instance;
             _useLightshipMeshing = originalSettings.UseLightshipMeshing;
-            _useLightshipPersistentAnchors = LightshipSettings.Instance.LightshipSimulationParams.UseLightshipPersistentAnchor;
+            _useSimulationPersistentAnchors = LightshipSettings.Instance.LightshipSimulationParams.UseSimulationPersistentAnchor;
 
             _useZBufferDepth = LightshipSettings.Instance.LightshipSimulationParams.UseZBufferDepth;
 
@@ -64,7 +64,7 @@ namespace Niantic.Lightship.AR.Loader
                     // Workaround for https://niantic.atlassian.net/browse/ARDK-1866
                     // we disable meshing for native loader helper and handle it manually later
                     enableMeshing: false,
-                    enablePersistentAnchors: _useLightshipPersistentAnchors,
+                    enablePersistentAnchors: !_useSimulationPersistentAnchors,
                     // Workaround for https://niantic.atlassian.net/browse/ARDK-1868
                     // we disable playback, can be removed once this is part of standalone loader
                     usePlayback: false,
@@ -117,7 +117,7 @@ namespace Niantic.Lightship.AR.Loader
                     XRGeneralSettings.Instance.Manager.activeLoaders[0].GetLoadedSubsystem<XRMeshSubsystem>();
             }
 
-            if (!_useLightshipPersistentAnchors)
+            if (_useSimulationPersistentAnchors)
             {
                 CreateSubsystem<XRPersistentAnchorSubsystemDescriptor, XRPersistentAnchorSubsystem>
                 (

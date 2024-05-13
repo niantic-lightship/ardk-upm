@@ -2,7 +2,6 @@
 using Niantic.Lightship.AR.Subsystems.Playback;
 using Niantic.Lightship.AR.Utilities;
 using Unity.XR.CoreUtils;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.XR.Simulation;
 
@@ -22,10 +21,12 @@ namespace Niantic.Lightship.AR.Simulation
         {
             get
             {
-                if (CameraEditorUtils.GameViewAspectRatio >= 1.0)
+                if (LightshipSimulationEditorUtility.GetGameViewAspectRatio() >= 1.0)
+                {
                     return Quaternion.Euler(0, 0, 0);
-                else
-                    return Quaternion.Euler(0, 0, -90);
+                }
+
+                return Quaternion.Euler(0, 0, -90);
             }
         }
 
@@ -69,7 +70,7 @@ namespace Niantic.Lightship.AR.Simulation
             // If the display aspect ratio has changed between landscape and portrait, update the camera rotation to match.
             if (CameraParent != null)
             {
-                var aspectRatio = CameraEditorUtils.GameViewAspectRatio;
+                var aspectRatio = LightshipSimulationEditorUtility.GetGameViewAspectRatio();
                 if (aspectRatio >= 1.0f && _lastAspectRatio < 1.0f)
                 {
                     CameraParent.rotation *= Quaternion.Euler(0, 0, 90);
@@ -103,7 +104,7 @@ namespace Niantic.Lightship.AR.Simulation
                 camera.enabled = false;
                 s_Instance.RgbCamera = camera;
 
-                s_Instance._lastAspectRatio = CameraEditorUtils.GameViewAspectRatio;
+                s_Instance._lastAspectRatio = LightshipSimulationEditorUtility.GetGameViewAspectRatio();
             }
 
             return s_Instance;

@@ -30,6 +30,8 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
 
         public void Destruct(IntPtr anchorProviderHandle);
 
+        public bool TryAddMap(IntPtr anchorProviderHandle, byte[] dataBytes);
+
         public bool TryCreateAnchor(IntPtr anchorProviderHandle, Pose pose, out TrackableId anchorId);
 
         public bool TryRemoveAnchor(IntPtr anchorProviderHandle, TrackableId anchorId);

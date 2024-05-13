@@ -45,17 +45,19 @@ namespace Niantic.ARDK.AR.Protobuf {
             "ASgFEg4KBmhlaWdodBgCIAEoBRIKCgJmeBgDIAEoAhIKCgJmeRgHIAEoAhIK",
             "CgJweBgEIAEoAhIKCgJweRgFIAEoAhIJCgFrGAYgASgCIj0KFEFmZmluZVRy",
             "YW5zZm9ybVByb3RvEhAKCHJvdGF0aW9uGAEgAygCEhMKC3RyYW5zbGF0aW9u",
-            "GAIgAygCIsIBCg1Mb2NhdGlvblByb3RvEhEKCXRpbWVzdGFtcBgBIAEoARIQ",
+            "GAIgAygCIvkBCg1Mb2NhdGlvblByb3RvEhEKCXRpbWVzdGFtcBgBIAEoARIQ",
             "CghsYXRpdHVkZRgCIAEoARIRCglsb25naXR1ZGUYAyABKAESEAoIYWNjdXJh",
             "Y3kYBCABKAISGAoQZWxldmF0aW9uX21ldGVycxgFIAEoAhIaChJlbGV2YXRp",
             "b25fYWNjdXJhY3kYBiABKAISFwoPaGVhZGluZ19kZWdyZWVzGAcgASgCEhgK",
-            "EGhlYWRpbmdfYWNjdXJhY3kYCCABKAIiNAoRRXhwb3N1cmVJbmZvUHJvdG8S",
-            "DwoHc2h1dHRlchgBIAEoAhIOCgZvZmZzZXQYAiABKAIiLAoPRGVwdGhSYW5n",
-            "ZVByb3RvEgwKBG5lYXIYASABKAISCwoDZmFyGAIgASgCIjAKD1Jhc3RlclNp",
-            "emVQcm90bxINCgV3aWR0aBgBIAEoBRIOCgZoZWlnaHQYAiABKAUiZgoQQm91",
-            "bmRpbmdCb3hQcm90bxIMCgRsb194GAEgASgCEgwKBGxvX3kYAiABKAISDAoE",
-            "bG9fehgDIAEoAhIMCgRoaV94GAQgASgCEgwKBGhpX3kYBSABKAISDAoEaGlf",
-            "ehgGIAEoAkIbqgIYTmlhbnRpYy5BUkRLLkFSLlByb3RvYnVmYgZwcm90bzM="));
+            "EGhlYWRpbmdfYWNjdXJhY3kYCCABKAISGQoRaGVhZGluZ190aW1lc3RhbXAY",
+            "CSABKAESGgoScG9zaXRpb25fdGltZXN0YW1wGAogASgBIjQKEUV4cG9zdXJl",
+            "SW5mb1Byb3RvEg8KB3NodXR0ZXIYASABKAISDgoGb2Zmc2V0GAIgASgCIiwK",
+            "D0RlcHRoUmFuZ2VQcm90bxIMCgRuZWFyGAEgASgCEgsKA2ZhchgCIAEoAiIw",
+            "Cg9SYXN0ZXJTaXplUHJvdG8SDQoFd2lkdGgYASABKAUSDgoGaGVpZ2h0GAIg",
+            "ASgFImYKEEJvdW5kaW5nQm94UHJvdG8SDAoEbG9feBgBIAEoAhIMCgRsb195",
+            "GAIgASgCEgwKBGxvX3oYAyABKAISDAoEaGlfeBgEIAEoAhIMCgRoaV95GAUg",
+            "ASgCEgwKBGhpX3oYBiABKAJCG6oCGE5pYW50aWMuQVJESy5BUi5Qcm90b2J1",
+            "ZmIGcHJvdG8z"));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(null, new pbr::GeneratedClrTypeInfo[] {
@@ -64,7 +66,7 @@ namespace Niantic.ARDK.AR.Protobuf {
             new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.ARDK.AR.Protobuf.ScanMetadataProto), global::Niantic.ARDK.AR.Protobuf.ScanMetadataProto.Parser, new[]{ "Id", "ImageSize", "DepthSize", "StartTimestamp", "TimezoneOffset", "AppName", "PlatformName", "ModelName", "ManufacturerName", "Poi", "Recorder", "UserJson", "NativeDepth", "Origin", "GlobalRotation" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.ARDK.AR.Protobuf.CameraParamsProto), global::Niantic.ARDK.AR.Protobuf.CameraParamsProto.Parser, new[]{ "Width", "Height", "Fx", "Fy", "Px", "Py", "K" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.ARDK.AR.Protobuf.AffineTransformProto), global::Niantic.ARDK.AR.Protobuf.AffineTransformProto.Parser, new[]{ "Rotation", "Translation" }, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.ARDK.AR.Protobuf.LocationProto), global::Niantic.ARDK.AR.Protobuf.LocationProto.Parser, new[]{ "Timestamp", "Latitude", "Longitude", "Accuracy", "ElevationMeters", "ElevationAccuracy", "HeadingDegrees", "HeadingAccuracy" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.ARDK.AR.Protobuf.LocationProto), global::Niantic.ARDK.AR.Protobuf.LocationProto.Parser, new[]{ "Timestamp", "Latitude", "Longitude", "Accuracy", "ElevationMeters", "ElevationAccuracy", "HeadingDegrees", "HeadingAccuracy", "HeadingTimestamp", "PositionTimestamp" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.ARDK.AR.Protobuf.ExposureInfoProto), global::Niantic.ARDK.AR.Protobuf.ExposureInfoProto.Parser, new[]{ "Shutter", "Offset" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.ARDK.AR.Protobuf.DepthRangeProto), global::Niantic.ARDK.AR.Protobuf.DepthRangeProto.Parser, new[]{ "Near", "Far" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.ARDK.AR.Protobuf.RasterSizeProto), global::Niantic.ARDK.AR.Protobuf.RasterSizeProto.Parser, new[]{ "Width", "Height" }, null, null, null),
@@ -1693,6 +1695,8 @@ namespace Niantic.ARDK.AR.Protobuf {
       elevationAccuracy_ = other.elevationAccuracy_;
       headingDegrees_ = other.headingDegrees_;
       headingAccuracy_ = other.headingAccuracy_;
+      headingTimestamp_ = other.headingTimestamp_;
+      positionTimestamp_ = other.positionTimestamp_;
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -1703,6 +1707,9 @@ namespace Niantic.ARDK.AR.Protobuf {
     /// <summary>Field number for the "timestamp" field.</summary>
     public const int TimestampFieldNumber = 1;
     private double timestamp_;
+    /// <summary>
+    ///  Legacy timestamp, deprecated.
+    /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public double Timestamp {
       get { return timestamp_; }
@@ -1788,6 +1795,34 @@ namespace Niantic.ARDK.AR.Protobuf {
       }
     }
 
+    /// <summary>Field number for the "heading_timestamp" field.</summary>
+    public const int HeadingTimestampFieldNumber = 9;
+    private double headingTimestamp_;
+    /// <summary>
+    ///  The timestamp that the heading is sampled by the device.
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public double HeadingTimestamp {
+      get { return headingTimestamp_; }
+      set {
+        headingTimestamp_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "position_timestamp" field.</summary>
+    public const int PositionTimestampFieldNumber = 10;
+    private double positionTimestamp_;
+    /// <summary>
+    ///  The timestamp that the GPS is sampled by the device.
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public double PositionTimestamp {
+      get { return positionTimestamp_; }
+      set {
+        positionTimestamp_ = value;
+      }
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public override bool Equals(object other) {
       return Equals(other as LocationProto);
@@ -1809,6 +1844,8 @@ namespace Niantic.ARDK.AR.Protobuf {
       if (ElevationAccuracy != other.ElevationAccuracy) return false;
       if (HeadingDegrees != other.HeadingDegrees) return false;
       if (HeadingAccuracy != other.HeadingAccuracy) return false;
+      if (HeadingTimestamp != other.HeadingTimestamp) return false;
+      if (PositionTimestamp != other.PositionTimestamp) return false;
       return true;
     }
 
@@ -1823,6 +1860,8 @@ namespace Niantic.ARDK.AR.Protobuf {
       if (ElevationAccuracy != 0F) hash ^= ElevationAccuracy.GetHashCode();
       if (HeadingDegrees != 0F) hash ^= HeadingDegrees.GetHashCode();
       if (HeadingAccuracy != 0F) hash ^= HeadingAccuracy.GetHashCode();
+      if (HeadingTimestamp != 0D) hash ^= HeadingTimestamp.GetHashCode();
+      if (PositionTimestamp != 0D) hash ^= PositionTimestamp.GetHashCode();
       return hash;
     }
 
@@ -1865,6 +1904,14 @@ namespace Niantic.ARDK.AR.Protobuf {
         output.WriteRawTag(69);
         output.WriteFloat(HeadingAccuracy);
       }
+      if (HeadingTimestamp != 0D) {
+        output.WriteRawTag(73);
+        output.WriteDouble(HeadingTimestamp);
+      }
+      if (PositionTimestamp != 0D) {
+        output.WriteRawTag(81);
+        output.WriteDouble(PositionTimestamp);
+      }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -1893,6 +1940,12 @@ namespace Niantic.ARDK.AR.Protobuf {
       }
       if (HeadingAccuracy != 0F) {
         size += 1 + 4;
+      }
+      if (HeadingTimestamp != 0D) {
+        size += 1 + 8;
+      }
+      if (PositionTimestamp != 0D) {
+        size += 1 + 8;
       }
       return size;
     }
@@ -1925,6 +1978,12 @@ namespace Niantic.ARDK.AR.Protobuf {
       }
       if (other.HeadingAccuracy != 0F) {
         HeadingAccuracy = other.HeadingAccuracy;
+      }
+      if (other.HeadingTimestamp != 0D) {
+        HeadingTimestamp = other.HeadingTimestamp;
+      }
+      if (other.PositionTimestamp != 0D) {
+        PositionTimestamp = other.PositionTimestamp;
       }
     }
 
@@ -1966,6 +2025,14 @@ namespace Niantic.ARDK.AR.Protobuf {
           }
           case 69: {
             HeadingAccuracy = input.ReadFloat();
+            break;
+          }
+          case 73: {
+            HeadingTimestamp = input.ReadDouble();
+            break;
+          }
+          case 81: {
+            PositionTimestamp = input.ReadDouble();
             break;
           }
         }

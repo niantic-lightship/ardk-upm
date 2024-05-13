@@ -132,10 +132,10 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
                     return;
 
                 if (Input.GetKey(forward))
-                    datasetReader.TryMoveForward();
+                    datasetReader.TryMoveToNextFrame();
 
                 if (Input.GetKey(backward))
-                    datasetReader.TryMoveBackward();
+                    datasetReader.TryMoveToPreviousFrame();
 #else
                 if (Input.touchCount == 2)
                     datasetReader.TryMoveToNextFrame();

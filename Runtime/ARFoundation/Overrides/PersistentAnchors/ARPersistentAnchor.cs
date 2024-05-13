@@ -21,7 +21,7 @@ namespace Niantic.Lightship.AR.PersistentAnchors
     /// By placing virtual content relative to a Persistent Anchor, it can be restored to the same
     /// real world location in a future session.
     /// </remarks>
-    [PublicAPI]
+    [PublicAPI("apiref/Niantic/Lightship/AR/PersistentAnchors/ARPersistentAnchor/")]
     [DefaultExecutionOrder(LightshipARUpdateOrder.PersistentAnchor)]
     [DisallowMultipleComponent]
     public sealed class ARPersistentAnchor : ARTrackable<XRPersistentAnchor, ARPersistentAnchor>

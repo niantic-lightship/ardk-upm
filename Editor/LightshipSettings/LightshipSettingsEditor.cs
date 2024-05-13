@@ -17,6 +17,7 @@ namespace Niantic.Lightship.AR.Editor
     {
         internal const string ProjectValidationSettingsPath = "Project/XR Plug-in Management/Project Validation";
         internal const string XRPluginManagementPath = "Project/XR Plug-in Management";
+        internal const string XREnvironmentViewPath = "Window/XR/AR Foundation/XR Environment";
 
         private enum Platform
         {
@@ -44,8 +45,14 @@ namespace Niantic.Lightship.AR.Editor
             public static readonly GUIContent enabledLabel = new GUIContent("Enabled");
             public static readonly GUIContent preferLidarLabel = new GUIContent
                 ("Prefer LiDAR if Available");
-            public static readonly GUIContent environmentPrefabLabel =
+            public static readonly GUIContent environmentViewLabel =
                 new GUIContent("Environment Prefab");
+            public static readonly GUIContent environmentViewButton =
+                new GUIContent
+                (
+                    "Open XR Environment Window",
+                    "To set an environment prefab, open the scene view and use the XR Environment overlay."
+                );
             public static readonly GUIContent useZBufferDepthInSimulationLabel =
                 new GUIContent("Use Z-Buffer Depth");
             public static readonly GUIContent useLightshipPersistentAnchorInSimulationLabel =
@@ -111,14 +118,12 @@ namespace Niantic.Lightship.AR.Editor
         private SerializedProperty _unityLogLevelProperty;
         private SerializedProperty _fileLogLevelProperty;
         private SerializedProperty _stdOutLogLevelProperty;
-        private SerializedProperty _environmentPrefabProperty;
         private SerializedProperty _useZBufferDepthInSimulationProperty;
-        private SerializedProperty _useLightshipPersistentAnchorInSimulationProperty;
+        private SerializedProperty _useSimulationPersistentAnchorInSimulationProperty;
         private SerializedProperty _lightshipPersistentAnchorParamsProperty;
         private IPlaybackSettingsEditor[] _playbackSettingsEditors;
         private Texture _enabledIcon;
         private Texture _disabledIcon;
-        private GameObject _previousEnvironmentPrefab;
 
         private void OnEnable()
         {
@@ -139,9 +144,8 @@ namespace Niantic.Lightship.AR.Editor
             _fileLogLevelProperty = _lightshipSettings.FindProperty("_fileLogLevel");
             _stdOutLogLevelProperty = _lightshipSettings.FindProperty("_stdoutLogLevel");
             // Simulation sub-properties
-            _environmentPrefabProperty = _lightshipSettings.FindProperty("_lightshipSimulationParams._environmentPrefab");
             _useZBufferDepthInSimulationProperty = _lightshipSettings.FindProperty("_lightshipSimulationParams._useZBufferDepth");
-            _useLightshipPersistentAnchorInSimulationProperty = _lightshipSettings.FindProperty("_lightshipSimulationParams._useLightshipPersistentAnchor");
+            _useSimulationPersistentAnchorInSimulationProperty = _lightshipSettings.FindProperty("_lightshipSimulationParams._useSimulationPersistentAnchor");
             _lightshipPersistentAnchorParamsProperty = _lightshipSettings.FindProperty("_lightshipSimulationParams._simulationPersistentAnchorParams");
 
             _playbackSettingsEditors =
@@ -296,7 +300,7 @@ namespace Niantic.Lightship.AR.Editor
                 (
                     "File Log Level",
                     tooltip: "Log level for logging things into a file. " +
-                    "Recommended to be set to 'off' unless its a niantic support case. File Location: [add location here]"
+                    "Recommended to be set to 'off' unless its a niantic support case. File Location: {Project-Root}/data/log.txt"
                 )
             );
 
@@ -318,8 +322,17 @@ namespace Niantic.Lightship.AR.Editor
             // Environment prefab
             EditorGUILayout.Space(10);
             EditorGUILayout.LabelField("Simulation Environment", EditorStyles.boldLabel);
-            EditorGUILayout.PropertyField
-                (_environmentPrefabProperty, Contents.environmentPrefabLabel);
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.LabelField(Contents.environmentViewLabel, GUILayout.Width(EditorGUIUtility.labelWidth));
+            bool clicked = GUILayout.Button(Contents.environmentViewButton, GUILayout.ExpandWidth(true));
+            EditorGUILayout.EndHorizontal();
+            if (clicked)
+            {
+                EditorApplication.delayCall += () =>
+                {
+                    EditorApplication.ExecuteMenuItem(XREnvironmentViewPath);
+                };
+            }
 
             // Depth
             EditorGUILayout.Space(10);
@@ -330,25 +343,24 @@ namespace Niantic.Lightship.AR.Editor
                 Contents.useZBufferDepthInSimulationLabel
             );
 
-            // Persistent anchors
+            // Persistent anchors (currently forcing the use of the simulation mock system)
             EditorGUILayout.Space(10);
             EditorGUILayout.LabelField("Persistent Anchors", EditorStyles.boldLabel);
-            EditorGUILayout.PropertyField
-            (
-                _useLightshipPersistentAnchorInSimulationProperty,
-                Contents.useLightshipPersistentAnchorInSimulationLabel
-            );
-
-            EditorGUI.indentLevel++;
-            if (!_useLightshipPersistentAnchorInSimulationProperty.boolValue)
+            // EditorGUILayout.PropertyField
+            // (
+            //     _useSimulationPersistentAnchorInSimulationProperty,
+            //     Contents.useLightshipPersistentAnchorInSimulationLabel
+            // );
+            //
+            // EditorGUI.indentLevel++;
+            if (_useSimulationPersistentAnchorInSimulationProperty.boolValue) // always true
             {
                 // Persistent anchor sub-settings
                 EditorGUIUtility.labelWidth = 285;
                 EditorGUILayout.PropertyField
                     (_lightshipPersistentAnchorParamsProperty, GUILayout.ExpandWidth(true));
             }
-
-            EditorGUI.indentLevel--;
+            // EditorGUI.indentLevel--;
 
             EditorGUILayout.Space(10);
         }

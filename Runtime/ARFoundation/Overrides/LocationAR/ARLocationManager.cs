@@ -24,147 +24,9 @@ namespace Niantic.Lightship.AR.LocationAR
     /// When you start tracking an ARLocation, and aim your phone's camera at the physical location,
     /// the digital content that you child to the ARLocation will appear in the physical world.
     /// </summary>
-    [PublicAPI]
+    [PublicAPI("apiref/Niantic/Lightship/AR/LocationAR/ARLocationManager/")]
     public class ARLocationManager : ARPersistentAnchorManager
     {
-        [Header("Experimental: Drift Mitigation")]
-        [Tooltip("Continue to send localization requests after initial localization is achieved. " +
-            "This refines the localization over time and mitigates drift, but consumes more bandwidth")]
-        [SerializeField]
-        private bool _ContinuousLocalizationEnabled = XRPersistentAnchorConfiguration.DefaultContinuousLocalizationEnabled;
-
-        [Tooltip("Interpolate anchor updates instead of snapping. Only works when continuous localization is enabled")]
-        [SerializeField]
-        private bool _InterpolationEnabled;
-
-        /// <summary>
-        /// Number of seconds over which anchor interpolation occurs.
-        /// Faster times will result in more noticeable movement.
-        /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
-        /// </summary>
-        public float InterpolationTimeSeconds
-        {
-            get => ARPersistentAnchorInterpolator.InterpolationTimeSeconds;
-            set => ARPersistentAnchorInterpolator.InterpolationTimeSeconds = value;
-        }
-
-        /// <summary>
-        /// Whether to enable or disable continuous localization
-        /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
-        /// </summary>
-        public bool ContinuousLocalizationEnabled
-        {
-            get => base.ContinuousLocalizationEnabled;
-            set => base.ContinuousLocalizationEnabled = value;
-        }
-
-        /// <summary>
-        /// Whether to enable or disable interpolation
-        /// It is recommended to use the native solution "TransformUpdateSmoothingEnabled" instead of this property
-        /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
-        /// </summary>
-        public bool InterpolationEnabled
-        {
-            get => base.InterpolateAnchors;
-            set => base.InterpolateAnchors = value;
-        }
-
-#if NIANTIC_ARDK_EXPERIMENTAL_FEATURES
-        [Tooltip("Averages/Fuses multiple localization results to provide a more stable localization. Only works when continuous localization is enabled")]
-        [SerializeField]
-        private bool _TemporalFusionEnabled = XRPersistentAnchorConfiguration.DefaultTemporalFusionEnabled;
-
-        [Header("Experimental: Drift Mitigation tuning")]
-        [FormerlySerializedAs("_CloudLocalizerMaxRequestsPerSecond")]
-        [Tooltip("Number of seconds between server requests for initial localization. 0 value means as many requests as possible.")]
-        [SerializeField]
-        private float _InitialServiceRequestIntervalSeconds = 1 / XRPersistentAnchorConfiguration.DefaultCloudLocalizerInitialRequestsPerSecond;
-
-        [Tooltip("Number of seconds between server requests for continuous localization. 0 value means as many requests as possible.")]
-        [SerializeField]
-        private float _ContinuousServiceRequestIntervalSeconds = 1 / XRPersistentAnchorConfiguration.DefaultCloudLocalizerContinuousRequestsPerSecond;
-
-        [Tooltip("Number of localization samples used to fuse. This value should account for the rate of localization requests. " +
-            "By default, it is recommended to cache around 5 seconds of localization samples to fuse")]
-        [SerializeField]
-        private uint _CloudLocalizationTemporalFusionWindowSize = XRPersistentAnchorConfiguration.DefaultCloudLocalizationTemporalFusionWindowSize;
-
-        [Header("Experimental: Diagnostics")]
-        [Tooltip("Whether to enable or disable frame diagnostics")]
-        [SerializeField]
-        private bool _DiagnosticsEnabled = XRPersistentAnchorConfiguration.DefaultDiagnosticsEnabled;
-
-        /// <summary>
-        /// Whether to enable or disable temporal fusion.
-        /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
-        /// </summary>
-        public bool TemporalFusionEnabled
-        {
-            get => base.TemporalFusionEnabled;
-            set => base.TemporalFusionEnabled = value;
-        }
-
-        /// <summary>
-        /// Whether to enable or disable transform update smoothing
-        /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
-        /// </summary>
-        public bool TransformUpdateSmoothingEnabled
-        {
-            get => base.TransformUpdateSmoothingEnabled;
-            set => base.TransformUpdateSmoothingEnabled = value;
-        }
-
-        /// <summary>
-        /// Number of seconds between server requests for initial localization. 0 value means as many requests as possible.
-        /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
-        /// </summary>
-        public float InitialServiceRequestIntervalSeconds
-        {
-            get => base.CloudLocalizerInitialRequestsPerSecond <= 0 ? 0 : 1 / base.CloudLocalizerInitialRequestsPerSecond;
-            set => base.CloudLocalizerInitialRequestsPerSecond = value <= 0 ? 0 : 1 / value;
-        }
-
-        /// <summary>
-        /// Number of seconds between server requests for continuous localization. 0 value means as many requests as possible.
-        /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
-        /// </summary>
-        public float ContinuousServiceRequestIntervalSeconds
-        {
-            get => base.CloudLocalizerContinuousRequestsPerSecond <= 0 ? 0 : 1 / base.CloudLocalizerContinuousRequestsPerSecond;
-            set => base.CloudLocalizerContinuousRequestsPerSecond = value <= 0 ? 0 : 1 / value;
-        }
-
-        /// <summary>
-        /// Number of localization samples used to fuse
-        /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
-        /// </summary>
-        public uint CloudLocalizationTemporalFusionWindowSize
-        {
-            get => base.CloudLocalizationTemporalFusionWindowSize;
-            set => base.CloudLocalizationTemporalFusionWindowSize = value;
-        }
-
-        /// <summary>
-        /// Whether to enable or disable frame diagnostics
-        /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
-        /// </summary>
-        public bool DiagnosticsEnabled
-        {
-            get => base.DiagnosticsEnabled;
-            set => base.DiagnosticsEnabled = value;
-        }
-
-        /// <summary>
-        /// Obsolete. Use CloudLocalizationTemporalFusionWindowSize instead.
-        /// </summary>
-        [Obsolete]
-        public int TemporalFusionSlidingWindow
-        {
-            get => (int)base.CloudLocalizationTemporalFusionWindowSize;
-            set => base.CloudLocalizationTemporalFusionWindowSize = (uint)value;
-        }
-#endif
-
         [Header("AR Locations")]
         [Tooltip("Whether or not to auto-track the currently selected location.  Auto-tracked locations will be enabled, including their children, when the camera is aimed at the physical location.")]
         [SerializeField]
@@ -235,23 +97,6 @@ namespace Niantic.Lightship.AR.LocationAR
             //  dependent on the subsystem in OnBeforeStart.
             base.OnEnable();
             arPersistentAnchorStateChanged += HandleARPersistentAnchorStateChanged;
-        }
-
-        protected override void OnBeforeStart()
-        {
-            // Apply the settings from the inspector
-            base.ContinuousLocalizationEnabled = _ContinuousLocalizationEnabled;
-#if NIANTIC_ARDK_EXPERIMENTAL_FEATURES
-            base.TemporalFusionEnabled = _TemporalFusionEnabled;
-            base.TransformUpdateSmoothingEnabled = _InterpolationEnabled;
-            base.CloudLocalizerInitialRequestsPerSecond = _InitialServiceRequestIntervalSeconds <= 0 ? 0 : 1 / _InitialServiceRequestIntervalSeconds;
-            base.CloudLocalizerContinuousRequestsPerSecond = _ContinuousServiceRequestIntervalSeconds <= 0 ? 0 : 1 / _ContinuousServiceRequestIntervalSeconds;
-            base.CloudLocalizationTemporalFusionWindowSize = _CloudLocalizationTemporalFusionWindowSize;
-            base.DiagnosticsEnabled = _DiagnosticsEnabled;
-#endif
-
-            // This will set the config based on the previously applied settings
-            base.OnBeforeStart();
         }
 
         protected override void Start()
@@ -343,8 +188,6 @@ namespace Niantic.Lightship.AR.LocationAR
         {
             if (_anchorToARLocationMap.Count == 0)
             {
-                Log.Info($"No AR Location is currently being tracked, so StopTracking() is not needed for " +
-                         $"ARLocationManager on GameObject '{gameObject.name}'.");
                 return;
             }
 
@@ -367,7 +210,7 @@ namespace Niantic.Lightship.AR.LocationAR
         {
             if (_anchorToARLocationMap.Count == 0)
             {
-                Log.Error($"No AR Location is currently being tracked, so TryUpdateTracking() is not needed." +
+                Log.Info($"No AR Location is currently being tracked, so TryUpdateTracking() is not needed." +
                     gameObject);
                 return;
             }
@@ -656,6 +499,13 @@ namespace Niantic.Lightship.AR.LocationAR
             arLocation.gameObject.SetActive(false);
             if (_originalParents.TryGetValue(anchor, out Transform parent))
             {
+                // Don't do anything if the parent is null
+                if (parent == null)
+                {
+                    _originalParents.Remove(anchor);
+                    return;
+                }
+
                 // If the anchor (current parent) is deactivated this frame, we can't move the arlocation
                 //  from under it. However... the anchor is deactivated when it is about the be removed,
                 //  so we will never be able to reparent the arlocation at scene close.

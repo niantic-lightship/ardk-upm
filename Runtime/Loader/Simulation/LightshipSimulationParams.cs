@@ -13,23 +13,6 @@ namespace Niantic.Lightship.AR.Loader
     [Serializable]
     public class LightshipSimulationParams
     {
-        private GameObject _previousEnvironmentPrefab;
-
-        [SerializeField, Tooltip("Use this environment prefab for simulation, applies to XRSimulationPreferences")]
-        private GameObject _environmentPrefab;
-
-        public GameObject EnvironmentPrefab
-        {
-            get => _environmentPrefab;
-#if UNITY_EDITOR
-            internal set
-            {
-                _environmentPrefab = value;
-                OnValidate();
-            }
-#endif
-        }
-
         /// <summary>
         /// Layer used for the depth
         /// </summary>
@@ -41,11 +24,11 @@ namespace Niantic.Lightship.AR.Loader
         /// <summary>
         /// Layer used for the persistent anchor
         /// </summary>
-        public bool UseLightshipPersistentAnchor => _useLightshipPersistentAnchor;
+        public bool UseSimulationPersistentAnchor => _useSimulationPersistentAnchor;
 
         [SerializeField,
          Tooltip("When enabled, use Lightship Persistent Anchors instead of simulation Persistent Anchors")]
-        private bool _useLightshipPersistentAnchor = false;
+        private bool _useSimulationPersistentAnchor = true;
 
         public LightshipSimulationPersistentAnchorParams SimulationPersistentAnchorParams => _simulationPersistentAnchorParams;
 
@@ -54,20 +37,5 @@ namespace Niantic.Lightship.AR.Loader
         /// </summary>
         [SerializeField]
         LightshipSimulationPersistentAnchorParams _simulationPersistentAnchorParams = new LightshipSimulationPersistentAnchorParams();
-
-#if UNITY_EDITOR
-        internal void OnValidate()
-        {
-            // If the environment prefab has changed, update the XRSimulationPreferences
-            if (_environmentPrefab != _previousEnvironmentPrefab)
-            {
-                _previousEnvironmentPrefab = _environmentPrefab;
-                if (_environmentPrefab != XRSimulationPreferences.Instance.environmentPrefab)
-                {
-                    XRSimulationPreferences.Instance.environmentPrefab = _environmentPrefab;
-                }
-            }
-        }
-#endif
     }
 }

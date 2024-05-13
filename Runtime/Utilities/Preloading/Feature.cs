@@ -1,5 +1,6 @@
 // Copyright 2022-2024 Niantic.
 
+using System;
 using System.ComponentModel;
 
 namespace Niantic.Lightship.AR.Utilities.Preloading
@@ -19,14 +20,7 @@ namespace Niantic.Lightship.AR.Utilities.Preloading
         [Description("No model specified")]
         Unspecified = 0,
 
-        /// <summary>
-        /// Lightship will use the model file provided by the user.
-        /// </summary>
-        /// <remarks>
-        /// The model file path can be provided via the ARDK configuration file or with
-        /// <see cref="IModelPreloader.RegisterModel(DepthMode, string)"/>.
-        /// </remarks>
-        [Description("Custom model")]
+        [Obsolete("For custom model files, please register to one of the existing modes (Fast, Medium or Smooth).")]
         Custom = 1,
 
         /// <summary>
@@ -61,14 +55,7 @@ namespace Niantic.Lightship.AR.Utilities.Preloading
         [Description("No model specified")]
         Unspecified = 0,
 
-        /// <summary>
-        /// Lightship will use the model file provided by the user.
-        /// </summary>
-        /// <remarks>
-        /// The model file path can be provided via the ARDK configuration file or with
-        /// <see cref="IModelPreloader.RegisterModel(SemanticsMode, string)"/>.
-        /// </remarks>
-        [Description("Custom model")]
+        [Obsolete("For custom model files, please register to one of the existing modes (Fast, Medium or Smooth).")]
         Custom = 1,
 
         /// <summary>

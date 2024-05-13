@@ -44,6 +44,11 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
             throw new NotImplementedException();
         }
 
+        public bool TryAddMap(IntPtr anchorProviderHandle, byte[] dataBytes)
+        {
+            throw new NotImplementedException();
+        }
+
         public bool TryCreateAnchor(IntPtr anchorProviderHandle, Pose pose, out TrackableId anchorId)
         {
             throw new NotImplementedException();

@@ -24,10 +24,26 @@ namespace Niantic.Lightship.AR.Simulation
         private Texture2D _confidenceTexture;
         private IntPtr _confidencePointer;
 
+        protected override void OnEnable()
+        {
+            postRenderCamera += OnPostRenderCamera;
+
+            base.OnEnable();
+        }
+
+        protected override void OnDisable()
+        {
+
+            postRenderCamera -= OnPostRenderCamera;
+
+            base.OnDisable();
+        }
+
         internal override void OnDestroy()
         {
             if (_depthRT != null)
                 _depthRT.Release();
+
             base.OnDestroy();
         }
 
@@ -75,7 +91,7 @@ namespace Niantic.Lightship.AR.Simulation
             m_RenderTexture.Create();
 
             // Confidence Texture is all white (all ones, perfect confidence)
-            _confidenceTexture = new Texture2D(_depthRT.width, _depthRT.height);
+            _confidenceTexture = new Texture2D(_depthRT.width, _depthRT.height, TextureFormat.RFloat, false);
             Color[] pixels = Enumerable.Repeat(Color.white, _confidenceTexture.width * _confidenceTexture.height).ToArray();
             _confidenceTexture.SetPixels(pixels);
             _confidenceTexture.Apply();
@@ -139,13 +155,10 @@ namespace Niantic.Lightship.AR.Simulation
         }
 
         // Postprocess the image
-        private void OnRenderImage (RenderTexture source, RenderTexture destination)
+        private void OnPostRenderCamera(Camera camera)
         {
-            // The first pass blits into a dedicated depth texture (16 bit depth channel)
-            Graphics.Blit (source, destination);
-
             // Here we convert the depth texture to RFloat32
-            Graphics.Blit (_depthRT, m_RenderTexture, _material);
+            Graphics.Blit(_depthRT, m_RenderTexture, _material);
         }
     }
 }

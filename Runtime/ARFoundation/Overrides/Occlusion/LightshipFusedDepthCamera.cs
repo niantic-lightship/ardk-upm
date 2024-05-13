@@ -18,13 +18,16 @@ namespace Niantic.Lightship.AR.Occlusion
         /// Configures the camera for capturing depth.
         /// </summary>
         /// <param name="meshLayer">The layer of the fused mesh.</param>
-        internal void Configure(int meshLayer)
+        /// <param name="nearClipPlane">The near clip plane of the camera.</param>
+        /// <param name="farClipPlane">The far clip plane of the camera.</param>
+        internal void Configure(int meshLayer, float nearClipPlane, float farClipPlane)
         {
             // Configure camera
             _camera.clearFlags = CameraClearFlags.Depth;
             _camera.depthTextureMode = DepthTextureMode.Depth;
             _camera.cullingMask = 1 << meshLayer;
-            _camera.nearClipPlane = 0.1f;
+            _camera.nearClipPlane = nearClipPlane;
+            _camera.farClipPlane = farClipPlane;
         }
 
         /// <summary>

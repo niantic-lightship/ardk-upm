@@ -30,10 +30,16 @@ namespace Niantic.Lightship.AR.Common
         public const int ScanningManager = Session + 1;
 
         /// <summary>
-        /// The <see cref="ARSemanticSegmentationManager"/>'s update order.
-        /// Should come after the <see cref="ARSession"/>.
+        /// The <see cref="AROcclusionManager"/>'s update order.
         /// </summary>
-        public const int SemanticSegmentationManager = Session + 1;
+        public const int OcclusionManager = UnityEngine.XR.ARFoundation.ARUpdateOrder.k_OcclusionManager;
+
+        /// <summary>
+        /// The <see cref="ARSemanticSegmentationManager"/>'s update order.
+        /// Should come after the <see cref="AROcclusionManager"/> to ensure that the model choice is made by the
+        /// occlusion manager before semantic segmentation starts.
+        /// </summary>
+        public const int SemanticSegmentationManager = OcclusionManager + 1;
 
         /// <summary>
         /// The <see cref="ARObjectDetectionManager"/>'s update order.
