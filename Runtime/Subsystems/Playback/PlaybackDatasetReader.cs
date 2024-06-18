@@ -23,16 +23,11 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
         private bool _goingForward = true;
         private double _timestampLoopOffset;
 
-        private const string TRACE_CATEGORY = "PlaybackDatasetReader";
+        private const string TraceCategory = "PlaybackDatasetReader";
 
         public PlaybackDatasetReader(PlaybackDataset dataset, bool loopInfinitely = false)
         {
-            if (dataset == null)
-            {
-                throw new ArgumentNullException(nameof(dataset));
-            }
-
-            _dataset = dataset;
+            _dataset = dataset ?? throw new ArgumentNullException(nameof(dataset));
             _loopInfinitely = loopInfinitely;
         }
 
@@ -182,11 +177,12 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
                 return _imageBytes;
             }
 
-            ProfilerUtility.EventBegin(TRACE_CATEGORY, "ReadImageData");
+            ProfilerUtility.EventBegin(TraceCategory, "ReadImageData");
             var filePath = Path.Combine(_dataset.DatasetPath, fileName);
             _imageBytes = FileUtilities.GetAllBytes(filePath);
             _lastLoadedImageFrameNumber = frameNumber;
-            ProfilerUtility.EventEnd(TRACE_CATEGORY, "ReadImageData");
+            ProfilerUtility.EventEnd(TraceCategory, "ReadImageData");
+
             return _imageBytes;
         }
     }

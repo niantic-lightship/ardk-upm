@@ -1,4 +1,6 @@
 // Copyright 2022-2024 Niantic.
+
+using Niantic.Lightship.AR.PAM;
 using UnityEngine;
 using UnityEngine.XR.ARSubsystems;
 
@@ -9,7 +11,7 @@ namespace Niantic.Lightship.AR.Utilities
         // Translates ARFoundation's TrackingState enum into the corresponding Lightship tracking state values
         // defined in tracking_state.h
         // Note: ARFoundation has no "Failed" state corresponding to Lightship's
-        public static uint FromUnityToArdk(this TrackingState state)
+        public static byte FromUnityToArdk(this TrackingState state)
         {
             switch (state)
             {
@@ -26,7 +28,7 @@ namespace Niantic.Lightship.AR.Utilities
 
         // Translates Unity's ScreenOrientation enum into the corresponding Lightship values
         // defined in orientation.h
-        public static uint FromUnityToArdk(this ScreenOrientation orientation)
+        public static byte FromUnityToArdk(this ScreenOrientation orientation)
         {
             switch (orientation)
             {
@@ -42,5 +44,29 @@ namespace Niantic.Lightship.AR.Utilities
                     return 0;
             }
         }
+
+        // Unity to ARDK Cpu Image Format
+        // Must match cpu_image_format.h
+        public static ImageFormatCEnum FromUnityToArdk(this XRCpuImage.Format format)
+        {
+            switch (format)
+            {
+                case XRCpuImage.Format.Unknown:
+                    return ImageFormatCEnum.Unknown;
+                case XRCpuImage.Format.AndroidYuv420_888:
+                    return ImageFormatCEnum.AndroidYuv420_888;
+                case XRCpuImage.Format.IosYpCbCr420_8BiPlanarFullRange:
+                    return ImageFormatCEnum.IosYpCbCr420_8BiPlanarFullRange;
+                case XRCpuImage.Format.OneComponent8:
+                    return ImageFormatCEnum.OneComponent8;
+                case XRCpuImage.Format.DepthFloat32:
+                    return ImageFormatCEnum.DepthFloat32;
+                case XRCpuImage.Format.DepthUint16:
+                    return ImageFormatCEnum.DepthUint16;
+                default:
+                    return ImageFormatCEnum.Unknown;
+            }
+        }
+
     }
 }

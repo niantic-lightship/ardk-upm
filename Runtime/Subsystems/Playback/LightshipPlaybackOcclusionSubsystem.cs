@@ -6,7 +6,6 @@ using System.IO;
 using Niantic.Lightship.AR.Subsystems.Common;
 using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.Utilities;
-using Niantic.Lightship.AR.Utilities.Textures;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
@@ -146,7 +145,12 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
             /// <summary>
             /// The CPU image API for interacting with the environment depth image.
             /// </summary>
-            public override XRCpuImage.Api environmentDepthCpuImageApi => LightshipCpuImageApi.instance;
+            public override XRCpuImage.Api environmentDepthCpuImageApi => LightshipCpuImageApi.Instance;
+
+            /// <summary>
+            /// The CPU image API for interacting with the environment depth confidence image.
+            /// </summary>
+            public override XRCpuImage.Api environmentDepthConfidenceCpuImageApi => LightshipCpuImageApi.Instance;
 
             /// <summary>
             /// The handle to the native version of the provider
@@ -158,10 +162,16 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
             // This value will strongly affect memory usage.  It can also be set by the user in configuration.
             // The value represents the number of frames in memory before the user must make a copy of the data
             private const int FramesInMemoryCount = 2;
-            private SizedBufferedTextureCache _environmentDepthTextures;
-            private SizedBufferedTextureCache _environmentConfidenceTextures;
+            private int _textureWidth;
+            private int _textureHeight;
+            private (int Id, Texture2D Frame) _currentDepthTexture;
+            private (int Id, Texture2D Frame) _currentConfidenceTexture;
+
+            private TextureFormat _depthImageFormat => TextureFormat.RFloat;
+            private TextureFormat _depthConfidenceImageFormat => TextureFormat.R8;
 
             private EnvironmentDepthMode _requestedEnvironmentDepthMode;
+            private readonly int _dummyStartingValue = -99;
 
             /// <summary>
             /// Construct the implementation provider.
@@ -183,9 +193,6 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
             /// </summary>
             public override void Destroy()
             {
-                _environmentDepthTextures.Dispose();
-                _environmentConfidenceTextures.Dispose();
-
                 _datasetReader = null;
             }
 
@@ -194,26 +201,13 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
                 _datasetReader = reader;
 
                 var depthRes = _datasetReader.GetDepthResolution();
+                _textureWidth = depthRes.x;
+                _textureHeight = depthRes.y;
 
-                _environmentDepthTextures =
-                    new SizedBufferedTextureCache
-                    (
-                        FramesInMemoryCount,
-                        depthRes.x,
-                        depthRes.y,
-                        TextureFormat.RFloat,
-                        true
-                    );
-
-                _environmentConfidenceTextures =
-                    new SizedBufferedTextureCache
-                    (
-                        FramesInMemoryCount,
-                        depthRes.x,
-                        depthRes.y,
-                        TextureFormat.R8,
-                        true
-                    );
+                _currentDepthTexture = new ValueTuple<int, Texture2D>
+                    (_dummyStartingValue, new Texture2D(_textureWidth, _textureHeight, _depthImageFormat, false));
+                _currentConfidenceTexture = new ValueTuple<int, Texture2D>
+                    (_dummyStartingValue, new Texture2D(_textureWidth, _textureHeight, _depthConfidenceImageFormat, false));
             }
 
             /// <summary>
@@ -302,29 +296,28 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
                     return false;
                 }
 
-                var path = Path.Combine(_datasetReader.GetDatasetPath(), frame.DepthPath);
-
-                var tex = _environmentDepthTextures.GetUpdatedTextureFromPath
-                (
-                    path,
-                    (uint)frame.Sequence
-                );
+                UpdateCacheWithCurrentDepthImage(frame);
 
                 var depthResolution = _datasetReader.GetDepthResolution();
                 xrTextureDescriptor =
                     new XRTextureDescriptor
                     (
-                        tex.GetNativeTexturePtr(),
-                        depthResolution.x,
-                        depthResolution.y,
-                        0,
-                        TextureFormat.RFloat,
-                        s_textureEnvironmentDepthPropertyId,
-                        0,
+                        _currentDepthTexture.Frame.GetNativeTexturePtr(),
+                        width: depthResolution.x,
+                        height: depthResolution.y,
+                        mipmapCount: 0,
+                        _currentDepthTexture.Frame.format,
+                        propertyNameId: s_textureEnvironmentDepthPropertyId,
+                        depth: 0,
                         TextureDimension.Tex2D
                     );
 
                 return true;
+            }
+
+            public override bool TryAcquireRawEnvironmentDepthCpuImage(out XRCpuImage.Cinfo cinfo)
+            {
+                return TryAcquireEnvironmentDepthCpuImage(out cinfo);
             }
 
             /// <summary>
@@ -352,29 +345,65 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
                 }
 
                 // Playback depth frames are being used
-                var path = Path.Combine(_datasetReader.GetDatasetPath(), frame.DepthPath);
-
-                var tex = _environmentDepthTextures.GetUpdatedTextureFromPath
-                (
-                    path,
-                    (uint)frame.Sequence
-                );
+                UpdateCacheWithCurrentDepthImage(frame);
 
                 var cpuImageApi = (LightshipCpuImageApi)environmentDepthCpuImageApi;
 
                 IntPtr dataPtr;
                 unsafe
                 {
-                    dataPtr = (IntPtr) tex.GetRawTextureData<byte>().GetUnsafeReadOnlyPtr();
+                    dataPtr = (IntPtr) _currentDepthTexture.Frame.GetRawTextureData<byte>().GetUnsafeReadOnlyPtr();
                 }
 
+                var depthResolution = _datasetReader.GetDepthResolution();
                 var gotCpuImage = cpuImageApi.TryAddManagedXRCpuImage
                 (
                     dataPtr,
-                    tex.width * tex.height * tex.format.BytesPerPixel(),
-                    tex.width,
-                    tex.height,
-                    tex.format,
+                    depthResolution.x * depthResolution.y * _currentDepthTexture.Frame.format.BytesPerPixel(),
+                    width: depthResolution.x,
+                    height: depthResolution.y,
+                    _currentDepthTexture.Frame.format,
+                    (ulong)(frame.TimestampInSeconds * 1000.0),
+                    out cinfo
+                );
+
+                return gotCpuImage;
+            }
+
+            public override bool TryAcquireEnvironmentDepthConfidenceCpuImage(out XRCpuImage.Cinfo cinfo)
+            {
+                if (_datasetReader == null)
+                {
+                    cinfo = default;
+                    return false;
+                }
+
+                var frame = _datasetReader.CurrFrame;
+                if (frame == null || !frame.HasDepth)
+                {
+                    cinfo = default;
+                    return false;
+                }
+
+                UpdateCacheWithCurrentConfidenceImage(frame);
+
+                var cpuImageApi = (LightshipCpuImageApi)environmentDepthCpuImageApi;
+
+                var currentFrame = _currentConfidenceTexture.Frame;
+                IntPtr dataPtr;
+                unsafe
+                {
+                    dataPtr = (IntPtr) currentFrame.GetRawTextureData<byte>().GetUnsafeReadOnlyPtr();
+                }
+
+                var resolution = _datasetReader.GetDepthResolution();
+                var gotCpuImage = cpuImageApi.TryAddManagedXRCpuImage
+                (
+                    dataPtr,
+                    currentFrame.width * currentFrame.height * currentFrame.format.BytesPerPixel(),
+                    width: resolution.x,
+                    height: resolution.y,
+                    currentFrame.format,
                     (ulong)(frame.TimestampInSeconds * 1000.0),
                     out cinfo
                 );
@@ -388,43 +417,81 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
                 out XRTextureDescriptor environmentDepthConfidenceDescriptor
             )
             {
+                environmentDepthConfidenceDescriptor = default;
+
                 // TODO (kcho): Check if LiDAR frames are fetched after subsystem is stopped by ARKit
                 if (_datasetReader == null)
                 {
-                    environmentDepthConfidenceDescriptor = default;
                     return false;
                 }
 
                 var frame = _datasetReader.CurrFrame;
                 if (frame == null || !frame.HasDepth)
                 {
-                    environmentDepthConfidenceDescriptor = default;
                     return false;
                 }
 
-                var path = Path.Combine(_datasetReader.GetDatasetPath(), frame.DepthConfidencePath);
+                UpdateCacheWithCurrentConfidenceImage(frame);
 
-                var tex = _environmentConfidenceTextures.GetUpdatedTextureFromPath
-                (
-                    path,
-                    (uint)frame.Sequence
-                );
-
-                var res = _datasetReader.GetDepthResolution();
                 environmentDepthConfidenceDescriptor =
                     new XRTextureDescriptor
                     (
-                        tex.GetNativeTexturePtr(),
-                        res.x,
-                        res.y,
-                        0,
-                        TextureFormat.R8,
-                        s_textureEnvironmentDepthConfidencePropertyId,
-                        0,
+                        _currentConfidenceTexture.Frame.GetNativeTexturePtr(),
+                        _textureWidth,
+                        _textureHeight,
+                        mipmapCount: 0,
+                        _currentConfidenceTexture.Frame.format,
+                        propertyNameId: s_textureEnvironmentDepthConfidencePropertyId,
+                        depth: 0,
                         TextureDimension.Tex2D
                     );
 
                 return true;
+            }
+
+            private void UpdateCacheWithCurrentDepthImage(PlaybackDataset.FrameMetadata frame)
+            {
+                if (_currentDepthTexture.Id != frame.Sequence)
+                {
+                    Texture2D tex = _currentDepthTexture.Frame;
+                    var wasReinitialisationSuccessful = tex.Reinitialize(_textureWidth, _textureHeight,
+                        _depthImageFormat, false);
+
+                    if (!wasReinitialisationSuccessful)
+                    {
+                        tex = new Texture2D(_textureWidth, _textureHeight, _depthImageFormat, false);
+                    }
+
+                    var path = Path.Combine(_datasetReader.GetDatasetPath(), frame.DepthPath);
+                    byte[] buffer = File.ReadAllBytes(path);
+                    tex.LoadRawTextureData(buffer);
+                    tex.Apply();
+
+                    _currentDepthTexture = (frame.Sequence, tex);
+                }
+            }
+
+
+            private void UpdateCacheWithCurrentConfidenceImage(PlaybackDataset.FrameMetadata frame)
+            {
+                if (_currentConfidenceTexture.Id != frame.Sequence)
+                {
+                    Texture2D tex = _currentConfidenceTexture.Frame;
+                    var reinitStatus = tex.Reinitialize(_textureWidth, _textureHeight,
+                        _depthConfidenceImageFormat, false);
+
+                    if (!reinitStatus)
+                    {
+                        tex = new Texture2D(_textureWidth, _textureHeight, _depthConfidenceImageFormat, false);
+                    }
+
+                    var path = Path.Combine(_datasetReader.GetDatasetPath(), frame.DepthConfidencePath);
+                    byte[] buffer = File.ReadAllBytes(path);
+                    tex.LoadRawTextureData(buffer);
+                    tex.Apply();
+
+                    _currentConfidenceTexture = (frame.Sequence, tex);
+                }
             }
 
 
@@ -459,8 +526,16 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
             public override void GetMaterialKeywords(out List<string> enabledKeywords,
                 out List<string> disabledKeywords)
             {
-                enabledKeywords = s_environmentDepthEnabledMaterialKeywords;
-                disabledKeywords = null;
+                if ((_occlusionPreferenceMode == OcclusionPreferenceMode.NoOcclusion))
+                {
+                    enabledKeywords = null;
+                    disabledKeywords = s_environmentDepthEnabledMaterialKeywords;
+                }
+                else
+                {
+                    enabledKeywords = s_environmentDepthEnabledMaterialKeywords;
+                    disabledKeywords = null;
+                }
             }
         }
     }

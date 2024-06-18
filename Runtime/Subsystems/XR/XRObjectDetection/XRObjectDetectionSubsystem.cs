@@ -82,6 +82,29 @@ namespace Niantic.Lightship.AR.XRSubsystems
         }
 
         /// <summary>
+        /// When enabled, the object detection algorithm takes into account how many consecutive frames an object
+        /// as been seen in, and how many frames a previously detected object has been unseen for, when determining
+        /// which detections to surface. This has the effect of decreasing the possibility of spurious detections,
+        /// but may also cause an increase in missed detections if framerate is low and the camera view is moving
+        /// significantly between each frame.
+        /// </summary>
+        /// <value>
+        /// True if stabilization is enabled.
+        /// </value>
+        /// <exception cref="System.NotSupportedException">Thrown if configuring stabilization is not supported
+        /// by the implementation.
+        /// </exception>
+        /// <remarks>
+        /// This is an experimental API. Experimental features are subject to breaking changes,
+        /// not officially supported, and may be deprecated without notice.
+        /// </remarks>
+        public virtual bool IsStabilizationEnabled
+        {
+            get => provider.IsStabilizationEnabled;
+            set => provider.IsStabilizationEnabled = value;
+        }
+
+        /// <summary>
         /// Tries to get a list of the object detection category names
         /// for the current model.
         /// </summary>
@@ -193,6 +216,27 @@ namespace Niantic.Lightship.AR.XRSubsystems
             /// </remarks>
             public virtual bool IsMetadataAvailable
                 => throw new NotSupportedException("Getting if metadata is available is not supported by this implementation");
+
+            /// <summary>
+            /// Property to be implemented by the provider to get or set whether filtering is enabled.
+            /// </summary>
+            /// <value>
+            /// True if filtering is enabled.
+            /// </value>
+            /// <exception cref="System.NotSupportedException">Thrown when configuring filtering is not supported
+            /// by the implementation.
+            /// </exception>
+            /// <exception cref="NotSupportedException"></exception>
+            public virtual bool IsStabilizationEnabled
+            {
+                get => false;
+                set
+                {
+                    throw new NotSupportedException("Configuring object detection filtering is not "
+                        + "supported by this implementation");
+                }
+            }
+
 
             /// <summary>
             /// Method to be implemented by the provider to get a list of the object detection category names

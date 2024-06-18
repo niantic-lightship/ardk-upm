@@ -32,15 +32,9 @@ namespace Niantic.Lightship.Simulation
 
         private static void OnSceneUnloaded(Scene scene)
         {
-            if (XRGeneralSettings.Instance.Manager.activeLoader is LightshipSimulationLoader)
-            {
-                ReinitializeLoader();
-            }
-        }
-
-        private static void ReinitializeLoader()
-        {
-            if (XRGeneralSettings.Instance != null && XRGeneralSettings.Instance.Manager != null)
+            if (XRGeneralSettings.Instance != null && XRGeneralSettings.Instance.Manager != null &&
+                XRGeneralSettings.Instance.Manager.activeLoader is LightshipSimulationLoader &&
+                SceneManager.GetActiveScene().name == scene.name)
             {
                 Log.Info("Deinitializing XR loader from LightshipSimulationSceneLoaderUtility...");
                 XRGeneralSettings.Instance.Manager.DeinitializeLoader();

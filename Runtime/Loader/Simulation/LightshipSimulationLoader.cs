@@ -36,10 +36,7 @@ namespace Niantic.Lightship.AR.Loader
         private LightshipLoaderHelper _lightshipLoaderHelper;
         private readonly List<ILightshipExternalLoader> _externalLoaders = new List<ILightshipExternalLoader>();
         private bool _useZBufferDepth = true;
-        private bool _useLightshipMeshing = false;
         private bool _useSimulationPersistentAnchors = true;
-        private XRMeshSubsystem _xrSimulationMeshSubsystem;
-        private XRMeshSubsystem _lightshipMeshSubsystem;
         private XRPersistentAnchorSubsystem _lightshipPersistentAnchorSubsystem;
 
         /// <summary>
@@ -49,7 +46,6 @@ namespace Niantic.Lightship.AR.Loader
         public override bool Initialize()
         {
             var originalSettings = LightshipSettings.Instance;
-            _useLightshipMeshing = originalSettings.UseLightshipMeshing;
             _useSimulationPersistentAnchors = LightshipSettings.Instance.LightshipSimulationParams.UseSimulationPersistentAnchor;
 
             _useZBufferDepth = LightshipSettings.Instance.LightshipSimulationParams.UseZBufferDepth;
@@ -61,9 +57,7 @@ namespace Niantic.Lightship.AR.Loader
                     // Workaround for https://niantic.atlassian.net/browse/ARDK-3019
                     // we disable lightship depth if we're use z-buffer depth
                     enableDepth: originalSettings.UseLightshipDepth && !_useZBufferDepth,
-                    // Workaround for https://niantic.atlassian.net/browse/ARDK-1866
-                    // we disable meshing for native loader helper and handle it manually later
-                    enableMeshing: false,
+                    enableMeshing: originalSettings.UseLightshipMeshing,
                     enablePersistentAnchors: !_useSimulationPersistentAnchors,
                     // Workaround for https://niantic.atlassian.net/browse/ARDK-1868
                     // we disable playback, can be removed once this is part of standalone loader
@@ -97,25 +91,6 @@ namespace Niantic.Lightship.AR.Loader
         {
             _lightshipLoaderHelper = lightshipLoaderHelper;
             _lightshipLoaderHelper.Initialize(this);
-
-            // Workaround for https://niantic.atlassian.net/browse/ARDK-1866
-            // we always create their meshing after native loader helper is done
-            CreateSubsystem<XRMeshSubsystemDescriptor, XRMeshSubsystem>(s_MeshSubsystemDescriptors, "XRSimulation-Meshing");
-
-            _xrSimulationMeshSubsystem =
-                XRGeneralSettings.Instance.Manager.activeLoaders[0].GetLoadedSubsystem<XRMeshSubsystem>();
-
-            // we then overwrite it (without destroying the XRSimulation-Meshing to keep it alive for their native call)
-            if (_useLightshipMeshing)
-            {
-                var meshingProvider = new LightshipMeshingProvider(LightshipUnityContext.UnityContextHandle);
-                // Create Unity integrated subsystem
-                CreateSubsystem<XRMeshSubsystemDescriptor, XRMeshSubsystem>(s_MeshSubsystemDescriptors,
-                    "LightshipMeshing");
-
-                _lightshipMeshSubsystem =
-                    XRGeneralSettings.Instance.Manager.activeLoaders[0].GetLoadedSubsystem<XRMeshSubsystem>();
-            }
 
             if (_useSimulationPersistentAnchors)
             {
@@ -187,12 +162,6 @@ namespace Niantic.Lightship.AR.Loader
             DestroySubsystem<XRCameraSubsystem>();
             DestroySubsystem<XRSessionSubsystem>();
             DestroySubsystem<XRPersistentAnchorSubsystem>();
-            // DestroySubsystem<XRMeshSubsystem>();
-
-            // Workaround for https://niantic.atlassian.net/browse/ARDK-1866
-            // if we used our meshing on top, we also have to destroy the underlying XRSimulationMeshSystem manually
-            _xrSimulationMeshSubsystem?.Destroy();
-            _lightshipMeshSubsystem?.Destroy();
 
             return true;
         }

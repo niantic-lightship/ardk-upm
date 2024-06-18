@@ -41,7 +41,7 @@ namespace Niantic.Lightship.AR.Simulation
             /// <value>
             /// The shader keyword for enabling environment depth rendering.
             /// </value>
-            private const string k_EnvironmentDepthEnabledARKitMaterialKeyword = "ARKIT_ENVIRONMENT_DEPTH_ENABLED";
+            private const string EnvironmentDepthEnabledARKitMaterialKeyword = "ARKIT_ENVIRONMENT_DEPTH_ENABLED";
 
             /// <summary>
             /// The shader keyword for enabling environment depth rendering for ARCore Background shader.
@@ -49,7 +49,7 @@ namespace Niantic.Lightship.AR.Simulation
             /// <value>
             /// The shader keyword for enabling environment depth rendering.
             /// </value>
-            private const string k_EnvironmentDepthEnabledARCoreMaterialKeyword = "ARCORE_ENVIRONMENT_DEPTH_ENABLED";
+            private const string EnvironmentDepthEnabledARCoreMaterialKeyword = "ARCORE_ENVIRONMENT_DEPTH_ENABLED";
 
             /// <summary>
             /// The shader keyword for enabling environment depth rendering for Lightship Playback Background shader.
@@ -57,7 +57,7 @@ namespace Niantic.Lightship.AR.Simulation
             /// <value>
             /// The shader keyword for enabling environment depth rendering.
             /// </value>
-            private const string k_EnvironmentDepthEnabledLightshipMaterialKeyword =
+            private const string EnvironmentDepthEnabledLightshipMaterialKeyword =
                 "LIGHTSHIP_ENVIRONMENT_DEPTH_ENABLED";
 
             /// <summary>
@@ -66,17 +66,16 @@ namespace Niantic.Lightship.AR.Simulation
             /// <value>
             /// The shader keywords for enabling environment depth rendering.
             /// </value>
-            private static readonly List<string> s_EnvironmentDepthEnabledMaterialKeywords =
+            private static readonly List<string> s_environmentDepthEnabledMaterialKeywords =
                 new()
                 {
-                    k_EnvironmentDepthEnabledARKitMaterialKeyword,
-                    k_EnvironmentDepthEnabledARCoreMaterialKeyword,
-                    k_EnvironmentDepthEnabledLightshipMaterialKeyword
+                    EnvironmentDepthEnabledARKitMaterialKeyword,
+                    EnvironmentDepthEnabledARCoreMaterialKeyword,
+                    EnvironmentDepthEnabledLightshipMaterialKeyword
                 };
 
-            private Camera m_Camera;
-            private LightshipCameraTextureFrameEventArgs m_DepthTextureFrameEventArgs;
-            private LightshipSimulationDepthTextureProvider _mSimulationDepthTextureProvider;
+            private Camera _camera;
+            private LightshipSimulationDepthTextureProvider _simulationDepthTextureProvider;
 
             /// <summary>
             /// Construct the implementation provider.
@@ -100,32 +99,25 @@ namespace Niantic.Lightship.AR.Simulation
 
                 var cameraGo = new GameObject("LightshipSimulationDepthCamera");
                 cameraGo.transform.SetParent(simulationDevice.CameraParent, false);
-                m_Camera = cameraGo.AddComponent<Camera>();
-                m_Camera.enabled = false;
+                _camera = cameraGo.AddComponent<Camera>();
+                _camera.enabled = false;
 
-                _mSimulationDepthTextureProvider =
-                    LightshipSimulationDepthTextureProvider.AddTextureProviderToCamera(m_Camera, xrCamera);
-                _mSimulationDepthTextureProvider.frameReceived += CameraFrameReceived;
-                if (_mSimulationDepthTextureProvider != null && _mSimulationDepthTextureProvider.CameraFrameEventArgs != null)
-                    m_DepthTextureFrameEventArgs =
-                        (LightshipCameraTextureFrameEventArgs)_mSimulationDepthTextureProvider.CameraFrameEventArgs;
+                _simulationDepthTextureProvider =
+                    LightshipSimulationDepthTextureProvider.AddTextureProviderToCamera(_camera, xrCamera);
+                _simulationDepthTextureProvider.FrameReceived += CameraFrameReceived;
             }
 
             public override void Stop()
             {
-                if (_mSimulationDepthTextureProvider != null)
-                    _mSimulationDepthTextureProvider.frameReceived -= CameraFrameReceived;
+                if (_simulationDepthTextureProvider != null)
+                    _simulationDepthTextureProvider.FrameReceived -= CameraFrameReceived;
             }
 
             public override void Destroy()
-            {
-
-            }
+            { }
 
             private void CameraFrameReceived(LightshipCameraTextureFrameEventArgs args)
-            {
-                m_DepthTextureFrameEventArgs = args;
-            }
+            { }
 
             public override NativeArray<XRTextureDescriptor> GetTextureDescriptors(
                 XRTextureDescriptor defaultDescriptor,
@@ -143,13 +135,13 @@ namespace Niantic.Lightship.AR.Simulation
 
             public override bool TryGetEnvironmentDepth(out XRTextureDescriptor xrTextureDescriptor)
             {
-                if (_mSimulationDepthTextureProvider == null)
+                if (_simulationDepthTextureProvider == null)
                 {
                     xrTextureDescriptor = default;
                     return false;
                 }
 
-                _mSimulationDepthTextureProvider.TryGetTextureDescriptor(out var descriptor);
+                _simulationDepthTextureProvider.TryGetTextureDescriptor(out var descriptor);
                 xrTextureDescriptor = descriptor;
                 return true;
             }
@@ -157,13 +149,13 @@ namespace Niantic.Lightship.AR.Simulation
             public override bool TryGetEnvironmentDepthConfidence(
                 out XRTextureDescriptor environmentDepthConfidenceDescriptor)
             {
-                if (_mSimulationDepthTextureProvider == null)
+                if (_simulationDepthTextureProvider == null)
                 {
                     environmentDepthConfidenceDescriptor = default;
                     return false;
                 }
 
-                _mSimulationDepthTextureProvider.TryGetConfidenceTextureDescriptor(out var descriptor);
+                _simulationDepthTextureProvider.TryGetConfidenceTextureDescriptor(out var descriptor);
                 environmentDepthConfidenceDescriptor = descriptor;
                 return true;
             }
@@ -176,7 +168,7 @@ namespace Niantic.Lightship.AR.Simulation
             public override void GetMaterialKeywords(out List<string> enabledKeywords,
                 out List<string> disabledKeywords)
             {
-                enabledKeywords = s_EnvironmentDepthEnabledMaterialKeywords;
+                enabledKeywords = s_environmentDepthEnabledMaterialKeywords;
                 disabledKeywords = null;
             }
         }

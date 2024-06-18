@@ -1,9 +1,12 @@
 // Copyright 2022-2024 Niantic.
 using System;
-
+using System.IO;
+using Niantic.Lightship.AR.Subsystems.Common;
+using Niantic.Lightship.AR.Utilities;
 using Niantic.Lightship.AR.Utilities.Logging;
-
+using Niantic.Lightship.AR.Utilities.Textures;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.XR.CoreUtils;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -17,7 +20,7 @@ namespace Niantic.Lightship.AR.Simulation
     /// </summary>
     public sealed class LightshipSimulationCameraSubsystem : XRCameraSubsystem
     {
-        internal const string k_SubsystemId = "Lightship-XRSimulation-Camera";
+        private const string SubsystemId = "Lightship-XRSimulation-Camera";
 
         /// <summary>
         /// The name for the shader for rendering the camera texture.
@@ -26,7 +29,7 @@ namespace Niantic.Lightship.AR.Simulation
         /// The name for the shader for rendering the camera texture.
         /// </value>
         // const string k_BackgroundShaderName = "Unlit/Simulation Background Simple";
-        private const string k_BackgroundShaderName = "Unlit/LightshipPlaybackBackground";
+        private const string BackgroundShaderName = "Unlit/LightshipPlaybackBackground";
 
         /// <summary>
         /// The shader property name for the simple RGB component of the camera video frame.
@@ -34,7 +37,7 @@ namespace Niantic.Lightship.AR.Simulation
         /// <value>
         /// The shader property name for the  simple RGB component of the camera video frame.
         /// </value>
-        private const string k_TextureSinglePropertyName = "_CameraTex";
+        private const string TextureSinglePropertyName = "_CameraTex";
 
         /// <summary>
         /// The shader property name identifier for the simple RGB component of the camera video frame.
@@ -42,41 +45,43 @@ namespace Niantic.Lightship.AR.Simulation
         /// <value>
         /// The shader property name identifier for the simple RGB component of the camera video frame.
         /// </value>
-        internal static readonly int textureSinglePropertyNameId = Shader.PropertyToID(k_TextureSinglePropertyName);
+        internal static readonly int s_textureSinglePropertyNameId = Shader.PropertyToID(TextureSinglePropertyName);
 
         private class LightshipSimulationProvider : Provider
         {
-            private LightshipCameraTextureFrameEventArgs m_CameraTextureFrameEventArgs;
-            private LightshipSimulationRgbCameraTextureProvider _mSimulationRgbCameraTextureProvider;
-            private Camera m_Camera;
-            private Material m_CameraMaterial;
-            private XRCameraConfiguration m_XRCameraConfiguration;
+            private LightshipCameraTextureFrameEventArgs _cameraTextureFrameEventArgs;
+            private LightshipSimulationRgbCameraTextureProvider _simulationRgbCameraTextureProvider;
+            private Camera _camera;
+            private Material _cameraMaterial;
+            private XRCameraConfiguration _xrCameraConfiguration;
 
-            private XRSupportedCameraBackgroundRenderingMode m_RequestedBackgroundRenderingMode = XRSupportedCameraBackgroundRenderingMode.BeforeOpaques;
+            private XRSupportedCameraBackgroundRenderingMode _requestedBackgroundRenderingMode = XRSupportedCameraBackgroundRenderingMode.BeforeOpaques;
+
+            public override XRCpuImage.Api cpuImageApi { get; } = LightshipCpuImageApi.Instance;
 
             public override Feature currentCamera => Feature.WorldFacingCamera;
 
             public override XRCameraConfiguration? currentConfiguration
             {
-                get => m_XRCameraConfiguration;
+                get => _xrCameraConfiguration;
                 set
                 {
                     // Currently assuming any not null configuration is valid for simulation
                     if (value == null)
                         throw new ArgumentNullException("value", "cannot set the camera configuration to null");
 
-                    m_XRCameraConfiguration = (XRCameraConfiguration)value;
+                    _xrCameraConfiguration = (XRCameraConfiguration)value;
                 }
             }
 
-            public override Material cameraMaterial => m_CameraMaterial;
+            public override Material cameraMaterial => _cameraMaterial;
 
             public override bool permissionGranted => true;
 
             public override XRSupportedCameraBackgroundRenderingMode requestedBackgroundRenderingMode
             {
-                get => m_RequestedBackgroundRenderingMode;
-                set => m_RequestedBackgroundRenderingMode = value;
+                get => _requestedBackgroundRenderingMode;
+                set => _requestedBackgroundRenderingMode = value;
             }
 
             public override XRCameraBackgroundRenderingMode currentBackgroundRenderingMode
@@ -100,7 +105,7 @@ namespace Niantic.Lightship.AR.Simulation
 
             public LightshipSimulationProvider()
             {
-                var backgroundShader = Shader.Find(k_BackgroundShaderName);
+                var backgroundShader = Shader.Find(BackgroundShaderName);
 
                 if (backgroundShader == null)
                 {
@@ -108,7 +113,7 @@ namespace Niantic.Lightship.AR.Simulation
                 }
                 else
                 {
-                    m_CameraMaterial = CreateCameraMaterial(k_BackgroundShaderName);
+                    _cameraMaterial = CreateCameraMaterial(BackgroundShaderName);
                 }
             }
 
@@ -122,41 +127,41 @@ namespace Niantic.Lightship.AR.Simulation
                 if (xrCamera == null)
                     throw new NullReferenceException("No camera found under XROrigin.");
 
-                m_Camera = LightshipSimulationDevice.GetOrCreateSimulationCamera().RgbCamera;
+                _camera = LightshipSimulationDevice.GetOrCreateSimulationCamera().RgbCamera;
 
-                _mSimulationRgbCameraTextureProvider = LightshipSimulationRgbCameraTextureProvider.AddTextureProviderToCamera(m_Camera, xrCamera);
-                _mSimulationRgbCameraTextureProvider.frameReceived += FrameReceived;
-                if (_mSimulationRgbCameraTextureProvider != null && _mSimulationRgbCameraTextureProvider.CameraFrameEventArgs != null)
-                    m_CameraTextureFrameEventArgs = (LightshipCameraTextureFrameEventArgs)_mSimulationRgbCameraTextureProvider.CameraFrameEventArgs;
+                _simulationRgbCameraTextureProvider = LightshipSimulationRgbCameraTextureProvider.AddTextureProviderToCamera(_camera, xrCamera);
+                _simulationRgbCameraTextureProvider.FrameReceived += FrameReceived;
+                if (_simulationRgbCameraTextureProvider != null && _simulationRgbCameraTextureProvider.CameraFrameEventArgs != null)
+                    _cameraTextureFrameEventArgs = (LightshipCameraTextureFrameEventArgs)_simulationRgbCameraTextureProvider.CameraFrameEventArgs;
 
-                m_XRCameraConfiguration = new XRCameraConfiguration(IntPtr.Zero, new Vector2Int(m_Camera.pixelWidth, m_Camera.pixelHeight));
+                _xrCameraConfiguration = new XRCameraConfiguration(IntPtr.Zero, new Vector2Int(_camera.pixelWidth, _camera.pixelHeight));
             }
 
             public override void Stop()
             {
-                if (_mSimulationRgbCameraTextureProvider != null)
-                    _mSimulationRgbCameraTextureProvider.frameReceived -= FrameReceived;
+                if (_simulationRgbCameraTextureProvider != null)
+                    _simulationRgbCameraTextureProvider.FrameReceived -= FrameReceived;
             }
 
             public override void Destroy()
             {
-                if (_mSimulationRgbCameraTextureProvider != null)
+                if (_simulationRgbCameraTextureProvider != null)
                 {
-                    Object.Destroy(_mSimulationRgbCameraTextureProvider.gameObject);
-                    _mSimulationRgbCameraTextureProvider = null;
+                    Object.Destroy(_simulationRgbCameraTextureProvider.gameObject);
+                    _simulationRgbCameraTextureProvider = null;
                 }
             }
 
             public override NativeArray<XRCameraConfiguration> GetConfigurations(XRCameraConfiguration defaultCameraConfiguration, Allocator allocator)
             {
                 var configs = new NativeArray<XRCameraConfiguration>(1, allocator);
-                configs[0] = m_XRCameraConfiguration;
+                configs[0] = _xrCameraConfiguration;
                 return configs;
             }
 
             public override NativeArray<XRTextureDescriptor> GetTextureDescriptors(XRTextureDescriptor defaultDescriptor, Allocator allocator)
             {
-                if (_mSimulationRgbCameraTextureProvider != null && _mSimulationRgbCameraTextureProvider.TryGetTextureDescriptors(out var descriptors, allocator))
+                if (_simulationRgbCameraTextureProvider != null && _simulationRgbCameraTextureProvider.TryGetTextureDescriptors(out var descriptors, allocator))
                 {
                     return descriptors;
                 }
@@ -166,17 +171,44 @@ namespace Niantic.Lightship.AR.Simulation
 
             public override bool TryAcquireLatestCpuImage(out XRCpuImage.Cinfo cameraImageCinfo)
             {
-                throw new NotImplementedException();
+                if (_cameraTextureFrameEventArgs.Texture == null)
+                {
+                    cameraImageCinfo = default;
+                    return false;
+                }
+
+                Texture2D temp = new Texture2D(_cameraTextureFrameEventArgs.Texture.width, _cameraTextureFrameEventArgs.Texture.height, _cameraTextureFrameEventArgs.Texture.format, mipChain: false);
+                ExternalTextureUtils.ReadFromExternalTexture(_cameraTextureFrameEventArgs.Texture, temp);
+                IntPtr dataPtr;
+                unsafe
+                {
+                    dataPtr = (IntPtr) temp.GetRawTextureData<byte>().GetUnsafeReadOnlyPtr();
+                }
+
+                var lightshipCpuImageApi = (LightshipCpuImageApi)cpuImageApi;
+
+                var gotCpuImage = lightshipCpuImageApi.TryAddManagedXRCpuImage
+                (
+                    dataPtr,
+                    temp.width * temp.height * temp.format.BytesPerPixel(),
+                    temp.width,
+                    temp.height,
+                    temp.format,
+                    timestampMs: (ulong)_cameraTextureFrameEventArgs.TimestampNs,
+                    out cameraImageCinfo
+                );
+
+                return gotCpuImage;
             }
 
             private void FrameReceived(LightshipCameraTextureFrameEventArgs args)
             {
-                m_CameraTextureFrameEventArgs = args;
+                _cameraTextureFrameEventArgs = args;
             }
 
             public override bool TryGetFrame(XRCameraParams cameraParams, out XRCameraFrame cameraFrame)
             {
-                if (_mSimulationRgbCameraTextureProvider == null)
+                if (_simulationRgbCameraTextureProvider == null)
                 {
                     cameraFrame = new XRCameraFrame();
                     return false;
@@ -202,25 +234,16 @@ namespace Niantic.Lightship.AR.Simulation
                 XRTextureDescriptor cameraGrain = default;
                 float noiseIntensity = default;
 
-                if (m_CameraTextureFrameEventArgs.timestampNs.HasValue)
-                {
-                    timeStamp = (long)m_CameraTextureFrameEventArgs.timestampNs;
-                    properties |= XRCameraFrameProperties.Timestamp;
-                }
+                timeStamp = (long)_cameraTextureFrameEventArgs.TimestampNs;
+                properties |= XRCameraFrameProperties.Timestamp;
 
-                if (m_CameraTextureFrameEventArgs.projectionMatrix.HasValue)
-                {
-                    projectionMatrix = (Matrix4x4)m_CameraTextureFrameEventArgs.projectionMatrix;
-                    properties |= XRCameraFrameProperties.ProjectionMatrix;
-                }
+                projectionMatrix = (Matrix4x4)_cameraTextureFrameEventArgs.ProjectionMatrix;
+                properties |= XRCameraFrameProperties.ProjectionMatrix;
 
-                if (m_CameraTextureFrameEventArgs.displayMatrix.HasValue)
-                {
-                    displayMatrix = (Matrix4x4)m_CameraTextureFrameEventArgs.displayMatrix;
-                    properties |= XRCameraFrameProperties.DisplayMatrix;
-                }
+                displayMatrix = (Matrix4x4)_cameraTextureFrameEventArgs.DisplayMatrix;
+                properties |= XRCameraFrameProperties.DisplayMatrix;
 
-                if (_mSimulationRgbCameraTextureProvider == null || !_mSimulationRgbCameraTextureProvider.TryGetLatestImagePtr(out nativePtr))
+                if (_simulationRgbCameraTextureProvider == null || !_simulationRgbCameraTextureProvider.TryGetLatestImagePtr(out nativePtr))
                 {
                     cameraFrame = default;
                     return false;
@@ -251,7 +274,7 @@ namespace Niantic.Lightship.AR.Simulation
 
             public override bool TryGetIntrinsics(out XRCameraIntrinsics cameraIntrinsics)
             {
-                cameraIntrinsics = m_CameraTextureFrameEventArgs.intrinsics;
+                cameraIntrinsics = _cameraTextureFrameEventArgs.Intrinsics;
                 return true;
             }
         }
@@ -260,7 +283,7 @@ namespace Niantic.Lightship.AR.Simulation
         private static void Register()
         {
             var cInfo = new XRCameraSubsystemCinfo {
-                id = k_SubsystemId,
+                id = SubsystemId,
                 providerType = typeof(LightshipSimulationProvider),
                 subsystemTypeOverride = typeof(LightshipSimulationCameraSubsystem),
                 supportsCameraConfigurations = true,

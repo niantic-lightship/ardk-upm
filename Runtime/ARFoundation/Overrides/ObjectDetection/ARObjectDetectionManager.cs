@@ -27,6 +27,12 @@ namespace Niantic.Lightship.AR.ObjectDetection
         [Range(1, 90)]
         private uint _targetFrameRate = LightshipObjectDetectionSubsystem.MaxRecommendedFrameRate;
 
+        [SerializeField]
+        [Tooltip
+            ("When stabilization is enabled, the object detection algorithm takes into account how many consecutive " +
+             "frames an object has been seen in or not seen in, decreasing the possibility of spurious detections.")]
+        private bool _isStabilizationEnabled;
+
         /// <summary>
         /// Frame rate that the object detection inference will aim to run at.
         /// </summary>
@@ -49,6 +55,32 @@ namespace Niantic.Lightship.AR.ObjectDetection
                 if (subsystem != null)
                 {
                     subsystem.TargetFrameRate = value;
+                }
+            }
+        }
+
+        /// <summary>
+        /// When enabled, the object detection algorithm takes into account how many consecutive frames an object
+        /// as been seen in, and how many frames a previously detected object has been unseen for, when determining
+        /// which detections to surface. This has the effect of decreasing the possibility of spurious detections,
+        /// but may also cause an increase in missed detections if framerate is low and the camera view is moving
+        /// significantly between each frame.
+        /// </summary>
+        /// <value>
+        /// True if stabilization is enabled.
+        /// </value>
+        /// <remarks>
+        /// This is an experimental API. Experimental features are subject to breaking changes,
+        /// not officially supported, and may be deprecated without notice.
+        /// </remarks>
+        public bool IsStabilizationEnabled
+        {
+            get => subsystem?.IsStabilizationEnabled ?? false;
+            set
+            {
+                if (subsystem != null)
+                {
+                    subsystem.IsStabilizationEnabled = value;
                 }
             }
         }
@@ -152,16 +184,12 @@ namespace Niantic.Lightship.AR.ObjectDetection
         private uint? _lastKnownFrameId;
 
         /// <summary>
-        ///
-        /// </summary>
-        private float _timeOfLastUpdate;
-
-        /// <summary>
         /// Callback before the subsystem is started (but after it is created).
         /// </summary>
         protected override void OnBeforeStart()
         {
             TargetFrameRate = _targetFrameRate;
+            IsStabilizationEnabled = _isStabilizationEnabled;
         }
 
         /// <summary>
@@ -184,6 +212,7 @@ namespace Niantic.Lightship.AR.ObjectDetection
             }
 
             TargetFrameRate = _targetFrameRate;
+            IsStabilizationEnabled = _isStabilizationEnabled;
 
             if (!subsystem.running || !subsystem.IsMetadataAvailable)
             {
@@ -209,8 +238,6 @@ namespace Niantic.Lightship.AR.ObjectDetection
             if (currentFrameId != _lastKnownFrameId)
             {
                 _lastKnownFrameId = currentFrameId;
-                _timeOfLastUpdate = Time.unscaledTime;
-                // TODO(ARDK-2679): Send a bool with this event signaling whether the frame was predicted or warped
                 InvokeFrameReceived();
             }
 

@@ -15,22 +15,34 @@ namespace Niantic.Lightship.AR.Subsystems.ObjectDetection
     {
         private readonly CategoryDirectory _categoryDirectory;
         private readonly DisplayHelper _displayHelper;
+
+        // Describes the bounding box of the detection in the coordinate space described by _containerResolution
         private readonly Rect _rect;
+
+        private readonly Vector2Int _containerResolution;
+
         private readonly float[] _confidences;
         public override float[] Confidences => _confidences;
 
+        // Not exposing this in public API for now
+        private readonly uint? _trackingId;
+
         public LightshipDetectedObject
         (
+            uint? trackingId,
             Rect rect,
             float[] confidences,
             CategoryDirectory directory,
-            DisplayHelper displayHelper
+            DisplayHelper displayHelper,
+            Vector2Int containerResolution
         )
         {
+            _trackingId = trackingId;
             _rect = rect;
             _confidences = confidences;
             _categoryDirectory = directory;
             _displayHelper = displayHelper;
+            _containerResolution = containerResolution;
         }
 
         public override float GetConfidence(string categoryName)
@@ -66,15 +78,22 @@ namespace Niantic.Lightship.AR.Subsystems.ObjectDetection
             return categorizations;
         }
 
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="viewportWidth"></param>
+        /// <param name="viewportHeight"></param>
+        /// <param name="orientation"></param>
+        /// <returns>A rectangle describing the bounding box of this detected object in the coordinate space
+        /// of the specified viewport.</returns>
         public override Rect CalculateRect(int viewportWidth, int viewportHeight, ScreenOrientation orientation)
         {
             // Inspect the source rect
-            var inferenceResolution = new Vector2Int(256, 256);
             var min = new Vector2Int((int)_rect.x, (int)_rect.y);
             var max = new Vector2Int((int)_rect.width + (int)_rect.x, (int)_rect.height + (int)_rect.y);
 
             // Transform the source rect to viewport
-            var container = new Vector2Int(viewportWidth, viewportHeight);
+            var viewport = new Vector2Int(viewportWidth, viewportHeight);
             var gotViewportTransform =
                 _displayHelper.TryCalculateViewportMapping
                 (
@@ -89,8 +108,8 @@ namespace Niantic.Lightship.AR.Subsystems.ObjectDetection
                 Log.Error("Failed to get object detection inference to viewport transform matrix.");
             }
 
-            var minPrime = ImageSamplingUtils.TransformImageCoordinates(min, inferenceResolution, container, transform);
-            var maxPrime = ImageSamplingUtils.TransformImageCoordinates(max, inferenceResolution, container, transform);
+            var minPrime = ImageSamplingUtils.TransformImageCoordinates(min, _containerResolution, viewport, transform);
+            var maxPrime = ImageSamplingUtils.TransformImageCoordinates(max, _containerResolution, viewport, transform);
 
             return new Rect(minPrime.x, minPrime.y, maxPrime.x - minPrime.x, minPrime.y - maxPrime.y);  // height is inverted
         }

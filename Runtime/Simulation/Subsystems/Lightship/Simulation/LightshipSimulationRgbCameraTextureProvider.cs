@@ -23,15 +23,15 @@ namespace Niantic.Lightship.AR.Simulation
             base.InitializeProvider(xrCamera, simulationCamera);
 
             // The background camera
-            m_XrCamera = xrCamera;
+            XrCamera = xrCamera;
             // The helper depth camera
-            m_SimulationRenderCamera = simulationCamera;
+            SimulationRenderCamera = simulationCamera;
 
             // in simulation rgb camera we want to see a skybox
             simulationCamera.clearFlags = CameraClearFlags.Skybox;
 
             // we invert x and y because the camera is always physically installed at landscape left and we rotate the camera -90 for portrait
-            var descriptor = new RenderTextureDescriptor((int) m_SimulationRenderCamera.sensorSize.y, (int) m_SimulationRenderCamera.sensorSize.x);
+            var descriptor = new RenderTextureDescriptor((int) SimulationRenderCamera.sensorSize.y, (int) SimulationRenderCamera.sensorSize.x);
 
             // Need to make sure we set the graphics format to our valid format
             // or we will get an out of range value for the render texture format
@@ -41,26 +41,26 @@ namespace Niantic.Lightship.AR.Simulation
             if (descriptor.depthBufferBits < 24)
                 descriptor.depthBufferBits = 24;
 
-            m_RenderTexture = new RenderTexture(descriptor)
+            RenderTexture = new RenderTexture(descriptor)
             {
                 name = "RGB camera sensor",
                 hideFlags = HideFlags.HideAndDontSave,
             };
 
-            if (m_RenderTexture.Create())
-                m_SimulationRenderCamera.targetTexture = m_RenderTexture;
+            if (RenderTexture.Create())
+                SimulationRenderCamera.targetTexture = RenderTexture;
 
-            if (m_ProviderTexture == null)
+            if (ProviderTexture == null)
             {
-                m_ProviderTexture = new Texture2D(descriptor.width, descriptor.height, descriptor.graphicsFormat, 1, TextureCreationFlags.None)
+                ProviderTexture = new Texture2D(descriptor.width, descriptor.height, descriptor.graphicsFormat, 1, TextureCreationFlags.None)
                 {
                     name = "Simulated Native Camera Texture",
                     hideFlags = HideFlags.HideAndDontSave
                 };
-                m_TexturePtr = m_ProviderTexture.GetNativeTexturePtr();
+                TexturePtr = ProviderTexture.GetNativeTexturePtr();
             }
 
-            _initialized = true;
+            Initialized = true;
         }
 
         internal override bool TryGetTextureDescriptors(out NativeArray<XRTextureDescriptor> planeDescriptors,
@@ -71,8 +71,8 @@ namespace Niantic.Lightship.AR.Simulation
             var descriptors = new XRTextureDescriptor[1];
             if (isValid)
             {
-                descriptors[0] = new XRTextureDescriptor(nativePtr, m_ProviderTexture.width, m_ProviderTexture.height,
-                m_ProviderTexture.mipmapCount, m_ProviderTexture.format, LightshipSimulationCameraSubsystem.textureSinglePropertyNameId, 0,
+                descriptors[0] = new XRTextureDescriptor(nativePtr, ProviderTexture.width, ProviderTexture.height,
+                ProviderTexture.mipmapCount, ProviderTexture.format, LightshipSimulationCameraSubsystem.s_textureSinglePropertyNameId, 0,
                 TextureDimension.Tex2D);
             }
             else

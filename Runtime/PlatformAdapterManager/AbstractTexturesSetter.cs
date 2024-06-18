@@ -8,16 +8,16 @@ namespace Niantic.Lightship.AR.PAM
     internal abstract class AbstractTexturesSetter : IDisposable
     {
         protected PlatformDataAcquirer PlatformDataAcquirer;
-        protected FrameData CurrentFrameData;
+        protected DeprecatedFrameData CurrentDeprecatedFrameData;
 
         protected UInt64 CtraceId;
 
         private const int MillisecondToNanosecondFactor = 1000000;
 
-        public AbstractTexturesSetter(PlatformDataAcquirer dataAcquirer, FrameData frameData)
+        public AbstractTexturesSetter(PlatformDataAcquirer dataAcquirer, DeprecatedFrameData deprecatedFrameData)
         {
             PlatformDataAcquirer = dataAcquirer;
-            CurrentFrameData = frameData;
+            CurrentDeprecatedFrameData = deprecatedFrameData;
         }
 
         public abstract void InvalidateCachedTextures();
@@ -27,7 +27,7 @@ namespace Niantic.Lightship.AR.PAM
         // Get the timestamp associated with the current textures
         public virtual double GetCurrentTimestampMs()
         {
-            if (PlatformDataAcquirer.TryGetCameraFrame(out XRCameraFrame frame))
+            if (PlatformDataAcquirer.TryGetCameraFrameDeprecated(out XRCameraFrame frame))
                 return (double)frame.timestampNs / MillisecondToNanosecondFactor;
 
             return 0;

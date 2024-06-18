@@ -44,10 +44,10 @@ namespace Niantic.Lightship.AR.Utilities
         (sourceWidth, sourceHeight, sourceOrientation, targetOrientation);
 
       // Calculate scaling
-      var targetRatio = targetWidth / targetHeight;
-      var s = targetRatio <= 1.0f
-        ? new Vector2(targetWidth / (targetHeight / rotatedContainer.y * rotatedContainer.x), 1.0f)
-        : new Vector2(1.0f, targetHeight / (targetWidth / rotatedContainer.x * rotatedContainer.y));
+      var squareTarget = Mathf.FloorToInt(targetWidth) == Mathf.FloorToInt(targetHeight);
+      var s = squareTarget || targetOrientation is ScreenOrientation.Portrait or ScreenOrientation.PortraitUpsideDown
+          ? new Vector2(targetWidth / (targetHeight / rotatedContainer.y * rotatedContainer.x), 1.0f)
+          : new Vector2(1.0f, targetHeight / (targetWidth / rotatedContainer.x * rotatedContainer.y));
 
       var rotate = reverseRotation
           ? ScreenRotation(from: targetOrientation, to: sourceOrientation)

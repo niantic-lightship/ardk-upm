@@ -4,7 +4,6 @@ using System.Runtime.InteropServices;
 using Niantic.Lightship.AR.Core;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
-using UnityEngine;
 
 namespace Niantic.Lightship.AR.PAM
 {
@@ -18,6 +17,11 @@ namespace Niantic.Lightship.AR.PAM
         public void Lightship_ARDK_Unity_PAM_OnFrame_Deprecated(IntPtr handle, IntPtr frameData)
         {
             Native.Lightship_ARDK_Unity_PAM_OnFrame_Deprecated(handle, frameData);
+        }
+
+        public void Lightship_ARDK_Unity_PAM_OnFrame(IntPtr handle, IntPtr frameData)
+        {
+            Native.Lightship_ARDK_Unity_PAM_OnFrame(handle, frameData);
         }
 
         public void Lightship_ARDK_Unity_PAM_GetDataFormatUpdatesForNewFrame(IntPtr handle, NativeArray<DataFormat> dataFormatsAdded,
@@ -49,6 +53,9 @@ namespace Niantic.Lightship.AR.PAM
 
             [DllImport(LightshipPlugin.Name)]
             public static extern void Lightship_ARDK_Unity_PAM_OnFrame_Deprecated(IntPtr handle, IntPtr frameData);
+
+            [DllImport(LightshipPlugin.Name)]
+            public static extern void Lightship_ARDK_Unity_PAM_OnFrame(IntPtr handle, IntPtr frameData);
 
             [DllImport(LightshipPlugin.Name)]
             public static extern void Lightship_ARDK_Unity_PAM_GetDataFormatUpdatesForNewFrame(IntPtr handle,

@@ -28,6 +28,7 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
             bool enableContinuousLocalization,
             bool enableTemporalFusion,
             bool enableTransformSmoothing,
+            bool enableCloudLocalization,
             bool enableSlickLocalization,
             float cloudLocalizerInitialRequestsPerSecond,
             float cloudLocalizerContinuousRequestsPerSecond,
@@ -49,7 +50,12 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
             throw new NotImplementedException();
         }
 
-        public bool TryCreateAnchor(IntPtr anchorProviderHandle, Pose pose, out TrackableId anchorId)
+        public bool TryAddGraph(IntPtr anchorProviderHandle, byte[] dataBytes)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void TryCreateAnchor(IntPtr anchorProviderHandle, Pose pose, out TrackableId anchorId)
         {
             throw new NotImplementedException();
         }

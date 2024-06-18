@@ -1,12 +1,16 @@
 // Copyright 2022-2024 Niantic.
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.Subsystems.Common;
 using Niantic.Lightship.AR.Utilities;
 using Niantic.Lightship.AR.Utilities.Textures;
+using Niantic.Lightship.Utilities.UnityAssets;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Scripting;
@@ -81,15 +85,16 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
 
             private PlaybackDatasetReader _datasetReader;
 
-            // This value will strongly affect memory usage.  It can also be set by the user in configuration.
-            // The value represents the number of frames in memory before the user must make a copy of the data
-            private const int FramesInMemoryCount = 2;
-            private SizedBufferedTextureCache _cameraImageTextures;
-
-            public override XRCpuImage.Api cpuImageApi => LightshipCpuImageApi.instance;
+            public override XRCpuImage.Api cpuImageApi => LightshipCpuImageApi.Instance;
 
             public override bool permissionGranted => true;
             public override Feature currentCamera => Feature.WorldFacingCamera;
+
+            private (int Id, Texture2D Frame) _currentFrame;
+            private int _textureWidth;
+            private int _textureHeight;
+            private TextureFormat _textureFormat;
+            private readonly Texture2D _encodedTexHolder = new Texture2D(2, 2);
 
             public override Feature requestedCamera
             {
@@ -156,7 +161,6 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
             public override void Destroy()
             {
                 _datasetReader = null;
-                _cameraImageTextures.Dispose();
             }
 
             public void SetPlaybackDatasetReader(PlaybackDatasetReader reader)
@@ -164,15 +168,12 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
                 _datasetReader = reader;
 
                 var imageRes = _datasetReader.GetImageResolution();
-                _cameraImageTextures =
-                    new SizedBufferedTextureCache
-                    (
-                        FramesInMemoryCount,
-                        imageRes.x,
-                        imageRes.y,
-                        TextureFormat.RGB24,  // format that JPG images are loaded as
-                        false
-                    );
+                _textureWidth = imageRes.x;
+                _textureHeight = imageRes.y;
+                _textureFormat = TextureFormat.RGB24;
+
+                _currentFrame = new ValueTuple<int, Texture2D>
+                    (-99, new Texture2D(_textureWidth, _textureHeight, _textureFormat, false));
             }
 
             public override NativeArray<XRCameraConfiguration> GetConfigurations
@@ -197,18 +198,15 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
 
             public override bool TryGetFrame(XRCameraParams cameraParams, out XRCameraFrame cameraFrame)
             {
-#if UNITY_EDITOR
-                // The Screen.orientation value passed in when the ARCameraManager invokes this method is not
-                // valid in Editor. Hence we have to override it.
-                cameraParams.screenOrientation = GameViewUtils.GetEditorScreenOrientation();
-#endif
-
                 var frame = _datasetReader.CurrFrame;
                 if (frame == null)
                 {
                     cameraFrame = default;
                     return false;
                 }
+
+                // Playback footage is only permitted to play in the orientation it was recorded in
+                cameraParams.screenOrientation = frame.Orientation;
 
                 const XRCameraFrameProperties props =
                     XRCameraFrameProperties.Timestamp |
@@ -266,7 +264,40 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
 
             public override bool TryAcquireLatestCpuImage(out XRCpuImage.Cinfo cinfo)
             {
-                return base.TryAcquireLatestCpuImage(out cinfo);
+                if (_datasetReader == null)
+                {
+                    cinfo = default;
+                    return false;
+                }
+
+                var frame = _datasetReader.CurrFrame;
+                if (frame == null)
+                {
+                    cinfo = default;
+                    return false;
+                }
+
+                UpdateCachedCurrentFrameInfo(frame);
+
+                IntPtr dataPtr;
+                unsafe
+                {
+                    dataPtr = (IntPtr) _currentFrame.Frame.GetRawTextureData<byte>().GetUnsafeReadOnlyPtr();
+                }
+
+                var lightshipCpuImageApi = (LightshipCpuImageApi)cpuImageApi;
+                var gotCpuImage = lightshipCpuImageApi.TryAddManagedXRCpuImage
+                (
+                    dataPtr,
+                    _currentFrame.Frame.width * _currentFrame.Frame.height * _currentFrame.Frame.format.BytesPerPixel(),
+                    _currentFrame.Frame.width,
+                    _currentFrame.Frame.height,
+                    _currentFrame.Frame.format,
+                    (ulong)(frame.TimestampInSeconds * 1000.0),
+                    out cinfo
+                );
+
+                return gotCpuImage;
             }
 
             public override bool TryGetIntrinsics(out XRCameraIntrinsics cameraIntrinsics)
@@ -296,19 +327,13 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
 
                 var arr = new NativeArray<XRTextureDescriptor>(1, allocator);
 
-                var tex = _cameraImageTextures.GetUpdatedTextureFromEncodedBuffer
-                (
-                    _datasetReader.GetCurrentImageData(),
-                    (uint)frame.Sequence,
-                    true,
-                    3
-                );
+                UpdateCachedCurrentFrameInfo(frame);
 
                 var res = _datasetReader.GetImageResolution();
                 arr[0] =
                     new XRTextureDescriptor
                     (
-                        tex.GetNativeTexturePtr(),
+                        _currentFrame.Frame.GetNativeTexturePtr(),
                         res.x,
                         res.y,
                         0,
@@ -326,6 +351,29 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
             {
                 enabledKeywords = _legacyRPEnabledMaterialKeywords;
                 disabledKeywords = _legacyRPDisabledMaterialKeywords;
+            }
+
+            private void UpdateCachedCurrentFrameInfo(PlaybackDataset.FrameMetadata frame)
+            {
+                if (_currentFrame.Id != frame.Sequence)
+                {
+                    Texture2D tex = _currentFrame.Frame;
+                    var wasReinitialisationSuccessful = tex.Reinitialize(_textureWidth, _textureHeight,
+                        _textureFormat, false);
+
+                    if (!wasReinitialisationSuccessful)
+                    {
+                        tex = new Texture2D(_textureWidth, _textureHeight, _textureFormat, false);
+                    }
+
+                    var path = Path.Combine(_datasetReader.GetDatasetPath(), frame.ImagePath);
+                    byte[] buffer = FileUtilities.GetAllBytes(path);
+                    _encodedTexHolder.LoadImage(buffer);
+                    tex.LoadMirroredOverXAxis(_encodedTexHolder, _textureFormat.BytesPerPixel());
+                    tex.Apply();
+
+                    _currentFrame = (frame.Sequence, tex);
+                }
             }
         }
     }

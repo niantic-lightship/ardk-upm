@@ -1166,7 +1166,7 @@ namespace Niantic.Lightship.AR.Occlusion
                 {
                     var width = depthTexture.width;
                     var height = depthTexture.height;
-                    _backgroundMaterial.SetVector(s_depthTextureParams,
+                    material.SetVector(s_depthTextureParams,
                         new Vector4(1.0f / width, 1.0f / height, width, height));
                 }
             }
@@ -1266,7 +1266,7 @@ namespace Niantic.Lightship.AR.Occlusion
             }
 
             // Recompile the shader for depth compression
-            if (_preferSmoothEdges && IsUsingLightshipOcclusionSubsystem)
+            if (_preferSmoothEdges && EligibleForEdgeSmoothing)
             {
                 BackgroundMaterial.EnableKeyword(k_DepthEdgeSmoothingFeature);
             }

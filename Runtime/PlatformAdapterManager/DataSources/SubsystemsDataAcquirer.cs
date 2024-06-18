@@ -1,22 +1,17 @@
 // Copyright 2022-2024 Niantic.
+
 using System;
-using System.Collections.Generic;
 using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.Subsystems.Occlusion;
 using Niantic.Lightship.AR.Utilities;
-using Niantic.Lightship.AR.Utilities.Textures;
-using Unity.Collections;
 using Unity.XR.CoreUtils;
 using UnityEngine;
-using UnityEngine.XR;
 using UnityEngine.XR.ARSubsystems;
 using UnityEngine.XR.Management;
 
 #if !UNITY_EDITOR && UNITY_ANDROID
 using UnityEngine.Android;
 #endif
-
-using Input = Niantic.Lightship.AR.Input;
 
 namespace Niantic.Lightship.AR.PAM
 {
@@ -43,6 +38,10 @@ namespace Niantic.Lightship.AR.PAM
 
         private bool _autoEnabledLocationServices;
         private bool _autoEnabledCompass;
+
+        private XRCpuImage _cpuImage;
+        private XRCpuImage _depthImage;
+        private XRCpuImage _depthConfidenceImage;
 
         public override bool TryToBeReady()
         {
@@ -88,6 +87,10 @@ namespace Niantic.Lightship.AR.PAM
                     "separately disabled."
                 );
             }
+
+            _cpuImage.Dispose();
+            _depthImage.Dispose();
+            _depthConfidenceImage.Dispose();
         }
 
         // Uses the XRGeneralSettings.instance singleton to connect to all subsystem references.
@@ -107,9 +110,21 @@ namespace Niantic.Lightship.AR.PAM
             }
         }
 
-        public override bool TryGetCameraIntrinsics(out XRCameraIntrinsics intrinsics)
+        public override bool TryGetCameraIntrinsicsDeprecated(out XRCameraIntrinsics intrinsics)
         {
             return _cameraSubsystem.TryGetIntrinsics(out intrinsics);
+        }
+
+        public override bool TryGetCameraIntrinsicsCStruct(out CameraIntrinsicsCStruct intrinsics)
+        {
+            intrinsics = default;
+            if (_cameraSubsystem.TryGetIntrinsics(out var xrCameraIntrinsics))
+            {
+                intrinsics.SetIntrinsics(xrCameraIntrinsics.focalLength, xrCameraIntrinsics.principalPoint);
+                return true;
+            }
+
+            return false;
         }
 
         /// Returns the XRSessionSubsystem's reported tracking state.
@@ -128,7 +143,7 @@ namespace Niantic.Lightship.AR.PAM
             return XRDisplayContext.GetScreenOrientation();
         }
 
-        public override bool TryGetCameraFrame(out XRCameraFrame frame)
+        public override bool TryGetCameraFrameDeprecated(out XRCameraFrame frame)
         {
             // Create params with dummy screen data (doesn't impact the texture descriptors or timestamp, just the
             // projection and display matrices).
@@ -138,10 +153,22 @@ namespace Niantic.Lightship.AR.PAM
                 zFar = 1,
                 screenWidth = 1,
                 screenHeight = 1,
-                screenOrientation = Screen.orientation
+                screenOrientation = GetScreenOrientation()
             };
 
             return _cameraSubsystem.TryGetLatestFrame(emptyParams, out frame);
+        }
+
+        public override bool TryGetCameraTimestampMs(out ulong timestampMs)
+        {
+            if (TryGetCameraFrameDeprecated(out var frame))
+            {
+                timestampMs = (ulong)frame.timestampNs / 1_000_000;
+                return true;
+            }
+
+            timestampMs = 0;
+            return false;
         }
 
         /// Returns the camera pose
@@ -152,58 +179,16 @@ namespace Niantic.Lightship.AR.PAM
 
         /// Will return the latest XRCpuImage acquired through the XRCameraSubsystem. The returned image can be invalid,
         /// for example because the session startup was not completed. XRCpuImages must be disposed by the consumer.
-        public override bool TryGetCpuImage(out XRCpuImage cpuImage)
+        public override bool TryGetCpuImageDeprecated(out XRCpuImage cpuImage)
         {
             return _cameraSubsystem.TryAcquireLatestCpuImage(out cpuImage);
         }
 
-        public override bool TryGetGpuImage(out Texture2D gpuImage)
-        {
-            var descriptors = _cameraSubsystem.GetTextureDescriptors(Allocator.Temp);
-            if (descriptors.Length == 0)
-            {
-                gpuImage = null;
-                return false;
-            }
-
-            // TODO: ARKit returns two textures (Y and CbCr) while ARCore and Playback returns just one
-            var descriptor = descriptors[0];
-
-            // Nothing to update if the descriptor is the same as the last one
-            if (_gpuImageDescriptor.Equals(descriptor))
-            {
-                gpuImage = _gpuImageTex;
-                return true;
-            }
-
-            // If the texture already exists, update it
-            if (_gpuImageTex != null && _gpuImageDescriptor.hasIdenticalTextureMetadata(descriptor))
-            {
-                _gpuImageTex.UpdateExternalTexture(descriptor.nativeTexture);
-            }
-            else
-            {
-                // Destroy any old texture
-                if (_gpuImageTex != null)
-                {
-                    UnityObjectUtils.Destroy(_gpuImageTex);
-                    _gpuImageTex = null;
-                }
-
-                // Create a new texture
-                _gpuImageTex = ExternalTextureUtils.CreateExternalTexture2D(descriptor);
-            }
-
-            _gpuImageDescriptor = descriptor;
-            gpuImage = _gpuImageTex;
-            return true;
-        }
-
-        public override bool TryGetCpuDepthImage(out XRCpuImage cpuDepthImage, out XRCpuImage cpuDepthConfidenceImage)
+        public override bool TryGetCpuDepthImageDeprecated(out XRCpuImage cpuDepthImage, out XRCpuImage cpuDepthConfidenceImage)
         {
             if (_usingLightshipOcclusion)
             {
-                cpuDepthImage = default ;
+                cpuDepthImage = default;
                 cpuDepthConfidenceImage = default;
                 return false;
             }
@@ -223,66 +208,27 @@ namespace Niantic.Lightship.AR.PAM
 
             return gotDepth && gotConfidence;
         }
-
-        public override bool TryGetGpuDepthImage(out Texture2D gpuDepthImage, out Texture2D gpuDepthConfidenceImage)
+        public override bool TryGetLightshipCpuImage(out LightshipCpuImage cpuImage)
         {
-            if (_usingLightshipOcclusion)
-            {
-                gpuDepthImage = null;
-                gpuDepthConfidenceImage = null;
-                return false;
-            }
-
-            var descriptors = _occlusionSubsystem.GetTextureDescriptors(Allocator.Temp);
-            var confidenceDescriptor = new XRTextureDescriptor();
-
-            // Have to add a try catch here, otherwise the code will crash when underlined
-            // subsystem does not support the TryGetEnvironmentDepthConfidence().
-            try
-            {
-              _occlusionSubsystem.TryGetEnvironmentDepthConfidence(out confidenceDescriptor);
-            }
-            catch (Exception)
-            {
-                gpuDepthImage = null;
-                gpuDepthConfidenceImage = null;
-                return false;
-            }
-
-            if (descriptors.Length == 0 || !descriptors[0].valid || !confidenceDescriptor.valid)
-            {
-                gpuDepthImage = null;
-                gpuDepthConfidenceImage = null;
-                return false;
-            }
-
-            var descriptor = descriptors[0];
-
-            if (_gpuDepthImageTex != null)
-            {
-                _gpuDepthImageTex.UpdateExternalTexture(descriptor.nativeTexture);
-            }
-            else
-            {
-                _gpuDepthImageTex = ExternalTextureUtils.CreateExternalTexture2D(descriptor);
-            }
-
-            if (_gpuDepthConfidenceTex != null)
-            {
-                _gpuDepthConfidenceTex.UpdateExternalTexture(confidenceDescriptor.nativeTexture);
-            }
-            else
-            {
-                _gpuDepthConfidenceTex = ExternalTextureUtils.CreateExternalTexture2D(confidenceDescriptor);
-            }
-
-            gpuDepthImage = _gpuDepthImageTex;
-            gpuDepthConfidenceImage = _gpuDepthConfidenceTex;
-
-            return true;
+            cpuImage = new LightshipCpuImage();
+            _cpuImage.Dispose();
+            return TryGetCpuImageDeprecated(out _cpuImage) || cpuImage.FromXRCpuImage(_cpuImage);
         }
 
-        public override bool TryGetGpsLocation(out GpsLocation gps)
+        public override bool TryGetLightshipCpuDepthImage(out LightshipCpuImage cpuDepthImage,
+            out LightshipCpuImage cpuDepthConfidenceImage)
+        {
+            cpuDepthImage = new LightshipCpuImage();
+            cpuDepthConfidenceImage = new LightshipCpuImage();
+
+            _depthImage.Dispose();
+            _depthConfidenceImage.Dispose();
+            return TryGetCpuDepthImageDeprecated(out _depthImage, out _depthConfidenceImage) ||
+                cpuDepthImage.FromXRCpuImage(_depthImage) ||
+                cpuDepthConfidenceImage.FromXRCpuImage(_depthConfidenceImage);
+        }
+
+        public override bool TryGetGpsLocation(out GpsLocationCStruct gps)
         {
             if (_locationServiceNeedsToStart)
                 TryStartLocationService();
@@ -299,11 +245,10 @@ namespace Niantic.Lightship.AR.PAM
             gps.Altitude = Input.location.lastData.altitude;
             gps.HorizontalAccuracy = Input.location.lastData.horizontalAccuracy;
             gps.VerticalAccuracy = Input.location.lastData.verticalAccuracy;
-            gps.padding = 0;
             return true;
         }
 
-        public override bool TryGetCompass(out CompassData compass)
+        public override bool TryGetCompass(out CompassDataCStruct compass)
         {
             if (_locationServiceNeedsToStart)
                 TryStartLocationService();
@@ -334,7 +279,6 @@ namespace Niantic.Lightship.AR.PAM
                         RequestLocationPermissions();
                     }
                     break;
-
                 case DataFormat.kCompass:
                     if (Input.location.status == LocationServiceStatus.Stopped)
                     {
@@ -400,7 +344,7 @@ namespace Niantic.Lightship.AR.PAM
         /// <summary>
         /// For Android devices, the Location Service can only be stared after Permissions are granted
         /// </summary>
-        private void TryStartLocationService()
+        protected void TryStartLocationService()
         {
             if (!Input.location.isEnabledByUser)
             {
@@ -408,7 +352,8 @@ namespace Niantic.Lightship.AR.PAM
                 return;
             }
 
-            if (Input.location.status == LocationServiceStatus.Initializing || Input.location.status == LocationServiceStatus.Running)
+            if (Input.location.status == LocationServiceStatus.Initializing ||
+                Input.location.status == LocationServiceStatus.Running)
             {
                 // Start was already called
                 _locationServiceNeedsToStart = false;
@@ -422,7 +367,6 @@ namespace Niantic.Lightship.AR.PAM
                 _locationServiceNeedsToStart = false;
                 return;
             }
-
         }
     }
 }

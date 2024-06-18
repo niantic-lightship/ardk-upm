@@ -108,7 +108,7 @@ namespace Niantic.Lightship.AR.Loader
 
             if (_playbackLoaderHelper == null)
             {
-                return _loader.DeinitializePlatform();
+                _loader.DeinitializePlatform();
             }
 
             InputReader.Shutdown();

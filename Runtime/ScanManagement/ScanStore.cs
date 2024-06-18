@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
-using Google.Protobuf;
+using Niantic.Protobuf;
 using Niantic.ARDK.AR.Protobuf;
 using Niantic.Lightship.AR.Utilities;
 

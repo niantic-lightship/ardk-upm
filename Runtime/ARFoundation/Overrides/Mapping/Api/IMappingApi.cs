@@ -1,6 +1,7 @@
 // Copyright 2022-2024 Niantic.
 
 using System;
+using UnityEngine;
 
 namespace Niantic.Lightship.AR.Mapping
 {
@@ -13,7 +14,11 @@ namespace Niantic.Lightship.AR.Mapping
 
         void Stop();
 
-        void Configure();
+        void Configure
+        (
+            float splitterMaxDistanceMeters,
+            float splitterMaxDurationSeconds
+        );
 
         void StartMapping();
 
@@ -22,5 +27,7 @@ namespace Niantic.Lightship.AR.Mapping
         bool GetDeviceMaps(out XRDeviceMap[] maps);
 
         bool GetDeviceGraphBlobs(out XRDeviceMapGraph[] blobs);
+
+        void CreateAnchorPayloadFromDeviceMap(XRDeviceMap map, Matrix4x4 pose, out byte[] anchorPayload);
     }
 }

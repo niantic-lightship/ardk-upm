@@ -36,7 +36,7 @@ namespace Niantic.Lightship.AR.PAM
                 return;
 
             // Downscaling should not change the orientation
-            Debug.Assert(outputResolution.x > outputResolution.y);
+            Debug.Assert(outputResolution.x >= outputResolution.y);
 
             // Calculate cropping
             var xMin = 0;

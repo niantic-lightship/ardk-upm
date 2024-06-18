@@ -11,31 +11,28 @@ namespace Niantic.Lightship.AR.Simulation
 {
     internal class LightshipSimulationDepthTextureProvider : LightshipSimulationTextureProvider
     {
-        private const string k_TextureEnvironmentDepthPropertyName = "_EnvironmentDepth";
-        private static readonly int k_TextureEnvironmentDepthPropertyId =
-            Shader.PropertyToID(k_TextureEnvironmentDepthPropertyName);
+        private const string TextureEnvironmentDepthPropertyName = "_EnvironmentDepth";
+        private static readonly int s_textureEnvironmentDepthPropertyId =
+            Shader.PropertyToID(TextureEnvironmentDepthPropertyName);
 
         // Resources
         private RenderTexture _depthRT;
         private Material _material;
-        private static readonly int _zBufferParamsZ = Shader.PropertyToID("_ZBufferParams_Z");
-        private static readonly int _zBufferParamsW = Shader.PropertyToID("_ZBufferParams_W");
+        private static readonly int s_zBufferParamsZ = Shader.PropertyToID("_ZBufferParams_Z");
+        private static readonly int s_zBufferParamsW = Shader.PropertyToID("_ZBufferParams_W");
 
         private Texture2D _confidenceTexture;
         private IntPtr _confidencePointer;
 
         protected override void OnEnable()
         {
-            postRenderCamera += OnPostRenderCamera;
-
+            PostRenderCamera += OnPostRenderCamera;
             base.OnEnable();
         }
 
         protected override void OnDisable()
         {
-
-            postRenderCamera -= OnPostRenderCamera;
-
+            PostRenderCamera -= OnPostRenderCamera;
             base.OnDisable();
         }
 
@@ -60,9 +57,9 @@ namespace Niantic.Lightship.AR.Simulation
             base.InitializeProvider(xrCamera, simulationCamera);
 
             // The background camera
-            m_XrCamera = xrCamera;
+            XrCamera = xrCamera;
             // The helper depth camera
-            m_SimulationRenderCamera = simulationCamera;
+            SimulationRenderCamera = simulationCamera;
 
             // The shader that converts depth to metric depth (RFloat32)
             var shader = Shader.Find("Custom/LightshipSimulationDepthShader");
@@ -72,8 +69,8 @@ namespace Niantic.Lightship.AR.Simulation
             // we invert x and y because the camera is always physically installed at landscape left and we rotate the camera -90 for portrait
             _depthRT = new RenderTexture
             (
-                (int) m_SimulationRenderCamera.sensorSize.y,
-                (int) m_SimulationRenderCamera.sensorSize.x,
+                (int) SimulationRenderCamera.sensorSize.y,
+                (int) SimulationRenderCamera.sensorSize.x,
                 16,
                 RenderTextureFormat.Depth
             );
@@ -81,14 +78,14 @@ namespace Niantic.Lightship.AR.Simulation
             _depthRT.Create();
 
             // RFloat32 depth texture
-            m_RenderTexture = new RenderTexture
+            RenderTexture = new RenderTexture
             (
                 _depthRT.width,
                 _depthRT.height,
                 0,
                 RenderTextureFormat.RFloat
             );
-            m_RenderTexture.Create();
+            RenderTexture.Create();
 
             // Confidence Texture is all white (all ones, perfect confidence)
             _confidenceTexture = new Texture2D(_depthRT.width, _depthRT.height, TextureFormat.RFloat, false);
@@ -97,27 +94,27 @@ namespace Niantic.Lightship.AR.Simulation
             _confidenceTexture.Apply();
             _confidencePointer = _confidenceTexture.GetNativeTexturePtr();
 
-            m_SimulationRenderCamera.depthTextureMode = DepthTextureMode.Depth;
-            m_SimulationRenderCamera.clearFlags = CameraClearFlags.Depth;
-            m_SimulationRenderCamera.nearClipPlane = 0.1f;
-            m_SimulationRenderCamera.targetTexture = _depthRT;
+            SimulationRenderCamera.depthTextureMode = DepthTextureMode.Depth;
+            SimulationRenderCamera.clearFlags = CameraClearFlags.Depth;
+            SimulationRenderCamera.nearClipPlane = 0.1f;
+            SimulationRenderCamera.targetTexture = _depthRT;
 
             // We set ZBufferParams from the depth camera
-            var farDividedByNear = m_SimulationRenderCamera.farClipPlane / m_SimulationRenderCamera.nearClipPlane;
-            _material.SetFloat(_zBufferParamsZ, (-1 + farDividedByNear) / m_SimulationRenderCamera.farClipPlane);
-            _material.SetFloat(_zBufferParamsW, 1 / m_SimulationRenderCamera.farClipPlane);
+            var farDividedByNear = SimulationRenderCamera.farClipPlane / SimulationRenderCamera.nearClipPlane;
+            _material.SetFloat(s_zBufferParamsZ, (-1 + farDividedByNear) / SimulationRenderCamera.farClipPlane);
+            _material.SetFloat(s_zBufferParamsW, 1 / SimulationRenderCamera.farClipPlane);
 
-            if (m_ProviderTexture == null)
+            if (ProviderTexture == null)
             {
-                m_ProviderTexture = new Texture2D(_depthRT.width, _depthRT.height, TextureFormat.RFloat, false)
+                ProviderTexture = new Texture2D(_depthRT.width, _depthRT.height, TextureFormat.RFloat, false)
                 {
                     name = "Simulated Native Camera Texture",
                     hideFlags = HideFlags.HideAndDontSave
                 };
-                m_TexturePtr = m_ProviderTexture.GetNativeTexturePtr();
+                TexturePtr = ProviderTexture.GetNativeTexturePtr();
             }
 
-            _initialized = true;
+            Initialized = true;
         }
 
         internal override bool TryGetTextureDescriptors(out NativeArray<XRTextureDescriptor> planeDescriptors,
@@ -140,25 +137,25 @@ namespace Niantic.Lightship.AR.Simulation
 
         internal void TryGetTextureDescriptor(out XRTextureDescriptor planeDescriptor)
         {
-            var isValid = TryGetLatestImagePtr(out var nativePtr);
+            var _ = TryGetLatestImagePtr(out var nativePtr);
 
-            planeDescriptor = new XRTextureDescriptor(nativePtr, m_ProviderTexture.width, m_ProviderTexture.height,
-                m_ProviderTexture.mipmapCount, m_ProviderTexture.format, k_TextureEnvironmentDepthPropertyId, 0,
+            planeDescriptor = new XRTextureDescriptor(nativePtr, ProviderTexture.width, ProviderTexture.height,
+                ProviderTexture.mipmapCount, ProviderTexture.format, s_textureEnvironmentDepthPropertyId, 0,
                 TextureDimension.Tex2D);
         }
 
         internal void TryGetConfidenceTextureDescriptor(out XRTextureDescriptor depthConfidenceDescriptor)
         {
             depthConfidenceDescriptor = new XRTextureDescriptor(_confidencePointer, _confidenceTexture.width, _confidenceTexture.height,
-                _confidenceTexture.mipmapCount, _confidenceTexture.format, k_TextureEnvironmentDepthPropertyId, 0,
+                _confidenceTexture.mipmapCount, _confidenceTexture.format, s_textureEnvironmentDepthPropertyId, 0,
                 TextureDimension.Tex2D);
         }
 
         // Postprocess the image
-        private void OnPostRenderCamera(Camera camera)
+        private void OnPostRenderCamera(Camera _)
         {
             // Here we convert the depth texture to RFloat32
-            Graphics.Blit(_depthRT, m_RenderTexture, _material);
+            Graphics.Blit(_depthRT, RenderTexture, _material);
         }
     }
 }

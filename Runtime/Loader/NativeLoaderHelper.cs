@@ -110,6 +110,11 @@ namespace Niantic.Lightship.AR.Loader
         internal bool Deinitialize(ILightshipInternalLoaderSupport loader)
         {
             Log.Info("Destroying lightship subsystems");
+            if (loader == null)
+            {
+                Log.Warning("Loader is null. Assuming system is already deinitialized.");
+                return true;
+            }
 
             // Destroy subsystem does a null check, so will just no-op if these subsystems were not created or already destroyed
             loader.DestroySubsystem<XRSemanticsSubsystem>();

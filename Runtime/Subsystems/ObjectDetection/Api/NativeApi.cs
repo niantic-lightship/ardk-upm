@@ -35,9 +35,9 @@ namespace Niantic.Lightship.AR.Subsystems.ObjectDetection
             Native.Destruct(nativeProviderHandle);
         }
 
-        public void Configure(IntPtr nativeProviderHandle, uint targetFramerate)
+        public void Configure(IntPtr nativeProviderHandle, uint targetFramerate, uint framesUntilSeen, uint framesUntilDiscarded)
         {
-            Native.Configure(nativeProviderHandle, targetFramerate);
+            Native.Configure(nativeProviderHandle, targetFramerate, framesUntilSeen, framesUntilDiscarded);
         }
 
         public bool HasMetadata(IntPtr nativeProviderHandle)
@@ -101,8 +101,9 @@ namespace Niantic.Lightship.AR.Subsystems.ObjectDetection
             IntPtr nativeProviderHandle,
             out uint numDetections,
             out uint numClasses,
-            out float[] boundingBoxesArray,
-            out float[] probabilitiesArray,
+            out float[] boundingBoxes,
+            out float[] probabilities,
+            out uint[] trackingIds,
             out uint frameId,
             out ulong frameTimestamp,
             bool interpolate,
@@ -119,46 +120,90 @@ namespace Niantic.Lightship.AR.Subsystems.ObjectDetection
                 out IntPtr resourceHandle,
                 out numDetections,
                 out numClasses,
-                out IntPtr boundingBoxesBuffer,
-                out IntPtr probabilitiesBuffer,
+                out IntPtr boundingBoxesPtr,
+                out IntPtr probabilitiesPtr,
+                out IntPtr trackingIdsPtr,
                 out frameId,
                 out frameTimestamp
             );
 
             if (!success || numDetections == 0)
             {
-                boundingBoxesArray = Array.Empty<float>();
-                probabilitiesArray = Array.Empty<float>();
+                boundingBoxes = Array.Empty<float>();
+                probabilities = Array.Empty<float>();
+                trackingIds = Array.Empty<uint>();
+                return false;
+            }
+
+            if (boundingBoxesPtr == IntPtr.Zero || probabilitiesPtr == IntPtr.Zero)
+            {
+                Log.Error("Native returned invalid array pointer.");
+                boundingBoxes = Array.Empty<float>();
+                probabilities = Array.Empty<float>();
+                trackingIds = Array.Empty<uint>();
                 return false;
             }
 
             // Copy the results to managed memory
             unsafe
             {
-                var boundingBoxesArrayNa =
+                var boundingBoxesNa =
                     NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<float>
                     (
-                        (void*)boundingBoxesBuffer,
+                        (void*)boundingBoxesPtr,
                         (int)numDetections * 4,
                         Allocator.None
                     );
 
-                var probabilitiesArrayNa =
+                var probabilitiesNa =
                     NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<float>
                     (
-                        (void*)probabilitiesBuffer,
+                        (void*)probabilitiesPtr,
                         (int)numDetections * (int)numClasses,
                         Allocator.None
                     );
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-                NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref boundingBoxesArrayNa,
-                    AtomicSafetyHandle.GetTempMemoryHandle());
-                NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref probabilitiesArrayNa,
-                    AtomicSafetyHandle.GetTempMemoryHandle());
+                NativeArrayUnsafeUtility.SetAtomicSafetyHandle
+                (
+                    ref boundingBoxesNa,
+                    AtomicSafetyHandle.GetTempMemoryHandle()
+                );
+
+                NativeArrayUnsafeUtility.SetAtomicSafetyHandle
+                (
+                    ref probabilitiesNa,
+                    AtomicSafetyHandle.GetTempMemoryHandle()
+                );
 #endif
-                boundingBoxesArray = boundingBoxesArrayNa.ToArray();
-                probabilitiesArray = probabilitiesArrayNa.ToArray();
+                boundingBoxes = boundingBoxesNa.ToArray();
+                probabilities = probabilitiesNa.ToArray();
+
+                // Tracking ids will not be available if tracking is disabled
+                if (trackingIdsPtr != IntPtr.Zero)
+                {
+                    var trackingIdsNa =
+                        NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<uint>
+                        (
+                            (void*)trackingIdsPtr,
+                            (int)numDetections,
+                            Allocator.None
+                        );
+
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+                    NativeArrayUnsafeUtility.SetAtomicSafetyHandle
+                    (
+                        ref trackingIdsNa,
+                        AtomicSafetyHandle.GetTempMemoryHandle()
+                    );
+#endif
+
+                    trackingIds = trackingIdsNa.ToArray();
+                }
+                else
+                {
+                    trackingIds = Array.Empty<uint>();
+                }
             }
 
             // Additional work with this native resource
@@ -265,7 +310,13 @@ namespace Niantic.Lightship.AR.Subsystems.ObjectDetection
             public static extern void Stop(IntPtr nativeProviderHandle);
 
             [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_ObjectDetectionProvider_Configure")]
-            public static extern void Configure(IntPtr nativeProviderHandle, uint frameRate);
+            public static extern void Configure
+            (
+                IntPtr nativeProviderHandle,
+                uint frameRate,
+                uint framesUntilSeen,
+                uint framesUntilDiscarded
+            );
 
             [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_ObjectDetectionProvider_Destruct")]
             public static extern void Destruct(IntPtr nativeProviderHandle);
@@ -290,8 +341,9 @@ namespace Niantic.Lightship.AR.Subsystems.ObjectDetection
                 out IntPtr resourceHandle,
                 out uint numDetections,
                 out uint numClasses,
-                out IntPtr boxLocationsBuffer,
-                out IntPtr probabilitiesBuffer,
+                out IntPtr boxLocationsPtr,
+                out IntPtr probabilitiesPtr,
+                out IntPtr trackingIdsPtr,
                 out uint frameId,
                 out ulong frameTimestamp
             );

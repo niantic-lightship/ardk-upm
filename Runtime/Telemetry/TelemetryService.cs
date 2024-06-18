@@ -5,7 +5,6 @@ using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
-using Google.Protobuf;
 using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.ARDK.AR.Protobuf;
 using Niantic.Lightship.AR.Core;
@@ -15,6 +14,7 @@ using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 using Niantic.Lightship.AR.Utilities;
+using Niantic.Protobuf;
 
 namespace Niantic.Lightship.AR.Telemetry
 {
@@ -73,7 +73,7 @@ namespace Niantic.Lightship.AR.Telemetry
                         // expected exception. No need to log.
                         return;
                     }
-                    
+
                     Log.Debug($"Encountered exception: {e} while running the timed telemetry native poller");
                 }
             }
@@ -258,11 +258,11 @@ namespace Niantic.Lightship.AR.Telemetry
         public void Dispose()
         {
             MonoBehaviourEventDispatcher.OnApplicationFocusLost.RemoveListener(FlushTelemetry);
-            
+
             // stop async tasks
             _cancellationTokenSource?.Cancel();
             _cancellationTokenSource?.Dispose();
-            
+
             // Flush any remaining events
             // Note: This does not guarantee that all events will be sent
             FlushTelemetry();

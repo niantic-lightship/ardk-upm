@@ -88,6 +88,18 @@ namespace Niantic.Lightship.AR.Meshing
 
       private bool _isDirty;
 
+
+      // Experimental Meshing Options
+      [Header("Experimental Meshing Options")]
+
+      [SerializeField]
+      [Tooltip("Reduce memory costs by allowing multiple levels of detail to be used when generating the mesh. Using multiple levels of detail can improve performance by reducing the number of triangles in the mesh, and allow larger scenes to be represented while retaining detail close to the camera.")]
+      private bool _enableLevelsOfDetail = false;
+
+      [SerializeField]
+      [Tooltip("Set the number of different levels to be used. Lightship will automatically determine which parts of the scene to represent with different levels of detail, and the voxel size and block size will increase by a factor of 2 for each level of detail. The voxel size and block size configured in the Meshing Extension will be used as the base values at the finest level of detail.")]
+      private int _levelsOfDetail = 1;
+
       /// <summary>
       /// Get or set the frame rate that meshing will aim to run at.
       /// </summary>
@@ -315,6 +327,33 @@ namespace Niantic.Lightship.AR.Meshing
           }
       }
 
+      public bool EnableLevelsOfDetail
+      {
+          get => _enableLevelsOfDetail;
+          set
+          {
+                if (value != _enableLevelsOfDetail)
+                {
+                    _enableLevelsOfDetail = value;
+                    _isDirty = true;
+                }
+          }
+      }
+
+      public int LevelsOfDetail
+      {
+          get => _levelsOfDetail;
+          set
+          {
+              if (value != _levelsOfDetail)
+              {
+                  _levelsOfDetail = value;
+                  _isDirty = true;
+              }
+          }
+      }
+
+
       private void ValidateHierarchy()
       {
           if (this == null)
@@ -422,6 +461,7 @@ namespace Niantic.Lightship.AR.Meshing
               _maximumIntegrationDistance,
               _voxelSize,
               _enableDistanceBasedVolumetricCleanup,
+              _enableLevelsOfDetail ? _levelsOfDetail : 0,
               _meshBlockSize,
               _meshCullingDistance,
               _enableMeshDecimation,

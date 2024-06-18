@@ -270,7 +270,9 @@ namespace Niantic.Lightship.AR.PersistentAnchors
 
         protected override void OnBeforeStart()
         {
-            XRPersistentAnchorConfiguration cfg = new();
+            // We capture the current subsystem configurations so we don't overwrite unwanted configs with default
+            XRPersistentAnchorConfiguration cfg = new(subsystem.CurrentConfiguration);
+
             cfg.ContinuousLocalizationEnabled = ContinuousLocalizationEnabled;
             cfg.TransformUpdateSmoothingEnabled = _InterpolationEnabled;
 
@@ -398,6 +400,24 @@ namespace Niantic.Lightship.AR.PersistentAnchors
                 return false;
             }
             return subsystem.TryAddMap(dataBytes);
+        }
+
+        /// <summary>
+        /// Add graph of maps
+        /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
+        /// </summary>
+        /// <param name="dataBytes">Graph data</param>
+        /// <returns>
+        /// <c>True</c> If the graph was successfully added.
+        /// <c>False</c> The graph cannot be added.
+        /// </returns>
+        public bool TryAddGraph(byte[] dataBytes)
+        {
+            if (!LightshipUnityContext.FeatureEnabled(XRPersistentAnchorSubsystem.SlickLocalizationFeatureFlagName))
+            {
+                return false;
+            }
+            return subsystem.TryAddGraph(dataBytes);
         }
 
         /// <summary>

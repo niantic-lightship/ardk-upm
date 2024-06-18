@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text;
-using Google.Protobuf;
+using Niantic.Protobuf;
 using JetBrains.Annotations;
 using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.ARDK.AR.Protobuf;
@@ -21,7 +21,7 @@ namespace Niantic.Lightship.AR.Settings
     [PublicAPI]
     public static class Metadata
     {
-        private const string ArdkVersion = "3.5.0-2405101709";
+        private const string ArdkVersion = "3.6.0-2406141834";
 
         private const string AuthorizationHeaderKey = "Authorization";
         private const string ApplicationIdHeaderKey = "x-ardk-application-id";

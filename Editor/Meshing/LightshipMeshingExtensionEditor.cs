@@ -33,6 +33,9 @@ namespace Niantic.Lightship.AR.Editor
         private SerializedProperty _isFilteringBlockListEnabled;
         private SerializedProperty _filteringBlockList;
 
+        private SerializedProperty _enableLevelsOfDetail;
+        private SerializedProperty _levelsOfDetail;
+
         private static class Contents
         {
             public static readonly string meshBlockSizeWarning =
@@ -121,6 +124,16 @@ namespace Niantic.Lightship.AR.Editor
                 }
             }
 
+            EditorGUILayout.PropertyField(_enableLevelsOfDetail);
+            if (_enableLevelsOfDetail.boolValue)
+            {
+                EditorGUILayout.PropertyField(_levelsOfDetail);
+            }
+            EditorGUILayout.HelpBox(
+                "Experimental meshing options are features still in development. They are provided here for us to " +
+                "collect feedback from early users, and we cannot guarantee they will be supported in future versions",
+                MessageType.Warning);
+
             serializedObject.ApplyModifiedProperties();
         }
 
@@ -139,6 +152,8 @@ namespace Niantic.Lightship.AR.Editor
             _filteringAllowList = serializedObject.FindProperty("_allowList");
             _isFilteringBlockListEnabled = serializedObject.FindProperty("_isFilteringBlockListEnabled");
             _filteringBlockList = serializedObject.FindProperty("_blockList");
+            _enableLevelsOfDetail = serializedObject.FindProperty("_enableLevelsOfDetail");
+            _levelsOfDetail = serializedObject.FindProperty("_levelsOfDetail");
         }
     }
 }

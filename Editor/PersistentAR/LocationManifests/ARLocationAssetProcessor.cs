@@ -298,6 +298,12 @@ namespace Niantic.Lightship.AR.Editor
                         (e => Path.GetExtension(e.Name).Equals(".json"));
 
                     var edgeData = ParseLocationData(edgeEntries.First());
+                    if (!textureEntries.Any())
+                    {
+                        // Skip submeshes without textures
+                        continue;
+                    }
+
                     var texture = ImportTexture(textureEntries.First(), targetDir);
 
                     var mesh = meshEntries.First();

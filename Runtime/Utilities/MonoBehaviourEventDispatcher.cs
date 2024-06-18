@@ -36,12 +36,15 @@ namespace Niantic.Lightship.AR.Utilities
         public static readonly PrioritizingEvent OnApplicationFocusLost = new ();
 
         private static Thread s_mainThread;
-        private static bool s_destroyedValidly;
+        private bool _destroyedValidly;
 
         // Instantiation of the MonoBehaviourEventDispatcher component must be delayed until after scenes load.
         public static void Create()
         {
-            if (SceneManager.sceneCount > 0)
+            // sceneCount includes unloaded or (currently unloading) scenes
+            // objects should only be instantiated when there is an active, loaded scene.
+            // note: loadedSceneCount may work in the future but is version 2022+ only.
+            if (SceneManager.GetActiveScene().isLoaded)
             {
                 Instantiate();
             }
@@ -67,14 +70,13 @@ namespace Niantic.Lightship.AR.Utilities
 
             Log.Info("Instantiating the MonoBehaviourEventDispatcher");
 
-            var go =
-                new GameObject(s_gameObjectName, typeof(MonoBehaviourEventDispatcher));
+            var go = new GameObject(s_gameObjectName) { hideFlags = HideFlags.HideInHierarchy };
 
-            go.hideFlags = HideFlags.HideInHierarchy;
+            var mbed = go.AddComponent<MonoBehaviourEventDispatcher>();
 
             if (Application.isPlaying)
             {
-                s_destroyedValidly = false;
+                mbed._destroyedValidly = false;
                 DontDestroyOnLoad(go);
             }
 #endif
@@ -87,8 +89,12 @@ namespace Niantic.Lightship.AR.Utilities
                 return;
             }
 
-            s_destroyedValidly = true;
+            s_instance._destroyedValidly = true;
             Destroy(s_instance.gameObject);
+            s_instance = null;
+            Updating.Clear();
+            LateUpdating.Clear();
+            OnApplicationFocusLost.Clear();
         }
 
         // Cache the current thread as the main thread for testing
@@ -155,7 +161,7 @@ namespace Niantic.Lightship.AR.Utilities
             //   is destroyed before the XR loader is deinitialized (gameObject.scene.isLoaded == false)
             // - Invalid (will log error): This component is destroyed without the XR loader being
             //   deinitialized immediately afterward ((!s_destroyedValidly && gameObject.scene.isLoaded) == true)
-            if (!s_destroyedValidly && gameObject.scene.isLoaded)
+            if (!_destroyedValidly && gameObject.scene.isLoaded)
             {
                 Log.Error
                 (
@@ -164,11 +170,6 @@ namespace Niantic.Lightship.AR.Utilities
                     "(which will recreate the component)."
                 );
             }
-
-            Updating.Clear();
-            LateUpdating.Clear();
-            OnApplicationFocusLost.Clear();
-            s_instance = null;
         }
 
         /// <summary>

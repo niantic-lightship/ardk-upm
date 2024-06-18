@@ -22,14 +22,14 @@ namespace Niantic.Lightship.AR.Simulation
     public class LightshipSimulationPersistentAnchorSubsystem :
         XRPersistentAnchorSubsystem
     {
-        internal const string k_SubsystemId = "Lightship-Simulation-PersistentAnchor";
+        private const string SubsystemId = "Lightship-Simulation-PersistentAnchor";
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void RegisterDescriptor()
         {
             var cinfo = new XRPersistentAnchorSubsystemDescriptor.Cinfo
             {
-                id = k_SubsystemId,
+                id = SubsystemId,
                 providerType = typeof(LightshipSimulationProvider),
                 subsystemTypeOverride = typeof(LightshipSimulationPersistentAnchorSubsystem),
                 supportsTrackableAttachments = true
@@ -38,10 +38,8 @@ namespace Niantic.Lightship.AR.Simulation
             XRPersistentAnchorSubsystemDescriptor.Create(cinfo);
         }
 
-        internal class LightshipSimulationProvider : Provider
+        private class LightshipSimulationProvider : Provider
         {
-            private XRPersistentAnchorConfiguration _currentConfiguration =
-                new XRPersistentAnchorConfiguration();
             private bool _started;
 
             private readonly List<XRPersistentAnchor> _addedList = new List<XRPersistentAnchor>();
@@ -49,9 +47,12 @@ namespace Niantic.Lightship.AR.Simulation
             private readonly List<TrackableId> _removedList = new List<TrackableId>();
             private readonly List<NativeArray<byte>> _payloads = new List<NativeArray<byte>>();
             private Guid _sessionId;
-            private LightshipSimulationPersistentAnchorParams _persistentAnchorParams;
-            private Random _random = new Random();
+            private readonly LightshipSimulationPersistentAnchorParams _persistentAnchorParams;
+            private readonly Random _random = new Random();
             private readonly List<XRPersistentAnchor> _anchors = new List<XRPersistentAnchor>();
+
+
+            public override XRPersistentAnchorConfiguration CurrentConfiguration { get; set; } = new XRPersistentAnchorConfiguration();
 
             public override bool IsMockProvider
             {
@@ -63,10 +64,7 @@ namespace Niantic.Lightship.AR.Simulation
             /// </summary>
             public LightshipSimulationProvider()
             {
-                Log.Info
-                (
-                    "LightshipSimulationPersistentAnchorSubsystem.LightshipSimulationProvider construct"
-                );
+                Log.Debug($"{nameof(LightshipSimulationPersistentAnchorSubsystem)}.{nameof(LightshipSimulationProvider)} ctor");
 
                 _sessionId = Guid.NewGuid();
                 _persistentAnchorParams = LightshipSettings.Instance.LightshipSimulationParams
@@ -83,7 +81,7 @@ namespace Niantic.Lightship.AR.Simulation
                 _started = false;
                 foreach (var payload in _payloads)
                 {
-                   payload.Dispose(); 
+                   payload.Dispose();
                 }
                 _payloads.Clear();
 
@@ -91,7 +89,7 @@ namespace Niantic.Lightship.AR.Simulation
                 {
                     _removedList.Add(anchor.trackableId);
                 }
-                
+
                 _anchors.Clear();
             }
 
@@ -100,7 +98,7 @@ namespace Niantic.Lightship.AR.Simulation
                 _started = false;
             }
 
-            [Obsolete]
+            [Obsolete("This method does not do anything")]
             public void Configure(IntPtr persistentAnchorApiHandle)
             {
             }
@@ -237,7 +235,7 @@ namespace Niantic.Lightship.AR.Simulation
                 // Surface the anchor backed by the persistent payload
                 var payloadSize = bytes.Length;
                 var xrPersistentAnchorPayload = new XRPersistentAnchorPayload(payloadIntPtr, payloadSize);
-                
+
                 anchor = new XRPersistentAnchor
                 (
                     anchorGuid,
@@ -284,7 +282,7 @@ namespace Niantic.Lightship.AR.Simulation
                 if (_persistentAnchorParams.applyTranslationalOffset)
                 {
                     var offsetVector = UnityEngine.Random.onUnitSphere;
-                    
+
                     // Apply a random magnitude between 0 and the max severity
                     offsetVector *=
                     (
@@ -303,8 +301,8 @@ namespace Niantic.Lightship.AR.Simulation
                     var angle = Quaternion.Angle(offsetQuaternion, Quaternion.identity);
 
                     // Apply a random angle between 0 and the max severity
-                    var angleLimit = 
-                        _persistentAnchorParams.rotationalOffsetSeverityDegrees * 
+                    var angleLimit =
+                        _persistentAnchorParams.rotationalOffsetSeverityDegrees *
                         (float)_random.NextDouble();
 
                     Quaternion finalRotation;
@@ -353,20 +351,6 @@ namespace Niantic.Lightship.AR.Simulation
                 if (!existsInAddedList)
                 {
                     _updateList.Add(update);
-                }
-            }
-
-            private XRPersistentAnchor CreateXRPersistentAnchor(IntPtr anchorChangeIntPtr)
-            {
-                return default;
-            }
-
-            public override XRPersistentAnchorConfiguration CurrentConfiguration
-            {
-                get => _currentConfiguration;
-                set
-                {
-                    _currentConfiguration = value;
                 }
             }
         }

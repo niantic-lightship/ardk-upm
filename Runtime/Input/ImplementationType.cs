@@ -7,6 +7,7 @@ namespace Niantic.Lightship.AR
     {
         Unity,
         Mock,
+        Spoof,
         Playback
     }
 }

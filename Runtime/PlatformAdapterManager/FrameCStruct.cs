@@ -9,7 +9,7 @@ namespace Niantic.Lightship.AR.PAM
     //   The lengths of color image data are sent as the length in bytes (i.e. sizeof(pixel) * width * height),
     //   while the lengths of primitive data buffers (intrinsics, platform depth) are equal to the number of elements.
     [StructLayout(LayoutKind.Sequential)]
-    internal struct FrameCStruct
+    internal struct DeprecatedFrameCStruct
     {
         // An Id to identify the current frame, this Id is promised to be different
         // across frames within the same run.
@@ -126,55 +126,5 @@ namespace Niantic.Lightship.AR.PAM
 
         // Length of the platform depth buffer camera intrinsics
         public UInt32 PlatformDepthCameraIntrinsicsLength;
-    }
-
-    // C struct for C# to send GPS data to C++.
-    // Needs to match gps_position.h
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct GpsLocation
-    {
-        // GPS timestamp in milliseconds since epoch
-        public UInt64 TimestampMs;
-
-        // GPS location latitude
-        public float Latitude;
-
-        // GPS location longitude
-        public float Longitude;
-
-        // GPS location altitude
-        public float Altitude;
-
-        // GPS vertical accuracy
-        public float VerticalAccuracy;
-
-        // GPS horizontal accuracy
-        public float HorizontalAccuracy;
-
-        public UInt32 padding;
-    }
-
-    // C struct for C# to send Compass data to C++.
-    // Needs to match compass.h.
-    // This struct is based on https://docs.unity3d.com/ScriptReference/Compass.html.
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct CompassData
-    {
-        // Accuracy of heading reading in degrees.
-        public float HeadingAccuracy;
-
-        // The heading in degrees relative to the magnetic North Pole.
-        public float MagneticHeading;
-
-        // The raw geomagnetic data measured in microteslas.
-        public float RawDataX;
-        public float RawDataY;
-        public float RawDataZ;
-
-        // Compass data epoch timestamp in ms.
-        public UInt64 TimestampMs;
-
-        // The heading in degrees relative to the geographic North Pole.
-        public float TrueHeading;
     }
 }

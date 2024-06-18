@@ -45,7 +45,7 @@ namespace Niantic.Lightship.AR.Subsystems.Semantics
 
 		private UInt32 _suppressionMaskChannels = 0;
 
-        private XRCpuImage.Api _cpuImageApi => LightshipCpuImageApi.instance;
+        private XRCpuImage.Api _cpuImageApi => LightshipCpuImageApi.Instance;
 
         public MockApi()
         {

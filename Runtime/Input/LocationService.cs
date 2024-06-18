@@ -1,6 +1,7 @@
 // Copyright 2022-2024 Niantic.
 using System;
 using System.Reflection;
+using Niantic.Lightship.AR.Core;
 using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.Loader;
 using Niantic.Lightship.AR.Subsystems.Playback;
@@ -127,9 +128,17 @@ namespace Niantic.Lightship.AR
             }
             else
             {
-                _provider = Application.isEditor
-                    ? new MockLocationServiceProvider()
-                    : new UnityLocationServiceProvider();
+#if NIANTIC_ARDK_EXPERIMENTAL_FEATURES
+                _lightshipSettings = LightshipUnityContext.ActiveSettings;
+                bool useSpoofLocation = _lightshipSettings != null && _lightshipSettings.UseLightshipSpoofLocation;
+#else
+                bool useSpoofLocation = false;
+#endif
+                _provider = useSpoofLocation
+                    ? new SpoofLocationServiceProvider()
+                    : Application.isEditor
+                        ? new MockLocationServiceProvider()
+                        : new UnityLocationServiceProvider();
             }
         }
 
@@ -454,6 +463,92 @@ namespace Niantic.Lightship.AR
                 AccuracyInMeters = desiredAccuracyInMeters;
                 UpdateDistanceInMeters = updateDistanceInMeters;
                 status = LocationServiceStatus.Running;
+            }
+
+            private void SetStatusToRunning()
+            {
+                MonoBehaviourEventDispatcher.Updating.RemoveListener(SetStatusToRunning);
+                status = LocationServiceStatus.Running;
+            }
+
+            public void Stop()
+            {
+                if (status != LocationServiceStatus.Failed)
+                {
+                    status = LocationServiceStatus.Stopped;
+                }
+            }
+        }
+
+        private class SpoofLocationServiceProvider : ILocationServiceProvider
+        {
+            public InputImplementationType ImplementationType => InputImplementationType.Spoof;
+            public float AccuracyInMeters { get; private set; }
+            public float UpdateDistanceInMeters { get; private set; }
+            public bool isEnabledByUser { get; private set; }
+            public LocationServiceStatus status { get; private set; }
+
+            public LocationInfo lastData
+            {
+                get
+                {
+#if NIANTIC_ARDK_EXPERIMENTAL_FEATURES
+                    if (status != LocationServiceStatus.Running)
+                    {
+                        Log.Info
+                        (
+                            "Location service updates are not enabled. " +
+                            "Check LocationService.status before querying last location."
+                        );
+
+                        return default;
+                    }
+
+                    return LightshipLocationSpoof.Instance.LocationInfo;
+#else
+                    Log.Error("Lightship spoof location is not enabled. Please enable NIANTIC_ARDK_EXPERIMENTAL_FEATURES in your project settings.");
+                    return default;
+#endif
+                }
+            }
+
+            public SpoofLocationServiceProvider()
+            {
+                isEnabledByUser = true;
+            }
+
+            public SpoofLocationServiceProvider(ILocationServiceProvider prevProvider)
+            {
+                isEnabledByUser = prevProvider.isEnabledByUser;
+            }
+
+            public void Start(float desiredAccuracyInMeters, float updateDistanceInMeters)
+            {
+                if (status == LocationServiceStatus.Stopped)
+                {
+                    if (!isEnabledByUser)
+                    {
+                        status = LocationServiceStatus.Failed;
+                    }
+                    else
+                    {
+                        AccuracyInMeters = desiredAccuracyInMeters;
+                        UpdateDistanceInMeters = updateDistanceInMeters;
+
+                        status = LocationServiceStatus.Initializing;
+                        MonoBehaviourEventDispatcher.Updating.AddListener(SetStatusToRunning);
+                    }
+                }
+            }
+
+            public void Start(float desiredAccuracyInMeters)
+            {
+                Start(desiredAccuracyInMeters, k_DefaultUpdateDistanceInMeters);
+            }
+
+            public void Start()
+            {
+                Start(k_DefaultAccuracyInMeters, k_DefaultUpdateDistanceInMeters);
             }
 
             private void SetStatusToRunning()

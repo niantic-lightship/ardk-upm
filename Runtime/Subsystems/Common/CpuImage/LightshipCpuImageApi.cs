@@ -1,11 +1,14 @@
 // Copyright 2022-2024 Niantic.
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.Utilities;
+using Niantic.Lightship.AR.Utilities.Profiling;
 using Niantic.Lightship.AR.Utilities.Textures;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
+using UnityEngine.Experimental.Rendering;
 using UnityEngine.XR.ARSubsystems;
 
 namespace Niantic.Lightship.AR.Subsystems.Common
@@ -15,7 +18,9 @@ namespace Niantic.Lightship.AR.Subsystems.Common
         /// <summary>
         /// The shared API instance.
         /// </summary>
-        public static LightshipCpuImageApi instance { get; } = new LightshipCpuImageApi();
+        public static LightshipCpuImageApi Instance { get; } = new LightshipCpuImageApi();
+
+        private const string TraceCategory = "LightshipCpuImageApi";
 
         private Dictionary<int, NativeImage> _images;
         private NativeDataRepository _pool;
@@ -54,7 +59,7 @@ namespace Niantic.Lightship.AR.Subsystems.Common
 
             if (_pool.Size > 0)
             {
-                Log.Error("Failed to dispose memory allocated in the NativeDataRepository.");
+                Log.Warning("Failed to dispose memory allocated in the NativeDataRepository.");
             }
 
             _pool = new NativeDataRepository();
@@ -73,6 +78,29 @@ namespace Niantic.Lightship.AR.Subsystems.Common
         )
         {
             if (_pool.TryCopyFrom(data, size, out var handle))
+            {
+                var image = new NativeImage(handle, format, width, height, timestampMs);
+                _images.Add(handle, image);
+                cinfo = new XRCpuImage.Cinfo(handle, image.Dimensions, 1, image.TimestampS, image.Format);
+
+                return true;
+            }
+
+            cinfo = default;
+            return false;
+        }
+
+        public bool TryAddManagedXRCpuImage
+        (
+            byte[] data,
+            int width,
+            int height,
+            TextureFormat format,
+            ulong timestampMs,
+            out XRCpuImage.Cinfo cinfo
+        )
+        {
+            if (_pool.TryCopyFrom(data, out var handle))
             {
                 var image = new NativeImage(handle, format, width, height, timestampMs);
                 _images.Add(handle, image);
@@ -187,9 +215,15 @@ namespace Niantic.Lightship.AR.Subsystems.Common
                 return false;
             }
 
-            if (!s_SupportedConversions[image.Format].Contains(conversionParams.outputFormat))
+            if (!s_supportedConversions[image.Format].Contains(conversionParams.outputFormat))
             {
                 return false;
+            }
+
+            var finalOutputFormat = conversionParams.outputFormat;
+            if (conversionParams.outputFormat == TextureFormat.RGB24)
+            {
+                conversionParams.outputFormat = TextureFormat.RGBA32;
             }
 
             if (_convertedTexture.width != conversionParams.outputDimensions.x
@@ -203,15 +237,16 @@ namespace Niantic.Lightship.AR.Subsystems.Common
                     conversionParams.outputFormat,
                     false
                 );
+
+                _convertedTexture.filterMode = FilterMode.Bilinear;
             }
 
             _pool.TryGetData(nativeHandle, out var sourceData);
-            var sourceTexture = new Texture2D(image.Dimensions.x, image.Dimensions.y, image.Format.ConvertToTextureFormat(), false);
+            var sourceTexture = new Texture2D(image.Dimensions.x, image.Dimensions.y, image.Format.AsTextureFormat(), false);
             sourceTexture.LoadRawTextureData(sourceData);
             sourceTexture.Apply();
 
-            _convertedTexture.filterMode = FilterMode.Bilinear;
-            Blit(sourceTexture, _convertedTexture, conversionParams.transformation);
+            Blit(sourceTexture, _convertedTexture, conversionParams);
 
 #if UNITY_EDITOR
             if (!Application.isPlaying)
@@ -224,23 +259,61 @@ namespace Niantic.Lightship.AR.Subsystems.Common
                 UnityEngine.Object.Destroy(sourceTexture);
             }
 
-            var convertedData = _convertedTexture.GetRawTextureData<byte>();
-
             unsafe
             {
-                UnsafeUtility.MemCpy(destinationBuffer.ToPointer(), convertedData.GetUnsafeReadOnlyPtr(), bufferLength);
+                if (finalOutputFormat == TextureFormat.RGB24 && _convertedTexture.format == TextureFormat.RGBA32)
+                {
+                    // SLOW. But that's OK because it's only ever used in Playback + Object Detection.
+                    // The channel data for both RGBA32 and RGB24 textures is ordered: R, G, B, A bytes one after another.
+                    UnsafeFastRgbaToRgbCopy(_convertedTexture, destinationBuffer, bufferLength);
+                }
+                else
+                {
+                    var convertedData = _convertedTexture.GetRawTextureData<byte>();
+                    UnsafeUtility.MemCpy(destinationBuffer.ToPointer(), convertedData.GetUnsafeReadOnlyPtr(), bufferLength);
+
+                    convertedData.Dispose();
+                }
             }
 
             return true;
+        }
+
+        private void UnsafeFastRgbaToRgbCopy(Texture2D sourceTexture, IntPtr destBuffer, int destBufferLength)
+        {
+            // Note: move destRgbData allocation out (keep it allocated) to avoid a lot of garbage collection
+            // 3 because RGB = 3 bytes
+            byte[] destRgbData = new byte[sourceTexture.width * sourceTexture.height * 3];
+            var sourceRgbaData = sourceTexture.GetRawTextureData<byte>();
+
+            int srcIndex = 0;
+            int destIndex = 0;
+
+            while (srcIndex < sourceRgbaData.Length) {
+                // Copy RGB, Skip A
+                destRgbData[destIndex++] = sourceRgbaData[srcIndex++];
+                destRgbData[destIndex++] = sourceRgbaData[srcIndex++];
+                destRgbData[destIndex++] = sourceRgbaData[srcIndex++];
+                srcIndex++;
+            }
+
+            Marshal.Copy(destRgbData, 0, destBuffer, Math.Min(destRgbData.Length, destBufferLength));
+            sourceRgbaData.Dispose();
         }
 
         private static void Blit
         (
             Texture sourceTexture,
             Texture2D destinationTexture,
-            XRCpuImage.Transformation transformation = XRCpuImage.Transformation.None
+            XRCpuImage.ConversionParams conversionParams
         )
         {
+            if (!SystemInfo.IsFormatSupported(destinationTexture.graphicsFormat, FormatUsage.Render))
+            {
+                Log.Error($"Texture format: {destinationTexture.graphicsFormat} not supported on this platform.");
+                return;
+            }
+
             var tmp =
                 RenderTexture.GetTemporary
                 (
@@ -252,7 +325,7 @@ namespace Niantic.Lightship.AR.Subsystems.Common
 
             var cachedRenderTarget = RenderTexture.active;
 
-            var (scale, offset) = CalculateBlitScale(transformation);
+            var (scale, offset) = CalculateBlitScale(conversionParams.transformation);
 
             // Separating scaling and non-scaling in case the implementation for no scaling is more efficient.
             if (scale != Vector2.one)
@@ -261,7 +334,15 @@ namespace Niantic.Lightship.AR.Subsystems.Common
             }
             else
             {
-                Graphics.Blit(sourceTexture, tmp);
+                var newScale = new Vector2(
+                    (float)conversionParams.inputRect.width / sourceTexture.width,
+                    (float)conversionParams.inputRect.height / sourceTexture.height
+                );
+                var newOffset = new Vector2(
+                    (float)conversionParams.inputRect.x / sourceTexture.width,
+                    (float)conversionParams.inputRect.y / sourceTexture.height
+                );
+                Graphics.Blit(sourceTexture, tmp, newScale, newOffset);
             }
 
             RenderTexture.ReleaseTemporary(tmp);
@@ -300,11 +381,14 @@ namespace Niantic.Lightship.AR.Subsystems.Common
             return (scale, offset);
         }
 
-        private static readonly Dictionary<XRCpuImage.Format, HashSet<TextureFormat>> s_SupportedConversions =
+        private static readonly Dictionary<XRCpuImage.Format, HashSet<TextureFormat>> s_supportedConversions =
             new()
             {
                 { XRCpuImage.Format.DepthFloat32, new HashSet<TextureFormat> { TextureFormat.RFloat } },
-                { XRCpuImage.Format.OneComponent8, new HashSet<TextureFormat> { TextureFormat.R8, TextureFormat.Alpha8 } }
+                { XRCpuImage.Format.OneComponent8, new HashSet<TextureFormat> { TextureFormat.R8, TextureFormat.Alpha8 } },
+                { XRCpuImage.Format.RGBA32, new HashSet<TextureFormat> { TextureFormat.RGBA32, TextureFormat.RGB24 } },
+                { XRCpuImage.Format.BGRA32, new HashSet<TextureFormat> { TextureFormat.RGBA32, TextureFormat.RGB24 } },
+                { XRCpuImage.Format.RGB24, new HashSet<TextureFormat> { TextureFormat.RGB24, TextureFormat.RGBA32 } }
             };
 
         /// <summary>
@@ -319,17 +403,7 @@ namespace Niantic.Lightship.AR.Subsystems.Common
         ///  Returns `false` otherwise.</returns>
         public override bool FormatSupported(XRCpuImage image, TextureFormat format)
         {
-            switch (image.format)
-            {
-                case XRCpuImage.Format.OneComponent8:
-                    return
-                        format == TextureFormat.R8 ||
-                        format == TextureFormat.Alpha8;
-                case XRCpuImage.Format.DepthFloat32:
-                    return format == TextureFormat.RFloat;
-                default:
-                    return false;
-            }
+            return s_supportedConversions[image.format].Contains(format);
         }
     }
 }

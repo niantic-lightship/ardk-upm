@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
@@ -48,6 +49,35 @@ namespace Niantic.Lightship.AR.Utilities.Textures
                 handle = _rand.Next();
                 _dataStore.Add(handle, dataDestination);
                 _size += (ulong)size;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Add data to be managed by this repository by copying it from the provided location.
+        /// </summary>
+        /// <param name="data">The array of data to copy into the repository.</param>
+        /// <param name="size">The size of the data in bytes.</param>
+        /// <param name="handle">A handle that can be used to get or remove this data from the repository.</param>
+        /// <returns></returns>
+        public bool TryCopyFrom(byte[] data, out int handle)
+        {
+            if (_dataStore.Count >= MaxTextures)
+            {
+                Error("Too many XRCpuImages have been acquired. Remember to dispose XRCpuImages after they are used.");
+                handle = 0;
+                return false;
+            }
+
+            unsafe
+            {
+                var dataDestination = new NativeArray<byte>(data.Length, Allocator.Persistent);
+                Marshal.Copy(data, 0, (IntPtr)dataDestination.GetUnsafePtr(), data.Length);
+
+                handle = _rand.Next();
+                _dataStore.Add(handle, dataDestination);
+                _size += (ulong)data.Length;
             }
 
             return true;

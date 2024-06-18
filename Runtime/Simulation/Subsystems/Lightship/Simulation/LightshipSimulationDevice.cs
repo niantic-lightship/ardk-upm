@@ -13,7 +13,7 @@ namespace Niantic.Lightship.AR.Simulation
     /// </summary>
     internal class LightshipSimulationDevice : MonoBehaviour
     {
-        private static LightshipSimulationDevice s_Instance;
+        private static LightshipSimulationDevice s_instance;
         private bool _removedOffset = false;
         private float _lastAspectRatio = 1f;
 
@@ -86,28 +86,28 @@ namespace Niantic.Lightship.AR.Simulation
 
         internal static LightshipSimulationDevice GetOrCreateSimulationCamera()
         {
-            if (!s_Instance)
+            if (!s_instance)
             {
                 SimulationCamera.GetOrCreateSimulationCamera();
                 var xrSimulationCamera = GameObject.Find("SimulationCamera");
 
-                s_Instance = xrSimulationCamera.AddComponent<LightshipSimulationDevice>();
+                s_instance = xrSimulationCamera.AddComponent<LightshipSimulationDevice>();
 
                 var cameraParentGo = new GameObject("LightshipSimulationCameras");
                 cameraParentGo.transform.SetParent(xrSimulationCamera.transform, false);
                 cameraParentGo.transform.rotation = s_cameraSensorToGameViewRotation;
-                s_Instance.CameraParent = cameraParentGo.transform;
+                s_instance.CameraParent = cameraParentGo.transform;
 
                 var rgbCameraGo = new GameObject("LightshipSimulationRgbCamera");
                 rgbCameraGo.transform.SetParent(cameraParentGo.transform, false);
                 var camera = rgbCameraGo.AddComponent<Camera>();
                 camera.enabled = false;
-                s_Instance.RgbCamera = camera;
+                s_instance.RgbCamera = camera;
 
-                s_Instance._lastAspectRatio = LightshipSimulationEditorUtility.GetGameViewAspectRatio();
+                s_instance._lastAspectRatio = LightshipSimulationEditorUtility.GetGameViewAspectRatio();
             }
 
-            return s_Instance;
+            return s_instance;
         }
     }
 }

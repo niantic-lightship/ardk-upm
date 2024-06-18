@@ -43,6 +43,14 @@ namespace Niantic.Lightship.AR.PAM
             }
         }
 
+        public virtual void Lightship_ARDK_Unity_PAM_OnFrame(IntPtr handle, IntPtr frameData)
+        {
+            if (handle == _handle)
+            {
+                Log.Info("Forwarded frame data");
+            }
+        }
+
         public void Lightship_ARDK_Unity_PAM_Release(IntPtr handle)
         {
             if (handle == _handle)
@@ -97,9 +105,9 @@ namespace Niantic.Lightship.AR.PAM
             _removedDataFormatsSize = formats.Length;
         }
 
-        public static FrameCStruct IntPtrToFrameCStruct(IntPtr ptr)
+        public static DeprecatedFrameCStruct IntPtrToFrameCStruct(IntPtr ptr)
         {
-            return (FrameCStruct)Marshal.PtrToStructure(ptr, typeof(FrameCStruct));
+            return (DeprecatedFrameCStruct)Marshal.PtrToStructure(ptr, typeof(DeprecatedFrameCStruct));
         }
     }
 }

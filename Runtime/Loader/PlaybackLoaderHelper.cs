@@ -120,12 +120,37 @@ namespace Niantic.Lightship.AR
         internal bool Deinitialize(ILightshipInternalLoaderSupport loader)
         {
             Log.Info("Deinitialize playback subsystems");
-            loader.DestroySubsystem<XRSessionSubsystem>();
-            loader.DestroySubsystem<XRCameraSubsystem>();
+            if (loader == null)
+            {
+                Log.Warning("Loader is null. Assuming system is already deinitialized.");
+                return true;
+            }
 
             _inputProvider?.Dispose();
             DatasetReader = null;
             InitializeInput(null, null);
+
+            var sessionSubsystem = loader.GetLoadedSubsystem<XRSessionSubsystem>();
+            if (sessionSubsystem != null)
+            {
+                if (sessionSubsystem.running)
+                {
+                    sessionSubsystem.Stop();
+                }
+
+                loader.DestroySubsystem<XRSessionSubsystem>();
+            }
+
+            var xrCameraSubsystem = loader.GetLoadedSubsystem<XRCameraSubsystem>();
+            if (xrCameraSubsystem != null)
+            {
+                if (xrCameraSubsystem.running)
+                {
+                    xrCameraSubsystem.Stop();
+                }
+
+                loader.DestroySubsystem<XRCameraSubsystem>();
+            }
 
             return true;
         }

@@ -17,7 +17,7 @@ namespace Niantic.Lightship.AR.Subsystems.ObjectDetection
 
         void Stop(IntPtr nativeProviderHandle);
 
-        void Configure(IntPtr nativeProviderHandle, uint targetFramerate);
+        void Configure(IntPtr nativeProviderHandle, uint targetFramerate, uint framesUntilSeen, uint framesUntilDiscarded);
 
         bool HasMetadata(IntPtr nativeProviderHandle);
 
@@ -31,8 +31,8 @@ namespace Niantic.Lightship.AR.Subsystems.ObjectDetection
         /// <param name="nativeProviderHandle"></param>
         /// <param name="numDetections"></param>
         /// <param name="numClasses"></param>
-        /// <param name="boxLocationsBuffer"></param>
-        /// <param name="probabilitiesBuffer">
+        /// <param name="boundingBoxes"></param>
+        /// <param name="probabilities">
         ///     Vector of floats, where the (n * numClasses + c)th element is the confidence
         ///     of the detection of the cth class for the box with ID n.
         /// </param>
@@ -48,8 +48,9 @@ namespace Niantic.Lightship.AR.Subsystems.ObjectDetection
             IntPtr nativeProviderHandle,
             out uint numDetections,
             out uint numClasses,
-            out float[] boxLocationsBuffer,
-            out float[] probabilitiesBuffer,
+            out float[] boundingBoxes,
+            out float[] probabilities,
+            out uint[] trackingIds,
             out uint frameId,
             out ulong frameTimestamp,
             bool interpolate,

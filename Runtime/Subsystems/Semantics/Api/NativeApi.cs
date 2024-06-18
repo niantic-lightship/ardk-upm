@@ -37,7 +37,7 @@ namespace  Niantic.Lightship.AR.Subsystems.Semantics
         /// <summary>
         /// The CPU image API for interacting with the environment depth image.
         /// </summary>
-        private LightshipCpuImageApi _cpuImageApi => LightshipCpuImageApi.instance;
+        private LightshipCpuImageApi _cpuImageApi => LightshipCpuImageApi.Instance;
 
         public IntPtr Construct(IntPtr unityContext)
         {

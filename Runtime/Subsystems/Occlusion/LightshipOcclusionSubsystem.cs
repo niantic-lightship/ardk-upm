@@ -744,7 +744,7 @@ namespace Niantic.Lightship.AR.Subsystems.Occlusion
             /// <summary>
             /// The CPU image API for interacting with the environment depth image.
             /// </summary>
-            public override XRCpuImage.Api environmentDepthCpuImageApi => LightshipCpuImageApi.instance;
+            public override XRCpuImage.Api environmentDepthCpuImageApi => LightshipCpuImageApi.Instance;
 
             /// <summary>
             /// Gets the occlusion texture descriptors associated with the current AR frame.

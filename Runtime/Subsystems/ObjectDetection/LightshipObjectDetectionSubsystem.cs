@@ -15,6 +15,20 @@ namespace Niantic.Lightship.AR.Subsystems.ObjectDetection
     {
         internal const uint MaxRecommendedFrameRate = 20;
 
+        // Internal because object tracking configuration is not exposed as a fully-fledged public
+        // feature, however the properties are useful to have for internal testing.
+        internal uint FramesUntilSeenByFilter
+        {
+            get => ((LightshipObjectDetectionProvider) provider).FramesUntilSeenByFilter;
+            set => ((LightshipObjectDetectionProvider)provider).FramesUntilSeenByFilter = value;
+        }
+
+        internal uint FramesUntilDiscardedByFilter
+        {
+            get => ((LightshipObjectDetectionProvider) provider).FramesUntilDiscardedByFilter;
+            set => ((LightshipObjectDetectionProvider)provider).FramesUntilDiscardedByFilter = value;
+        }
+
         /// <summary>
         /// Register the Lightship object detection subsystem.
         /// </summary>
@@ -135,6 +149,10 @@ namespace Niantic.Lightship.AR.Subsystems.ObjectDetection
                 }
             }
 
+            // TODO [ARDK-3676]: Experiment to figure out what the best default values are
+            private const uint DefaultFramesUntilSeen = 3;
+            private const uint DefaultFramesUntilDiscarded = 3;
+
             /// <summary>
             /// The handle to the native version of the provider
             /// </summary>
@@ -145,6 +163,8 @@ namespace Niantic.Lightship.AR.Subsystems.ObjectDetection
             private DisplayHelper _displayHelper;
 
             private uint _targetFrameRate = MaxRecommendedFrameRate;
+            private uint _framesUntilSeenByFilter = DefaultFramesUntilSeen;
+            private uint _framesUntilDiscardedByFilter = DefaultFramesUntilDiscarded;
             private ulong _latestTimestamp = 0;
 
             /// <summary>
@@ -169,6 +189,72 @@ namespace Niantic.Lightship.AR.Subsystems.ObjectDetection
                         _targetFrameRate = value;
                         Configure();
                     }
+                }
+            }
+
+            public uint FramesUntilSeenByFilter
+            {
+                get
+                {
+                    return _framesUntilSeenByFilter;
+                }
+                set
+                {
+                    if (_framesUntilSeenByFilter != value)
+                    {
+                        _framesUntilSeenByFilter = value;
+                        Configure();
+                    }
+                }
+            }
+
+            public uint FramesUntilDiscardedByFilter
+            {
+                get
+                {
+                    return _framesUntilDiscardedByFilter;
+                }
+                set
+                {
+                    if (_framesUntilDiscardedByFilter != value)
+                    {
+                        _framesUntilDiscardedByFilter = value;
+                        Configure();
+                    }
+                }
+            }
+
+            /// <summary>
+            /// Property to get or set whether stabilization is enabled.
+            /// </summary>
+            /// <value>
+            /// True if stabilization is enabled.
+            /// </value>
+            public override bool IsStabilizationEnabled
+            {
+                get
+                {
+                    return FramesUntilDiscardedByFilter > 0 && FramesUntilSeenByFilter > 0;
+                }
+                set
+                {
+                    if (value == IsStabilizationEnabled)
+                    {
+                        return;
+                    }
+
+                    if (value)
+                    {
+                        _framesUntilSeenByFilter = DefaultFramesUntilSeen;
+                        _framesUntilDiscardedByFilter = DefaultFramesUntilDiscarded;
+                    }
+                    else
+                    {
+                        _framesUntilSeenByFilter = 0;
+                        _framesUntilDiscardedByFilter = 0;
+                    }
+
+                    Configure();
                 }
             }
 
@@ -200,7 +286,7 @@ namespace Niantic.Lightship.AR.Subsystems.ObjectDetection
                     return null;
                 }
             }
-            
+
             public ulong LatestTimestamp
             {
                 get
@@ -208,6 +294,8 @@ namespace Niantic.Lightship.AR.Subsystems.ObjectDetection
                     return _latestTimestamp;
                 }
             }
+
+
 
             public LightshipObjectDetectionProvider() : this(new NativeApi()) { }
 
@@ -340,9 +428,10 @@ namespace Niantic.Lightship.AR.Subsystems.ObjectDetection
                         _nativeProviderHandle,
                         out uint numDetections,
                         out uint numClasses,
-                        out float[] boxLocationsList,
-                        out float[] probabilitiesList,
-                        out uint _,
+                        out float[] boxLocations,
+                        out float[] probabilities,
+                        out uint[] trackingIds,
+                        out uint frameId,
                         out _latestTimestamp,
                         true,
                         out var interpolationMatrix
@@ -363,20 +452,18 @@ namespace Niantic.Lightship.AR.Subsystems.ObjectDetection
                     var vertexIndex = i * 4;
 
                     // Extract coordinates
-                    // From Native: left, top, right, bottom to left, top, width, height for Unity Rect Struct
-                    var topLeft =
-                        new Vector2Int((int)boxLocationsList[vertexIndex], (int)boxLocationsList[vertexIndex + 1]);
+                    var left = (int)boxLocations[vertexIndex];
+                    var top = (int)boxLocations[vertexIndex + 1];
+                    var right = (int)boxLocations[vertexIndex + 2];
+                    var bot = (int)boxLocations[vertexIndex + 3];
 
-                    var bottomRight =
-                        new Vector2Int((int)boxLocationsList[vertexIndex + 2], (int)boxLocationsList[vertexIndex + 3]);
+                    var topLeft = new Vector2Int(left, top);
+                    var bottomRight = new Vector2Int(right, bot);
+                    var topRight = new Vector2Int(right, top);
+                    var bottomLeft = new Vector2Int(left, bot);
 
-                    var topRight =
-                        new Vector2Int((int)boxLocationsList[vertexIndex + 2], (int)boxLocationsList[vertexIndex + 1]);
-
-                    var bottomLeft =
-                        new Vector2Int((int)boxLocationsList[vertexIndex], (int)boxLocationsList[vertexIndex + 3]);
-
-                    // Interpolate coordinates, if requested
+                    // Interpolate coordinates, if requested.
+                    // The coordinates remain in the coordinate space of the inference image.
                     if (interpolationMatrix.HasValue)
                     {
                         topLeft =
@@ -422,15 +509,18 @@ namespace Niantic.Lightship.AR.Subsystems.ObjectDetection
                     var newRight = Math.Max(topRight.x, bottomRight.x);
                     var newBottom = Math.Max(bottomLeft.y, bottomRight.y);
 
-                    topLeft = new Vector2Int(newLeft, newTop);
-                    bottomRight = new Vector2Int(newRight, newBottom);
-
                     // Construct the UI rect
-                    var rect = new Rect(topLeft.x, topLeft.y, bottomRight.x - topLeft.x, bottomRight.y - topLeft.y);
+                    var rect = new Rect(newLeft, newTop, newRight - newLeft, newBottom - newTop);
+
+                    uint? id = null;
+                    if (trackingIds.Length > 0)
+                    {
+                        id = trackingIds[i];
+                    }
 
                     var boxProbIndex = i * (int)numClasses;
-                    var confidences = probabilitiesList[boxProbIndex..(boxProbIndex + (int)numClasses)];
-                    results[i] = new LightshipDetectedObject(rect, confidences, _categoryDirectory, _displayHelper);
+                    var confidences = probabilities[boxProbIndex..(boxProbIndex + (int)numClasses)];
+                    results[i] = new LightshipDetectedObject(id, rect, confidences, _categoryDirectory, _displayHelper, container);
                 }
 
                 return true;
@@ -443,7 +533,7 @@ namespace Niantic.Lightship.AR.Subsystems.ObjectDetection
                     return;
                 }
 
-                _api.Configure(_nativeProviderHandle, TargetFrameRate);
+                _api.Configure(_nativeProviderHandle, _targetFrameRate, _framesUntilSeenByFilter, _framesUntilDiscardedByFilter);
             }
 
             // Destroy the native provider and replace it with the provided (or default mock) provider

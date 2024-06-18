@@ -357,6 +357,20 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
                 return _api.TryAddMap(_nativeProviderHandle, dataBytes);
             }
 
+            public override bool TryAddGraph(byte[] dataBytes)
+            {
+                if (!LightshipUnityContext.FeatureEnabled(SlickLocalizationFeatureFlagName))
+                {
+                    return false;
+                }
+                if (!_nativeProviderHandle.IsValidHandle())
+                {
+                    return false;
+                }
+
+                return _api.TryAddGraph(_nativeProviderHandle, dataBytes);
+            }
+
             public override bool GetVpsSessionId(out string vpsSessionId)
             {
                 if (!_nativeProviderHandle.IsValidHandle())
@@ -377,14 +391,11 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
                     return false;
                 }
 
-                if (_api.TryCreateAnchor(_nativeProviderHandle, pose, out var anchorId))
-                {
-                    anchor = new XRPersistentAnchor(anchorId);
-                    return true;
-                }
-
-                anchor = XRPersistentAnchor.defaultValue;
-                return false;
+                // Native TryCreateAnchor is a void function but Subsystem/Provider level function follows
+                // ARF pattern to return boolean
+                _api.TryCreateAnchor(_nativeProviderHandle, pose, out var anchorId);
+                anchor = new XRPersistentAnchor(anchorId);
+                return true;
             }
 
             public override bool TryRemoveAnchor(TrackableId anchorId)
@@ -634,6 +645,7 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
                         _currentConfiguration.ContinuousLocalizationEnabled,
                         _currentConfiguration.TemporalFusionEnabled,
                         _currentConfiguration.TransformUpdateSmoothingEnabled,
+                        _currentConfiguration.CloudLocalizationEnabled,
                         _currentConfiguration.SlickLocalizationEnabled,
                         _currentConfiguration.CloudLocalizerInitialRequestsPerSecond,
                         _currentConfiguration.CloudLocalizerContinuousRequestsPerSecond,

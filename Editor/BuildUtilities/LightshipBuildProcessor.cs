@@ -134,7 +134,7 @@ namespace Niantic.Lightship.AR.Editor
                 }
 
                 project.WriteToFile(projectPath);
-                
+
 #if (FIX_INTEGRATED_SUBSYSTEM_2021 && UNITY_2021_3_OR_NEWER && !UNITY_2022) || (FIX_INTEGRATED_SUBSYSTEM_2022 && UNITY_2022)
                 PostProcessIosUnityAppControllerFix(buildPath);
 #endif
@@ -285,7 +285,8 @@ namespace Niantic.Lightship.AR.Editor
                 {
                     if (loaderIsOpenXR)
                     {
-                        AddDefineSymbols.Add("NIANTIC_LIGHTSHIP_SPACES_ENABLED");
+                        // TODO(ARDK-3724): Add speicific define for OpenXR
+                        // AddDefineSymbols.Add("NIANTIC_LIGHTSHIP_SPACES_ENABLED");
                     }
 
                     AddDefineSymbols.Add("NIANTIC_LIGHTSHIP_AR_LOADER_ENABLED");

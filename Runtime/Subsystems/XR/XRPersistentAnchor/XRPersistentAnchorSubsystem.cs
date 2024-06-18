@@ -244,6 +244,21 @@ namespace Niantic.Lightship.AR.XRSubsystems
             return provider.TryAddMap(dataBytes);
         }
 
+        /// <summary>
+        /// Attempts to add map graph.
+        /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
+        /// </summary>
+        /// <param name="dataBytes">Byte array of map graph data</param>
+        /// <returns><c>true</c> if the new map graph was added, otherwise <c>false</c>.</returns>
+        public bool TryAddGraph(byte[] dataBytes)
+        {
+            if (!LightshipUnityContext.FeatureEnabled(SlickLocalizationFeatureFlagName))
+            {
+                return false;
+            }
+            return provider.TryAddGraph(dataBytes);
+        }
+
         // Invoked when the subsystem is stopped
         internal event Action OnSubsystemStop;
 
@@ -325,6 +340,18 @@ namespace Niantic.Lightship.AR.XRSubsystems
             /// <param name="dataBytes">Byte array of map data</param>
             /// <returns><c>true</c> if the new map was added, otherwise <c>false</c>.</returns>
             public virtual bool TryAddMap(byte[] dataBytes)
+            {
+                return false;
+            }
+
+
+            /// <summary>
+            /// Attempts to add map graph.
+            /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
+            /// </summary>
+            /// <param name="dataBytes">Byte array of map graph data</param>
+            /// <returns><c>true</c> if the new map graph was added, otherwise <c>false</c>.</returns>
+            public virtual bool TryAddGraph(byte[] dataBytes)
             {
                 return false;
             }

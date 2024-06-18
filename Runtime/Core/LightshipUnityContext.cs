@@ -10,7 +10,7 @@ using Niantic.Lightship.AR.PAM;
 using Niantic.Lightship.AR.Utilities.Profiling;
 using Niantic.Lightship.AR.Settings;
 using Niantic.Lightship.AR.Telemetry;
-
+using Niantic.Lightship.Utilities.UnityAssets;
 
 namespace Niantic.Lightship.AR.Core
 {
@@ -38,6 +38,9 @@ namespace Niantic.Lightship.AR.Core
         // by native UnityContext
         internal static event Action OnDeinitialized;
         internal static event Action OnUnityContextHandleInitialized;
+
+        // Function that an external plugin can use to register its own PlatformDataAcquirer with PAM
+        internal static Func<IntPtr, bool, bool, PlatformAdapterManager> CreatePamWithPlugin;
 
         internal static void Initialize(LightshipSettings settings, bool isDeviceLidarSupported, bool disableTelemetry = false)
         {
@@ -73,7 +76,7 @@ namespace Niantic.Lightship.AR.Core
             s_userConfig = new UserConfig
             {
                 ApiKey = settings.ApiKey,
-                FeatureFlagFilePath = Path.Combine(Application.streamingAssetsPath, "featureFlag.json")
+                FeatureFlagFilePath = GetFeatureFlagPath()
             };
 
             DeviceInfo deviceInfo = new DeviceInfo
@@ -135,26 +138,31 @@ namespace Niantic.Lightship.AR.Core
             // Create the PAM, which will create the SAH
             Log.Info("Creating PAM");
 
-            // Playback
+            // Check for Playback in Editor / On Device
             if (Application.isEditor || settings.UsePlayback)
             {
-                PlatformAdapterManager =
-                    PlatformAdapterManager.Create<PAM.NativeApi, SubsystemsDataAcquirer>
-                    (
-                        UnityContextHandle,
-                        PlatformAdapterManager.ImageProcessingMode.GPU,
-                        isLidarDepthEnabled: settings.PreferLidarIfAvailable && s_isDeviceLidarSupported,
-                        trySendOnUpdate: settings.TestSettings.TickPamOnUpdate
-                    );
+                PlatformAdapterManager = PlatformAdapterManager.Create<PAM.NativeApi, SubsystemsDataAcquirer>
+                (
+                    UnityContextHandle,
+                    isLidarDepthEnabled: settings.PreferLidarIfAvailable && s_isDeviceLidarSupported,
+                    trySendOnUpdate: settings.TestSettings.TickPamOnUpdate
+                );
             }
-            // Native
+            else if (null != CreatePamWithPlugin) // Check if another Lightship plugin has registered with its own PlatformDataAcquirer
+            {
+                PlatformAdapterManager = CreatePamWithPlugin
+                (
+                    UnityContextHandle,
+                    settings.PreferLidarIfAvailable,
+                    settings.TestSettings.TickPamOnUpdate
+                );
+            }
             else
             {
                 PlatformAdapterManager =
                     PlatformAdapterManager.Create<PAM.NativeApi, SubsystemsDataAcquirer>
                     (
                         UnityContextHandle,
-                        PlatformAdapterManager.ImageProcessingMode.CPU,
                         isLidarDepthEnabled: settings.PreferLidarIfAvailable && s_isDeviceLidarSupported,
                         trySendOnUpdate: settings.TestSettings.TickPamOnUpdate
                     );
@@ -205,6 +213,45 @@ namespace Niantic.Lightship.AR.Core
             }
 
             return NativeApi.Lightship_ARDK_Unity_Context_FeatureEnabled(UnityContextHandle, featureName);
+        }
+
+        private static string GetFeatureFlagPath()
+        {
+            const string featureFlagFileName = "featureFlag.json";
+            var pathInPersistentData = Path.Combine(Application.persistentDataPath, featureFlagFileName);
+            var pathInStreamingAsset = Path.Combine(Application.streamingAssetsPath, featureFlagFileName);
+            var pathInTempCache = Path.Combine(Application.temporaryCachePath, featureFlagFileName);
+
+            // Use if file exists in the persistent data path
+            if (File.Exists(pathInPersistentData))
+            {
+                return pathInPersistentData;
+            }
+
+            // Use if file exists in the streaming asset path
+            if (pathInStreamingAsset.Contains("://"))
+            {
+                // the file path is file URL e.g. on Android. copy to temp and use it
+                bool fileRead = FileUtilities.TryReadAllText(pathInStreamingAsset, out var jsonString);
+                if (fileRead)
+                {
+                    File.WriteAllText(pathInTempCache, jsonString);
+                    return pathInTempCache;
+                }
+            }
+            else
+            {
+                if (File.Exists(pathInStreamingAsset))
+                {
+                    return pathInStreamingAsset;
+                }
+            }
+
+            // Write default setting to temp and use it
+            const string defaultFeatureFlagSetting = @"{
+                }";
+            File.WriteAllText(pathInTempCache, defaultFeatureFlagSetting);
+            return pathInTempCache;
         }
 
         /// <summary>

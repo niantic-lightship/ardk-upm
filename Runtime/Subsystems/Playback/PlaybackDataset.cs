@@ -10,13 +10,22 @@ using UnityEngine.XR.ARSubsystems;
 
 namespace Niantic.Lightship.AR.Subsystems.Playback
 {
-    // Format declared here: AR/pages/360712457
+    /// <summary>
+    /// DataContract of the playback dataset
+    /// Format declared here: AR/pages/360712457 -> no idea what this means but like, whatever
+    /// </summary>
     [Serializable]
     internal class PlaybackDataset
     {
+        /// <summary>
+        /// the datasetPath is being provided for the Api - potentially to get the base path for images by this class' users.
+        /// The content holds the contents of the json file for each playback dataset
+        /// </summary>
+        /// <param name="content"></param>
+        /// <param name="datasetPath"></param>
         public PlaybackDataset(string content, string datasetPath)
         {
-            _datasetPath = datasetPath;
+            DatasetPath = datasetPath;
             JsonUtility.FromJsonOverwrite(content, this);
 
             foreach (var frame in Frames)
@@ -45,8 +54,7 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
             }
         }
 
-        private readonly string _datasetPath;
-        public string DatasetPath => _datasetPath;
+        public string DatasetPath { get; }
 
         [SerializeField]
         private int autofocus;

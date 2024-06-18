@@ -47,6 +47,9 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
             public bool enableTransformSmoothing;
 
             [MarshalAs(UnmanagedType.U1)]
+            public bool enableCloudLocalization;
+
+            [MarshalAs(UnmanagedType.U1)]
             public bool enableSlickLocalization;
 
             public float cloudLocalizerInitialRequestsPerSecond;
@@ -67,6 +70,7 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
             bool enableContinuousLocalization,
             bool enableTemporalFusion,
             bool enableTransformSmoothing,
+            bool enableCloudLocalization,
             bool enableSlickLocalization,
             float cloudLocalizerInitialRequestsPerSecond,
             float cloudLocalizerContinuousRequestsPerSecond,
@@ -79,6 +83,7 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
             configurationCStruct.enableContinuousLocalization = enableContinuousLocalization;
             configurationCStruct.enableTemporalFusion = enableTemporalFusion;
             configurationCStruct.enableTransformSmoothing = enableTransformSmoothing;
+            configurationCStruct.enableCloudLocalization = enableCloudLocalization;
             configurationCStruct.enableSlickLocalization = enableSlickLocalization;
             configurationCStruct.cloudLocalizerInitialRequestsPerSecond = cloudLocalizerInitialRequestsPerSecond;
             configurationCStruct.cloudLocalizerContinuousRequestsPerSecond = cloudLocalizerContinuousRequestsPerSecond;
@@ -113,11 +118,26 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
             return Native.TryAddMap(anchorProviderHandle, dataPtr, dataSize);
         }
 
-        public bool TryCreateAnchor(IntPtr anchorProviderHandle, Pose pose, out TrackableId anchorId)
+
+        public bool TryAddGraph(IntPtr anchorProviderHandle, byte[] dataBytes)
+        {
+            IntPtr dataPtr = IntPtr.Zero;
+            int dataSize = dataBytes.Length;
+            unsafe
+            {
+                fixed (byte* bytePtr = dataBytes)
+                {
+                    dataPtr = (IntPtr)bytePtr;
+                }
+            }
+            return Native.TryAddGraph(anchorProviderHandle, dataPtr, dataSize);
+        }
+
+        public void TryCreateAnchor(IntPtr anchorProviderHandle, Pose pose, out TrackableId anchorId)
         {
             Matrix4x4 poseMatrix = Matrix4x4.TRS(pose.position, pose.rotation, Vector3.one);
             float[] poseArray = MatrixConversionHelper.Matrix4x4ToInternalArray(poseMatrix.FromUnityToArdk());
-            return Native.TryCreateAnchor(anchorProviderHandle, poseArray, out anchorId);
+            Native.TryCreateAnchor(anchorProviderHandle, poseArray, out anchorId);
         }
 
         public bool TryRemoveAnchor(IntPtr anchorProviderHandle, TrackableId anchorId)
@@ -357,8 +377,11 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
             [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_AnchorProvider_TryAddMap")]
             public static extern bool TryAddMap(IntPtr anchorApiHandle, IntPtr dataPtr, int dataSize);
 
+            [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_AnchorProvider_TryAddGraph")]
+            public static extern bool TryAddGraph(IntPtr anchorApiHandle, IntPtr dataPtr, int dataSize);
+
             [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_AnchorProvider_TryCreateAnchor")]
-            public static extern bool TryCreateAnchor
+            public static extern void TryCreateAnchor
                 (IntPtr anchorApiHandle, float[] poseMatrix, out TrackableId anchorId);
 
             [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_AnchorProvider_TryRemoveAnchor")]

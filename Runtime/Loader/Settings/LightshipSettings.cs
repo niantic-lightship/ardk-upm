@@ -133,6 +133,20 @@ namespace Niantic.Lightship.AR.Loader
         /// </summary>
         public bool UseLightshipObjectDetection => _useLightshipObjectDetection;
 
+        #region Experimental Settings
+
+#if NIANTIC_ARDK_EXPERIMENTAL_FEATURES
+        [SerializeField, Tooltip("When true, Lightship's Spoof Location to be used on device.")]
+        private bool _useLightshipSpoofLocation = false;
+
+        /// <summary>
+        /// [Experimental] When true, Lightship's spoof location provider can be used.
+        /// </summary>
+        public bool UseLightshipSpoofLocation => _useLightshipSpoofLocation;
+#endif
+
+        #endregion
+
         [SerializeField, Tooltip("The lowest log level to print")]
         private LogLevel _unityLogLevel = LogLevel.Warn;
 

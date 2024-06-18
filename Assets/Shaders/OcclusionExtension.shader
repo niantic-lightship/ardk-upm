@@ -87,6 +87,12 @@ Shader "Lightship/OcclusionExtension"
               return 1.0f / (zParams.z * z + zParams.w);
             }
 
+            // Inverse of Linear Eye Depth
+            inline float EyeDepthToNonLinear(float eyeDepth, float4 zParams)
+            {
+              return (1.0f / eyeDepth - zParams.w) / zParams.z;
+            }
+
             v2f vert (appdata v)
             {
                 v2f o;
@@ -152,25 +158,25 @@ Shader "Lightship/OcclusionExtension"
               // Infer the far plane distance
 #ifdef UNITY_REVERSED_Z
               const float maxDepth = 0.0f;
-              const float eps = -1.1754944E-3f;
 #else
               const float maxDepth = 1.0f;
-              const float eps = 1.1754944E-3f;
 #endif
 
               float2 depth_uv = float2(i.depth_uv.x / i.depth_uv.z, i.depth_uv.y / i.depth_uv.z);
 
 #ifdef FEATURE_STABILIZATION
               // Sample non-linear frame depth
-              float frameDepth = ConvertDistanceToDepth(SampleLinearEyeDepth(depth_uv));
+              float frameDepthLinearEye = SampleLinearEyeDepth(depth_uv);
+              float frameDepth = ConvertDistanceToDepth(frameDepthLinearEye);
 
               // Sample non-linear fused depth
-              float fusedDepth = tex2D(_FusedDepth, i.vertex_uv).r + eps;
+              float fusedDepth = tex2D(_FusedDepth, i.vertex_uv).r;
+              float fusedDepthLinearEye = LinearEyeDepth(fusedDepth, _ZBufferParams);
+              const float eps = 0.1f;
+              fusedDepth = EyeDepthToNonLinear(fusedDepthLinearEye + eps, _ZBufferParams);
 
               // Linearize and compare
-              float frameLinear = Linear01Depth(frameDepth);
-              float fusedLinear = Linear01Depth(fusedDepth);
-              bool useFrameDepth = fusedLinear == maxDepth || (abs(fusedLinear - frameLinear) / fusedLinear) >= _StabilizationThreshold;
+              bool useFrameDepth = (abs(fusedDepthLinearEye - frameDepthLinearEye) / fusedDepthLinearEye) >= _StabilizationThreshold;
 
               // Determine the depth value
               float depth = useFrameDepth ? frameDepth : fusedDepth;

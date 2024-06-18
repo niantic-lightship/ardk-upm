@@ -1,6 +1,7 @@
 // Copyright 2022-2024 Niantic.
 using System.Runtime.InteropServices;
 using Niantic.Lightship.AR.Utilities;
+using Niantic.Lightship.AR.Utilities.Logging;
 
 namespace Niantic.Lightship.AR.XRSubsystems
 {
@@ -15,6 +16,7 @@ namespace Niantic.Lightship.AR.XRSubsystems
         internal const bool DefaultContinuousLocalizationEnabled = false;
         internal const bool DefaultTemporalFusionEnabled = false;
         internal const bool DefaultTransformUpdateSmoothingEnabled = false;
+        internal const bool DefaultCloudLocalizationEnabled = true;
         internal const bool DefaultSlickLocalizationEnabled = false;
         internal const float DefaultCloudLocalizerInitialRequestsPerSecond = 1.0f;
         internal const float DefaultCloudLocalizerContinuousRequestsPerSecond = 0.2f;
@@ -26,6 +28,7 @@ namespace Niantic.Lightship.AR.XRSubsystems
         private bool _continuousLocalizationEnabled;
         private bool _temporalFusionEnabled;
         private bool _transformUpdateSmoothingEnabled;
+        private bool _cloudLocalizationEnabled;
         private bool _slickLocalizationEnabled;
         private float _cloudLocalizerInitialRequestsPerSecond;
         private float _cloudLocalizerContinuousRequestsPerSecond;
@@ -52,6 +55,12 @@ namespace Niantic.Lightship.AR.XRSubsystems
             set => _transformUpdateSmoothingEnabled = value;
         }
 
+        public bool CloudLocalizationEnabled
+        {
+            get => _cloudLocalizationEnabled;
+            set => _cloudLocalizationEnabled = value;
+        }
+
         public bool SlickLocalizationEnabled
         {
             get => _slickLocalizationEnabled;
@@ -62,7 +71,15 @@ namespace Niantic.Lightship.AR.XRSubsystems
         public float CloudLocalizerInitialRequestsPerSecond
         {
             get => _cloudLocalizerInitialRequestsPerSecond;
-            set => _cloudLocalizerInitialRequestsPerSecond = value;
+            set
+            {
+                if (value < 0)
+                {
+                    Log.Error("CloudLocalizerInitialRequestsPerSecond must be greater or equal than zero.");
+                    return;
+                }
+                _cloudLocalizerInitialRequestsPerSecond = value;
+            }
         }
 
         // Define the rate of server requests for continuous localization
@@ -70,25 +87,57 @@ namespace Niantic.Lightship.AR.XRSubsystems
         public float CloudLocalizerContinuousRequestsPerSecond
         {
             get => _cloudLocalizerContinuousRequestsPerSecond;
-            set => _cloudLocalizerContinuousRequestsPerSecond = value;
+            set
+            {
+                if (value < 0)
+                {
+                    Log.Error("CloudLocalizerContinuousRequestsPerSecond must be greater or equal than zero.");
+                    return;
+                }
+                _cloudLocalizerContinuousRequestsPerSecond = value;
+            }
         }
 
         public float SlickLocalizationFps
         {
             get => _slickLocalizationFps;
-            set => _slickLocalizationFps = value;
+            set
+            {
+                if (value < 0)
+                {
+                    Log.Error("SlickLocalizationFps must be greater or equal than zero.");
+                    return;
+                }
+                _slickLocalizationFps = value;
+            }
         }
 
         public uint CloudLocalizationTemporalFusionWindowSize
         {
             get => _cloudLocalizationTemporalFusionWindowSize;
-            set => _cloudLocalizationTemporalFusionWindowSize = value;
+            set
+            {
+                if (value <= 0)
+                {
+                    Log.Error("CloudLocalizationTemporalFusionWindowSize must be greater than zero.");
+                    return;
+                }
+                _cloudLocalizationTemporalFusionWindowSize = value;
+            }
         }
 
         public uint SlickLocalizationTemporalFusionWindowSize
         {
             get => _slickLocalizationTemporalFusionWindowSize;
-            set => _slickLocalizationTemporalFusionWindowSize = value;
+            set
+            {
+                if (value <= 0)
+                {
+                    Log.Error("SlickLocalizationTemporalFusionWindowSize must be greater than zero.");
+                    return;
+                }
+                _slickLocalizationTemporalFusionWindowSize = value;
+            }
         }
 
         public bool DiagnosticsEnabled
@@ -105,6 +154,7 @@ namespace Niantic.Lightship.AR.XRSubsystems
             _continuousLocalizationEnabled = DefaultContinuousLocalizationEnabled;
             _temporalFusionEnabled = DefaultTemporalFusionEnabled;
             _transformUpdateSmoothingEnabled = DefaultTransformUpdateSmoothingEnabled;
+            _cloudLocalizationEnabled = DefaultCloudLocalizationEnabled;
             _slickLocalizationEnabled = DefaultSlickLocalizationEnabled;
             _cloudLocalizerInitialRequestsPerSecond = DefaultCloudLocalizerInitialRequestsPerSecond;
             _cloudLocalizerContinuousRequestsPerSecond = DefaultCloudLocalizerContinuousRequestsPerSecond;
@@ -119,6 +169,7 @@ namespace Niantic.Lightship.AR.XRSubsystems
             bool continuousLocalizationEnabled = DefaultContinuousLocalizationEnabled,
             bool temporalFusionEnabled = DefaultTemporalFusionEnabled,
             bool transformUpdateSmoothingEnabled = DefaultTransformUpdateSmoothingEnabled,
+            bool cloudLocalizationEnabled = DefaultCloudLocalizationEnabled,
             bool slickLocalizationEnabled = DefaultSlickLocalizationEnabled,
             float cloudLocalizerInitialRequestsPerSecond = DefaultCloudLocalizerInitialRequestsPerSecond,
             float cloudLocalizerContinuousRequestsPerSecond = DefaultCloudLocalizerContinuousRequestsPerSecond,
@@ -131,6 +182,7 @@ namespace Niantic.Lightship.AR.XRSubsystems
             _continuousLocalizationEnabled = continuousLocalizationEnabled;
             _temporalFusionEnabled = temporalFusionEnabled;
             _transformUpdateSmoothingEnabled = transformUpdateSmoothingEnabled;
+            _cloudLocalizationEnabled = cloudLocalizationEnabled;
             _slickLocalizationEnabled = slickLocalizationEnabled;
             _cloudLocalizerInitialRequestsPerSecond = cloudLocalizerInitialRequestsPerSecond;
             _cloudLocalizerContinuousRequestsPerSecond = cloudLocalizerContinuousRequestsPerSecond;
@@ -150,6 +202,7 @@ namespace Niantic.Lightship.AR.XRSubsystems
             _continuousLocalizationEnabled = other._continuousLocalizationEnabled;
             _temporalFusionEnabled = other._temporalFusionEnabled;
             _transformUpdateSmoothingEnabled = other._transformUpdateSmoothingEnabled;
+            _cloudLocalizationEnabled = other._cloudLocalizationEnabled;
             _slickLocalizationEnabled = other._slickLocalizationEnabled;
             _cloudLocalizerInitialRequestsPerSecond = other._cloudLocalizerInitialRequestsPerSecond;
             _cloudLocalizerContinuousRequestsPerSecond = other._cloudLocalizerContinuousRequestsPerSecond;
@@ -174,6 +227,7 @@ namespace Niantic.Lightship.AR.XRSubsystems
             return  _continuousLocalizationEnabled == other._continuousLocalizationEnabled &&
                     _temporalFusionEnabled == other._temporalFusionEnabled &&
                     _transformUpdateSmoothingEnabled == other._transformUpdateSmoothingEnabled &&
+                    _cloudLocalizationEnabled == other._cloudLocalizationEnabled &&
                     _slickLocalizationEnabled == other._slickLocalizationEnabled &&
                     FloatEqualityHelper.NearlyEquals(_cloudLocalizerInitialRequestsPerSecond, other._cloudLocalizerInitialRequestsPerSecond) &&
                     FloatEqualityHelper.NearlyEquals(_cloudLocalizerContinuousRequestsPerSecond, other._cloudLocalizerContinuousRequestsPerSecond) &&

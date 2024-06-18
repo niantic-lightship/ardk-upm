@@ -14,6 +14,32 @@ namespace Niantic.Lightship.AR.Mapping
 
         private IMappingApi _mapper;
 
+        private bool _isRunning;
+
+        /// <summary>
+        /// Node Splitter config for Max Distantance Travelled before creating a new map node
+        /// </summary>
+        public float SplitterMaxDistanceMeters
+        {
+            get => _splitterMaxDistanceMeters;
+            set => _splitterMaxDistanceMeters = value;
+        }
+
+        /// <summary>
+        /// Node Splitter config for Max Duration Exceeded before creating a new map node
+        /// </summary>
+        public float SplitterMaxDurationSeconds
+        {
+            get => _splitterMaxDurationSeconds;
+            set => _splitterMaxDurationSeconds = value;
+        }
+
+        [SerializeField]
+        private float _splitterMaxDistanceMeters = 5.0f;
+
+        [SerializeField]
+        private float _splitterMaxDurationSeconds = 10.0f;
+
         /// <summary>
         /// Workaround to start native module until implementing subsystem
         /// </summary>
@@ -23,7 +49,9 @@ namespace Niantic.Lightship.AR.Mapping
             {
                 return;
             }
+            _mapper.Configure(_splitterMaxDistanceMeters, _splitterMaxDurationSeconds);
             _mapper.Start();
+            _isRunning = true;
         }
 
         /// <summary>
@@ -36,6 +64,7 @@ namespace Niantic.Lightship.AR.Mapping
                 return;
             }
             _mapper.Stop();
+            _isRunning = false;
         }
 
         /// <summary>
@@ -92,11 +121,29 @@ namespace Niantic.Lightship.AR.Mapping
             return _mapper.GetDeviceGraphBlobs(out blobs);
         }
 
+        /// <summary>
+        /// Generates Anchor (as payload) from Device Map
+        /// </summary>
+        /// <param name="map">A map node,  device map</param>
+        /// <param name="pose">A local pose of the anchor to create</param>
+        /// <param name="anchorPayload"> anchor payload as byte array</param>
+        /// <returns>True byte array representing the anchor that can be wrapped by namespace Niantic.Lightship.AR.PersistentAnchors</returns>
+        public bool CreateAnchorFromDeviceMap(XRDeviceMap map, Matrix4x4 pose, out byte[] anchorPayload)
+        {
+            if (!IsFeatureEnabled())
+            {
+                anchorPayload = default;
+                return false;
+            }
+            _mapper.CreateAnchorPayloadFromDeviceMap(map, pose, out anchorPayload);
+            return true;
+        }
+
         private void Awake()
         {
             _mapper = new NativeMappingApi();
             _mapper.Create(LightshipUnityContext.UnityContextHandle);
-            _mapper.Configure();
+            _isRunning = false;
         }
 
         internal void UseFakeMappingApi(IMappingApi mappingApi)
@@ -106,6 +153,12 @@ namespace Niantic.Lightship.AR.Mapping
 
         private void OnDestroy()
         {
+            if (_isRunning)
+            {
+                // stop before dispose if still running
+                _mapper.Stop();
+                _isRunning = false;
+            }
             _mapper.Dispose();
         }
 

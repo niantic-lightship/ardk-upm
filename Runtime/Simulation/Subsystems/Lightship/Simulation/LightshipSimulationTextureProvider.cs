@@ -19,60 +19,60 @@ namespace Niantic.Lightship.AR.Simulation
     /// </summary>
     internal abstract class LightshipSimulationTextureProvider : MonoBehaviour
     {
-        internal static event Action<Camera> preRenderCamera;
-        internal static event Action<Camera> postRenderCamera;
-        internal event Action<LightshipCameraTextureFrameEventArgs> frameReceived;
+        internal static event Action<Camera> PreRenderCamera;
+        internal static event Action<Camera> PostRenderCamera;
+        internal event Action<LightshipCameraTextureFrameEventArgs> FrameReceived;
 
-        protected Camera m_XrCamera;
-        protected Camera m_SimulationRenderCamera;
-        protected RenderTexture m_RenderTexture;
-        protected Texture2D m_ProviderTexture;
-        protected IntPtr m_TexturePtr;
-        protected LightshipCameraTextureFrameEventArgs? m_CameraFrameEventArgs;
+        protected Camera XrCamera;
+        protected Camera SimulationRenderCamera;
+        protected RenderTexture RenderTexture;
+        protected Texture2D ProviderTexture;
+        protected IntPtr TexturePtr;
 
-        private readonly List<Texture2D> m_CameraImagePlanes = new List<Texture2D>();
+        private Texture2D _cameraPlane = default;
 
-        internal LightshipCameraTextureFrameEventArgs? CameraFrameEventArgs => m_CameraFrameEventArgs;
+        internal LightshipCameraTextureFrameEventArgs? CameraFrameEventArgs;
 
-        protected bool _initialized;
+        protected bool Initialized;
 
-        private int _sensorWidth = 720;
-        private int _sensorHeight = 540;
-        private float _sensorFocalLength = 623.5382f;
+        private const int SensorWidth = 720;
+        private const int SensorHeight = 540;
+        private const float SensorFocalLength = 623.5382f;
 
         private void Update()
         {
-            if (!_initialized)
+            if (!Initialized)
                 return;
 
             // Currently assuming the main camera is being set to the correct settings for rendering to the target device
-            m_XrCamera.ResetProjectionMatrix();
-            DoCameraRender(m_SimulationRenderCamera);
+            XrCamera.ResetProjectionMatrix();
+            DoCameraRender(SimulationRenderCamera);
 
-            if (!m_RenderTexture.IsCreated() && !m_RenderTexture.Create())
+            if (!RenderTexture.IsCreated() && !RenderTexture.Create())
                 return;
 
-            if (m_ProviderTexture.width != m_RenderTexture.width
-                || m_ProviderTexture.height != m_RenderTexture.height)
+            if (ProviderTexture.width != RenderTexture.width
+                || ProviderTexture.height != RenderTexture.height)
             {
-                if (!m_ProviderTexture.Reinitialize(m_RenderTexture.width, m_RenderTexture.height))
+                if (!ProviderTexture.Reinitialize(RenderTexture.width, RenderTexture.height))
                     return;
 
-                m_TexturePtr = m_ProviderTexture.GetNativeTexturePtr();
+                TexturePtr = ProviderTexture.GetNativeTexturePtr();
             }
 
-            Graphics.CopyTexture(m_RenderTexture, m_ProviderTexture);
+            Graphics.CopyTexture(RenderTexture, ProviderTexture);
 
-            m_CameraImagePlanes.Clear();
-            m_CameraImagePlanes.Add(m_ProviderTexture);
+            //m_CameraImagePlanes.Clear();
+            //m_CameraImagePlanes.Add(m_ProviderTexture);
+            _cameraPlane = ProviderTexture;
 
             var orientation = transform.localToWorldMatrix.GetScreenOrientation();
 
             var displayMatrix =
                 CameraMath.CalculateDisplayMatrix
                 (
-                    m_RenderTexture.width,
-                    m_RenderTexture.height,
+                    RenderTexture.width,
+                    RenderTexture.height,
                     Screen.width,
                     Screen.height,
                     orientation,
@@ -85,13 +85,13 @@ namespace Niantic.Lightship.AR.Simulation
                     layout: CameraMath.MatrixLayout.RowMajor
                 );
 
-            m_SimulationRenderCamera.ResetProjectionMatrix();
-            var projectionMatrix = m_SimulationRenderCamera.projectionMatrix;
+            SimulationRenderCamera.ResetProjectionMatrix();
+            var projectionMatrix = SimulationRenderCamera.projectionMatrix;
 
             // projectionMatrix dictates the AR camera's vertical FOV.
             // we can calculate the corresponding matrix by temporarily setting the simulation camera's FOV
-            float originalVerticalFOV = m_SimulationRenderCamera.fieldOfView;
-            float originalHorizontalFOV = Camera.VerticalToHorizontalFieldOfView(originalVerticalFOV, m_SimulationRenderCamera.aspect);
+            float originalVerticalFOV = SimulationRenderCamera.fieldOfView;
+            float originalHorizontalFOV = Camera.VerticalToHorizontalFieldOfView(originalVerticalFOV, SimulationRenderCamera.aspect);
             float desiredVerticalFOV;
             if (orientation == ScreenOrientation.Portrait || orientation == ScreenOrientation.PortraitUpsideDown)
             {
@@ -106,54 +106,49 @@ namespace Niantic.Lightship.AR.Simulation
                 desiredVerticalFOV = Camera.HorizontalToVerticalFieldOfView(originalHorizontalFOV, LightshipSimulationEditorUtility.GetGameViewAspectRatio());
 
             }
-            m_SimulationRenderCamera.fieldOfView = desiredVerticalFOV;
-            projectionMatrix = m_SimulationRenderCamera.projectionMatrix;
+            SimulationRenderCamera.fieldOfView = desiredVerticalFOV;
+            projectionMatrix = SimulationRenderCamera.projectionMatrix;
             // restore the original FOV
-            m_SimulationRenderCamera.fieldOfView = originalVerticalFOV;
+            SimulationRenderCamera.fieldOfView = originalVerticalFOV;
 
-            var frameEventArgs = new LightshipCameraTextureFrameEventArgs
-            {
-                timestampNs = (long)(DateTimeOffset.UtcNow.ToUnixTimeSeconds() * 1e9),
-                projectionMatrix = projectionMatrix,
-                displayMatrix = displayMatrix,
-                intrinsics = GetCameraIntrinsics(),
-                textures = m_CameraImagePlanes,
-            };
+            var frameEventArgs = new LightshipCameraTextureFrameEventArgs(
+                timestampNs: (long)(DateTimeOffset.UtcNow.ToUnixTimeSeconds() * 1e9), projectionMatrix: projectionMatrix,
+                displayMatrix: displayMatrix, intrinsics: GetCameraIntrinsics(), texture: _cameraPlane);
 
-            frameReceived?.Invoke(frameEventArgs);
+            FrameReceived?.Invoke(frameEventArgs);
         }
 
         protected virtual void OnEnable()
         {
-            preRenderCamera += OnPreRenderCamera;
-            postRenderCamera += OnPostRenderCamera;
+            PreRenderCamera += OnPreRenderCamera;
+            PostRenderCamera += OnPostRenderCamera;
         }
 
         protected virtual void OnDisable()
         {
-            preRenderCamera -= OnPreRenderCamera;
-            postRenderCamera -= OnPostRenderCamera;
+            PreRenderCamera -= OnPreRenderCamera;
+            PostRenderCamera -= OnPostRenderCamera;
         }
 
         internal virtual void OnDestroy()
         {
-            if (m_SimulationRenderCamera != null)
-                m_SimulationRenderCamera.targetTexture = null;
+            if (SimulationRenderCamera != null)
+                SimulationRenderCamera.targetTexture = null;
 
-            if (m_RenderTexture != null)
-                m_RenderTexture.Release();
+            if (RenderTexture != null)
+                RenderTexture.Release();
 
-            if (m_ProviderTexture != null)
-                UnityObjectUtils.Destroy(m_ProviderTexture);
+            if (ProviderTexture != null)
+                UnityObjectUtils.Destroy(ProviderTexture);
         }
 
         private XRCameraIntrinsics GetCameraIntrinsics()
         {
             return new XRCameraIntrinsics
                 (
-                    new Vector2(_sensorFocalLength, _sensorFocalLength),
-                    new Vector2(_sensorWidth/2f, _sensorHeight/2f),
-                    new Vector2Int(m_SimulationRenderCamera.scaledPixelWidth, m_SimulationRenderCamera.scaledPixelHeight)
+                    new Vector2(SensorFocalLength, SensorFocalLength),
+                    new Vector2(SensorWidth/2f, SensorHeight/2f),
+                    new Vector2Int(SimulationRenderCamera.scaledPixelWidth, SimulationRenderCamera.scaledPixelHeight)
                 );
         }
 
@@ -172,16 +167,16 @@ namespace Niantic.Lightship.AR.Simulation
             simulationCamera.usePhysicalProperties = true;
             // sensor size is in mm, pixel size comes from sensor size divided by target texture resolution
             // we make pixels on the sensor 1mm by later setting the target textures to the same values as sensor size
-            simulationCamera.sensorSize = new Vector2(_sensorHeight, _sensorWidth);
-            var calculatedFov = Camera.FocalLengthToFieldOfView(_sensorFocalLength, simulationCamera.sensorSize.y);
+            simulationCamera.sensorSize = new Vector2(SensorHeight, SensorWidth);
+            var calculatedFov = Camera.FocalLengthToFieldOfView(SensorFocalLength, simulationCamera.sensorSize.y);
             simulationCamera.fieldOfView = calculatedFov;
         }
 
         private void DoCameraRender(Camera renderCamera)
         {
-            preRenderCamera?.Invoke(renderCamera);
+            PreRenderCamera?.Invoke(renderCamera);
             renderCamera.Render();
-            postRenderCamera?.Invoke(renderCamera);
+            PostRenderCamera?.Invoke(renderCamera);
         }
 
         internal abstract bool TryGetTextureDescriptors(out NativeArray<XRTextureDescriptor> planeDescriptors,
@@ -189,10 +184,10 @@ namespace Niantic.Lightship.AR.Simulation
 
         internal bool TryGetLatestImagePtr(out IntPtr nativePtr)
         {
-            if (m_CameraImagePlanes != null && m_CameraImagePlanes.Count > 0 && m_ProviderTexture != null
-                && m_ProviderTexture.isReadable)
+            if (_cameraPlane != null && ProviderTexture != null
+                && ProviderTexture.isReadable)
             {
-                nativePtr =  m_TexturePtr;
+                nativePtr =  TexturePtr;
                 return true;
             }
 

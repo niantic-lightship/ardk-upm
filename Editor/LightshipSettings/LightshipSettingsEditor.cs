@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Niantic.Lightship.AR.Loader;
+using Niantic.Lightship.AR.Utilities.Logging;
 using UnityEditor;
 using UnityEditor.XR.Management;
 using UnityEngine;
@@ -115,6 +116,7 @@ namespace Niantic.Lightship.AR.Editor
         private SerializedProperty _useLightshipSemanticSegmentationProperty;
         private SerializedProperty _useLightshipScanningProperty;
         private SerializedProperty _useLightshipObjectDetectionProperty;
+        private SerializedProperty _useLightshipSpoofLocationProperty;
         private SerializedProperty _unityLogLevelProperty;
         private SerializedProperty _fileLogLevelProperty;
         private SerializedProperty _stdOutLogLevelProperty;
@@ -139,7 +141,7 @@ namespace Niantic.Lightship.AR.Editor
             _useLightshipScanningProperty = _lightshipSettings.FindProperty("_useLightshipScanning");
             _useLightshipObjectDetectionProperty =
                 _lightshipSettings.FindProperty("_useLightshipObjectDetection");
-                _lightshipSettings.FindProperty("__useLightshipObjectDetectionProperty");
+            _useLightshipSpoofLocationProperty = _lightshipSettings.FindProperty("_useLightshipSpoofLocation");
             _unityLogLevelProperty = _lightshipSettings.FindProperty("_unityLogLevel");
             _fileLogLevelProperty = _lightshipSettings.FindProperty("_fileLogLevel");
             _stdOutLogLevelProperty = _lightshipSettings.FindProperty("_stdoutLogLevel");
@@ -174,6 +176,11 @@ namespace Niantic.Lightship.AR.Editor
 
                 // -- Put new simulation settings here --
                 DrawLightshipSimulationSettings();
+
+                // -- Put new experimental settings here --
+#if NIANTIC_ARDK_EXPERIMENTAL_FEATURES
+                DrawExperimentalSettings();
+#endif
 
                 EditorGUI.EndDisabledGroup();
                 if (change.changed)
@@ -363,6 +370,24 @@ namespace Niantic.Lightship.AR.Editor
             // EditorGUI.indentLevel--;
 
             EditorGUILayout.Space(10);
+        }
+
+        private void DrawExperimentalSettings()
+        {
+            EditorGUILayout.Space(10);
+            EditorGUILayout.LabelField
+            (
+                "Experimental",
+                Contents.boldFont18Style
+            );
+            EditorGUILayout.Space(10);
+            EditorGUILayout.LabelField("Spoof Location", EditorStyles.boldLabel);
+            EditorGUILayout.PropertyField
+                (_useLightshipSpoofLocationProperty, Contents.enabledLabel);
+
+            EditorGUI.indentLevel++;
+            // Put Spoof Location sub-settings here
+            EditorGUI.indentLevel--;
         }
 
         private void LayOutSDKEnabled(string platform, bool enabled, BuildTargetGroup group = BuildTargetGroup.Unknown)
