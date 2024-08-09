@@ -24,6 +24,19 @@ namespace Niantic.Lightship.AR.PAM
             Native.Lightship_ARDK_Unity_PAM_OnFrame(handle, frameData);
         }
 
+        public void Lightship_ARDK_Unity_PAM_GetDataFormatsReadyForNewFrame(
+            IntPtr handle,
+            NativeArray<DataFormat> dataFormatsReady,
+            out int readySize
+        )
+        {
+            unsafe
+            {
+                Native.Lightship_ARDK_Unity_PAM_GetDataFormatsReadyForNewFrame(handle,
+                    (IntPtr)dataFormatsReady.GetUnsafePtr(), out readySize);
+            }
+        }
+
         public void Lightship_ARDK_Unity_PAM_GetDataFormatUpdatesForNewFrame(IntPtr handle, NativeArray<DataFormat> dataFormatsAdded,
             out int addedSize, NativeArray<DataFormat> dataFormatsReady, out int readySize, NativeArray<DataFormat> dataFormatsRemoved,
             out int removedSize)
@@ -56,6 +69,14 @@ namespace Niantic.Lightship.AR.PAM
 
             [DllImport(LightshipPlugin.Name)]
             public static extern void Lightship_ARDK_Unity_PAM_OnFrame(IntPtr handle, IntPtr frameData);
+
+            [DllImport(LightshipPlugin.Name)]
+            public static extern void Lightship_ARDK_Unity_PAM_GetDataFormatsReadyForNewFrame
+            (
+                IntPtr handle,
+                IntPtr readyDataFormats,
+                out Int32 readyDataFormatsSize
+            );
 
             [DllImport(LightshipPlugin.Name)]
             public static extern void Lightship_ARDK_Unity_PAM_GetDataFormatUpdatesForNewFrame(IntPtr handle,

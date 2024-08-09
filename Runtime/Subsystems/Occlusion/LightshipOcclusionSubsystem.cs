@@ -76,18 +76,80 @@ namespace Niantic.Lightship.AR.Subsystems.Occlusion
         /// but scaled by the factor between their resolutions. Converts from world coordinates relative to the
         /// camera to image space, with the x- and y-coordinates expressed in pixels, scaled by the z-value.
         /// </summary>
-        /// <value>
-        /// The intrinsics matrix.
-        /// </value>
+        /// <remarks>This matrix assumes the image in its original (un-padded) aspect ratio.</remarks>
         /// <exception cref="System.NotSupportedException">Thrown if getting intrinsics matrix is not supported.
         /// </exception>
+        [Obsolete("Use OcclusionExtension.LatestIntrinsicsMatrix instead.")]
         public Matrix4x4? LatestIntrinsicsMatrix
         {
             get
             {
                 if (provider is LightshipOcclusionProvider lightshipProvider)
                 {
+                    // Get the aspect ratio of the camera image
+                    var isCameraAspectRatioValid = XRDisplayContext.TryGetCameraImageAspectRatio(out var aspectRatio);
+
+                    // Get the original resolution of the depth image
+                    var sourceResolution = lightshipProvider.LatestEnvironmentDepthResolution;
+
+                    // Get the original intrinsics matrix for the depth image
+                    var narrowIntrinsics = lightshipProvider.LatestIntrinsicsMatrix;
+
+                    if (narrowIntrinsics.HasValue && sourceResolution.HasValue && isCameraAspectRatioValid)
+                    {
+                        // Calculate the padded intrinsics matrix
+                        var targetWidth = sourceResolution.Value.x;
+                        var targetHeight = Mathf.FloorToInt(targetWidth / aspectRatio);
+                        var result = narrowIntrinsics.Value;
+
+                        // Transform principal point to the padded resolution
+                        result[0, 2] += (targetWidth - sourceResolution.Value.x) / 2.0f;
+                        result[1, 2] += (targetHeight - sourceResolution.Value.y) / 2.0f;
+                        return result;
+                    }
+
+                    return null;
+                }
+
+                throw new NotSupportedException();
+            }
+        }
+
+        /// <summary>
+        /// Returns the intrinsics matrix of the most recent depth prediction. Contains values
+        /// for the camera's focal length and principal point. Converts between 2D image pixel
+        /// coordinates and 3D world coordinates relative to the camera.
+        /// </summary>
+        /// <remarks>This matrix assumes the image in its original (un-padded) aspect ratio.</remarks>
+        /// <exception cref="System.NotSupportedException">Thrown if getting intrinsics matrix is not supported.
+        /// </exception>
+        internal Matrix4x4? _LatestIntrinsicsMatrix
+        {
+            get
+            {
+                if (provider is LightshipOcclusionProvider lightshipProvider)
+                {
                     return lightshipProvider.LatestIntrinsicsMatrix;
+                }
+
+                throw new NotSupportedException();
+            }
+        }
+
+        /// <summary>
+        /// Returns the extrinsics matrix of the most recent depth prediction. This matrix
+        /// represents the transformation from the camera to the world space for the image
+        /// that was used to create the latest depth image.
+        /// </summary>
+        /// <exception cref="System.NotSupportedException">Thrown if getting extrinsics matrix is not supported.
+        /// </exception>
+        internal Matrix4x4? _LatestExtrinsicsMatrix
+        {
+            get
+            {
+                if (provider is LightshipOcclusionProvider lightshipProvider)
+                {
+                    return lightshipProvider.LatestExtrinsicsMatrix;
                 }
 
                 throw new NotSupportedException();
@@ -418,6 +480,38 @@ namespace Niantic.Lightship.AR.Subsystems.Occlusion
                         if (_api.TryGetLatestIntrinsicsMatrix(_nativeProviderHandle, out Matrix4x4 intrinsicsMatrix))
                         {
                             return intrinsicsMatrix;
+                        }
+                    }
+
+                    return null;
+                }
+            }
+
+            public Matrix4x4? LatestExtrinsicsMatrix
+            {
+                get
+                {
+                    if (_nativeProviderHandle.IsValidHandle())
+                    {
+                        if (_api.TryGetLatestExtrinsicsMatrix(_nativeProviderHandle, out Matrix4x4 extrinsicsMatrix))
+                        {
+                            return extrinsicsMatrix;
+                        }
+                    }
+
+                    return null;
+                }
+            }
+
+            public Vector2Int? LatestEnvironmentDepthResolution
+            {
+                get
+                {
+                    if (_nativeProviderHandle.IsValidHandle())
+                    {
+                        if (_api.TryGetLatestEnvironmentDepthResolution(_nativeProviderHandle, out Vector2Int resolution))
+                        {
+                            return resolution;
                         }
                     }
 

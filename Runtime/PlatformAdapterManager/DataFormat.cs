@@ -13,12 +13,10 @@ namespace Niantic.Lightship.AR.PAM
         kDeviceOrientation = 2,
         kTrackingState = 3,
 
-        // CPU image will come with the image timestamp, image intrinsics, and its
-        // data.
+        // CPU Image with intrinsics – 256x144 R8G8B8A8
         kCpuRgba_256_144_Uint8 = 4,
-        
-        // CPU image will come with the image timestamp, image intrinsics, and its
-        // data.
+
+        // CPU Image with intrinsics – 256x256 R8G8B8
         kCpuRgb_256_256_Uint8 = 5,
 
         // JPEG image will come with the image timestamp, image intrinsics, and its
@@ -38,5 +36,8 @@ namespace Niantic.Lightship.AR.PAM
 
         // Platform depth data
         kPlatform_depth = 10,
+
+        // CPU Image with intrinsics – 384x216 R8G8B8
+        kCpuRgb_384_216_Uint8 = 11,
     }
 }

@@ -123,25 +123,41 @@ namespace Niantic.Lightship.AR.Simulation
             var isValid = TryGetLatestImagePtr(out var nativePtr);
 
             var descriptors = new XRTextureDescriptor[1];
-            if (isValid)
+            if (isValid && TryGetTextureDescriptor(out var planeDescriptor))
             {
-                TryGetTextureDescriptor(out var planeDescriptor);
                 descriptors[0] = planeDescriptor;
             }
             else
+            {
                 descriptors[0] = default;
+                isValid = false;
+            }
 
             planeDescriptors = new NativeArray<XRTextureDescriptor>(descriptors, allocator);
             return isValid;
         }
 
-        internal void TryGetTextureDescriptor(out XRTextureDescriptor planeDescriptor)
+        internal bool TryGetTextureDescriptor(out XRTextureDescriptor planeDescriptor)
         {
-            var _ = TryGetLatestImagePtr(out var nativePtr);
+            if (!TryGetLatestImagePtr(out var nativePtr))
+            {
+                planeDescriptor = default;
+                return false;
+            }
 
-            planeDescriptor = new XRTextureDescriptor(nativePtr, ProviderTexture.width, ProviderTexture.height,
-                ProviderTexture.mipmapCount, ProviderTexture.format, s_textureEnvironmentDepthPropertyId, 0,
-                TextureDimension.Tex2D);
+            planeDescriptor = new XRTextureDescriptor
+            (
+                nativePtr,
+                ProviderTexture.width,
+                ProviderTexture.height,
+                ProviderTexture.mipmapCount,
+                ProviderTexture.format,
+                s_textureEnvironmentDepthPropertyId,
+                0,
+                TextureDimension.Tex2D
+            );
+
+            return true;
         }
 
         internal void TryGetConfidenceTextureDescriptor(out XRTextureDescriptor depthConfidenceDescriptor)

@@ -31,7 +31,9 @@ namespace MathTypes {
             "CgF4GAEgASgCUgF4EgwKAXkYAiABKAJSAXkSDAoBehgDIAEoAlIBehIMCgF3",
             "GAQgASgCUgF3InQKCVRyYW5zZm9ybRI0Cgt0cmFuc2xhdGlvbhgBIAEoCzIS",
             "Lk1hdGhUeXBlcy5WZWN0b3IzUgt0cmFuc2xhdGlvbhIxCghyb3RhdGlvbhgC",
-            "IAEoCzIVLk1hdGhUeXBlcy5RdWF0ZXJuaW9uUghyb3RhdGlvbmIGcHJvdG8z"));
+            "IAEoCzIVLk1hdGhUeXBlcy5RdWF0ZXJuaW9uUghyb3RhdGlvbkItCiljb20u",
+            "bmlhbnRpY3Byb2plY3QuYXJnZW8uaW5maW5pdGFtLnByb3Rvc1ABYgZwcm90",
+            "bzM="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {

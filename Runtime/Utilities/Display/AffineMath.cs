@@ -129,7 +129,7 @@ namespace Niantic.Lightship.AR.Utilities
     /// <param name="from">Original orientation.</param>
     /// <param name="to">Target orientation.</param>
     /// <returns>An affine matrix to be applied to normalized image coordinates.</returns>
-    private static Matrix4x4 ScreenRotation(ScreenOrientation from, ScreenOrientation to)
+    internal static Matrix4x4 ScreenRotation(ScreenOrientation from, ScreenOrientation to)
     {
       // Rotate around the center
       return Translation(-s_center) * Rotation(GetRadians(from, to)) * Translation(s_center);

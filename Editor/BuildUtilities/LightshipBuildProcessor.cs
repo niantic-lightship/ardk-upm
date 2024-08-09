@@ -290,10 +290,12 @@ namespace Niantic.Lightship.AR.Editor
                     }
 
                     AddDefineSymbols.Add("NIANTIC_LIGHTSHIP_AR_LOADER_ENABLED");
+                    AddDefineSymbols.Add("NIANTIC_ARDK_USE_FAST_LIGHTWEIGHT_PAM");
                 }
                 else if (!LightshipBuildProcessor.loaderEnabled && previousLoaderEnabled)
                 {
                     AddDefineSymbols.Remove("NIANTIC_LIGHTSHIP_AR_LOADER_ENABLED");
+                    AddDefineSymbols.Remove("NIANTIC_ARDK_USE_FAST_LIGHTWEIGHT_PAM");
                     AddDefineSymbols.Remove("NIANTIC_LIGHTSHIP_SPACES_ENABLED");
                 }
             }

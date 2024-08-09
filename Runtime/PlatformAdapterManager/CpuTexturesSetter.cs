@@ -355,7 +355,7 @@ namespace Niantic.Lightship.AR.PAM
 
             const string tryGetCpuDepthImageEventName = "TryGetCpuDepthImageDeprecated";
             ProfilerUtility.EventBegin(TraceCategory, tryGetCpuDepthImageEventName);
-            bool gotDepthImage = PlatformDataAcquirer.TryGetCpuDepthImageDeprecated(out _depthCpuImage, out _depthConfidenceCpuImage);
+            bool gotDepthImage = PlatformDataAcquirer.TryGetDepthCpuImageDeprecated(out _depthCpuImage, out _depthConfidenceCpuImage);
             ProfilerUtility.EventEnd(TraceCategory, tryGetCpuDepthImageEventName, "GotCpuDepthImage", gotDepthImage.ToString());
 
             if (gotDepthImage)

@@ -115,6 +115,7 @@ namespace Niantic.Lightship.AR.Scanning
             public static extern void Lightship_ARDK_Unity_Scanning_Archive_Builder_Release(IntPtr handle);
 
             [DllImport(LightshipPlugin.Name)]
+            [return:MarshalAs(UnmanagedType.I1)]
             public static extern bool Lightship_ARDK_Unity_Scanning_Archive_Builder_Has_More_Chunks(IntPtr handle);
 
             [DllImport(LightshipPlugin.Name)]

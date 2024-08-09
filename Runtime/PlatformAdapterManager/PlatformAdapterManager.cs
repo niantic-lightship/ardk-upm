@@ -1,4 +1,4 @@
-//#define NIANTIC_ARDK_USE_FAST_LIGHTWEIGHT_PAM
+// #define NIANTIC_ARDK_USE_FAST_LIGHTWEIGHT_PAM
 // Copyright 2022-2024 Niantic.
 
 using System;
@@ -56,10 +56,11 @@ namespace Niantic.Lightship.AR.PAM
             _nativeHandle = _api.Lightship_ARDK_Unity_PAM_Create(unityContext, isLidarDepthEnabled);
 
             var numFormats = Enum.GetValues(typeof(DataFormat)).Length;
-
             _addedDataFormats = new NativeArray<DataFormat>(numFormats, Allocator.Persistent);
             _readyDataFormats = new NativeArray<DataFormat>(numFormats, Allocator.Persistent);
             _removedDataFormats = new NativeArray<DataFormat>(numFormats, Allocator.Persistent);
+
+            _frameCounter = 0;
 
             _currentDeprecatedFrameDataDeprecated = new DeprecatedFrameData();
             _texturesSetter = new CpuTexturesSetter(_platformDataAcquirer, _currentDeprecatedFrameDataDeprecated);
@@ -119,7 +120,7 @@ namespace Niantic.Lightship.AR.PAM
                 _texturesSetter.Dispose();
 
 #if NIANTIC_ARDK_USE_FAST_LIGHTWEIGHT_PAM
-                MonoBehaviourEventDispatcher.Updating.RemoveListener(SendUpdatedFrameData);
+            MonoBehaviourEventDispatcher.Updating.RemoveListener(SendUpdatedFrameData);
 #else
             MonoBehaviourEventDispatcher.Updating.RemoveListener(DeprecatedSendUpdatedFrameData);
 #endif
@@ -270,6 +271,7 @@ namespace Niantic.Lightship.AR.PAM
 
         public void DeprecatedSendUpdatedFrameData()
         {
+
             if (!_platformDataAcquirer.TryToBeReady())
             {
                 return;
@@ -391,7 +393,7 @@ namespace Niantic.Lightship.AR.PAM
                 const string sentDataEventName = "SentData";
                 ProfilerUtility.EventBegin(TraceCategory, sentDataEventName);
 
-                DataFormat[] sentDataFormats = CollateSentDataFormats();
+                DataFormat[] sentDataFormats = DeprecatedCollateSentDataFormats();
 
                 if (sentDataFormats.Length > 0)
                 {
@@ -412,7 +414,7 @@ namespace Niantic.Lightship.AR.PAM
             _texturesSetter.InvalidateCachedTextures();
         }
 
-        private void SendUpdatedFrameData()
+        public void SendUpdatedFrameData()
         {
             if (!_platformDataAcquirer.TryToBeReady())
             {
@@ -422,55 +424,94 @@ namespace Niantic.Lightship.AR.PAM
             const string setCurrentFrameDataEventName = "SetCurrentFrameData";
             ProfilerUtility.EventBegin(TraceCategory, setCurrentFrameDataEventName);
 
+            _api.Lightship_ARDK_Unity_PAM_GetDataFormatsReadyForNewFrame
+            (
+                _nativeHandle,
+                _readyDataFormats,
+                out _readyDataFormatsSize
+            );
+
+            if (_readyDataFormatsSize == 0)
+            {
+                ProfilerUtility.EventEnd(TraceCategory, setCurrentFrameDataEventName);
+                return;
+            }
+
             FrameDataCStruct frameData = new FrameDataCStruct();
+
+            var getCameraImage = false;
+            var getDepthImage = false;
             for (int i = 0; i < _readyDataFormatsSize; i++)
             {
                 switch (_readyDataFormats[i])
                 {
                     case DataFormat.kCompass:
-                    {
                         _platformDataAcquirer.TryGetCompass(out frameData.CompassData);
                         break;
-                    }
 
                     case DataFormat.kGpsLocation:
-                    {
                         _platformDataAcquirer.TryGetGpsLocation(out frameData.GpsLocation);
                         break;
-                    }
+
+                    case DataFormat.kCpuRgba_256_144_Uint8:
+                    case DataFormat.kCpuRgb_256_256_Uint8:
+                    case DataFormat.kCpuRgb_384_216_Uint8:
+                    case DataFormat.kJpeg_720_540_Uint8:
+                    case DataFormat.kJpeg_full_res_Uint8:
+                        getCameraImage = true;
+                        break;
+
+                    case DataFormat.kPlatform_depth:
+                        getDepthImage = true;
+                        break;
+
+                    case DataFormat.kPose:
+                    case DataFormat.kDeviceOrientation:
+                    case DataFormat.kTrackingState:
+                        // Always sent, whether it was requested or not, because the cost is negligible
+                        break;
+
+                    default:
+                        Log.Error($"Native layer requested a format {_readyDataFormats[i]} that is not handled by the PAM.");
+                        break;
                 }
             }
 
             // Pose
             _platformDataAcquirer.TryGetCameraPose(out Matrix4x4 cameraToLocal);
-            frameData.CameraPose.SetTransform(cameraToLocal.FromUnityToArdk());
+            var cameraPose = cameraToLocal.FromUnityToArdk();
+            frameData.CameraPose.SetTransform(cameraPose);
 
             frameData.FrameId = _frameCounter++;
-            frameData.CameraTimestampMs = (ulong)_texturesSetter.GetCurrentTimestampMs();
+            frameData.CameraTimestampMs = _platformDataAcquirer.TryGetCameraTimestampMs(out var timestampMs) ? (ulong)timestampMs : 0;
             frameData.TrackingState = _platformDataAcquirer.GetTrackingState().FromUnityToArdk();
             frameData.ScreenOrientation = _platformDataAcquirer.GetScreenOrientation().FromUnityToArdk();
 
-            if (_platformDataAcquirer.TryGetCameraIntrinsicsDeprecated(out XRCameraIntrinsics cameraIntrinsics))
+            if (getCameraImage && _platformDataAcquirer.TryGetCpuImage(out var cpuCamera))
             {
-                frameData.CameraIntrinsics.SetIntrinsics(cameraIntrinsics.focalLength, cameraIntrinsics.principalPoint);
+                _platformDataAcquirer.TryGetCameraIntrinsicsCStruct(out frameData.CameraIntrinsics);
+                frameData.CameraImagePlane0.SetImagePlane(cpuCamera.Planes[0]);
+                frameData.CameraImagePlane1.SetImagePlane(cpuCamera.Planes[1]);
+                frameData.CameraImagePlane2.SetImagePlane(cpuCamera.Planes[2]);
+                frameData.CameraImageFormat = cpuCamera.Format;
+                frameData.CameraImageWidth = cpuCamera.Width;
+                frameData.CameraImageHeight = cpuCamera.Height;
             }
 
-            // Note, cpuImage needs to be disposed
-            // We only need to check valid because our tests create invalid XRCpuImage
-            if (_platformDataAcquirer.TryGetCpuImageDeprecated(out XRCpuImage cpuImage) && cpuImage.valid)
+            if (getDepthImage && _platformDataAcquirer.TryGetDepthCpuImage(out var cpuDepth, out var cpuDepthConfidence))
             {
-                unsafe
-                {
-                    frameData.CameraImagePlane0DataPtr = (IntPtr)cpuImage.GetPlane(0).data.GetUnsafeReadOnlyPtr();
-                    frameData.CameraImagePlane1DataPtr = (cpuImage.planeCount > 1)?
-                        (IntPtr)cpuImage.GetPlane(1).data.GetUnsafeReadOnlyPtr() : IntPtr.Zero;
-                    frameData.CameraImagePlane2DataPtr = (cpuImage.planeCount > 2)?
-                        (IntPtr)cpuImage.GetPlane(2).data.GetUnsafeReadOnlyPtr() : IntPtr.Zero;
-                }
+                frameData.DepthDataPtr = cpuDepth.Planes[0].DataPtr;
+                frameData.DepthConfidencesDataPtr = cpuDepthConfidence.Planes[0].DataPtr;
+                frameData.DepthDataWidth = cpuDepth.Width;
+                frameData.DepthDataHeight = cpuDepth.Height;
+                frameData.DepthAndConfidenceDataLength = cpuDepth.Width * cpuDepth.Height;
 
-                frameData.CameraImageFormat = cpuImage.format.FromUnityToArdk();
-                frameData.CameraImageWidth = (uint)cpuImage.width;
-                frameData.CameraImageHeight = (uint)cpuImage.height;
+                // TODO [ARDK-3966]: Move scaling calculation to C++
+                _platformDataAcquirer.TryGetDepthCameraIntrinsicsCStruct
+                (
+                    out frameData.DepthCameraIntrinsics,
+                    new Vector2Int((int)cpuDepth.Width, (int)cpuDepth.Height)
+                );
             }
 
             ProfilerUtility.EventEnd(TraceCategory, setCurrentFrameDataEventName);
@@ -487,14 +528,103 @@ namespace Niantic.Lightship.AR.PAM
             }
             ProfilerUtility.EventEnd(TraceCategory, nativePamOnFrameEventName);
 
-            // Cleanup
-            cpuImage.Dispose();
+            if (SentData != null)
+            {
+                const string sentDataEventName = "SentData";
+                ProfilerUtility.EventBegin(TraceCategory, sentDataEventName);
+
+                DataFormat[] sentDataFormats = CollateSentDataFormats(ref frameData);
+
+                if (sentDataFormats.Length > 0)
+                {
+                    Log.Debug
+                        (
+                            $"PAM sending data: {string.Join(',', sentDataFormats)}, " +
+                            $"orientation: {_platformDataAcquirer.GetScreenOrientation()}"
+                        );
+                }
+
+                SentData?.Invoke(new PamEventArgs(sentDataFormats));
+                ProfilerUtility.EventEnd(TraceCategory, sentDataEventName);
+            }
+
         }
 
         // Returns only the data formats that were actually sent to SAH
-        private DataFormat[] CollateSentDataFormats()
+        private DataFormat[] CollateSentDataFormats( ref FrameDataCStruct frameData)
         {
             List<DataFormat> sentDataFormats = new();
+            var hasCameraImage = frameData.CameraImageWidth > 0 && frameData.CameraImageHeight > 0;
+            var hasDepthImage = frameData.DepthDataWidth > 0 && frameData.DepthDataHeight > 0;
+
+            foreach (var dataFormat in _readyDataFormats)
+            {
+                switch (dataFormat)
+                {
+                    case DataFormat.kCpuRgba_256_144_Uint8:
+                        if (hasCameraImage)
+                        {
+                            sentDataFormats.Add(DataFormat.kCpuRgba_256_144_Uint8);
+                        }
+                        break;
+                    case DataFormat.kCpuRgb_256_256_Uint8:
+                        if (hasCameraImage)
+                        {
+                            sentDataFormats.Add(DataFormat.kCpuRgb_256_256_Uint8);
+                        }
+                        break;
+
+                    case DataFormat.kJpeg_720_540_Uint8:
+                        if (hasCameraImage)
+                        {
+                            sentDataFormats.Add(DataFormat.kJpeg_720_540_Uint8);
+                        }
+                        break;
+
+                    case DataFormat.kGpsLocation:
+                        if (frameData.GpsLocation.TimestampMs > 0)
+                        {
+                            sentDataFormats.Add(DataFormat.kGpsLocation);
+                        }
+
+                        break;
+
+                    case DataFormat.kCompass:
+                        if (frameData.CompassData.TimestampMs > 0)
+                        {
+                            sentDataFormats.Add(DataFormat.kCompass);
+                        }
+                        break;
+
+
+                    case DataFormat.kJpeg_full_res_Uint8:
+                        if (hasCameraImage)
+                        {
+                            sentDataFormats.Add(DataFormat.kJpeg_full_res_Uint8);
+                        }
+                        break;
+
+                    case DataFormat.kPlatform_depth:
+                        if (hasDepthImage)
+                        {
+                            sentDataFormats.Add(DataFormat.kPlatform_depth);
+                        }
+                        break;
+                }
+            }
+
+            return sentDataFormats.ToArray();
+        }
+
+
+
+
+        // Returns only the data formats that were actually sent to SAH
+        private DataFormat[] DeprecatedCollateSentDataFormats()
+        {
+            List<DataFormat> sentDataFormats = new();
+
+
             foreach (var dataFormat in _readyDataFormats)
             {
                 switch (dataFormat)

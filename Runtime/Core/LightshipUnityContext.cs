@@ -135,27 +135,20 @@ namespace Niantic.Lightship.AR.Core
                 return;
             }
 
-            // Create the PAM, which will create the SAH
-            Log.Info("Creating PAM");
+            var isLidarEnabled = settings.PreferLidarIfAvailable && s_isDeviceLidarSupported;
+            Log.Info($"Creating PAM (lidar enabled: {isLidarEnabled})");
 
-            // Check for Playback in Editor / On Device
-            if (Application.isEditor || settings.UsePlayback)
+            // Check if another Lightship plugin has registered with its own PlatformDataAcquirer.
+            // Except if we're using playback, in which case we always use the SubsystemsDataAcquirer to read the dataset.
+            if (null != CreatePamWithPlugin && !settings.UsePlayback)
             {
-                PlatformAdapterManager = PlatformAdapterManager.Create<PAM.NativeApi, SubsystemsDataAcquirer>
-                (
-                    UnityContextHandle,
-                    isLidarDepthEnabled: settings.PreferLidarIfAvailable && s_isDeviceLidarSupported,
-                    trySendOnUpdate: settings.TestSettings.TickPamOnUpdate
-                );
-            }
-            else if (null != CreatePamWithPlugin) // Check if another Lightship plugin has registered with its own PlatformDataAcquirer
-            {
-                PlatformAdapterManager = CreatePamWithPlugin
-                (
-                    UnityContextHandle,
-                    settings.PreferLidarIfAvailable,
-                    settings.TestSettings.TickPamOnUpdate
-                );
+                PlatformAdapterManager =
+                    CreatePamWithPlugin
+                    (
+                        UnityContextHandle,
+                        isLidarEnabled,
+                        settings.TestSettings.TickPamOnUpdate
+                    );
             }
             else
             {
@@ -163,7 +156,7 @@ namespace Niantic.Lightship.AR.Core
                     PlatformAdapterManager.Create<PAM.NativeApi, SubsystemsDataAcquirer>
                     (
                         UnityContextHandle,
-                        isLidarDepthEnabled: settings.PreferLidarIfAvailable && s_isDeviceLidarSupported,
+                        isLidarEnabled,
                         trySendOnUpdate: settings.TestSettings.TickPamOnUpdate
                     );
             }

@@ -46,9 +46,6 @@ namespace Niantic.Lightship.AR.Loader
         public override bool Initialize()
         {
             var originalSettings = LightshipSettings.Instance;
-            _useSimulationPersistentAnchors = LightshipSettings.Instance.LightshipSimulationParams.UseSimulationPersistentAnchor;
-
-            _useZBufferDepth = LightshipSettings.Instance.LightshipSimulationParams.UseZBufferDepth;
 
             // we create new settings with playback disabled
             var settingsWithoutPlayback =
@@ -56,9 +53,9 @@ namespace Niantic.Lightship.AR.Loader
                 (
                     // Workaround for https://niantic.atlassian.net/browse/ARDK-3019
                     // we disable lightship depth if we're use z-buffer depth
-                    enableDepth: originalSettings.UseLightshipDepth && !_useZBufferDepth,
+                    enableDepth: originalSettings.UseLightshipDepth && !originalSettings.LightshipSimulationParams.UseZBufferDepth,
                     enableMeshing: originalSettings.UseLightshipMeshing,
-                    enablePersistentAnchors: !_useSimulationPersistentAnchors,
+                    enablePersistentAnchors: !originalSettings.LightshipSimulationParams.UseSimulationPersistentAnchor,
                     // Workaround for https://niantic.atlassian.net/browse/ARDK-1868
                     // we disable playback, can be removed once this is part of standalone loader
                     usePlayback: false,
@@ -76,7 +73,8 @@ namespace Niantic.Lightship.AR.Loader
                     stdoutLogLevel: originalSettings.StdOutLightshipLogLevel,
                     fileLogLevel: originalSettings.FileLightshipLogLevel,
                     tickPamOnUpdate: originalSettings.TestSettings.TickPamOnUpdate,
-                    disableTelemetry: originalSettings.TestSettings.DisableTelemetry
+                    disableTelemetry: originalSettings.TestSettings.DisableTelemetry,
+                    simulationParams: originalSettings.LightshipSimulationParams
                 );
             _lightshipLoaderHelper ??= new LightshipLoaderHelper(settingsWithoutPlayback, _externalLoaders);
 
@@ -90,6 +88,10 @@ namespace Niantic.Lightship.AR.Loader
         public bool InitializeWithLightshipHelper(LightshipLoaderHelper lightshipLoaderHelper)
         {
             _lightshipLoaderHelper = lightshipLoaderHelper;
+
+            _useZBufferDepth = _lightshipLoaderHelper.InitializationSettings.LightshipSimulationParams.UseZBufferDepth;
+            _useSimulationPersistentAnchors = _lightshipLoaderHelper.InitializationSettings.LightshipSimulationParams.UseSimulationPersistentAnchor;
+
             _lightshipLoaderHelper.Initialize(this);
 
             if (_useSimulationPersistentAnchors)

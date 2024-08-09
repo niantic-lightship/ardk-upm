@@ -1,0 +1,49 @@
+#pragma kernel CSMain
+#define BLOCK_SIZE 16
+
+Texture2D<float> depthTexture;
+RWStructuredBuffer<float4> worldPoints;
+
+cbuffer Calibration : register(b0)
+{
+  float4x4 intrinsics;
+  float4x4 extrinsics;
+  int textureWidth;
+  int textureHeight;
+}
+
+[numthreads(BLOCK_SIZE, BLOCK_SIZE, 1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+  if (id.x >= textureWidth || id.y >= textureHeight)
+    return;
+
+  // Read depth
+  float depth = depthTexture[uint2(id.x, id.y)];
+
+  // Check for valid depth
+  if (depth > 0)
+  {
+    // Read intrinsics
+    float fx = intrinsics._11;
+    float fy = intrinsics._22;
+    float cx = intrinsics._13;
+    float cy = intrinsics._23;
+
+    // Convert from image coordinates to camera coordinates
+    float x = (id.x - cx) * depth / fx;
+    float y = (id.y - cy) * depth / fy;
+    float z = depth;
+
+    // Transform to world coordinates
+    float4 cameraPoint = float4(x, -y, z, 1.0);
+    float4 worldPoint = mul(extrinsics, cameraPoint);
+
+    worldPoints[id.y * textureWidth + id.x] = worldPoint;
+  }
+  else
+  {
+    worldPoints[id.y * textureWidth + id.x] = float4(0, 0, 0, 0);
+  }
+
+}

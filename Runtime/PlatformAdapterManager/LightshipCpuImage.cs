@@ -7,53 +7,80 @@ using UnityEngine.XR.ARSubsystems;
 
 namespace Niantic.Lightship.AR.PAM
 {
+    public struct LightshipCpuImagePlane
+    {
+        public LightshipCpuImagePlane(IntPtr dataPtr, uint dataSize, uint pixelStride, uint rowStride)
+        {
+            DataPtr = dataPtr;
+            DataSize = dataSize;
+            PixelStride = pixelStride;
+            RowStride = rowStride;
+        }
+
+        // Pointer to data of image plane.
+        public IntPtr DataPtr;
+
+        // Size of data in DataPtr.
+        public uint DataSize;
+
+        // Bytes per pixel. 1 for YUV, 3 for RGB, 4 for RGBA.
+        public uint PixelStride;
+
+        // Bytes per row of pixels. Generally some multiple of width: PixelStride for RGB, or 1/2 for subsampled YUV.
+        public uint RowStride;
+    }
+
     /// <summary>
     /// A Niantic ARDK intermediate class to hold image data before sending down to native via FrameDataCStruct.
     /// Should be able to hold references to XRCpuImage, MagicLeap and others' data. Does not own any of it.
     ///
     /// Is not related to LightshipCpuImageApi.
     /// </summary>
-    internal struct LightshipCpuImage
+    public struct LightshipCpuImage
     {
-        LightshipCpuImage(XRCpuImage cpuImage)
+        public const int MaxPlanes = 3;
+
+        public static bool TryGetFromXRCpuImage(XRCpuImage xrCpuImage, out LightshipCpuImage lightshipCpuImage)
         {
-            Plane0DataPtr = IntPtr.Zero;
-            Plane1DataPtr = IntPtr.Zero;
-            Plane2DataPtr = IntPtr.Zero;
-
-            Format = ImageFormatCEnum.Unknown;
-            Width = 0;
-            Height = 0;
-
-            FromXRCpuImage(cpuImage);
-        }
-
-        public bool FromXRCpuImage(XRCpuImage cpuImage)
-        {
-            if (!cpuImage.valid)
+            if (!xrCpuImage.valid)
             {
+                lightshipCpuImage = default;
                 return false;
             }
 
-            unsafe
+            lightshipCpuImage = new LightshipCpuImage();
+            for (int i = 0; i < xrCpuImage.planeCount; ++i)
             {
-                Plane0DataPtr = (IntPtr)cpuImage.GetPlane(0).data.GetUnsafeReadOnlyPtr();
-                Plane1DataPtr = (cpuImage.planeCount > 1)?
-                    (IntPtr)cpuImage.GetPlane(1).data.GetUnsafeReadOnlyPtr() : IntPtr.Zero;
-                Plane2DataPtr = (cpuImage.planeCount > 2)?
-                    (IntPtr)cpuImage.GetPlane(2).data.GetUnsafeReadOnlyPtr() : IntPtr.Zero;
+                unsafe
+                {
+                    var plane = xrCpuImage.GetPlane(i);
+                    lightshipCpuImage.Planes[i].DataPtr = (IntPtr)plane.data.GetUnsafeReadOnlyPtr();
+                    lightshipCpuImage.Planes[i].DataSize = (uint)plane.data.Length;
+                    lightshipCpuImage.Planes[i].PixelStride = (uint)plane.pixelStride;
+                    lightshipCpuImage.Planes[i].RowStride = (uint)plane.rowStride;
+                }
             }
 
-            Format = cpuImage.format.FromUnityToArdk();
-            Width = (uint)cpuImage.width;
-            Height = (uint)cpuImage.height;
+            lightshipCpuImage.Format = xrCpuImage.format.FromUnityToArdk();
+            lightshipCpuImage.Width = (uint)xrCpuImage.width;
+            lightshipCpuImage.Height = (uint)xrCpuImage.height;
             return true;
         }
 
         // Camera image plane data
-        public IntPtr Plane0DataPtr;
-        public IntPtr Plane1DataPtr;
-        public IntPtr Plane2DataPtr;
+        private LightshipCpuImagePlane[] _planes;
+        public LightshipCpuImagePlane[] Planes
+        {
+            get
+            {
+                if (_planes == null)
+                {
+                    _planes = new LightshipCpuImagePlane[MaxPlanes];
+                }
+
+                return _planes;
+            }
+        }
 
         public ImageFormatCEnum Format;
 

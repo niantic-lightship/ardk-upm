@@ -104,35 +104,6 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
             Native.Destruct(persistentAnchorApiHandle);
         }
 
-        public bool TryAddMap(IntPtr anchorProviderHandle, byte[] dataBytes)
-        {
-            IntPtr dataPtr = IntPtr.Zero;
-            int dataSize = dataBytes.Length;
-            unsafe
-            {
-                fixed (byte* bytePtr = dataBytes)
-                {
-                    dataPtr = (IntPtr)bytePtr;
-                }
-            }
-            return Native.TryAddMap(anchorProviderHandle, dataPtr, dataSize);
-        }
-
-
-        public bool TryAddGraph(IntPtr anchorProviderHandle, byte[] dataBytes)
-        {
-            IntPtr dataPtr = IntPtr.Zero;
-            int dataSize = dataBytes.Length;
-            unsafe
-            {
-                fixed (byte* bytePtr = dataBytes)
-                {
-                    dataPtr = (IntPtr)bytePtr;
-                }
-            }
-            return Native.TryAddGraph(anchorProviderHandle, dataPtr, dataSize);
-        }
-
         public void TryCreateAnchor(IntPtr anchorProviderHandle, Pose pose, out TrackableId anchorId)
         {
             Matrix4x4 poseMatrix = Matrix4x4.TRS(pose.position, pose.rotation, Vector3.one);
@@ -213,17 +184,10 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
                 );
             }
 
-            if (trackingState == (int)TrackingState.Tracking)
-            {
-                var matrix = MatrixConversionHelper.InternalToMatrix4x4(poseArray.ToArray()).FromArdkToUnity();
-                var position = MatrixUtils.PositionFromMatrix(matrix);
-                var rotation = MatrixUtils.RotationFromMatrix(matrix);
-                pose = new Pose(position, rotation);
-            }
-            else
-            {
-                pose = default;
-            }
+            var matrix = MatrixConversionHelper.InternalToMatrix4x4(poseArray.ToArray()).FromArdkToUnity();
+            var position = MatrixUtils.PositionFromMatrix(matrix);
+            var rotation = MatrixUtils.RotationFromMatrix(matrix);
+            pose = new Pose(position, rotation);
 
             return success;
         }
@@ -373,12 +337,6 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
 
             [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_AnchorProvider_Destruct")]
             public static extern void Destruct(IntPtr anchorApiHandle);
-
-            [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_AnchorProvider_TryAddMap")]
-            public static extern bool TryAddMap(IntPtr anchorApiHandle, IntPtr dataPtr, int dataSize);
-
-            [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_AnchorProvider_TryAddGraph")]
-            public static extern bool TryAddGraph(IntPtr anchorApiHandle, IntPtr dataPtr, int dataSize);
 
             [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_AnchorProvider_TryCreateAnchor")]
             public static extern void TryCreateAnchor

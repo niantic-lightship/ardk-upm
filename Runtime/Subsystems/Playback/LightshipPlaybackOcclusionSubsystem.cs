@@ -46,13 +46,26 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
             ((IPlaybackDatasetUser)provider).SetPlaybackDatasetReader(reader);
         }
 
-        public Matrix4x4? LatestIntrinsicsMatrix
+        internal Matrix4x4? _LatestIntrinsicsMatrix
         {
             get
             {
                 if (provider is LightshipPlaybackProvider lightshipProvider)
                 {
                     return lightshipProvider.LatestIntrinsicsMatrix;
+                }
+
+                throw new NotSupportedException();
+            }
+        }
+
+        internal Matrix4x4? _LatestExtrinsicsMatrix
+        {
+            get
+            {
+                if (provider is LightshipPlaybackProvider lightshipProvider)
+                {
+                    return lightshipProvider.LatestExtrinsicsMatrix;
                 }
 
                 throw new NotSupportedException();
@@ -254,20 +267,27 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
                     }
 
                     var frame = _datasetReader.CurrFrame;
-                    if (frame == null)
+                    if (frame != null)
                     {
-                        return null;
+                        var res = _datasetReader.GetDepthResolution();
+                        var intrinsics = frame.Intrinsics;
+                        var result = Matrix4x4.identity;
+                        result[0, 0] = intrinsics.focalLength.x / intrinsics.resolution.x * res.x;
+                        result[1, 1] = intrinsics.focalLength.y / intrinsics.resolution.y * res.y;
+                        result[0, 2] = intrinsics.principalPoint.x / intrinsics.resolution.x * res.x;
+                        result[1, 2] = intrinsics.principalPoint.y / intrinsics.resolution.y * res.y;
+                        return result;
                     }
 
-                    var intrinsics = frame.Intrinsics;
+                    return null;
+                }
+            }
 
-                    return new Matrix4x4
-                    (
-                        new Vector4(intrinsics.focalLength.x, 0, intrinsics.principalPoint.x, 0),
-                        new Vector4(0, intrinsics.focalLength.y, intrinsics.principalPoint.y, 0),
-                        new Vector4(0, 0, 1, 0),
-                        new Vector4(0, 0, 0, 1)
-                    );
+            public Matrix4x4? LatestExtrinsicsMatrix
+            {
+                get
+                {
+                    return _datasetReader?.CurrFrame?.Pose;
                 }
             }
 

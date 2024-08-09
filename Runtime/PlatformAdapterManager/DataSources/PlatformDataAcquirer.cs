@@ -11,19 +11,25 @@ namespace Niantic.Lightship.AR.PAM
     {
         public abstract bool TryToBeReady();
 
-        public abstract bool TryGetCameraFrameDeprecated(out XRCameraFrame frame);
-
-        public abstract bool TryGetCameraTimestampMs(out ulong timestampMs);
+        public abstract bool TryGetCameraTimestampMs(out double timestampMs);
 
         public abstract bool TryGetCameraPose(out Matrix4x4 pose);
 
         public abstract bool TryGetCpuImageDeprecated(out XRCpuImage cpuImage);
 
-        public abstract bool TryGetCpuDepthImageDeprecated(out XRCpuImage cpuDepthImage, out XRCpuImage cpuDepthConfidenceImage);
+        public abstract bool TryGetDepthCpuImageDeprecated
+        (
+            out XRCpuImage cpuDepthImage,
+            out XRCpuImage cpuDepthConfidenceImage
+        );
 
-        public abstract bool TryGetLightshipCpuImage(out LightshipCpuImage cpuImage);
+        public abstract bool TryGetCpuImage(out LightshipCpuImage cpuImage);
 
-        public abstract bool TryGetLightshipCpuDepthImage(out LightshipCpuImage cpuDepthImage, out LightshipCpuImage cpuDepthConfidenceImage);
+        public abstract bool TryGetDepthCpuImage
+        (
+            out LightshipCpuImage depthCpuImage,
+            out LightshipCpuImage confidenceCpuImage
+        );
 
         public abstract ScreenOrientation GetScreenOrientation();
 
@@ -33,13 +39,17 @@ namespace Niantic.Lightship.AR.PAM
 
         public abstract bool TryGetCameraIntrinsicsCStruct(out CameraIntrinsicsCStruct intrinsics);
 
+        public abstract bool TryGetDepthCameraIntrinsicsCStruct(out CameraIntrinsicsCStruct depthIntrinsics, Vector2Int depthResolution);
+
         public abstract bool TryGetGpsLocation(out GpsLocationCStruct gps);
 
         public abstract bool TryGetCompass(out CompassDataCStruct compass);
 
-        public virtual void Dispose() {}
+        public virtual void Dispose() { }
 
+        // DEPRECATED – New PAM does FormatAdded on Register, reduces interface for new HMDs
         public abstract void OnFormatAdded(DataFormat addedFormat);
+        // DEPRECATED – New PAM does FormatAdded on Register, reduces interface for new HMDs
         public abstract void OnFormatRemoved(DataFormat addedFormat);
     }
 }

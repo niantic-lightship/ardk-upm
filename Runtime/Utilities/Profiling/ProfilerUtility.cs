@@ -68,31 +68,6 @@ namespace Niantic.Lightship.AR.Utilities.Profiling
         }
 
         [Conditional("ENABLE_LIGHTSHIP_PROFILER")]
-        public static void EventStep(string category, string name, string step)
-        {
-            foreach (var profiler in _profilers)
-            {
-                profiler.EventStep(category, name, step);
-            }
-        }
-
-        [Conditional("ENABLE_LIGHTSHIP_PROFILER")]
-        public static void EventStep
-        (
-            string category,
-            string name,
-            string step,
-            string arg1_name,
-            string arg1_val
-        )
-        {
-            foreach (var profiler in _profilers)
-            {
-                profiler.EventStep(category, name, step, arg1_name, arg1_val);
-            }
-        }
-
-        [Conditional("ENABLE_LIGHTSHIP_PROFILER")]
         public static void EventEnd(string category, string name)
         {
             foreach (var profiler in _profilers)
@@ -130,6 +105,118 @@ namespace Niantic.Lightship.AR.Utilities.Profiling
             foreach (var profiler in _profilers)
             {
                 profiler.EventEnd(category, name, arg1_name, arg1_val, arg2_name, arg2_val);
+            }
+        }
+
+        [Conditional("ENABLE_LIGHTSHIP_PROFILER")]
+        public static void EventAsyncBegin(string category, string name, ulong id)
+        {
+            foreach (var profiler in _profilers)
+            {
+                profiler.EventAsyncBegin(category, name, id);
+            }
+        }
+
+        [Conditional("ENABLE_LIGHTSHIP_PROFILER")]
+        public static void EventAsyncBegin
+        (
+            string category,
+            string name,
+            ulong id,
+            string arg1_name,
+            string arg1_val
+        )
+        {
+            foreach (var profiler in _profilers)
+            {
+                profiler.EventAsyncBegin(category, name, id, arg1_name, arg1_val);
+            }
+        }
+
+        [Conditional("ENABLE_LIGHTSHIP_PROFILER")]
+        public static void EventAsyncBegin
+        (
+            string category,
+            string name,
+            ulong id,
+            string arg1_name,
+            string arg1_val,
+            string arg2_name,
+            string arg2_val
+        )
+        {
+            foreach (var profiler in _profilers)
+            {
+                profiler.EventAsyncBegin(category, name, id, arg1_name, arg1_val, arg2_name, arg2_val);
+            }
+        }
+
+        [Conditional("ENABLE_LIGHTSHIP_PROFILER")]
+        public static void EventAsyncStep(string category, string name, ulong id, string step)
+        {
+            foreach (var profiler in _profilers)
+            {
+                profiler.EventAsyncStep(category, name, id, step);
+            }
+        }
+
+        [Conditional("ENABLE_LIGHTSHIP_PROFILER")]
+        public static void EventAsyncStep
+        (
+            string category,
+            string name,
+            ulong id,
+            string step,
+            string arg1_name,
+            string arg1_val
+        )
+        {
+            foreach (var profiler in _profilers)
+            {
+                profiler.EventAsyncStep(category, name, id, step, arg1_name, arg1_val);
+            }
+        }
+
+        [Conditional("ENABLE_LIGHTSHIP_PROFILER")]
+        public static void EventAsyncEnd(string category, string name, ulong id)
+        {
+            foreach (var profiler in _profilers)
+            {
+                profiler.EventAsyncEnd(category, name, id);
+            }
+        }
+
+        [Conditional("ENABLE_LIGHTSHIP_PROFILER")]
+        public static void EventAsyncEnd
+        (
+            string category,
+            string name,
+            ulong id,
+            string arg1_name,
+            string arg1_val
+        )
+        {
+            foreach (var profiler in _profilers)
+            {
+                profiler.EventAsyncEnd(category, name, id, arg1_name, arg1_val);
+            }
+        }
+
+        [Conditional("ENABLE_LIGHTSHIP_PROFILER")]
+        public static void EventAsyncEnd
+        (
+            string category,
+            string name,
+            ulong id,
+            string arg1_name,
+            string arg1_val,
+            string arg2_name,
+            string arg2_val
+        )
+        {
+            foreach (var profiler in _profilers)
+            {
+                profiler.EventAsyncEnd(category, name, id, arg1_name, arg1_val, arg2_name, arg2_val);
             }
         }
 

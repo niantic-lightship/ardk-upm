@@ -12,6 +12,13 @@ namespace Niantic.Lightship.AR.PAM
 
         public void Lightship_ARDK_Unity_PAM_Release(IntPtr handle);
 
+        public void Lightship_ARDK_Unity_PAM_GetDataFormatsReadyForNewFrame
+        (
+            IntPtr handle,
+            NativeArray<DataFormat> dataFormatsReady,
+            out int readySize
+        );
+
         public void Lightship_ARDK_Unity_PAM_GetDataFormatUpdatesForNewFrame
         (
             IntPtr handle,

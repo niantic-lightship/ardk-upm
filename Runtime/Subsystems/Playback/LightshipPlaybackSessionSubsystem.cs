@@ -3,6 +3,8 @@ using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.Loader;
 using Niantic.Lightship.AR.Utilities;
 using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Controls;
 using UnityEngine.Scripting;
 using UnityEngine.XR.ARSubsystems;
 
@@ -122,19 +124,23 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
             private void MoveToNextFrameIfKeyDown()
             {
 #if UNITY_EDITOR
-                const KeyCode single = KeyCode.Space;
-                const KeyCode forward = KeyCode.RightArrow;
-                const KeyCode backward = KeyCode.LeftArrow;
-
-                if (Input.GetKeyUp(single))
-                    datasetReader.TryMoveToNextFrame();
-                else if (Input.GetKey(single) || Input.GetKeyDown(single))
+                // The Editor may be headless on CI
+                if (null == Keyboard.current)
                     return;
 
-                if (Input.GetKey(forward))
+                KeyControl space = InputSystem.GetDevice<Keyboard>().spaceKey;
+                KeyControl forward = InputSystem.GetDevice<Keyboard>().rightArrowKey;
+                KeyControl backward = InputSystem.GetDevice<Keyboard>().leftArrowKey;
+
+                if (space.wasPressedThisFrame)
+                    datasetReader.TryMoveToNextFrame();
+                else if (space.isPressed)
+                    return;
+
+                if (forward.isPressed)
                     datasetReader.TryMoveToNextFrame();
 
-                if (Input.GetKey(backward))
+                if (backward.isPressed)
                     datasetReader.TryMoveToPreviousFrame();
 #else
                 if (Input.touchCount == 2)

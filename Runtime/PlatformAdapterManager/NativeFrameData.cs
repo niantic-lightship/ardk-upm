@@ -7,8 +7,8 @@ namespace Niantic.Lightship.AR.PAM
     // IMPORTANT
     // If you change this file, please add multiple Unity and NativeC reviewers
 
-    // C# to C struct. Must match cpu_image_format.h
-    internal enum ImageFormatCEnum : uint
+    // C# to C struct. Must match frame_data.h
+    public enum ImageFormatCEnum : uint
     {
         Unknown = 0,
 
@@ -26,6 +26,21 @@ namespace Niantic.Lightship.AR.PAM
 
         // 16-bit unsigned integer, describing the depth (distance to an object) in
         DepthUint16 = 5,
+
+        // Single channel image format with 32 bits per pixel
+        OneComponent32 = 6,
+
+        // 4 channel image with 8 bits per channel, describing the color in ARGB order
+        ARGB32 = 7,
+
+        // 4 channel image with 8 bits per channel, describing the color in RGBA order
+        RGBA32 = 8,
+
+        // 4 channel image with 8 bits per channel, describing the color in BGRA order
+        BGRA32 = 9,
+
+        // 3 8-bit unsigned integer channels, describing the color in RGB order
+        RGB24 = 10,
     }
 
     // IMPORTANT – This struct has explicit matching C# and pure-C alignment/padding requirements
@@ -79,6 +94,14 @@ namespace Niantic.Lightship.AR.PAM
     [StructLayout(LayoutKind.Sequential)]
     internal struct CameraIntrinsicsCStruct
     {
+        public CameraIntrinsicsCStruct(UnityEngine.Vector2 focalLength, UnityEngine.Vector2 principalPoint)
+        {
+            FocalLengthX = focalLength.x;
+            FocalLengthY = focalLength.y;
+            PrincipalPointX = principalPoint.x;
+            PrincipalPointY = principalPoint.y;
+        }
+
         public void SetIntrinsics(UnityEngine.Vector2 focalLength, UnityEngine.Vector2 principalPoint)
         {
             FocalLengthX = focalLength.x;
@@ -127,6 +150,26 @@ namespace Niantic.Lightship.AR.PAM
     // IMPORTANT – This struct has explicit matching C# and pure-C alignment/padding requirements
     // C# to C struct. Must match frame_data.h
     [StructLayout(LayoutKind.Sequential)]
+    internal struct CameraPlaneCStruct
+    {
+        public void SetImagePlane(LightshipCpuImagePlane plane)
+        {
+            DataPtr = plane.DataPtr;
+            DataSize = plane.DataSize;
+            PixelStride = plane.PixelStride;
+            RowStride = plane.RowStride;
+        }
+
+        public IntPtr DataPtr;
+        public uint DataSize;
+        public uint PixelStride;
+        public uint RowStride;
+        private uint Padding;
+    }
+
+    // IMPORTANT – This struct has explicit matching C# and pure-C alignment/padding requirements
+    // C# to C struct. Must match frame_data.h
+    [StructLayout(LayoutKind.Sequential)]
     internal struct FrameDataCStruct
     {
         // Most recent Compass data from the device
@@ -142,16 +185,16 @@ namespace Niantic.Lightship.AR.PAM
         public ulong CameraTimestampMs;
 
         // Camera image plane data
-        public IntPtr CameraImagePlane0DataPtr;
-        public IntPtr CameraImagePlane1DataPtr;
-        public IntPtr CameraImagePlane2DataPtr;
+        public CameraPlaneCStruct CameraImagePlane0;
+        public CameraPlaneCStruct CameraImagePlane1;
+        public CameraPlaneCStruct CameraImagePlane2;
 
         // Platform depth data
         public IntPtr DepthDataPtr;
         // Platform depth confidence data
         public IntPtr DepthConfidencesDataPtr;
         // Platform Depth image intrinsics with image resolution
-        public IntPtr DepthCameraIntrinsics;
+        public CameraIntrinsicsCStruct DepthCameraIntrinsics;
 
         // An unique Id to identify the current frame across frames within the same run
         public uint FrameId;
@@ -171,8 +214,6 @@ namespace Niantic.Lightship.AR.PAM
 
         // Length of the depth float buffer (same value as depth confidence buffer as well)
         public uint DepthAndConfidenceDataLength;
-        // Length of the platform depth buffer camera intrinsics
-        public uint DepthCameraIntrinsicsLength;
 
         // Width of the depth float buffer
         public uint DepthDataWidth;

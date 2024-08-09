@@ -130,6 +130,35 @@ namespace Niantic.Lightship.AR.Subsystems.Occlusion
             return true;
         }
 
+        public bool TryGetLatestExtrinsicsMatrix(IntPtr nativeProviderHandle, out Matrix4x4 extrinsicsMatrix)
+        {
+            float[] extrinsics = new float[16];
+            bool gotIntrinsics = Native.TryGetLatestExtrinsics(nativeProviderHandle, extrinsics);
+
+            if (!gotIntrinsics)
+            {
+                extrinsicsMatrix = default;
+                return false;
+            }
+
+            extrinsicsMatrix = extrinsics.FromColumnMajorArray().FromArdkToUnity();
+            return true;
+        }
+
+        public bool TryGetLatestEnvironmentDepthResolution(IntPtr nativeProviderHandle, out Vector2Int resolution)
+        {
+            bool gotResolution = Native.TryGetLatestEnvironmentDepthResolution(nativeProviderHandle, out int width, out int height);
+
+            if (!gotResolution)
+            {
+                resolution = default;
+                return false;
+            }
+
+            resolution = new Vector2Int(width, height);
+            return true;
+        }
+
         /// <summary>
         /// Returns a 3x3 transformation matrix for converting between
         /// normalized image coordinates and a coordinate space appropriate
@@ -309,6 +338,12 @@ namespace Niantic.Lightship.AR.Subsystems.Occlusion
 
             [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_OcclusionProvider_TryGetLatestIntrinsics")]
             public static extern bool TryGetLatestIntrinsics(IntPtr nativeProviderHandle, float[] intrinsics);
+
+            [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_OcclusionProvider_TryGetLatestExtrinsics")]
+            public static extern bool TryGetLatestExtrinsics(IntPtr nativeProviderHandle, float[] extrinsics);
+
+            [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_OcclusionProvider_TryGetLatestEnvironmentDepthResolution")]
+            public static extern bool TryGetLatestEnvironmentDepthResolution(IntPtr nativeProviderHandle, out int width, out int height);
 
             [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_OcclusionProvider_CalculateSamplerMatrix")]
             public static extern bool CalculateSamplerMatrix

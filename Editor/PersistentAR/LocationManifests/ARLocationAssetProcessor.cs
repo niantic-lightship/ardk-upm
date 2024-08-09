@@ -12,6 +12,7 @@ using Niantic.Lightship.AR.LocationAR;
 using Niantic.Lightship.AR.Utilities;
 using Niantic.Lightship.AR.Utilities.UnityAssets;
 using UnityEditor;
+using UnityEditor.Build;
 
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -247,6 +248,18 @@ namespace Niantic.Lightship.AR.Editor
                     // Some nodes do not have textures
                     if (texEntries.Any())
                     {
+                        var buildTarget = EditorUserBuildSettings.activeBuildTarget;
+                        if (buildTarget != BuildTarget.Android && buildTarget != BuildTarget.iOS)
+                        {
+                            Debug.LogError
+                            (
+                                "The current editor build target is not Android or iOS. " +
+                                "Textures may be compressed in a manner that cannot be built to Android or iOS devices. " +
+                                "Change the build target to iOS or Android and reimport the zip if you intend to " +
+                                "include ARLocationManifest meshes on these platforms"
+                            );
+                        }
+
                         tex = ImportTexture(texEntries.First(), assetTargetDir);
                     }
 

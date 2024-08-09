@@ -59,10 +59,25 @@ namespace Niantic.Lightship.AR.PAM
             }
         }
 
-        public void Lightship_ARDK_Unity_PAM_GetDataFormatUpdatesForNewFrame(IntPtr handle,
+        public void Lightship_ARDK_Unity_PAM_GetDataFormatsReadyForNewFrame
+        (
+            IntPtr handle,
+            NativeArray<DataFormat> dataFormatsReady, out int readySize
+        )
+        {
+            readySize = _readyDataFormatsSize;
+            NativeArray<DataFormat>.Copy(_readyDataFormats, dataFormatsReady, _readyDataFormats.Length);
+
+            ClearDataFormats();
+        }
+
+        public void Lightship_ARDK_Unity_PAM_GetDataFormatUpdatesForNewFrame
+        (
+            IntPtr handle,
             NativeArray<DataFormat> dataFormatsAdded, out int addedSize,
             NativeArray<DataFormat> dataFormatsReady, out int readySize,
-            NativeArray<DataFormat> dataFormatsRemoved, out int removedSize)
+            NativeArray<DataFormat> dataFormatsRemoved, out int removedSize
+        )
         {
             addedSize = _addedDataFormatsSize;
             NativeArray<DataFormat>.Copy(_addedDataFormats, dataFormatsAdded, _addedDataFormats.Length);
@@ -72,6 +87,7 @@ namespace Niantic.Lightship.AR.PAM
 
             removedSize = _removedDataFormatsSize;
             NativeArray<DataFormat>.Copy(_removedDataFormats, dataFormatsRemoved, _removedDataFormats.Length);
+
             ClearDataFormats();
         }
 
@@ -105,9 +121,15 @@ namespace Niantic.Lightship.AR.PAM
             _removedDataFormatsSize = formats.Length;
         }
 
-        public static DeprecatedFrameCStruct IntPtrToFrameCStruct(IntPtr ptr)
+        public static FrameDataCStruct IntPtrToFrameDataCStruct(IntPtr ptr)
+        {
+            return (FrameDataCStruct)Marshal.PtrToStructure(ptr, typeof(FrameDataCStruct));
+        }
+
+        public static DeprecatedFrameCStruct IntPtrToDeprecatedFrameCStruct(IntPtr ptr)
         {
             return (DeprecatedFrameCStruct)Marshal.PtrToStructure(ptr, typeof(DeprecatedFrameCStruct));
         }
+
     }
 }

@@ -535,7 +535,7 @@ namespace Niantic.Lightship.AR.Subsystems
         )
         {
             var meshDataArray = Mesh.AllocateWritableMeshData(1);
-            var result = await Draco.ConvertDracoMeshToUnity(meshDataArray[0], meshBytes);
+            var result = await DracoDecoder.DecodeMesh(meshDataArray[0], meshBytes);
 
             if (result.success)
             {

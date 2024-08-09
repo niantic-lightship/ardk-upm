@@ -12,37 +12,9 @@ namespace Niantic.Lightship.AR.PAM
             return true;
         }
 
-        // Always returns true. Frame only has valid timestamp.
-        public override bool TryGetCameraFrameDeprecated(out XRCameraFrame frame)
+        public override bool TryGetCameraTimestampMs(out double timestampMs)
         {
-            frame = new XRCameraFrame
-            (
-                DateTimeOffset.Now.ToUnixTimeMilliseconds() * 1000000,
-                0,
-                0,
-                default,
-                Matrix4x4.zero,
-                Matrix4x4.zero,
-                TrackingState.Tracking,
-                IntPtr.Zero,
-                XRCameraFrameProperties.Timestamp,
-                0,
-                0,
-                0,
-                0,
-                default,
-                Vector3.zero,
-                default,
-                default,
-                0
-            );
-
-            return true;
-        }
-
-        public override bool TryGetCameraTimestampMs(out ulong timestampNs)
-        {
-            timestampNs = (ulong)(DateTimeOffset.Now.ToUnixTimeMilliseconds());
+            timestampMs = (double)(DateTimeOffset.Now.ToUnixTimeMilliseconds());
             return true;
         }
 
@@ -58,23 +30,27 @@ namespace Niantic.Lightship.AR.PAM
             return true;
         }
 
-        public override bool TryGetCpuDepthImageDeprecated(out XRCpuImage cpuDepthImage, out XRCpuImage cpuDepthConfidenceImage)
+        public override bool TryGetDepthCpuImageDeprecated(out XRCpuImage cpuDepthImage, out XRCpuImage cpuDepthConfidenceImage)
         {
             cpuDepthImage = default;
             cpuDepthConfidenceImage = default;
             return false;
         }
 
-        public override bool TryGetLightshipCpuImage(out LightshipCpuImage cpuImage)
+        public override bool TryGetCpuImage(out LightshipCpuImage cpuImage)
         {
             cpuImage = new LightshipCpuImage();
             return true;
         }
 
-        public override bool TryGetLightshipCpuDepthImage(out LightshipCpuImage cpuDepthImage, out LightshipCpuImage cpuDepthConfidenceImage)
+        public override bool TryGetDepthCpuImage
+        (
+            out LightshipCpuImage depthCpuImage,
+            out LightshipCpuImage confidenceCpuImage
+        )
         {
-            cpuDepthImage = default;
-            cpuDepthConfidenceImage = default;
+            depthCpuImage = default;
+            confidenceCpuImage = default;
             return false;
         }
 
@@ -99,7 +75,13 @@ namespace Niantic.Lightship.AR.PAM
         {
             intrinsics = default;
             intrinsics.SetIntrinsics(new Vector2(554.256f, 579.411f), new Vector2(320, 240));
-            // Note: no field for resolution: new Vector2Int(640, 480)
+            return true;
+        }
+
+        public override bool TryGetDepthCameraIntrinsicsCStruct(out CameraIntrinsicsCStruct depthIntrinsics, Vector2Int depthResolution)
+        {
+            depthIntrinsics = default;
+            depthIntrinsics.SetIntrinsics(new Vector2(554.256f, 579.411f), new Vector2(320, 240));
             return true;
         }
 

@@ -82,6 +82,12 @@ namespace Niantic.Lightship.AR.Occlusion
             "LatestInrinsicsMatrix is not supported on non-Lightship implementations of the XROcclusionSubsystem.";
 
         /// <summary>
+        /// Message logged when the LatestExtrinsicsMatrix API is not supported by the subsystem.
+        /// </summary>
+        private const string k_LatestExtrinsicsMatrixNotSupportedMessage =
+            "LatestExtrinsicsMatrix is not supported on non-Lightship implementations of the XROcclusionSubsystem.";
+
+        /// <summary>
         /// Message logged when the extension tries to use the cpu image it failed to acquire.
         /// </summary>
         private const string k_MissingCpuImageMessage = "Could not acquire the cpu depth image.";
@@ -229,6 +235,11 @@ namespace Niantic.Lightship.AR.Occlusion
 
         [SerializeField]
         private bool _bypassOcclusionManagerUpdates;
+
+        [SerializeField]
+        [Tooltip("Allow the occlusion extension to override the occlusion manager's settings to set " 
+            + "the most optimal configuration (see documentation for more details).")]
+        private bool _overrideOcclusionManagerSettings = true;
 
         [SerializeField]
         private ARSemanticSegmentationManager _semanticSegmentationManager;
@@ -419,13 +430,10 @@ namespace Niantic.Lightship.AR.Occlusion
         }
 
         /// <summary>
-        /// Returns the intrinsics matrix of the most recent semantic segmentation prediction. Contains values
-        /// for the camera's focal length and principal point. Converts between 2D image pixel coordinates and
-        /// 3D world coordinates relative to the camera.
+        /// Returns the intrinsics matrix of the most recent depth prediction. Contains values
+        /// for the camera's focal length and principal point. Converts between 2D image pixel
+        /// coordinates and 3D world coordinates relative to the camera.
         /// </summary>
-        /// <value>
-        /// The intrinsics matrix.
-        /// </value>
         /// <exception cref="System.NotSupportedException">Thrown if getting intrinsics matrix is not supported.
         /// </exception>
         public Matrix4x4? LatestIntrinsicsMatrix
@@ -435,11 +443,33 @@ namespace Niantic.Lightship.AR.Occlusion
                 switch (_occlusionSubsystem)
                 {
                     case LightshipOcclusionSubsystem lightshipOcclusionSubsystem:
-                        return lightshipOcclusionSubsystem.LatestIntrinsicsMatrix;
+                        return lightshipOcclusionSubsystem._LatestIntrinsicsMatrix;
                     case LightshipPlaybackOcclusionSubsystem lightshipPlaybackOcclusionSubsystem:
-                        return lightshipPlaybackOcclusionSubsystem.LatestIntrinsicsMatrix;
+                        return lightshipPlaybackOcclusionSubsystem._LatestIntrinsicsMatrix;
                     default:
                         Log.Warning(k_LatestIntrinsicsMatrixNotSupportedMessage);
+                        return default;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Returns the extrinsics matrix of the most recent depth prediction.
+        /// </summary>
+        /// <exception cref="System.NotSupportedException">Thrown if getting extrinsics matrix is not supported.
+        /// </exception>
+        public Matrix4x4? LatestExtrinsicsMatrix
+        {
+            get
+            {
+                switch (_occlusionSubsystem)
+                {
+                    case LightshipOcclusionSubsystem lightshipOcclusionSubsystem:
+                        return lightshipOcclusionSubsystem._LatestExtrinsicsMatrix;
+                    case LightshipPlaybackOcclusionSubsystem lightshipPlaybackOcclusionSubsystem:
+                        return lightshipPlaybackOcclusionSubsystem._LatestExtrinsicsMatrix;
+                    default:
+                        Log.Warning(k_LatestExtrinsicsMatrixNotSupportedMessage);
                         return default;
                 }
             }
@@ -614,17 +644,26 @@ namespace Niantic.Lightship.AR.Occlusion
         }
 
         /// <summary>
-        /// Returns the depth texture used to render occlusions.
+        /// Whether to override the occlusion manager's settings to set the most optimal configuration
+        /// for the occlusion extension. 
+        /// Currently the following overrides are applied: 
+        /// 1) On iPhone devices with Lidar sensor, the best and medium occlusion mode will cause a significant performance hit
+        /// as well as a crash. We will override the occlusion mode to fastest to avoid this issue and enable smooth edges 
+        /// for the best results. 
         /// </summary>
-        public Texture2D DepthTexture
+        public bool OverrideOcclusionManagerSettings
         {
-            get
+            get => _overrideOcclusionManagerSettings;
+            set
             {
-                return _occlusionSubsystem is not LightshipOcclusionSubsystem
-                    ? _occlusionManager.environmentDepthTexture
-                    : _gpuDepth;
+               _overrideOcclusionManagerSettings = value;
             }
         }
+
+        /// <summary>
+        /// Returns the depth texture used to render occlusions.
+        /// </summary>
+        public Texture2D DepthTexture { get; private set; }
 
         /// <summary>
         /// Returns a transform for converting between normalized image
@@ -931,16 +970,32 @@ namespace Niantic.Lightship.AR.Occlusion
                 ReconfigureSubsystem();
             }
 
+            if (_overrideOcclusionManagerSettings)
+            {
+                ApplyOverrideOcclusionManagerSettings();
+            }
+            
+
             if (!_occlusionSubsystem.running ||
                 _occlusionManager.currentOcclusionPreferenceMode == OcclusionPreferenceMode.NoOcclusion)
             {
                 return;
             }
 
-            if (FetchDepthData(out Texture2D depthTexture))
+            // Determine the best depth to use
+            if (FetchDepthData(out var depth))
             {
+                // Assign the depth texture
+                DepthTexture = depth;
+
+                // Run update logic
                 HandleOcclusionDistance();
-                HandleOcclusionRendering(depthTexture);
+                HandleOcclusionRendering(DepthTexture);
+            }
+            else
+            {
+                // No depth available, clear the depth texture
+                DepthTexture = null;
             }
         }
 
@@ -1324,6 +1379,34 @@ namespace Niantic.Lightship.AR.Occlusion
                 lsSubsystem.RequestDisableFetchTextureDescriptors =
                     _areCommandBuffersAttached && _bypassOcclusionManagerUpdates;
             }
+        }
+
+
+        /// <summary>
+        /// As we discover some limitations with the ARFoundation occlusion manager, we may need to override 
+        /// some of its settings to ensure that the occlusion extension works optimally
+        /// This method will be the central place where these settings are overridden. 
+        /// </summary>
+        private void ApplyOverrideOcclusionManagerSettings()
+        {
+            if (_occlusionManager == null || _occlusionSubsystem == null)
+            {
+                return;
+            }
+
+            // On devices with Lidar sensor, the best and medium occlusion mode will cause a significant performance hit
+            // as well as a crash. We will override the occlusion mode to fastest to avoid this issue and enable smooth edges 
+            // for the best results. 
+        #if UNITY_IOS
+            if (_occlusionSubsystem is not LightshipOcclusionSubsystem && 
+                (_occlusionManager.currentEnvironmentDepthMode == EnvironmentDepthMode.Medium ||
+                 _occlusionManager.currentEnvironmentDepthMode == EnvironmentDepthMode.Best))
+            {
+                _occlusionManager.requestedEnvironmentDepthMode = EnvironmentDepthMode.Fastest;
+                PreferSmoothEdges = true;
+            }
+        #endif
+        
         }
 
         /// <summary>

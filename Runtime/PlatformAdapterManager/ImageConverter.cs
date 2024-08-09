@@ -132,6 +132,30 @@ namespace Niantic.Lightship.AR.PAM
             image.filterMode = ogFilterMode;
         }
 
+        [Obsolete("Is used in deprecated PAM pipeline. Use new ConvertCameraIntrinsics instead, which is more generic.")]
+        public static void ConvertCameraIntrinsics
+        (
+            XRCameraIntrinsics inputIntrinsics,
+            Vector2Int outputResolution,
+            NativeArray<float> destinationBuffer
+        )
+        {
+            var convertedIntrinsics =
+                ConvertCameraIntrinsics
+                (
+                    inputIntrinsics.focalLength,
+                    inputIntrinsics.principalPoint,
+                    inputIntrinsics.resolution,
+                    outputResolution
+                );
+
+            destinationBuffer[0] = convertedIntrinsics.FocalLengthX;
+            destinationBuffer[4] = convertedIntrinsics.FocalLengthY;
+            destinationBuffer[6] = convertedIntrinsics.PrincipalPointX;
+            destinationBuffer[7] = convertedIntrinsics.PrincipalPointY;
+            destinationBuffer[8] = 1;
+        }
+
         // Resizes intrinsics doing first the crop, then the scale.
         // Writes out the result into the destination buffer,
         // flattening the 3x3 matrix into a column-major array
@@ -141,66 +165,60 @@ namespace Niantic.Lightship.AR.PAM
         // | Fx  0  Cx |
         // | 0  Fy  Cy |
         // | 0  0   1  |
-        public static void ConvertCameraIntrinsics
+        public static CameraIntrinsicsCStruct ConvertCameraIntrinsics
         (
-            XRCameraIntrinsics inputIntrinsics,
-            Vector2Int outputResolution,
-            NativeArray<float> destinationBuffer
+            Vector2 focalLength,
+            Vector2 principalPoint,
+            Vector2Int inputResolution,
+            Vector2Int outputResolution
         )
         {
-            float widthRatio;
-            float heightRatio;
+            float xRatio;
+            float yRatio;
 
-            int inputWidth = inputIntrinsics.resolution.x;
-            int inputHeight = inputIntrinsics.resolution.y;
-
-            var outFocalLength = inputIntrinsics.focalLength;
-            var outPrincipalPoint = inputIntrinsics.principalPoint;
+            Vector2 outFocalLength = focalLength;
+            Vector2 outPrincipalPoint = principalPoint;
 
             // Decide if we are going to crop from top/bottom or left/right
-            if (inputIntrinsics.resolution.y >= CalculateHeight(inputWidth, outputResolution))
+            if (inputResolution.y >= MatchAspectRatioX(inputResolution.x, outputResolution))
             {
-                int newHeight = CalculateHeight(inputWidth, outputResolution);
-                int offset = (inputHeight - newHeight) / 2;
+                int newY = MatchAspectRatioX(inputResolution.x, outputResolution);
+                int offset = (inputResolution.y - newY) / 2;
                 outPrincipalPoint.y -= offset;
 
-                widthRatio = outputResolution.x / (float)inputWidth;
-                heightRatio = outputResolution.y / (float)newHeight;
+                xRatio = outputResolution.x / (float)inputResolution.x;
+                yRatio = outputResolution.y / (float)newY;
             }
             else
             {
-                int newWidth = CalculateWidth(inputHeight, outputResolution);
-                int offset = (inputWidth - newWidth) / 2;
+                int newX = MatchAspectRatioY(inputResolution.y, outputResolution);
+                int offset = (inputResolution.x - newX) / 2;
                 outPrincipalPoint.x -= offset;
 
-                widthRatio = outputResolution.x / (float)newWidth;
-                heightRatio = outputResolution.y / (float)inputHeight;
+                xRatio = outputResolution.x / (float)newX;
+                yRatio = outputResolution.y / (float)inputResolution.y;
             }
 
-            outFocalLength.x *= widthRatio;
-            outPrincipalPoint.x *= widthRatio;
-            outFocalLength.y *= heightRatio;
-            outPrincipalPoint.y *= heightRatio;
+            outFocalLength.x *= xRatio;
+            outPrincipalPoint.x *= xRatio;
+            outFocalLength.y *= yRatio;
+            outPrincipalPoint.y *= yRatio;
 
-            destinationBuffer[0] = outFocalLength.x;
-            destinationBuffer[4] = outFocalLength.y;
-            destinationBuffer[6] = outPrincipalPoint.x;
-            destinationBuffer[7] = outPrincipalPoint.y;
-            destinationBuffer[8] = 1;
+            return new CameraIntrinsicsCStruct(outFocalLength, outPrincipalPoint);
         }
 
-        private static int CalculateHeight(int width, Vector2Int aspectRatio)
+        private static int MatchAspectRatioX(int x, Vector2Int aspectRatio)
         {
-            int height = (aspectRatio.y * width) / aspectRatio.x;
-            height -= height & 1; // Nearest smaller multiple of two
-            return height;
+            int newY = (aspectRatio.y * x) / aspectRatio.x;
+            newY -= newY & 1; // Nearest smaller multiple of two
+            return newY;
         }
 
-        private static int CalculateWidth(int height, Vector2Int aspectRatio)
+        private static int MatchAspectRatioY(int y, Vector2Int aspectRatio)
         {
-            int width = (aspectRatio.x * height) / aspectRatio.y;
-            width -= width & 1; // Nearest smaller multiple of two
-            return width;
+            int newX = (aspectRatio.x * y) / aspectRatio.y;
+            newX -= newX & 1; // Nearest smaller multiple of two
+            return newX;
         }
     }
 }

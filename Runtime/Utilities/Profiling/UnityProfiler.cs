@@ -9,7 +9,6 @@ namespace Niantic.Lightship.AR.Utilities.Profiling
     internal class UnityProfiler : IProfiler
     {
         private Dictionary<string, ProfilerMarker> _markers;
-        private ProfilerMarker? _currStep;
 
         public bool Initialize()
         {
@@ -20,15 +19,12 @@ namespace Niantic.Lightship.AR.Utilities.Profiling
 
         public void Shutdown()
         {
-            return;
+            // nothing needed
         }
 
-        private string GetEventName(string category, string name, string step = "")
+        private string GetEventName(string category, string name)
         {
-            if (string.IsNullOrEmpty(step))
-                return $"{category}|{name}";
-
-            return $"{category}|{name}|{step}";
+            return $"{category}|{name}";
         }
 
         private ProfilerMarker CreateAndOrBeginMarker(string markerName)
@@ -75,12 +71,6 @@ namespace Niantic.Lightship.AR.Utilities.Profiling
                 throw new ArgumentException($"No profiler event with category: {category} and name: {name} exists.");
             }
 
-            if (_currStep.HasValue)
-            {
-                _currStep.Value.End();
-                _currStep = null;
-            }
-
             marker.End();
         }
 
@@ -102,20 +92,65 @@ namespace Niantic.Lightship.AR.Utilities.Profiling
             EventEnd(category, name);
         }
 
-        public void EventStep(string category, string name, string step)
+        // Unity does not support markers that can span multiple frames.
+        public void EventAsyncBegin(string category, string name, ulong id)
         {
-            if (_currStep.HasValue)
-            {
-                _currStep.Value.End();
-            }
-
-            var marker = CreateAndOrBeginMarker(GetEventName(category, name, step));
-            _currStep = marker;
+            // no-op
         }
 
-        public void EventStep(string category, string name, string step, string arg1_name, string arg1_val)
+        public void EventAsyncBegin(string category, string name, ulong id, string arg1_name, string arg1_val)
         {
-            EventStep(category, name, step);
+            // no-op
+        }
+
+        public void EventAsyncBegin
+        (
+            string category,
+            string name,
+            ulong id,
+            string arg1_name,
+            string arg1_val,
+            string arg2_name,
+            string arg2_val
+        )
+        {
+            // no-op
+        }
+
+        // There's no such thing as "step" events in the Unity Profiler.
+        // Instead we create a new marker for each step, and end the previous step marker when a new step begins.
+        public void EventAsyncStep(string category, string name, ulong id, string step)
+        {
+            // no-op
+        }
+
+        public void EventAsyncStep(string category, string name, ulong id, string step, string arg1_name, string arg1_val)
+        {
+            // no-op
+        }
+
+        public void EventAsyncEnd(string category, string name, ulong id)
+        {
+            // no-op
+        }
+
+        public void EventAsyncEnd(string category, string name, ulong id, string arg1_name, string arg1_val)
+        {
+            // no-op
+        }
+
+        public void EventAsyncEnd
+        (
+            string category,
+            string name,
+            ulong id,
+            string arg1_name,
+            string arg1_val,
+            string arg2_name,
+            string arg2_val
+        )
+        {
+            // no-op
         }
 
         // There's no such thing as an "instance" or "immediate" event in terms of the Unity Profiler.

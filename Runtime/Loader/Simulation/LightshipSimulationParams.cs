@@ -18,7 +18,8 @@ namespace Niantic.Lightship.AR.Loader
         /// </summary>
         public bool UseZBufferDepth => _useZBufferDepth;
 
-        [SerializeField, Tooltip("When enabled, uses the geometry depth from camera z-buffer, instead of Lightship depth prediction")]
+        [SerializeField,
+         Tooltip("When enabled, uses the geometry depth from camera z-buffer, instead of Lightship depth prediction")]
         private bool _useZBufferDepth = true;
 
         /// <summary>
@@ -30,12 +31,26 @@ namespace Niantic.Lightship.AR.Loader
          Tooltip("When enabled, use Lightship Persistent Anchors instead of simulation Persistent Anchors")]
         private bool _useSimulationPersistentAnchor = true;
 
-        public LightshipSimulationPersistentAnchorParams SimulationPersistentAnchorParams => _simulationPersistentAnchorParams;
+        public LightshipSimulationPersistentAnchorParams SimulationPersistentAnchorParams =>
+            _simulationPersistentAnchorParams;
 
         /// <summary>
         /// Parameters for simulating the persistent anchor subsystem
         /// </summary>
         [SerializeField]
-        LightshipSimulationPersistentAnchorParams _simulationPersistentAnchorParams = new LightshipSimulationPersistentAnchorParams();
+        LightshipSimulationPersistentAnchorParams _simulationPersistentAnchorParams =
+            new LightshipSimulationPersistentAnchorParams();
+
+        internal LightshipSimulationParams()
+        {
+        }
+
+        internal LightshipSimulationParams(bool useZBufferDepth, bool useSimulationPersistentAnchor,
+            LightshipSimulationPersistentAnchorParams simulationPersistentAnchorParams)
+        {
+            _useZBufferDepth = useZBufferDepth;
+            _useSimulationPersistentAnchor = useSimulationPersistentAnchor;
+            _simulationPersistentAnchorParams = simulationPersistentAnchorParams;
+        }
     }
 }

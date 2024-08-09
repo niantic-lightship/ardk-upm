@@ -221,6 +221,16 @@ namespace Niantic.Lightship.AR.PersistentAnchors
 #endif
 
         /// <summary>
+        /// Enable/Disable Cloud Localization
+        /// </summary>
+        private bool _cloudLocalizationEnabled = XRPersistentAnchorConfiguration.DefaultCloudLocalizationEnabled;
+        public bool CloudLocalizationEnabled
+        {
+            get => _cloudLocalizationEnabled;
+            set => _cloudLocalizationEnabled = value;
+        }
+
+        /// <summary>
         /// Enable Device Localization
         /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
         /// </summary>
@@ -273,6 +283,7 @@ namespace Niantic.Lightship.AR.PersistentAnchors
             // We capture the current subsystem configurations so we don't overwrite unwanted configs with default
             XRPersistentAnchorConfiguration cfg = new(subsystem.CurrentConfiguration);
 
+            cfg.CloudLocalizationEnabled = CloudLocalizationEnabled;
             cfg.ContinuousLocalizationEnabled = ContinuousLocalizationEnabled;
             cfg.TransformUpdateSmoothingEnabled = _InterpolationEnabled;
 
@@ -329,6 +340,7 @@ namespace Niantic.Lightship.AR.PersistentAnchors
 
             CloudLocalizationTemporalFusionWindowSize = config.CloudLocalizationTemporalFusionWindowSize;
             DiagnosticsEnabled = config.DiagnosticsEnabled;
+            CloudLocalizationEnabled = config.CloudLocalizationEnabled;
             SlickLocalizationEnabled = config.SlickLocalizationEnabled;
 #endif
         }
@@ -354,8 +366,17 @@ namespace Niantic.Lightship.AR.PersistentAnchors
                 subsystem.OnSubsystemStop -= OnSubsystemStop;
                 subsystem.OnConfigurationChanged -= OnConfigurationChanged;
                 subsystem.OnBeforeSubsystemStart -= OnBeforeSubsystemStart;
+
+                // There is a weird behavior on Android that skips OnDisable
+                // We explicitly call subsystem.Stop() here to ensure the proper state of subsystem
+                if (subsystem.running)
+                {
+                    subsystem.Stop();
+                }
             }
+
             RemoveAllAnchorsImmediate();
+
             base.OnDestroy();
         }
 
@@ -382,42 +403,6 @@ namespace Niantic.Lightship.AR.PersistentAnchors
             }
 
             return subsystem.GetVpsSessionId(out vpsSessionId);
-        }
-
-        /// <summary>
-        /// Add map
-        /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
-        /// </summary>
-        /// <param name="dataBytes">Map data</param>
-        /// <returns>
-        /// <c>True</c> If the map was successfully added.
-        /// <c>False</c> The map cannot be added.
-        /// </returns>
-        public bool TryAddMap(byte[] dataBytes)
-        {
-            if (!LightshipUnityContext.FeatureEnabled(XRPersistentAnchorSubsystem.SlickLocalizationFeatureFlagName))
-            {
-                return false;
-            }
-            return subsystem.TryAddMap(dataBytes);
-        }
-
-        /// <summary>
-        /// Add graph of maps
-        /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
-        /// </summary>
-        /// <param name="dataBytes">Graph data</param>
-        /// <returns>
-        /// <c>True</c> If the graph was successfully added.
-        /// <c>False</c> The graph cannot be added.
-        /// </returns>
-        public bool TryAddGraph(byte[] dataBytes)
-        {
-            if (!LightshipUnityContext.FeatureEnabled(XRPersistentAnchorSubsystem.SlickLocalizationFeatureFlagName))
-            {
-                return false;
-            }
-            return subsystem.TryAddGraph(dataBytes);
         }
 
         /// <summary>

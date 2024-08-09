@@ -21,7 +21,7 @@ namespace Niantic.Lightship.AR.Settings
     [PublicAPI]
     public static class Metadata
     {
-        private const string ArdkVersion = "3.6.0-2406141834";
+        private const string ArdkVersion = "3.7.0-2408080827";
 
         private const string AuthorizationHeaderKey = "Authorization";
         private const string ApplicationIdHeaderKey = "x-ardk-application-id";
@@ -43,6 +43,7 @@ namespace Niantic.Lightship.AR.Settings
             Version = ArdkVersion;
             AppInstanceId = Guid.NewGuid().ToString();
             AgeLevel = ARClientEnvelope.Types.AgeLevel.Unknown;
+
 
             s_isUnityContextInitialized = false;
             LightshipUnityContext.OnUnityContextHandleInitialized += () =>

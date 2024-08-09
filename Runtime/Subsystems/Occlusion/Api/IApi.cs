@@ -60,6 +60,10 @@ namespace Niantic.Lightship.AR.Subsystems.Occlusion
 
         public bool TryGetLatestIntrinsicsMatrix(IntPtr nativeProviderHandle, out Matrix4x4 intrinsicsMatrix);
 
+        public bool TryGetLatestExtrinsicsMatrix(IntPtr nativeProviderHandle, out Matrix4x4 extrinsicsMatrix);
+
+        public bool TryGetLatestEnvironmentDepthResolution(IntPtr nativeProviderHandle, out Vector2Int resolution);
+
         public void DisposeResource(IntPtr nativeProviderHandle, IntPtr resourceHandle);
     }
 }

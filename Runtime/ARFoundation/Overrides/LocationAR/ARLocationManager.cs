@@ -279,8 +279,11 @@ namespace Niantic.Lightship.AR.LocationAR
                     // ARLocation/Anchor is not longer tracked
                     return;
                 }
+
+                var tracking = false;
+                var reason = ARLocationTrackingStateReason.Unknown;
                 var arLocation = _anchorToARLocationMap[anchor];
-                bool tracked = anchor.trackingState == TrackingState.Tracking;
+                bool tracked = anchor.trackingState == TrackingState.Tracking || anchor.trackingState == TrackingState.Limited;
                 if (tracked)
                 {
                     if (!_trackedARLocations.Contains(arLocation))
@@ -300,8 +303,19 @@ namespace Niantic.Lightship.AR.LocationAR
                         }
                     }
 
-                    arLocation.gameObject.SetActive(true);
-                    var args = new ARLocationTrackedEventArgs(arLocation, true);
+                    if (anchor.trackingState == TrackingState.Tracking)
+                    {
+                        tracking = true;
+                        reason = ARLocationTrackingStateReason.None;
+                        arLocation.gameObject.SetActive(true);
+                    }
+                    if (anchor.trackingState == TrackingState.Limited)
+                    {
+                        tracking = false;
+                        reason = ARLocationTrackingStateReason.Limited;
+                    }
+
+                    var args = new ARLocationTrackedEventArgs(arLocation, tracking, reason);
                     locationTrackingStateChanged?.Invoke(args);
                 }
                 else
@@ -313,6 +327,7 @@ namespace Niantic.Lightship.AR.LocationAR
                         ParentARLocationToOriginal(arLocation, anchor);
                         wasTrackedAnchorRemoved = _trackedARLocations.Remove(arLocation);
                         _anchorToARLocationMap.Remove(anchor);
+                        reason = ARLocationTrackingStateReason.Removed;
 
                         // If the last tracked location is removed, clear state and be ready for the next StartTracking()
                         if (_anchorToARLocationMap.Count == 0)
@@ -329,7 +344,7 @@ namespace Niantic.Lightship.AR.LocationAR
                     }
 
                     // Note: You could call arLocation.gameObject.SetActive(false) in locationTrackingStateChanged event if you wanted to de-activate gameObject when tracking is lost
-                    var args = new ARLocationTrackedEventArgs(arLocation, false);
+                    var args = new ARLocationTrackedEventArgs(arLocation, false, reason);
                     locationTrackingStateChanged?.Invoke(args);
                 }
             }

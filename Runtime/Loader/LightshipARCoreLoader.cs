@@ -132,22 +132,99 @@ namespace Niantic.Lightship.AR.Loader
                 return;
             }
 
-            foreach (var config in configurations)
+            int bestConfigIndex = -1;
+            for (int i = 0; i < configurations.Length; ++i)
             {
-                // Select the first configuration that meets the resolution minimum assuming
-                // that the configuration will correspond with the default camera use by ARCore
-                if (MeetsResolutionMinimums(config.resolution, CameraResolutionMinWidth, CameraResolutionMinHeight))
+                // Select the "best" configuration that meets the resolution minimum.
+                if (MeetsResolutionMinimums(configurations[i].resolution, CameraResolutionMinWidth, CameraResolutionMinHeight))
                 {
-                    Log.Info("Setting XRCameraConfiguration as: " + config);
-                    cameraSubsystem.currentConfiguration = config;
-                    break;
+                    if (bestConfigIndex == -1)
+                    {
+                        bestConfigIndex = i;
+                        Log.Info("Found first valid XRCameraConfiguration: " + configurations[i]);
+                    }
+                    else if (IsSecondConfigBetter(configurations[bestConfigIndex], configurations[i]))
+                    {
+                        bestConfigIndex = i;
+                        Log.Info("Found a better XRCameraConfiguration: " + configurations[i]);
+                    }
                 }
+            }
+
+            if (bestConfigIndex >= 0)
+            {
+                cameraSubsystem.currentConfiguration = configurations[bestConfigIndex];
+                Log.Info("Using XRCameraConfiguration: " + configurations[bestConfigIndex]);
+            }
+            else
+            {
+                Log.Warning("No valid camera configurations found.");
             }
         }
 
         private bool MeetsResolutionMinimums(Vector2Int resolution, int minWidth, int minHeight)
         {
             return resolution.x >= minWidth && resolution.y >= minHeight;
+        }
+
+        // Returns true if the second argument is a "better" camera configuration than the first one.
+        // Here, "better" means: lowest framerate within the range 25-59 Hz. In order to
+        // maintain device compatibility, the resolution must exactly match the first resolution.
+        // Some devices with multiple cameras (e.g. Samsung S10) will return the preferred AR
+        // camera first. The other cameras will have a different resolution, so can be skipped.
+        //
+        // If one config is not clearly better, then the first config will be preferred. This
+        // preserves the previous ARDK behavior, where the first config was always used.
+        // Using a camera framerate below 60Hz is needed to prevent performance/thermal
+        // issues on some devices.
+        private bool IsSecondConfigBetter(XRCameraConfiguration first, XRCameraConfiguration second)
+        {
+            const int MinFrameRate = 25;
+            const int MaxFrameRate = 60;
+
+            if ((first.height != second.height) || (first.width != second.width))
+            {
+                // When resolution differs, always go with the first config.
+                return false;
+            }
+
+            if (!first.framerate.HasValue)
+            {
+                // Always prefer a known framerate that is less than the max framerate.
+                if (second.framerate.HasValue && second.framerate.Value < MaxFrameRate) return true;
+
+                // Second framerate is either too fast or unknown.
+                return false;
+            }
+            else if (first.framerate == second.framerate)
+            {
+                // When all else is equal, prefer the first framerate over the second.
+                return false;
+            }
+            else if (second.framerate.HasValue)
+            {
+                // Both framerates are known...
+                if (first.framerate.Value >= MinFrameRate && second.framerate.Value >= MinFrameRate)
+                {
+                    // Prefer the lowest framerate that is above the minimum.
+                    return second.framerate.Value < first.framerate.Value;
+                }
+                else if (first.framerate.Value >= MinFrameRate)
+                {
+                    // Second framerate is below the minimum, so prefer the first.
+                    return false;
+                }
+                else if (second.framerate.Value >= MinFrameRate)
+                {
+                    // First framerate is below the minimum, so prefer the second.
+                    return true;
+                }
+                // Both first and second are below the minimum, so prefer the highest framerate.
+                return second.framerate.Value > first.framerate.Value;
+            }
+
+            // Always fallback to the first config.
+            return false;
         }
 
         /// <summary>

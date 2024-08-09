@@ -53,20 +53,36 @@ namespace Niantic.Lightship.AR.Utilities
             {
                 case XRCpuImage.Format.Unknown:
                     return ImageFormatCEnum.Unknown;
+
                 case XRCpuImage.Format.AndroidYuv420_888:
                     return ImageFormatCEnum.AndroidYuv420_888;
                 case XRCpuImage.Format.IosYpCbCr420_8BiPlanarFullRange:
                     return ImageFormatCEnum.IosYpCbCr420_8BiPlanarFullRange;
+
                 case XRCpuImage.Format.OneComponent8:
                     return ImageFormatCEnum.OneComponent8;
+
                 case XRCpuImage.Format.DepthFloat32:
                     return ImageFormatCEnum.DepthFloat32;
                 case XRCpuImage.Format.DepthUint16:
                     return ImageFormatCEnum.DepthUint16;
+
+                case XRCpuImage.Format.OneComponent32:
+                    return ImageFormatCEnum.OneComponent32;
+
+                case XRCpuImage.Format.ARGB32:
+                    return ImageFormatCEnum.ARGB32;
+                case XRCpuImage.Format.RGBA32:
+                    return ImageFormatCEnum.RGBA32;
+                case XRCpuImage.Format.BGRA32:
+                    return ImageFormatCEnum.BGRA32;
+                case XRCpuImage.Format.RGB24:
+                    return ImageFormatCEnum.RGB24;
+
                 default:
+                    Debug.Assert(false, "Did XRCpuImage got updated? Unhandled value: " + format);
                     return ImageFormatCEnum.Unknown;
             }
         }
-
     }
 }

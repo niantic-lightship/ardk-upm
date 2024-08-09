@@ -17,6 +17,7 @@ namespace Niantic.Lightship.AR.Editor
         private SerializedProperty _targetFrameRate;
 
         private SerializedProperty _bypassManagerUpdates;
+        private SerializedProperty _overrideOcclusionManagerSettings;
         private SerializedProperty _optimalOcclusionDistanceMode;
         private SerializedProperty _principalOccludee;
 
@@ -78,6 +79,8 @@ namespace Niantic.Lightship.AR.Editor
             {
                 EditorGUILayout.LabelField("Bypass Occlusion Manager Updates", EditorStyles.boldLabel);
                 EditorGUILayout.PropertyField(_bypassManagerUpdates,Contents.enabledLabel);
+                EditorGUILayout.LabelField("Override Occlusion Manager Settings", EditorStyles.boldLabel);
+                EditorGUILayout.PropertyField(_overrideOcclusionManagerSettings,Contents.enabledLabel);
                 EditorGUILayout.LabelField("Optimal Occlusion", EditorStyles.boldLabel);
                 EditorGUILayout.PropertyField(_optimalOcclusionDistanceMode, Contents.modeLabel);
                 if (_optimalOcclusionDistanceMode.enumValueIndex == (int)LightshipOcclusionExtension.OptimalOcclusionDistanceMode.SpecifiedGameObject)
@@ -197,6 +200,7 @@ namespace Niantic.Lightship.AR.Editor
         {
             _targetFrameRate = serializedObject.FindProperty("_targetFrameRate");
             _bypassManagerUpdates = serializedObject.FindProperty("_bypassOcclusionManagerUpdates");
+            _overrideOcclusionManagerSettings = serializedObject.FindProperty("_overrideOcclusionManagerSettings");
             _optimalOcclusionDistanceMode = serializedObject.FindProperty("_optimalOcclusionDistanceMode");
             _principalOccludee = serializedObject.FindProperty("_principalOccludee");
             _isOcclusionSuppressionEnabled = serializedObject.FindProperty("_isOcclusionSuppressionEnabled");

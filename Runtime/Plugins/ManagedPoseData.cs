@@ -49,8 +49,9 @@ namespace ManagedPoses {
             "YWNlbWVudEFjY3VyYWN5UhFwbGFjZW1lbnRBY2N1cmFjeRJJChBub2RlQXNz",
             "b2NpYXRpb25zGAUgAygLMh0uTWFuYWdlZFBvc2VzLk5vZGVBc3NvY2lhdGlv",
             "blIQbm9kZUFzc29jaWF0aW9ucxJECg5nZW9Bc3NvY2lhdGlvbhgGIAEoCzIc",
-            "Lk1hbmFnZWRQb3Nlcy5HZW9Bc3NvY2lhdGlvblIOZ2VvQXNzb2NpYXRpb25i",
-            "BnByb3RvMw=="));
+            "Lk1hbmFnZWRQb3Nlcy5HZW9Bc3NvY2lhdGlvblIOZ2VvQXNzb2NpYXRpb25C",
+            "LQopY29tLm5pYW50aWNwcm9qZWN0LmFyZ2VvLmluZmluaXRhbS5wcm90b3NQ",
+            "AWIGcHJvdG8z"));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::MathTypes.MathTypesReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {

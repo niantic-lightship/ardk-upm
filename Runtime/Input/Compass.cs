@@ -35,8 +35,12 @@ namespace Niantic.Lightship.AR
         public Vector3 rawVector => GetOrCreateProvider().raw;
 
         /// <summary>
-        ///   <para>Timestamp (in seconds since 1970) when the heading was last time updated. (Read Only)</para>
+        ///   <para>Timestamp when the heading was last time updated. (Read Only)</para>
         /// </summary>
+        /// <remarks>
+        /// Android: The time elapsed is represented in nanoseconds since the device was last turned on.
+        /// iOS: The time elapsed is represented in seconds since the Unix epoch January 1, 1970.
+        /// </remarks>
         public double timestamp => GetOrCreateProvider().timestamp;
 
         /// <summary>

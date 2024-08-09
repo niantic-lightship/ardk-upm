@@ -12,6 +12,7 @@ namespace Niantic.Lightship.AR.Loader
         private readonly PlaybackLoaderHelper _playbackLoaderHelper;
         private readonly NativeLoaderHelper _nativeLoaderHelper;
         private readonly LightshipSettings _initializationSettings;
+        internal LightshipSettings InitializationSettings => _initializationSettings;
 
         private ILightshipInternalLoaderSupport _loader;
         private readonly List<ILightshipExternalLoader> _externalLoaders;

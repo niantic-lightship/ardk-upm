@@ -39,6 +39,9 @@ namespace Niantic.Lightship.AR.PAM
         private bool _autoEnabledLocationServices;
         private bool _autoEnabledCompass;
 
+        // Offset for Unity Android compass timestamp bug
+        private ulong _androidCompassOffset = 0;
+
         private XRCpuImage _cpuImage;
         private XRCpuImage _depthImage;
         private XRCpuImage _depthConfidenceImage;
@@ -127,6 +130,28 @@ namespace Niantic.Lightship.AR.PAM
             return false;
         }
 
+        public override bool TryGetDepthCameraIntrinsicsCStruct(out CameraIntrinsicsCStruct depthIntrinsics, Vector2Int depthResolution)
+        {
+            // When both camera and depth images are obtained via ARFoundation's subsystems,
+            // the depth intrinsics are the same as the camera intrinsics but scaled
+            if (TryGetCameraIntrinsicsDeprecated(out XRCameraIntrinsics cameraIntrinsics))
+            {
+                depthIntrinsics =
+                    ImageConverter.ConvertCameraIntrinsics
+                    (
+                        cameraIntrinsics.focalLength,
+                        cameraIntrinsics.principalPoint,
+                        cameraIntrinsics.resolution,
+                        depthResolution
+                    );
+
+                return true;
+            }
+
+            depthIntrinsics = default;
+            return false;
+        }
+
         /// Returns the XRSessionSubsystem's reported tracking state.
         /// Note:
         ///     In both ARKit and ARCore, tracking state is None for just the first frame and then changes to Limited,
@@ -143,7 +168,7 @@ namespace Niantic.Lightship.AR.PAM
             return XRDisplayContext.GetScreenOrientation();
         }
 
-        public override bool TryGetCameraFrameDeprecated(out XRCameraFrame frame)
+        public override bool TryGetCameraTimestampMs(out double timestampMs)
         {
             // Create params with dummy screen data (doesn't impact the texture descriptors or timestamp, just the
             // projection and display matrices).
@@ -156,14 +181,9 @@ namespace Niantic.Lightship.AR.PAM
                 screenOrientation = GetScreenOrientation()
             };
 
-            return _cameraSubsystem.TryGetLatestFrame(emptyParams, out frame);
-        }
-
-        public override bool TryGetCameraTimestampMs(out ulong timestampMs)
-        {
-            if (TryGetCameraFrameDeprecated(out var frame))
+            if (_cameraSubsystem.TryGetLatestFrame(emptyParams, out var frame))
             {
-                timestampMs = (ulong)frame.timestampNs / 1_000_000;
+                timestampMs = (double)frame.timestampNs / 1_000_000;
                 return true;
             }
 
@@ -184,7 +204,7 @@ namespace Niantic.Lightship.AR.PAM
             return _cameraSubsystem.TryAcquireLatestCpuImage(out cpuImage);
         }
 
-        public override bool TryGetCpuDepthImageDeprecated(out XRCpuImage cpuDepthImage, out XRCpuImage cpuDepthConfidenceImage)
+        public override bool TryGetDepthCpuImageDeprecated(out XRCpuImage cpuDepthImage, out XRCpuImage cpuDepthConfidenceImage)
         {
             if (_usingLightshipOcclusion)
             {
@@ -193,43 +213,65 @@ namespace Niantic.Lightship.AR.PAM
                 return false;
             }
 
-            var gotDepth = _occlusionSubsystem.TryAcquireRawEnvironmentDepthCpuImage(out cpuDepthImage);
-
-            bool gotConfidence = false;
+            bool gotDepth = _occlusionSubsystem.TryAcquireRawEnvironmentDepthCpuImage(out cpuDepthImage);
             if (gotDepth)
             {
-                gotConfidence =
-                    _occlusionSubsystem.TryAcquireEnvironmentDepthConfidenceCpuImage(out cpuDepthConfidenceImage);
+                _occlusionSubsystem.TryAcquireEnvironmentDepthConfidenceCpuImage(out cpuDepthConfidenceImage);
             }
             else
             {
                 cpuDepthConfidenceImage = default;
             }
 
-            return gotDepth && gotConfidence;
-        }
-        public override bool TryGetLightshipCpuImage(out LightshipCpuImage cpuImage)
-        {
-            cpuImage = new LightshipCpuImage();
-            _cpuImage.Dispose();
-            return TryGetCpuImageDeprecated(out _cpuImage) || cpuImage.FromXRCpuImage(_cpuImage);
+            return gotDepth;
         }
 
-        public override bool TryGetLightshipCpuDepthImage(out LightshipCpuImage cpuDepthImage,
-            out LightshipCpuImage cpuDepthConfidenceImage)
+        public override bool TryGetCpuImage(out LightshipCpuImage cpuImage)
         {
-            cpuDepthImage = new LightshipCpuImage();
-            cpuDepthConfidenceImage = new LightshipCpuImage();
+            _cpuImage.Dispose(); // TODO(bevangelista) Avoid silently releasing resources on TryGets
+            cpuImage = default;
 
-            _depthImage.Dispose();
-            _depthConfidenceImage.Dispose();
-            return TryGetCpuDepthImageDeprecated(out _depthImage, out _depthConfidenceImage) ||
-                cpuDepthImage.FromXRCpuImage(_depthImage) ||
-                cpuDepthConfidenceImage.FromXRCpuImage(_depthConfidenceImage);
+            return _cameraSubsystem.TryAcquireLatestCpuImage(out _cpuImage) &&
+                LightshipCpuImage.TryGetFromXRCpuImage(_cpuImage, out cpuImage);
+        }
+
+        public override bool TryGetDepthCpuImage
+        (
+            out LightshipCpuImage depthCpuImage,
+            out LightshipCpuImage confidenceCpuImage
+        )
+        {
+            _depthImage.Dispose();              // TODO(bevangelista) Avoid silently releasing resources on TryGets
+            _depthConfidenceImage.Dispose();    // TODO(bevangelista) Avoid silently releasing resources on TryGets
+            depthCpuImage = default;
+            confidenceCpuImage = default;
+
+            if (_usingLightshipOcclusion)
+            {
+                return false;
+            }
+
+            bool hasDepthImage = _occlusionSubsystem.TryAcquireRawEnvironmentDepthCpuImage(out _depthImage);
+            if (hasDepthImage)
+            {
+                hasDepthImage = LightshipCpuImage.TryGetFromXRCpuImage(_depthImage, out depthCpuImage);
+                if (hasDepthImage &&
+                    _occlusionSubsystem.TryAcquireEnvironmentDepthConfidenceCpuImage(out _depthConfidenceImage))
+                {
+                    LightshipCpuImage.TryGetFromXRCpuImage(_depthConfidenceImage, out confidenceCpuImage);
+                }
+            }
+
+            return hasDepthImage;
         }
 
         public override bool TryGetGpsLocation(out GpsLocationCStruct gps)
         {
+            if (Input.location.status == LocationServiceStatus.Stopped)
+            {
+                RequestLocationPermissions();
+            }
+
             if (_locationServiceNeedsToStart)
                 TryStartLocationService();
 
@@ -239,17 +281,28 @@ namespace Niantic.Lightship.AR.PAM
                 return false;
             }
 
-            gps.TimestampMs = (UInt64)(Input.location.lastData.timestamp * 1000);
+            gps.TimestampMs = (ulong)(Input.location.lastData.timestamp * 1000);
             gps.Latitude = Input.location.lastData.latitude;
             gps.Longitude = Input.location.lastData.longitude;
             gps.Altitude = Input.location.lastData.altitude;
             gps.HorizontalAccuracy = Input.location.lastData.horizontalAccuracy;
             gps.VerticalAccuracy = Input.location.lastData.verticalAccuracy;
+
             return true;
         }
 
         public override bool TryGetCompass(out CompassDataCStruct compass)
         {
+            if (Input.location.status == LocationServiceStatus.Stopped)
+            {
+                RequestLocationPermissions();
+            }
+
+            if (Input.compass.enabled == false)
+            {
+                EnableCompass();
+            }
+
             if (_locationServiceNeedsToStart)
                 TryStartLocationService();
 
@@ -259,7 +312,14 @@ namespace Niantic.Lightship.AR.PAM
                 return false;
             }
 
-            compass.TimestampMs = (UInt64)(Input.compass.timestamp * 1000);
+            // The compass.timestamp value on Android will monotonic time since the device was last turned on
+            // instead of posix time. We've observed it being in nanoseconds on a wide array of devices
+            // even though Unity documentation says seconds. But we've been sending it multiplied by x1000
+            // since ARDK 2.x, so we will continue to do that, even on Android, for continuity's sake.
+            // On iOS we lose millisecond precision converting naively Input.compass.timestamp to a ulong,
+            // so we want the x1000 anyway.
+            compass.TimestampMs = (ulong)(Input.compass.timestamp * 1000);
+
             compass.HeadingAccuracy = Input.compass.headingAccuracy;
             compass.MagneticHeading = Input.compass.magneticHeading;
             compass.RawDataX = Input.compass.rawVector.x;

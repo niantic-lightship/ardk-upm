@@ -40,7 +40,9 @@ namespace Niantic.Lightship.AR.Telemetry
         {
             try
             {
-                _ardkPublisher.RecordEvent(telemetryEvent);
+
+                    _ardkPublisher.RecordEvent(telemetryEvent);
+
             }
             catch (Exception)
             {

@@ -343,34 +343,6 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
 
 #endif
 
-            public override bool TryAddMap(byte[] dataBytes)
-            {
-                if (!LightshipUnityContext.FeatureEnabled(SlickLocalizationFeatureFlagName))
-                {
-                    return false;
-                }
-                if (!_nativeProviderHandle.IsValidHandle())
-                {
-                    return false;
-                }
-
-                return _api.TryAddMap(_nativeProviderHandle, dataBytes);
-            }
-
-            public override bool TryAddGraph(byte[] dataBytes)
-            {
-                if (!LightshipUnityContext.FeatureEnabled(SlickLocalizationFeatureFlagName))
-                {
-                    return false;
-                }
-                if (!_nativeProviderHandle.IsValidHandle())
-                {
-                    return false;
-                }
-
-                return _api.TryAddGraph(_nativeProviderHandle, dataBytes);
-            }
-
             public override bool GetVpsSessionId(out string vpsSessionId)
             {
                 if (!_nativeProviderHandle.IsValidHandle())

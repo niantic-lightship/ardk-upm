@@ -136,13 +136,17 @@ namespace Niantic.Lightship.AR.Loader
         #region Experimental Settings
 
 #if NIANTIC_ARDK_EXPERIMENTAL_FEATURES
-        [SerializeField, Tooltip("When true, Lightship's Spoof Location to be used on device.")]
+        [SerializeField, Tooltip("When true, spoof Lightship's location on device.")]
         private bool _useLightshipSpoofLocation = false;
+#endif
 
         /// <summary>
         /// [Experimental] When true, Lightship's spoof location provider can be used.
         /// </summary>
+#if NIANTIC_ARDK_EXPERIMENTAL_FEATURES
         public bool UseLightshipSpoofLocation => _useLightshipSpoofLocation;
+#else
+        public bool UseLightshipSpoofLocation => false;
 #endif
 
         #endregion
@@ -395,7 +399,8 @@ namespace Niantic.Lightship.AR.Loader
             LogLevel stdoutLogLevel = LogLevel.Off,
             LogLevel fileLogLevel = LogLevel.Off,
             bool disableTelemetry = true,
-            bool tickPamOnUpdate = true
+            bool tickPamOnUpdate = true,
+            LightshipSimulationParams simulationParams = null
         )
         {
             var settings = CreateInstance<LightshipSettings>();
@@ -437,6 +442,9 @@ namespace Niantic.Lightship.AR.Loader
             }
 
             settings._testSettings = new LightshipTestSettings(disableTelemetry, tickPamOnUpdate);
+
+            simulationParams ??= new LightshipSimulationParams();
+            settings._lightshipSimulationParams = simulationParams;
 
             return settings;
         }

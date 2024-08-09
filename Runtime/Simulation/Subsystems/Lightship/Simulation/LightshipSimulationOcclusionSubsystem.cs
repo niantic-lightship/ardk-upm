@@ -141,7 +141,12 @@ namespace Niantic.Lightship.AR.Simulation
                     return false;
                 }
 
-                _simulationDepthTextureProvider.TryGetTextureDescriptor(out var descriptor);
+                if (!_simulationDepthTextureProvider.TryGetTextureDescriptor(out var descriptor))
+                {
+                    xrTextureDescriptor = default;
+                    return false;
+                }
+
                 xrTextureDescriptor = descriptor;
                 return true;
             }

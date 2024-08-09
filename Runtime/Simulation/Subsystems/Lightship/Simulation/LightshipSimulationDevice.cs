@@ -95,7 +95,8 @@ namespace Niantic.Lightship.AR.Simulation
 
                 var cameraParentGo = new GameObject("LightshipSimulationCameras");
                 cameraParentGo.transform.SetParent(xrSimulationCamera.transform, false);
-                cameraParentGo.transform.rotation = s_cameraSensorToGameViewRotation;
+                cameraParentGo.transform.localRotation = s_cameraSensorToGameViewRotation;
+                cameraParentGo.transform.localPosition = Vector3.zero;
                 s_instance.CameraParent = cameraParentGo.transform;
 
                 var rgbCameraGo = new GameObject("LightshipSimulationRgbCamera");

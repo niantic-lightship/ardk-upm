@@ -24,28 +24,13 @@ namespace Niantic.Lightship.AR.Utilities.Profiling
             Native.Lightship_ARDK_Unity_ShutdownCtrace();
         }
 
-        private ulong GetOrAddId(string category, string name)
+        public void EventAsyncBegin(string category, string name, ulong id)
         {
-            var key = $"{category}|{name}";
-            if (!_ids.TryGetValue(key, out ulong id))
-            {
-                var buffer = new byte[sizeof(ulong)];
-                _random.NextBytes(buffer);
-                id = BitConverter.ToUInt64(buffer, 0);
-                _ids.Add(key, id);
-            }
-
-            return id;
+            Native.Lightship_ARDK_Unity_TraceEventAsyncBegin0(category, name, id);
         }
 
-        public void EventAsyncBegin(string category, string name)
+        public void EventAsyncBegin(string category, string name, ulong id, string arg1_name, string arg1_val)
         {
-            Native.Lightship_ARDK_Unity_TraceEventAsyncBegin0(category, name, GetOrAddId(category, name));
-        }
-
-        public void EventAsyncBegin(string category, string name, string arg1_name, string arg1_val)
-        {
-            var id = GetOrAddId(category, name);
             Native.Lightship_ARDK_Unity_TraceEventAsyncBegin1(category, name, id, arg1_name, arg1_val);
         }
 
@@ -53,37 +38,33 @@ namespace Niantic.Lightship.AR.Utilities.Profiling
         (
             string category,
             string name,
+            ulong id,
             string arg1Name,
             string arg1Val,
             string arg2Name,
             string arg2Val
         )
         {
-            var id = GetOrAddId(category, name);
             Native.Lightship_ARDK_Unity_TraceEventAsyncBegin2(category, name, id, arg1Name, arg1Val, arg2Name, arg2Val);
         }
 
-        public void EventStep(string category, string name, string step)
+        public void EventAsyncStep(string category, string name, ulong id, string step)
         {
-            var id = GetOrAddId(category, name);
             Native.Lightship_ARDK_Unity_TraceEventAsyncStep0(category, name, id, step);
         }
 
-        public void EventStep(string category, string name, string step, string arg1_name, string arg1_val)
+        public void EventAsyncStep(string category, string name, ulong id, string step, string arg1_name, string arg1_val)
         {
-            var id = GetOrAddId(category, name);
             Native.Lightship_ARDK_Unity_TraceEventAsyncStep1(category, name, id, step, arg1_name, arg1_val);
         }
 
-        public void EventAsyncEnd(string category, string name)
+        public void EventAsyncEnd(string category, string name, ulong id)
         {
-            var id = GetOrAddId(category, name);
             Native.Lightship_ARDK_Unity_TraceEventAsyncEnd0(category, name, id);
         }
 
-        public void EventAsyncEnd(string category, string name, string arg1Name, string arg1Val)
+        public void EventAsyncEnd(string category, string name, ulong id, string arg1Name, string arg1Val)
         {
-            var id = GetOrAddId(category, name);
             Native.Lightship_ARDK_Unity_TraceEventAsyncEnd1(category, name, id, arg1Name, arg1Val);
         }
 
@@ -91,13 +72,13 @@ namespace Niantic.Lightship.AR.Utilities.Profiling
         (
             string category,
             string name,
+            ulong id,
             string arg1Name,
             string arg1Val,
             string arg2Name,
             string arg2Val
         )
         {
-            var id = GetOrAddId(category, name);
             Native.Lightship_ARDK_Unity_TraceEventAsyncEnd2(category, name, id, arg1Name, arg1Val, arg2Name, arg2Val);
         }
 
@@ -145,7 +126,6 @@ namespace Niantic.Lightship.AR.Utilities.Profiling
             string arg2Val
         )
         {
-            var id = GetOrAddId(category, name);
             Native.Lightship_ARDK_Unity_TraceEventEnd2(category, name, arg1Name, arg1Val, arg2Name, arg2Val);
         }
 
