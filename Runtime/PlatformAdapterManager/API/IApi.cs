@@ -29,5 +29,13 @@ namespace Niantic.Lightship.AR.PAM
             NativeArray<DataFormat> dataFormatsRemoved,
             out int removedSize
         );
+
+        public void Lightship_ARDK_Core_SAH_GetDispatchedFormatsToModules
+        (
+            IntPtr handle,
+            out uint dispatchedFrameId,
+            out ulong dispatchedToModules,
+            out ulong dispatchedDataFormats
+        );
     }
 }

@@ -425,7 +425,7 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
                         anchorChangeIntPtr,
                         out var trackableId,
                         out var pose,
-                        out int trackingState, out int trackingStateReason,
+                        out int trackingState, out int trackingStateReason, out float trackingConfidence,
                         out var xrPersistentAnchorPayloadIntPtr, out int payloadSize,
                         out UInt64 timestampMs
                     );
@@ -443,7 +443,8 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
                             (TrackingState)trackingState,
                             (TrackingStateReason)trackingStateReason,
                             xrPersistentAnchorPayload,
-                            timestampMs
+                            timestampMs,
+                            trackingConfidence
                         );
 
                     return xrPersistentAnchor;
@@ -624,7 +625,9 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
                         _currentConfiguration.SlickLocalizationFps,
                         _currentConfiguration.CloudLocalizationTemporalFusionWindowSize,
                         _currentConfiguration.SlickLocalizationTemporalFusionWindowSize,
-                        _currentConfiguration.DiagnosticsEnabled
+                        _currentConfiguration.DiagnosticsEnabled,
+                        _currentConfiguration.LimitedLocalizationsOnly,
+                        _currentConfiguration.JpegCompressionQuality
                     );
                 }
             }

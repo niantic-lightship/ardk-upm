@@ -44,14 +44,16 @@ namespace Niantic.Lightship.SharedAR.Rooms
         private static string _marshEndPoint;
 
         // Default ExperienceID
-        internal static string DefaultExperienceId { get; private set; }
+        internal static string DefaultExperienceId { get; private set; } = "";
 
         static RoomManagementService()
         {
             _serviceImpl = _HttpRoomManagementServiceImpl._Instance;
             var appId = Application.identifier;
-            var apiKey = LightshipSettings.Instance.ApiKey;
-            _marshEndPoint = LightshipSettings.Instance.SharedArEndpoint;
+
+            var lightshipSettings = LightshipSettingsHelper.ActiveSettings;
+            var apiKey = lightshipSettings.ApiKey;
+            _marshEndPoint = lightshipSettings.EndpointSettings.SharedArEndpoint;
             _serviceImpl.InitializeService(_marshEndPoint, appId, apiKey);
         }
 

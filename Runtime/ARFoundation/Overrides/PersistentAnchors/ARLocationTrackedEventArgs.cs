@@ -23,17 +23,21 @@ namespace Niantic.Lightship.AR.PersistentAnchors
 
         public ARLocationTrackingStateReason TrackingStateReason { get; }
 
+        public float TrackingConfidence { get; }
+
         /// <summary>
         /// Creates the args for ARLocation tracking
         /// </summary>
         /// <param name="arARLocation">The ARLocation to track</param>
         /// <param name="tracking">Whether or not the ARLocation is being tracked</param>
         /// <param name="reason">If tracking is false, more information about why</param>
-        public ARLocationTrackedEventArgs(ARLocation arARLocation, bool tracking, ARLocationTrackingStateReason reason)
+        /// <param name="trackingConfidence">Positive number representing confidence we have in latest tracking update</param>
+        public ARLocationTrackedEventArgs(ARLocation arARLocation, bool tracking, ARLocationTrackingStateReason reason, float trackingConfidence = 0.0f)
         {
             ARLocation = arARLocation;
             Tracking = tracking;
             TrackingStateReason = reason;
+            TrackingConfidence = trackingConfidence;
         }
     }
 }

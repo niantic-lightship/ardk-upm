@@ -8,10 +8,12 @@ using Niantic.Lightship.AR.Subsystems.Playback;
 using Niantic.Lightship.AR.Utilities;
 using UnityEngine;
 using UnityEditor;
+using UnityEngine.XR.ARSubsystems;
+using UnityEngine.XR.Management;
 
 namespace Niantic.Lightship.AR
 {
-    public class LocationService : IPlaybackDatasetUser, ILightshipSettingsUser
+    public class LocationService : IPlaybackDatasetUser
     {
         /// <summary>
         ///   <para>Indicates whether the device allows access the application to access the location service.</para>
@@ -73,7 +75,8 @@ namespace Niantic.Lightship.AR
         internal ILocationServiceProvider Provider => _provider;
 
         private ILocationServiceProvider _provider;
-        private LightshipSettings _lightshipSettings;
+
+        private bool _isLightshipLoaded;
 
         // Defaults as defined by Unity
         private const float k_DefaultAccuracyInMeters = 10f;
@@ -94,7 +97,7 @@ namespace Niantic.Lightship.AR
         // because we need to account for when this method is invoked without XR having been initialized.
         private void CreateProvider()
         {
-            var nextIsPlayback = _lightshipSettings != null && _lightshipSettings.UsePlayback;
+            var nextIsPlayback = _isLightshipLoaded && LightshipSettingsHelper.ActiveSettings.UsePlayback;
 
             if (_provider == null)
             {
@@ -128,9 +131,11 @@ namespace Niantic.Lightship.AR
             }
             else
             {
-#if NIANTIC_ARDK_EXPERIMENTAL_FEATURES
-                _lightshipSettings = LightshipUnityContext.ActiveSettings;
-                bool useSpoofLocation = _lightshipSettings != null && _lightshipSettings.UseLightshipSpoofLocation;
+#if NIANTIC_LIGHTSHIP_ML2_ENABLED
+                // ML2 needs spoofing enabled.
+                bool useSpoofLocation = true;
+#elif NIANTIC_ARDK_EXPERIMENTAL_FEATURES
+                bool useSpoofLocation = LightshipSettingsHelper.ActiveSettings.UseLightshipSpoofLocation;
 #else
                 bool useSpoofLocation = false;
 #endif
@@ -242,9 +247,9 @@ namespace Niantic.Lightship.AR
             }
         }
 
-        void ILightshipSettingsUser.SetLightshipSettings(LightshipSettings settings)
+        internal void Refresh(bool isLightshipLoaded)
         {
-            _lightshipSettings = settings;
+            _isLightshipLoaded = isLightshipLoaded;
             CreateProvider();
         }
 
@@ -492,7 +497,7 @@ namespace Niantic.Lightship.AR
             {
                 get
                 {
-#if NIANTIC_ARDK_EXPERIMENTAL_FEATURES
+#if NIANTIC_ARDK_EXPERIMENTAL_FEATURES || NIANTIC_LIGHTSHIP_ML2_ENABLED
                     if (status != LocationServiceStatus.Running)
                     {
                         Log.Info

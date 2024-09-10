@@ -11,8 +11,6 @@ namespace Niantic.Lightship.AR.Editor
         private SerializedProperty _deviceDatasetPath;
         private SerializedProperty _deviceRunManually;
         private SerializedProperty _deviceLoopInfinitely;
-        private SerializedProperty _deviceNumberOfIterations;
-
 
         public void InitializeSerializedProperties(SerializedObject lightshipSettings)
         {
@@ -26,16 +24,13 @@ namespace Niantic.Lightship.AR.Editor
         {
             EditorGUILayout.PropertyField(_deviceUsePlayback, new GUIContent("Enabled"));
 
-            if (_deviceUsePlayback.boolValue)
-            {
-                EditorGUI.indentLevel++;
-                DrawDatasetPathGUI();
-                EditorGUILayout.PropertyField(_deviceRunManually, new GUIContent("Run Manually"));
+            EditorGUI.BeginDisabledGroup(!_deviceUsePlayback.boolValue);
 
-                EditorGUILayout.PropertyField(_deviceLoopInfinitely, new GUIContent("Loop Infinitely"));
+            DrawDatasetPathGUI();
+            EditorGUILayout.PropertyField(_deviceRunManually, new GUIContent("Run Manually"));
+            EditorGUILayout.PropertyField(_deviceLoopInfinitely, new GUIContent("Loop Infinitely"));
 
-                EditorGUI.indentLevel--;
-            }
+            EditorGUI.EndDisabledGroup();
         }
 
         private void DrawDatasetPathGUI()

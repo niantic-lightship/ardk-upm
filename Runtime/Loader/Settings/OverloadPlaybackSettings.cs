@@ -1,6 +1,6 @@
 // Copyright 2022-2024 Niantic.
 
-using UnityEngine;
+using System;
 
 namespace Niantic.Lightship.AR.Loader
 {
@@ -40,10 +40,23 @@ namespace Niantic.Lightship.AR.Loader
 
         private uint _numberOfIterations = 1;
 
+        [Obsolete]
         public uint NumberOfIterations
         {
             get {return _numberOfIterations; }
             set { _numberOfIterations = value; }
+        }
+
+        internal OverloadPlaybackSettings()
+        {
+        }
+
+        internal OverloadPlaybackSettings(ILightshipPlaybackSettings source)
+        {
+            UsePlayback = source.UsePlayback;
+            PlaybackDatasetPath = source.PlaybackDatasetPath;
+            RunManually = source.RunManually;
+            LoopInfinitely = source.LoopInfinitely;
         }
     }
 }

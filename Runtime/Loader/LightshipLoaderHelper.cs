@@ -3,7 +3,6 @@
 using System;
 using System.Collections.Generic;
 using Niantic.Lightship.AR.Utilities;
-using Niantic.Lightship.AR.Utilities.Logging;
 
 namespace Niantic.Lightship.AR.Loader
 {
@@ -11,30 +10,28 @@ namespace Niantic.Lightship.AR.Loader
     {
         private readonly PlaybackLoaderHelper _playbackLoaderHelper;
         private readonly NativeLoaderHelper _nativeLoaderHelper;
-        private readonly LightshipSettings _initializationSettings;
-        internal LightshipSettings InitializationSettings => _initializationSettings;
 
         private ILightshipInternalLoaderSupport _loader;
         private readonly List<ILightshipExternalLoader> _externalLoaders;
 
-        // Use this constructor in loader to reduce duplication of code
-        internal LightshipLoaderHelper(LightshipSettings settings) : this(settings, new List<ILightshipExternalLoader>()) { }
-
-        internal LightshipLoaderHelper(LightshipSettings settings, List<ILightshipExternalLoader> externalLoaders)
+        // Constructs NativeLoaderHelper and PlaybackLoaderHelper components based on the given settings
+        internal LightshipLoaderHelper(List<ILightshipExternalLoader> externalLoaders = null)
         {
-            _initializationSettings = settings;
-            _externalLoaders = externalLoaders ?? throw new ArgumentNullException();
+            _externalLoaders = externalLoaders ?? new List<ILightshipExternalLoader>();
             _nativeLoaderHelper = new NativeLoaderHelper();
-            if (_initializationSettings.UsePlayback)
+            if (LightshipSettingsHelper.ActiveSettings.UsePlayback)
             {
                 _playbackLoaderHelper = new PlaybackLoaderHelper();
             }
         }
 
-        // Use this constructor when injecting in tests.
-        internal LightshipLoaderHelper(LightshipSettings settings, NativeLoaderHelper nativeLoaderHelper, PlaybackLoaderHelper playbackLoaderHelper)
+        // Constructor with externally defined NativeLoaderHelper and PlaybackLoaderHelper components
+        internal LightshipLoaderHelper
+        (
+            NativeLoaderHelper nativeLoaderHelper,
+            PlaybackLoaderHelper playbackLoaderHelper
+        )
         {
-            _initializationSettings = settings;
             _nativeLoaderHelper = nativeLoaderHelper;
             _playbackLoaderHelper = playbackLoaderHelper;
         }
@@ -52,9 +49,10 @@ namespace Niantic.Lightship.AR.Loader
             MonoBehaviourEventDispatcher.Create();
             InputReader.Initialize();
 
-            if (_initializationSettings.UsePlayback)
+            var settings = LightshipSettingsHelper.ActiveSettings;
+            if (settings.UsePlayback)
             {
-                initializationSuccess &= _playbackLoaderHelper.InitializeBeforeNativeHelper(_loader, _initializationSettings);
+                initializationSuccess &= _playbackLoaderHelper.InitializeBeforeNativeHelper(_loader);
             }
             else
             {
@@ -70,15 +68,15 @@ namespace Niantic.Lightship.AR.Loader
 
             // Determine if device supports LiDAR only during the window where AFTER arf loader initializes but BEFORE
             // lightship loader initializes as non-playback relies on checking the existence of arf's meshing subsystem
-            var isLidarSupported = _initializationSettings.UsePlayback
+            var isLidarSupported = settings.UsePlayback
                 ? _playbackLoaderHelper.DatasetReader.GetIsLidarAvailable()
                 : _loader.IsPlatformDepthAvailable();
 
-            initializationSuccess &= _nativeLoaderHelper.Initialize(_loader, _initializationSettings, isLidarSupported);
+            initializationSuccess &= _nativeLoaderHelper.Initialize(_loader, isLidarSupported);
 
-            if (_initializationSettings.UsePlayback)
+            if (settings.UsePlayback)
             {
-                initializationSuccess &= _playbackLoaderHelper.InitializeAfterNativeHelper(_loader, _initializationSettings);
+                initializationSuccess &= _playbackLoaderHelper.InitializeAfterNativeHelper(_loader);
             }
 
             // Initialise external loaders last because they might depend on core subsystems:

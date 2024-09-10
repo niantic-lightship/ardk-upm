@@ -1,12 +1,15 @@
 // Copyright 2022-2024 Niantic.
 
+using System;
 using Niantic.Lightship.AR.Core;
 using Niantic.Lightship.AR.Subsystems.Semantics;
+using Niantic.Lightship.AR.Utilities;
 using Niantic.Lightship.AR.Utilities.Logging;
 using UnityEngine;
 
 namespace Niantic.Lightship.AR.Mapping
 {
+    [Obsolete]
     public class ARMappingManager :
         MonoBehaviour
     {
@@ -94,6 +97,7 @@ namespace Niantic.Lightship.AR.Mapping
         /// <summary>
         ///  Start map generation
         /// </summary>
+        [Experimental]
         public void StartMapping()
         {
             if (!IsFeatureEnabled())

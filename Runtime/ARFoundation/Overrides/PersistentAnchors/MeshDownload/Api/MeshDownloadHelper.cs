@@ -68,17 +68,7 @@ namespace Niantic.Lightship.AR.Subsystems
             CancellationToken cancellationToken = default
         )
         {
-            // Try to get api key from unity context first, then look up settings instance if none is found
-            string apiKey = null;
-            if (LightshipUnityContext.ActiveSettings != null)
-            {
-                apiKey = LightshipUnityContext.ActiveSettings.ApiKey;
-            }
-
-            if (string.IsNullOrWhiteSpace(apiKey))
-            {
-                apiKey = LightshipSettings.Instance.ApiKey;
-            }
+            var apiKey = LightshipSettingsHelper.ActiveSettings.ApiKey;
 
             if (string.IsNullOrWhiteSpace(apiKey))
             {
@@ -412,12 +402,13 @@ namespace Niantic.Lightship.AR.Subsystems
 
         private static string GetUrlForMethod(string method)
         {
+            // Default
             var configEndpoint = prodVpsEndpoint;
 
-            if (LightshipUnityContext.ActiveSettings != null &&
-                !string.IsNullOrWhiteSpace(LightshipUnityContext.ActiveSettings.VpsEndpoint))
+            var settings = LightshipSettingsHelper.ActiveSettings.EndpointSettings;
+            if (!string.IsNullOrWhiteSpace(settings.VpsEndpoint))
             {
-                configEndpoint = LightshipUnityContext.ActiveSettings.VpsEndpoint;
+                configEndpoint = settings.VpsEndpoint;
             }
 
             return string.Format(configEndpointFormatter, configEndpoint, method);

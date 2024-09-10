@@ -21,7 +21,7 @@ Shader "Lightship/FusedDepthChunk"
 
     CGPROGRAM
 
-    #pragma surface surf ShadowOnly
+    #pragma surface surf ShadowOnly addshadow
 
     fixed4 _ShadowColor;
 

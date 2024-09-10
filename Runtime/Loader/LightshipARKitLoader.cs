@@ -25,13 +25,8 @@ namespace Niantic.Lightship.AR.Loader
     /// </summary>
     public class LightshipARKitLoader : ARKitLoader, ILightshipInternalLoaderSupport
     {
-        public void InjectLightshipLoaderHelper(LightshipLoaderHelper lightshipLoaderHelper)
-        {
-            _lightshipLoaderHelper = lightshipLoaderHelper;
-        }
         private LightshipLoaderHelper _lightshipLoaderHelper;
         private List<ILightshipExternalLoader> _externalLoaders = new();
-
 
         /// <summary>
         /// The `XROcclusionSubsystem` whose lifecycle is managed by this loader.
@@ -50,23 +45,14 @@ namespace Niantic.Lightship.AR.Loader
         /// <returns>`True` if the session subsystems were successfully created, otherwise `false`.</returns>
         public override bool Initialize()
         {
-            var initializationSettings = LightshipSettings.Instance;
-            _lightshipLoaderHelper ??= new LightshipLoaderHelper(initializationSettings, _externalLoaders);
-
+            _lightshipLoaderHelper = new LightshipLoaderHelper(_externalLoaders);
             return InitializeWithLightshipHelper(_lightshipLoaderHelper);
         }
 
-        /// <summary>
-        /// Initializes the loader with an injected LightshipLoaderHelper. This is a helper to initialize manually from tests.
-        /// </summary>
-        /// <returns>`True` if the session subsystems were successfully created, otherwise `false`.</returns>
         public bool InitializeWithLightshipHelper(LightshipLoaderHelper lightshipLoaderHelper)
         {
-#if NIANTIC_LIGHTSHIP_ARKIT_LOADER_ENABLED
             _lightshipLoaderHelper = lightshipLoaderHelper;
             return _lightshipLoaderHelper.Initialize(this);
-#endif
-            return false;
         }
 
         public bool IsPlatformDepthAvailable()

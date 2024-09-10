@@ -54,10 +54,23 @@ namespace Niantic.Lightship.AR.Loader
         [Tooltip("How many times the dataset will be run. It will alternate each loop between going forward and backwards.")]
         private uint _numberOfIterations = 1;
 
+        [Obsolete]
         public uint NumberOfIterations
         {
             get {return _numberOfIterations; }
             set { _numberOfIterations = value; }
+        }
+
+        internal DevicePlaybackSettings(ILightshipPlaybackSettings source)
+        {
+            UsePlayback = source.UsePlayback;
+            PlaybackDatasetPath = source.PlaybackDatasetPath;
+            RunManually = source.RunManually;
+            LoopInfinitely = source.LoopInfinitely;
+        }
+
+        public DevicePlaybackSettings()
+        {
         }
     }
 }

@@ -64,6 +64,11 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
 
             [MarshalAs(UnmanagedType.U1)]
             public bool enableDiagnostics;
+
+            [MarshalAs(UnmanagedType.U1)]
+            public bool limitedLocalizationsOnly;
+
+            public Int32 jpegCompressionQuality;
         }
 
         public void Configure(IntPtr anchorProviderHandle,
@@ -77,7 +82,9 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
             float slickLocalizerFps,
             UInt32 cloudTemporalFusionWindowSize,
             UInt32 slickTemporalFusionWindowSize,
-            bool enableDiagnostics)
+            bool enableDiagnostics,
+            bool limitedLocalizationsOnly,
+            int jpegCompressionQuality)
         {
             var configurationCStruct = new AnchorConfigurationCStruct();
             configurationCStruct.enableContinuousLocalization = enableContinuousLocalization;
@@ -96,6 +103,8 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
                 ? XRPersistentAnchorConfiguration.DefaultSlickLocalizationTemporalFusionWindowSize
                 : slickTemporalFusionWindowSize;
             configurationCStruct.enableDiagnostics = enableDiagnostics;
+            configurationCStruct.limitedLocalizationsOnly = limitedLocalizationsOnly;
+            configurationCStruct.jpegCompressionQuality = jpegCompressionQuality;
             Native.Configure(anchorProviderHandle, configurationCStruct);
         }
 
@@ -162,6 +171,7 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
             out Pose pose,
             out int trackingState,
             out int trackingStateReason,
+            out float trackingConfidence,
             out IntPtr anchorPayloadPtr,
             out int anchorPayloadSize,
             out UInt64 timestampMs
@@ -178,6 +188,7 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
                     (IntPtr)poseArray.GetUnsafePtr(),
                     out trackingState,
                     out trackingStateReason,
+                    out trackingConfidence,
                     out anchorPayloadPtr,
                     out anchorPayloadSize,
                     out timestampMs
@@ -373,6 +384,7 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
                 IntPtr poseIntPtr,
                 out int trackingState,
                 out int trackingStateReason,
+                out float trackingConfidence,
                 out IntPtr anchorPayloadPtr,
                 out int anchorPayloadSize,
                 out UInt64 timestampMs

@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace Niantic.Lightship.AR.Utilities.Logging
 {
-    internal enum LogLevel
+    public enum LogLevel
     {
         All = 0,
         Debug,

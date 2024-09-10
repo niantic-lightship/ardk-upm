@@ -1,11 +1,13 @@
 // Copyright 2022-2024 Niantic.
 
+using System;
 using Niantic.Lightship.AR.Core;
 using Niantic.Lightship.AR.Utilities.Logging;
 using UnityEngine;
 
 namespace Niantic.Lightship.AR.MapStorageAccess
 {
+    [Obsolete]
     public class MapStorageAccessManager :
         MonoBehaviour
     {
@@ -105,7 +107,7 @@ namespace Niantic.Lightship.AR.MapStorageAccess
                 Log.Error("Subgraph data is empty");
                 return;
             }
-            
+
             _api.AddSubGraph(dataBytes);
         }
 

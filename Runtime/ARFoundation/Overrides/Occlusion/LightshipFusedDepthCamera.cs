@@ -1,11 +1,34 @@
 // Copyright 2022-2024 Niantic.
 
+using System;
 using UnityEngine;
+
+#if !MODULE_URP_ENABLED
+using UnityEngine.Rendering;
+#else
+using UnityEngine.Rendering.Universal;
+#endif
 
 namespace Niantic.Lightship.AR.Occlusion
 {
     public class LightshipFusedDepthCamera : MonoBehaviour
     {
+        /// <summary>
+        /// Use this to get the material in use for rendering the fused depth texture or inject an external one.
+        /// </summary>
+        internal Material Material
+        {
+            get
+            {
+                return _externalMaterial != null ? _externalMaterial : _internalMaterial;
+            }
+
+            set
+            {
+                _externalMaterial = value;
+            }
+        }
+
         /// <summary>
         /// The GPU texture containing depth values of the fused mesh.
         /// </summary>
@@ -13,21 +36,32 @@ namespace Niantic.Lightship.AR.Occlusion
 
         // Resources
         private Camera _camera;
+        private Material _internalMaterial;
+        private Material _externalMaterial;
+
+        // Helpers
+        public const string DefaultShaderName = "Lightship/CopyEyeDepth";
 
         /// <summary>
         /// Configures the camera for capturing depth.
         /// </summary>
+        /// <param name="mainCamera">The main rendering camera to copy attributes from.</param>
         /// <param name="meshLayer">The layer of the fused mesh.</param>
-        /// <param name="nearClipPlane">The near clip plane of the camera.</param>
-        /// <param name="farClipPlane">The far clip plane of the camera.</param>
-        internal void Configure(int meshLayer, float nearClipPlane, float farClipPlane)
+        internal void Configure(Camera mainCamera, int meshLayer)
         {
             // Configure camera
             _camera.clearFlags = CameraClearFlags.Depth;
-            _camera.depthTextureMode = DepthTextureMode.Depth;
             _camera.cullingMask = 1 << meshLayer;
-            _camera.nearClipPlane = nearClipPlane;
-            _camera.farClipPlane = farClipPlane;
+            _camera.nearClipPlane = mainCamera.nearClipPlane;
+            _camera.farClipPlane = mainCamera.farClipPlane;
+            _camera.depth = mainCamera.depth - 1;
+
+            // Set the camera to yield a depth texture
+#if MODULE_URP_ENABLED
+            _camera.GetUniversalAdditionalCameraData().requiresDepthOption = CameraOverrideOption.On;
+#else
+            _camera.depthTextureMode = DepthTextureMode.Depth;
+#endif
         }
 
         /// <summary>
@@ -43,6 +77,17 @@ namespace Niantic.Lightship.AR.Occlusion
 
         private void Awake()
         {
+            // Prerequisites
+            var shader = Shader.Find(DefaultShaderName);
+            if (shader == null)
+            {
+                throw new InvalidOperationException
+                (
+                    $"Could not find shader named '{DefaultShaderName}' required " +
+                    "for depth processing."
+                );
+            }
+
             // Reset transform
             var cameraTransform = transform;
             cameraTransform.localPosition = Vector3.zero;
@@ -50,21 +95,38 @@ namespace Niantic.Lightship.AR.Occlusion
             cameraTransform.localScale = Vector3.one;
 
             // Allocate GPU texture
-            GpuTexture = new RenderTexture(1024, 1024, 16, RenderTextureFormat.Depth)
+            GpuTexture = new RenderTexture(1024, 1024, 16, RenderTextureFormat.RFloat)
             {
-                filterMode = FilterMode.Point, wrapMode = TextureWrapMode.Clamp
+                filterMode = FilterMode.Bilinear, wrapMode = TextureWrapMode.Clamp
             };
 
             GpuTexture.Create();
 
             // Allocate a camera
             _camera = gameObject.AddComponent<Camera>();
-            _camera.targetTexture = GpuTexture;
+
+            // Allocate the material
+            _internalMaterial = new Material(shader);
         }
+
+#if !MODULE_URP_ENABLED
+        private void OnRenderImage(RenderTexture source, RenderTexture destination)
+        {
+            Graphics.Blit(null, GpuTexture, Material);
+        }
+#endif
 
         private void OnDestroy()
         {
-            Destroy(_camera);
+            if (_camera != null)
+            {
+                Destroy(_camera);
+            }
+
+            if (_internalMaterial != null)
+            {
+                Destroy(_internalMaterial);
+            }
 
             if (GpuTexture != null)
             {

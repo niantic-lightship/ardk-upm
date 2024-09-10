@@ -27,7 +27,9 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
             float slickLocalizerFps,
             UInt32 cloudTemporalFusionWindowSize,
             UInt32 slickTemporalFusionWindowSize,
-            bool diagnosticsEnabled);
+            bool diagnosticsEnabled,
+            bool limitedLocalizationsOnly,
+            int jpegCompressionQuality);
 
         public void Destruct(IntPtr anchorProviderHandle);
 
@@ -57,6 +59,7 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
             out Pose pose,
             out int trackingState,
             out int trackingStateReason,
+            out float trackingConfidence,
             out IntPtr anchorPayloadPtr,
             out int anchorPayloadSize,
             out UInt64 timestampMs

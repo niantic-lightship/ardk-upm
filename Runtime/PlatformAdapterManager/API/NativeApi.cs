@@ -54,6 +54,30 @@ namespace Niantic.Lightship.AR.PAM
             }
         }
 
+        public void Lightship_ARDK_Core_SAH_GetDispatchedFormatsToModules
+        (
+            IntPtr handle,
+            out uint dispatchedFrameId,
+            out ulong dispatchedToModules,
+            out ulong dispatchedDataFormats
+        )
+        {
+            unsafe
+            {
+                Native.Lightship_ARDK_Core_SAH_GetDispatchedFormatsToModules
+                (
+                    handle,
+                    out uint outDispatchedFrameId,
+                    out ulong outDispatchedToModules,
+                    out ulong outDispatchedDataFormats
+                );
+
+                dispatchedFrameId = outDispatchedFrameId;
+                dispatchedToModules = outDispatchedToModules;
+                dispatchedDataFormats = outDispatchedDataFormats;
+            }
+        }
+
         public void Lightship_ARDK_Unity_PAM_Release(IntPtr handle)
         {
             Native.Lightship_ARDK_Unity_PAM_Release(handle);
@@ -83,6 +107,12 @@ namespace Niantic.Lightship.AR.PAM
                 IntPtr addedDataFormats, out UInt32 addedDataFormatsSize,
                 IntPtr readyDataFormats, out UInt32 readyDataFormatsSize,
                 IntPtr removedDataFormats, out UInt32 removedDataFormatsSize);
+
+            [DllImport(LightshipPlugin.Name)]
+            public static extern void Lightship_ARDK_Core_SAH_GetDispatchedFormatsToModules(IntPtr handle,
+                out uint dispatchedFrameId,
+                out ulong dispatchedToModules,
+                out ulong dispatchedDataFormats);
 
             [DllImport(LightshipPlugin.Name)]
             public static extern void Lightship_ARDK_Unity_PAM_Release(IntPtr handle);

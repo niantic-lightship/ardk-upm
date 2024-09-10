@@ -48,7 +48,9 @@ namespace Niantic.Lightship.AR.PAM
                 return false;
             }
 
-            lightshipCpuImage = new LightshipCpuImage();
+            lightshipCpuImage = new LightshipCpuImage(xrCpuImage.format.FromUnityToArdk(),
+                (uint)xrCpuImage.width, (uint)xrCpuImage.height);
+
             for (int i = 0; i < xrCpuImage.planeCount; ++i)
             {
                 unsafe
@@ -61,29 +63,30 @@ namespace Niantic.Lightship.AR.PAM
                 }
             }
 
-            lightshipCpuImage.Format = xrCpuImage.format.FromUnityToArdk();
-            lightshipCpuImage.Width = (uint)xrCpuImage.width;
-            lightshipCpuImage.Height = (uint)xrCpuImage.height;
             return true;
         }
 
-        // Camera image plane data
-        private LightshipCpuImagePlane[] _planes;
-        public LightshipCpuImagePlane[] Planes
+        public static LightshipCpuImage Create()
         {
-            get
+            return new LightshipCpuImage
             {
-                if (_planes == null)
-                {
-                    _planes = new LightshipCpuImagePlane[MaxPlanes];
-                }
-
-                return _planes;
-            }
+                Planes = new LightshipCpuImagePlane[MaxPlanes],
+                Format = ImageFormatCEnum.Unknown,
+                Width = 0,
+                Height = 0,
+            };
         }
 
-        public ImageFormatCEnum Format;
+        public LightshipCpuImage(ImageFormatCEnum format, uint width, uint height)
+        {
+            Planes = new LightshipCpuImagePlane[MaxPlanes];
+            Format = format;
+            Width = width;
+            Height = height;
+        }
 
+        public LightshipCpuImagePlane[] Planes;
+        public ImageFormatCEnum Format;
         public uint Width;
         public uint Height;
     }

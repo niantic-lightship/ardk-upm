@@ -67,8 +67,8 @@ namespace Niantic.Lightship.AR.Simulation
                 Log.Debug($"{nameof(LightshipSimulationPersistentAnchorSubsystem)}.{nameof(LightshipSimulationProvider)} ctor");
 
                 _sessionId = Guid.NewGuid();
-                _persistentAnchorParams = LightshipSettings.Instance.LightshipSimulationParams
-                    .SimulationPersistentAnchorParams;
+                _persistentAnchorParams =
+                    LightshipSettingsHelper.ActiveSettings.LightshipSimulationParams.SimulationPersistentAnchorParams;
             }
 
             public override void Start()

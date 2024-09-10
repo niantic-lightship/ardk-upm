@@ -111,11 +111,13 @@ namespace Niantic.Lightship.AR.Editor
             return platformRules;
         }
 
-        internal static BuildValidationRule[] CreateGlobalRules(
+        internal static BuildValidationRule[] CreateGlobalRules
+        (
             LightshipSettings lightshipSettings,
             string datasetContainingDirectory,
             [NotNull] Func<bool> getIsLightshipPluginEnabled,
-            [NotNull] Func<string> getUnityVersion)
+            [NotNull] Func<string> getUnityVersion
+        )
         {
             var globalRules = new[]
             {

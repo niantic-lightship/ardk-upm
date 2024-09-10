@@ -315,7 +315,7 @@ namespace Niantic.Lightship.AR.LocationAR
                         reason = ARLocationTrackingStateReason.Limited;
                     }
 
-                    var args = new ARLocationTrackedEventArgs(arLocation, tracking, reason);
+                    var args = new ARLocationTrackedEventArgs(arLocation, tracking, reason, anchor.trackingConfidence);
                     locationTrackingStateChanged?.Invoke(args);
                 }
                 else
@@ -344,7 +344,7 @@ namespace Niantic.Lightship.AR.LocationAR
                     }
 
                     // Note: You could call arLocation.gameObject.SetActive(false) in locationTrackingStateChanged event if you wanted to de-activate gameObject when tracking is lost
-                    var args = new ARLocationTrackedEventArgs(arLocation, false, reason);
+                    var args = new ARLocationTrackedEventArgs(arLocation, false, reason, anchor.trackingConfidence);
                     locationTrackingStateChanged?.Invoke(args);
                 }
             }

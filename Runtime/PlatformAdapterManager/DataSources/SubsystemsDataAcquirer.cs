@@ -1,6 +1,5 @@
 // Copyright 2022-2024 Niantic.
 
-using System;
 using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.Subsystems.Occlusion;
 using Niantic.Lightship.AR.Utilities;
@@ -22,13 +21,15 @@ namespace Niantic.Lightship.AR.PAM
         private XRCameraSubsystem _cameraSubsystem;
         private XROcclusionSubsystem _occlusionSubsystem;
 
-        private bool _usingLightshipOcclusion;
-        private bool _locationServiceNeedsToStart = false;
-
         // Textures
         private Texture2D _gpuImageTex;
         private Texture2D _gpuDepthImageTex;
         private Texture2D _gpuDepthConfidenceTex;
+
+        // CPU images
+        private XRCpuImage _cpuImage;
+        private XRCpuImage _depthImage;
+        private XRCpuImage _depthConfidenceImage;
 
         // Descriptors
         private XRTextureDescriptor _gpuImageDescriptor;
@@ -38,27 +39,30 @@ namespace Niantic.Lightship.AR.PAM
 
         private bool _autoEnabledLocationServices;
         private bool _autoEnabledCompass;
+        private bool _usingLightshipOcclusion;
+        private bool _locationServiceNeedsToStart;
 
-        // Offset for Unity Android compass timestamp bug
-        private ulong _androidCompassOffset = 0;
-
-        private XRCpuImage _cpuImage;
-        private XRCpuImage _depthImage;
-        private XRCpuImage _depthConfidenceImage;
+        /// <summary>
+        /// Indicates whether all required subsystems have been loaded.
+        /// </summary>
+        protected virtual bool DidLoadSubsystems
+        {
+            get { return _sessionSubsystem != null; }
+        }
 
         public override bool TryToBeReady()
         {
-            if (_sessionSubsystem == null)
+            if (!DidLoadSubsystems)
             {
-                SetupSubsystemReferences();
+                AcquireSubsystemReferences();
             }
 
-            return _sessionSubsystem != null;
+            return DidLoadSubsystems;
         }
 
         public SubsystemsDataAcquirer()
         {
-            SetupSubsystemReferences();
+            AcquireSubsystemReferences();
         }
 
         public override void Dispose()
@@ -97,7 +101,7 @@ namespace Niantic.Lightship.AR.PAM
         }
 
         // Uses the XRGeneralSettings.instance singleton to connect to all subsystem references.
-        protected void SetupSubsystemReferences()
+        private void AcquireSubsystemReferences()
         {
             // Query the currently active loader for the created subsystem, if one exists.
             if (XRGeneralSettings.Instance != null && XRGeneralSettings.Instance.Manager != null)
@@ -105,12 +109,21 @@ namespace Niantic.Lightship.AR.PAM
                 var loader = XRGeneralSettings.Instance.Manager.activeLoader;
                 if (loader != null)
                 {
-                    _cameraSubsystem = loader.GetLoadedSubsystem<XRCameraSubsystem>();
-                    _sessionSubsystem = loader.GetLoadedSubsystem<XRSessionSubsystem>();
-                    _occlusionSubsystem = loader.GetLoadedSubsystem<XROcclusionSubsystem>();
-                    _usingLightshipOcclusion = _occlusionSubsystem is LightshipOcclusionSubsystem;
+                    OnAcquireSubsystems(loader);
                 }
             }
+        }
+
+        /// <summary>
+        /// Invoked when it is time to cache the subsystem references from the XRLoader.
+        /// </summary>
+        /// <param name="loader"></param>
+        protected virtual void OnAcquireSubsystems(XRLoader loader)
+        {
+            _sessionSubsystem = loader.GetLoadedSubsystem<XRSessionSubsystem>();
+            _cameraSubsystem = loader.GetLoadedSubsystem<XRCameraSubsystem>();
+            _occlusionSubsystem = loader.GetLoadedSubsystem<XROcclusionSubsystem>();
+            _usingLightshipOcclusion = _occlusionSubsystem is LightshipOcclusionSubsystem;
         }
 
         public override bool TryGetCameraIntrinsicsDeprecated(out XRCameraIntrinsics intrinsics)

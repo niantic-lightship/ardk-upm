@@ -35,7 +35,9 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
             float slickLocalizerFps,
             UInt32 cloudTemporalFusionWindowSize,
             UInt32 slickTemporalFusionWindowSize,
-            bool diagnosticsEnabled)
+            bool diagnosticsEnabled,
+            bool limitedLocalizationsOnly,
+            int jpegCompressionQuality)
         {
             throw new NotImplementedException();
         }
@@ -90,7 +92,7 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
         }
 
         public bool TryExtractAnchorChange(IntPtr anchorChangeHandle, out TrackableId trackableId, out Pose pose,
-            out int trackingState, out int trackingStateReason, out IntPtr anchorPayloadPtr, out int anchorPayloadSize, out UInt64 timestampMs)
+            out int trackingState, out int trackingStateReason, out float trackingConfidence, out IntPtr anchorPayloadPtr, out int anchorPayloadSize, out UInt64 timestampMs)
         {
             throw new NotImplementedException();
         }

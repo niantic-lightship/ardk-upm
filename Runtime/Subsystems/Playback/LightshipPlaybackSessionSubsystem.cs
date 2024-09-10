@@ -12,7 +12,7 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
 {
     // Manages PlaybackDatasetReader
     [Preserve]
-    public class LightshipPlaybackSessionSubsystem : XRSessionSubsystem, IPlaybackDatasetUser, ILightshipSettingsUser
+    public class LightshipPlaybackSessionSubsystem : XRSessionSubsystem, IPlaybackDatasetUser
     {
         /// <summary>
         /// Register the Lightship playback session subsystem.
@@ -39,9 +39,9 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
             ((LightshipPlaybackProvider)provider).datasetReader = reader;
         }
 
-        void ILightshipSettingsUser.SetLightshipSettings(LightshipSettings settings)
+        internal PlaybackDatasetReader GetPlaybackDatasetReader()
         {
-            ((LightshipPlaybackProvider)provider).lightshipSettings = settings;
+            return ((LightshipPlaybackProvider)provider).datasetReader;
         }
 
         public bool TryMoveToNextFrame()
@@ -52,7 +52,6 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
         private class LightshipPlaybackProvider : Provider
         {
             public PlaybackDatasetReader datasetReader;
-            public LightshipSettings lightshipSettings;
 
             private int m_initialApplicationFramerate;
 
@@ -94,7 +93,7 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
                 }
 
                 datasetReader.Reset();
-                if (!lightshipSettings.RunManually)
+                if (!LightshipSettingsHelper.ActiveSettings.RunPlaybackManually)
                 {
                     MonoBehaviourEventDispatcher.Updating.AddListener(MoveToNextFrame);
                 }

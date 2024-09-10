@@ -24,6 +24,8 @@ namespace Niantic.Lightship.AR.XRSubsystems
         internal const uint DefaultCloudLocalizationTemporalFusionWindowSize = 5;
         internal const uint DefaultSlickLocalizationTemporalFusionWindowSize = 100;
         internal const bool DefaultDiagnosticsEnabled = false;
+        internal const bool DefaultLimitedLocalizationsOnly = false;
+        internal const int DefaultJpegCompressionQuality = 50;
 
         private bool _continuousLocalizationEnabled;
         private bool _temporalFusionEnabled;
@@ -36,6 +38,8 @@ namespace Niantic.Lightship.AR.XRSubsystems
         private uint _cloudLocalizationTemporalFusionWindowSize;
         private uint _slickLocalizationTemporalFusionWindowSize;
         private bool _diagnosticsEnabled;
+        private bool _limitedLocalizationsOnly;
+        private int _jpegCompressionQuality;
 
         public bool ContinuousLocalizationEnabled
         {
@@ -146,6 +150,26 @@ namespace Niantic.Lightship.AR.XRSubsystems
             set => _diagnosticsEnabled = value;
         }
 
+        public bool LimitedLocalizationsOnly
+        {
+            get => _limitedLocalizationsOnly;
+            set => _limitedLocalizationsOnly = value;
+        }
+
+        public int JpegCompressionQuality
+        {
+            get => _jpegCompressionQuality;
+            set
+            {
+                if (value < 1 || value > 100)
+                {
+                    Log.Error("JpegCompressionQuality must be between 1 and 100.");
+                    return;
+                }
+                _jpegCompressionQuality = value;
+            }
+        }
+
         /// <summary>
         /// Default constructor for the XRPersistentAnchorConfiguration.
         /// </summary>
@@ -162,6 +186,8 @@ namespace Niantic.Lightship.AR.XRSubsystems
             _cloudLocalizationTemporalFusionWindowSize = DefaultCloudLocalizationTemporalFusionWindowSize;
             _slickLocalizationTemporalFusionWindowSize = DefaultSlickLocalizationTemporalFusionWindowSize;
             _diagnosticsEnabled = DefaultDiagnosticsEnabled;
+            _limitedLocalizationsOnly = DefaultLimitedLocalizationsOnly;
+            _jpegCompressionQuality = DefaultJpegCompressionQuality;
         }
 
         public XRPersistentAnchorConfiguration
@@ -176,7 +202,9 @@ namespace Niantic.Lightship.AR.XRSubsystems
             float slickLocalizationFps = DefaultSlickLocalizationFps,
             uint cloudLocalizationTemporalFusionWindowSize = DefaultCloudLocalizationTemporalFusionWindowSize,
             uint slickLocalizationTemporalFusionWindowSize = DefaultSlickLocalizationTemporalFusionWindowSize,
-            bool diagnosticsEnabled = DefaultDiagnosticsEnabled
+            bool diagnosticsEnabled = DefaultDiagnosticsEnabled,
+            bool limitedLocalizationsOnly = DefaultLimitedLocalizationsOnly,
+            int jpegCompressionQuality = DefaultJpegCompressionQuality
         )
         {
             _continuousLocalizationEnabled = continuousLocalizationEnabled;
@@ -190,6 +218,8 @@ namespace Niantic.Lightship.AR.XRSubsystems
             _cloudLocalizationTemporalFusionWindowSize = cloudLocalizationTemporalFusionWindowSize;
             _slickLocalizationTemporalFusionWindowSize = slickLocalizationTemporalFusionWindowSize;
             _diagnosticsEnabled = diagnosticsEnabled;
+            _limitedLocalizationsOnly = limitedLocalizationsOnly;
+            _jpegCompressionQuality = jpegCompressionQuality;
         }
 
         public XRPersistentAnchorConfiguration(XRPersistentAnchorConfiguration other) : this()
@@ -210,6 +240,8 @@ namespace Niantic.Lightship.AR.XRSubsystems
             _cloudLocalizationTemporalFusionWindowSize = other._cloudLocalizationTemporalFusionWindowSize;
             _slickLocalizationTemporalFusionWindowSize = other._slickLocalizationTemporalFusionWindowSize;
             _diagnosticsEnabled = other._diagnosticsEnabled;
+            _limitedLocalizationsOnly = other._limitedLocalizationsOnly;
+            _jpegCompressionQuality = other._jpegCompressionQuality;
         }
 
         /// <summary>
@@ -234,7 +266,9 @@ namespace Niantic.Lightship.AR.XRSubsystems
                     FloatEqualityHelper.NearlyEquals(_slickLocalizationFps, other._slickLocalizationFps) &&
                     _cloudLocalizationTemporalFusionWindowSize == other._cloudLocalizationTemporalFusionWindowSize &&
                     _slickLocalizationTemporalFusionWindowSize == other._slickLocalizationTemporalFusionWindowSize &&
-                    _diagnosticsEnabled == other._diagnosticsEnabled;
+                    _diagnosticsEnabled == other._diagnosticsEnabled &&
+                    _limitedLocalizationsOnly == other._limitedLocalizationsOnly &&
+                    _jpegCompressionQuality == other._jpegCompressionQuality;
         }
 
         public new bool Equals(object obj)
@@ -258,7 +292,8 @@ namespace Niantic.Lightship.AR.XRSubsystems
                 ((uint)_cloudLocalizerContinuousRequestsPerSecond).GetHashCode() ^
                 ((uint)_slickLocalizationFps).GetHashCode() ^
                 _cloudLocalizationTemporalFusionWindowSize.GetHashCode() ^
-                _slickLocalizationTemporalFusionWindowSize.GetHashCode();
+                _slickLocalizationTemporalFusionWindowSize.GetHashCode() ^
+                _jpegCompressionQuality.GetHashCode();
         }
     }
 }

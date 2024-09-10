@@ -25,7 +25,8 @@ namespace Niantic.Lightship.SharedAR.Networking.API
             if (String.IsNullOrEmpty(endpointPrefixToNative))
             {
                 // if empty, set the default prefix from config
-                var marshEndpointSplit = LightshipSettings.Instance.SharedArEndpoint.Split('.');
+                var settings = LightshipSettingsHelper.ActiveSettings.EndpointSettings;
+                var marshEndpointSplit = settings.SharedArEndpoint.Split('.');
                 if (marshEndpointSplit.Length > 0)
                 {
                     endpointPrefixToNative = marshEndpointSplit[0];

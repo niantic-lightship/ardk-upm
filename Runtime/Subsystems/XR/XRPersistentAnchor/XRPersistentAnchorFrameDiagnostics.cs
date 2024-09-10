@@ -29,6 +29,7 @@ namespace Niantic.Lightship.AR.XRSubsystems
         OversaturatedPixelRatio, // Ratio of oversaturated pixels in the frame
         LinearVelocityMetersPerSecond, // Calculated from poses
         AngularVelocityRadiansPerSecond, // Calculated from poses
+        InCarProbability // SQC prediction
     }
 
     /// <summary>

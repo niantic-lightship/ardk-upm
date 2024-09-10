@@ -1,18 +1,19 @@
 // Copyright 2022-2024 Niantic.
 
-using System;
-using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.Loader;
+using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.Subsystems.Playback;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.XR.ARSubsystems;
+using UnityEngine.XR.Management;
 
 namespace Niantic.Lightship.AR
 {
     /// <summary>
     ///   <para>Interface into compass functionality.</para>
     /// </summary>
-    public class Compass: IPlaybackDatasetUser, ILightshipSettingsUser
+    public class Compass: IPlaybackDatasetUser
     {
         /// <summary>
         ///   <para>The heading in degrees relative to the magnetic North Pole. (Read Only)</para>
@@ -55,8 +56,8 @@ namespace Niantic.Lightship.AR
         internal ICompassProvider Provider => _provider;
 
         private ICompassProvider _provider;
-        private LightshipSettings _lightshipSettings;
-        private bool m_PrevWasEnabled;
+        private bool _prevWasEnabled;
+        private bool _isLightshipLoaded;
 
         private ICompassProvider GetOrCreateProvider()
         {
@@ -73,7 +74,7 @@ namespace Niantic.Lightship.AR
         // because we need to account for when this method is invoked without XR having been initialized.
         private void CreateProvider()
         {
-            var nextIsPlayback = _lightshipSettings != null && _lightshipSettings.UsePlayback;
+            var nextIsPlayback = _isLightshipLoaded && LightshipSettingsHelper.ActiveSettings.UsePlayback;
 
             if (_provider == null)
             {
@@ -201,9 +202,9 @@ namespace Niantic.Lightship.AR
             }
         }
 
-        void ILightshipSettingsUser.SetLightshipSettings(LightshipSettings settings)
+        internal void Refresh(bool isLightshipLoaded)
         {
-            _lightshipSettings = settings;
+            _isLightshipLoaded = isLightshipLoaded;
             CreateProvider();
         }
 

@@ -51,33 +51,31 @@ namespace Niantic.Lightship.AR.Editor
         public void DrawGUI()
         {
             var currUsedPlayback = _editorPlaybackSettings.UsePlayback;
-            var changedUsePlayback = EditorGUILayout.Toggle(Contents.usePlaybackLabel, currUsedPlayback);
-            if (changedUsePlayback != currUsedPlayback)
+            var newUsePlayback = EditorGUILayout.Toggle(Contents.usePlaybackLabel, currUsedPlayback);
+            if (newUsePlayback != currUsedPlayback)
             {
-                _editorPlaybackSettings.UsePlayback = changedUsePlayback;
+                _editorPlaybackSettings.UsePlayback = newUsePlayback;
             }
 
-            if (changedUsePlayback)
+            EditorGUI.BeginDisabledGroup(!newUsePlayback);
+
+            DrawDatasetPathGUI();
+
+            var currRunManually = _editorPlaybackSettings.RunManually;
+            var changedRunManually = EditorGUILayout.Toggle(Contents.runManuallyLabel, currRunManually);
+            if (changedRunManually != currRunManually)
             {
-                EditorGUI.indentLevel++;
-                DrawDatasetPathGUI();
-
-                var currRunManually = _editorPlaybackSettings.RunManually;
-                var changedRunManually = EditorGUILayout.Toggle(Contents.runManuallyLabel, currRunManually);
-                if (changedRunManually != currRunManually)
-                {
-                    _editorPlaybackSettings.RunManually = changedRunManually;
-                }
-
-                var currLoopInfinitely = _editorPlaybackSettings.LoopInfinitely;
-                var changedLoopInfinitely = EditorGUILayout.Toggle(Contents.loopInfinitelyLabel, currLoopInfinitely);
-                if (changedLoopInfinitely != currLoopInfinitely)
-                {
-                    _editorPlaybackSettings.LoopInfinitely = changedLoopInfinitely;
-                }
-
-                EditorGUI.indentLevel--;
+                _editorPlaybackSettings.RunManually = changedRunManually;
             }
+
+            var currLoopInfinitely = _editorPlaybackSettings.LoopInfinitely;
+            var changedLoopInfinitely = EditorGUILayout.Toggle(Contents.loopInfinitelyLabel, currLoopInfinitely);
+            if (changedLoopInfinitely != currLoopInfinitely)
+            {
+                _editorPlaybackSettings.LoopInfinitely = changedLoopInfinitely;
+            }
+
+            EditorGUI.EndDisabledGroup();
         }
 
         private void DrawDatasetPathGUI()

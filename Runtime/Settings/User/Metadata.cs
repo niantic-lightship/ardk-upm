@@ -21,7 +21,7 @@ namespace Niantic.Lightship.AR.Settings
     [PublicAPI]
     public static class Metadata
     {
-        private const string ArdkVersion = "3.7.0-2408080827";
+        private const string ArdkVersion = "3.8.0-2409081646";
 
         private const string AuthorizationHeaderKey = "Authorization";
         private const string ApplicationIdHeaderKey = "x-ardk-application-id";
@@ -73,9 +73,10 @@ namespace Niantic.Lightship.AR.Settings
             var gatewayHeaders = new Dictionary<string, string>();
             gatewayHeaders.Add(ArClientEnvelopeHeaderKey, ConvertToBase64(GetArClientEnvelopeAsJson(requestId)));
             gatewayHeaders.Add(ClientIdHeaderKey, ClientId);
-            gatewayHeaders.Add(AuthorizationHeaderKey, LightshipSettings.Instance.ApiKey);
             gatewayHeaders.Add(ApplicationIdHeaderKey, ApplicationId);
-            if(!string.IsNullOrWhiteSpace(UserId))
+            gatewayHeaders.Add(AuthorizationHeaderKey, LightshipSettingsHelper.ActiveSettings.ApiKey);
+
+            if (!string.IsNullOrWhiteSpace(UserId))
             {
                 gatewayHeaders.Add(UserIdHeaderKey, UserId);
             }

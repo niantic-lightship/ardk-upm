@@ -30,6 +30,7 @@ namespace Niantic.Lightship.SharedAR.Rooms.Implementation
         private string _destroyFormat = "https://{0}/room/destroy";
         private string _getRoomsForExperienceFormat = "https://{0}/room/get_rooms";
 
+        // Before making changes here, see comment in RoomManagementService's static constructor.
         public void InitializeService(string endpoint, string appId, string apiKey)
         {
             _endpoint = endpoint;

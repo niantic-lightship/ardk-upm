@@ -60,8 +60,8 @@ namespace Niantic.Lightship.AR.Utilities.Metrics
             _usingObjectDetection = usingObjectDetection;
             _automaticallyTrackFPS = automaticallyTrackFPS;
 
-            var xrManager = XRGeneralSettings.Instance.Manager;
-            if (!xrManager.isInitializationComplete)
+            var xrManager = XRGeneralSettings.Instance?.Manager;
+            if (xrManager == null || !xrManager.isInitializationComplete)
             {
                 Log.Warning("XRManager is not initialized yet: cannot get subsystems");
                 return;

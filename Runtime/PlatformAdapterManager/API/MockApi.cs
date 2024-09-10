@@ -91,6 +91,19 @@ namespace Niantic.Lightship.AR.PAM
             ClearDataFormats();
         }
 
+        public void Lightship_ARDK_Core_SAH_GetDispatchedFormatsToModules
+        (
+            IntPtr handle,
+            out uint dispatchedFrameId,
+            out ulong dispatchedToModules,
+            out ulong dispatchedDataFormats
+        )
+        {
+            dispatchedFrameId = 0;
+            dispatchedToModules = 0;
+            dispatchedDataFormats = 0;
+        }
+
         public void MarkDataFormatsReady(int size, params DataFormat[] formats)
         {
             _readyDataFormats = formats;

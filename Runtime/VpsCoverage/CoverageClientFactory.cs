@@ -1,16 +1,19 @@
 // Copyright 2022-2024 Niantic.
 
+using System;
 using Niantic.Lightship.AR.Loader;
+using Niantic.Lightship.AR.Utilities.Logging;
+using UnityEngine.XR.Management;
 
 namespace Niantic.Lightship.AR.VpsCoverage
 {
     /// Factory to create CoverageClient instances.
     public static class CoverageClientFactory
     {
+        [Obsolete("Create a CoverageClient instance using the default constructor instead.")]
         public static CoverageClient Create()
         {
-            // TODO [AR-16577]: Using the asset instance will prevent this class from being easily testable
-            return new CoverageClient(LightshipSettings.Instance);
+            return new CoverageClient();
         }
     }
 }

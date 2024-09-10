@@ -37,6 +37,7 @@ namespace Niantic.Lightship.AR.XRSubsystems
         /// <param name="pose">The <c>Pose</c>, in session space, of the anchor.</param>
         /// <param name="trackingState">The <see cref="TrackingState"/> of the anchor.</param>
         /// <param name="trackingStateReason">The reason for the current tracking state.</param>
+        /// <param name="trackingConfidence">Positive number representing confidence we have in latest tracking update.</param>
         /// <param name="xrPersistentAnchorPayload">The payload associated with the anchor.</param>
         public XRPersistentAnchor(
             TrackableId trackableId,
@@ -44,12 +45,14 @@ namespace Niantic.Lightship.AR.XRSubsystems
             TrackingState trackingState,
             TrackingStateReason trackingStateReason,
             XRPersistentAnchorPayload xrPersistentAnchorPayload,
-            UInt64 timestampMs)
+            UInt64 timestampMs,
+            float trackingConfidence = 0.0f)
         {
             m_Id = trackableId;
             m_Pose = pose;
             m_TrackingState = trackingState;
             m_TrackingStateReason = trackingStateReason;
+            m_TrackingConfidence = trackingConfidence;
             m_XRPersistentAnchorPayload = xrPersistentAnchorPayload;
             m_timestampMs = timestampMs;
         }
@@ -61,6 +64,7 @@ namespace Niantic.Lightship.AR.XRSubsystems
             m_Pose = Pose.identity;
             m_TrackingState = TrackingState.None;
             m_TrackingStateReason = TrackingStateReason.None;
+            m_TrackingConfidence = 0.0f;
             m_XRPersistentAnchorPayload = new XRPersistentAnchorPayload(new IntPtr(0), 0);
             m_timestampMs = 0;
         }
@@ -84,6 +88,11 @@ namespace Niantic.Lightship.AR.XRSubsystems
         /// Get the <see cref="trackingStateReason"/> of this anchor.
         /// </summary>
         public readonly TrackingStateReason trackingStateReason => m_TrackingStateReason;
+
+        /// <summary>
+        /// Get the <see cref="trackingConfidence"/> of this anchor.
+        /// </summary>
+        public readonly float trackingConfidence => m_TrackingConfidence;
 
         /// <summary>
         /// The payload for this anchor
@@ -164,6 +173,8 @@ namespace Niantic.Lightship.AR.XRSubsystems
         private TrackingState m_TrackingState;
 
         private TrackingStateReason m_TrackingStateReason;
+
+        private float m_TrackingConfidence;
 
         private XRPersistentAnchorPayload m_XRPersistentAnchorPayload;
 

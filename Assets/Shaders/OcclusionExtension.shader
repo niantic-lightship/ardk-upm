@@ -143,11 +143,11 @@ Shader "Lightship/OcclusionExtension"
             }
 
             // Samples the depth texture for distances
-            inline float SampleLinearEyeDepth(float2 uv) {
+            inline float SampleLinearEyeDepth(sampler2D s, float2 uv, float4 texelSize) {
 #ifdef FEATURE_EDGE_SMOOTHING
-              return SampleFloatBilinear(_Depth, uv, _DepthTextureParams);
+              return SampleFloatBilinear(s, uv, texelSize);
 #else
-              return tex2D(_Depth, uv).r;
+              return tex2D(s, uv).r;
 #endif
             }
 
@@ -166,14 +166,13 @@ Shader "Lightship/OcclusionExtension"
 
 #ifdef FEATURE_STABILIZATION
               // Sample non-linear frame depth
-              float frameDepthLinearEye = SampleLinearEyeDepth(depth_uv);
+              float frameDepthLinearEye = SampleLinearEyeDepth(_Depth, depth_uv, _DepthTextureParams);
               float frameDepth = ConvertDistanceToDepth(frameDepthLinearEye);
 
               // Sample non-linear fused depth
-              float fusedDepth = tex2D(_FusedDepth, i.vertex_uv).r;
-              float fusedDepthLinearEye = LinearEyeDepth(fusedDepth, _ZBufferParams);
               const float eps = 0.1f;
-              fusedDepth = EyeDepthToNonLinear(fusedDepthLinearEye + eps, _ZBufferParams);
+              float fusedDepthLinearEye = tex2D(_FusedDepth, i.vertex_uv) + eps;
+              float fusedDepth = EyeDepthToNonLinear(fusedDepthLinearEye, _ZBufferParams);
 
               // Linearize and compare
               bool useFrameDepth = (abs(fusedDepthLinearEye - frameDepthLinearEye) / fusedDepthLinearEye) >= _StabilizationThreshold;
@@ -181,7 +180,7 @@ Shader "Lightship/OcclusionExtension"
               // Determine the depth value
               float depth = useFrameDepth ? frameDepth : fusedDepth;
 #else
-              float depth = ConvertDistanceToDepth(SampleLinearEyeDepth(depth_uv));
+              float depth = ConvertDistanceToDepth(SampleLinearEyeDepth(_Depth, depth_uv, _DepthTextureParams));
 #endif
 
 #ifdef FEATURE_SUPPRESSION

@@ -12,11 +12,6 @@ namespace Niantic.Lightship.AR.Loader
 {
     public class LightshipStandaloneLoader : XRLoaderHelper, ILightshipInternalLoaderSupport
     {
-        public void InjectLightshipLoaderHelper(LightshipLoaderHelper lightshipLoaderHelper)
-        {
-            _lightshipLoaderHelper = lightshipLoaderHelper;
-        }
-
         private LightshipLoaderHelper _lightshipLoaderHelper;
         private List<ILightshipExternalLoader> _externalLoaders = new();
 
@@ -42,16 +37,10 @@ namespace Niantic.Lightship.AR.Loader
         /// <returns>`True` if the session subsystems were successfully created, otherwise `false`.</returns>
         public override bool Initialize()
         {
-            var initializationSettings = LightshipSettings.Instance;
-            _lightshipLoaderHelper ??= new LightshipLoaderHelper(initializationSettings, _externalLoaders);
-
+            _lightshipLoaderHelper = new LightshipLoaderHelper(_externalLoaders);
             return InitializeWithLightshipHelper(_lightshipLoaderHelper);
         }
 
-        /// <summary>
-        /// Initializes the loader with an injected LightshipLoaderHelper. This is a helper to initialize manually from tests.
-        /// </summary>
-        /// <returns>`True` if the session subsystems were successfully created, otherwise `false`.</returns>
         public bool InitializeWithLightshipHelper(LightshipLoaderHelper lightshipLoaderHelper)
         {
             _lightshipLoaderHelper = lightshipLoaderHelper;

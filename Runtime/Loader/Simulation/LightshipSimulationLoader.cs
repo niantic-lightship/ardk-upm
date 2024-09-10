@@ -28,69 +28,40 @@ namespace Niantic.Lightship.AR.Loader
         private static List<XROcclusionSubsystemDescriptor> _occlusionSubsystemDescriptors = new();
         private static List<XRPersistentAnchorSubsystemDescriptor> s_persistentAnchorSubsystemDescriptors = new();
 
-        public void InjectLightshipLoaderHelper(LightshipLoaderHelper lightshipLoaderHelper)
-        {
-            _lightshipLoaderHelper = lightshipLoaderHelper;
-        }
-
         private LightshipLoaderHelper _lightshipLoaderHelper;
         private readonly List<ILightshipExternalLoader> _externalLoaders = new List<ILightshipExternalLoader>();
         private bool _useZBufferDepth = true;
         private bool _useSimulationPersistentAnchors = true;
-        private XRPersistentAnchorSubsystem _lightshipPersistentAnchorSubsystem;
 
         /// <summary>
-        /// Initializes the loader. This is called from Unity when starting an AR session.
+        /// Initializes the loader. This is called from Unity when initializing XR.
         /// </summary>
         /// <returns>`True` if the session subsystems were successfully created, otherwise `false`.</returns>
         public override bool Initialize()
         {
-            var originalSettings = LightshipSettings.Instance;
+            var settings = LightshipSettingsHelper.ActiveSettings;
 
-            // we create new settings with playback disabled
-            var settingsWithoutPlayback =
-                LightshipSettings._CreateRuntimeInstance
-                (
-                    // Workaround for https://niantic.atlassian.net/browse/ARDK-3019
-                    // we disable lightship depth if we're use z-buffer depth
-                    enableDepth: originalSettings.UseLightshipDepth && !originalSettings.LightshipSimulationParams.UseZBufferDepth,
-                    enableMeshing: originalSettings.UseLightshipMeshing,
-                    enablePersistentAnchors: !originalSettings.LightshipSimulationParams.UseSimulationPersistentAnchor,
-                    // Workaround for https://niantic.atlassian.net/browse/ARDK-1868
-                    // we disable playback, can be removed once this is part of standalone loader
-                    usePlayback: false,
-                    playbackDataset: "",
-                    runPlaybackManually: false,
-                    loopPlaybackInfinitely: false,
-                    numberOfPlaybackLoops: 1,
-                    apiKey: originalSettings.ApiKey,
-                    enableSemanticSegmentation: originalSettings.UseLightshipSemanticSegmentation,
-                    preferLidarIfAvailable: originalSettings.PreferLidarIfAvailable,
-                    enableObjectDetection: originalSettings.UseLightshipObjectDetection,
-                    enableScanning: originalSettings.UseLightshipScanning,
-                    unityLogLevel: originalSettings.UnityLightshipLogLevel,
-                    ardkConfiguration: null,
-                    stdoutLogLevel: originalSettings.StdOutLightshipLogLevel,
-                    fileLogLevel: originalSettings.FileLightshipLogLevel,
-                    tickPamOnUpdate: originalSettings.TestSettings.TickPamOnUpdate,
-                    disableTelemetry: originalSettings.TestSettings.DisableTelemetry,
-                    simulationParams: originalSettings.LightshipSimulationParams
-                );
-            _lightshipLoaderHelper ??= new LightshipLoaderHelper(settingsWithoutPlayback, _externalLoaders);
+            // Workaround for https://niantic.atlassian.net/browse/ARDK-3019
+            // we disable lightship depth if we're use z-buffer depth
+            settings.UseLightshipDepth =
+                settings.UseLightshipDepth && !settings.LightshipSimulationParams.UseZBufferDepth;
+
+            // Workaround for https://niantic.atlassian.net/browse/ARDK-1868
+            // we disable playback, can be removed once this is part of standalone loader
+            settings.UsePlayback = false;
+
+            _lightshipLoaderHelper = new LightshipLoaderHelper(_externalLoaders);
 
             return InitializeWithLightshipHelper(_lightshipLoaderHelper);
         }
 
-        /// <summary>
-        /// Initializes the loader with an injected LightshipLoaderHelper. This is a helper to initialize manually from tests.
-        /// </summary>
-        /// <returns>`True` if the session subsystems were successfully created, otherwise `false`.</returns>
         public bool InitializeWithLightshipHelper(LightshipLoaderHelper lightshipLoaderHelper)
         {
             _lightshipLoaderHelper = lightshipLoaderHelper;
 
-            _useZBufferDepth = _lightshipLoaderHelper.InitializationSettings.LightshipSimulationParams.UseZBufferDepth;
-            _useSimulationPersistentAnchors = _lightshipLoaderHelper.InitializationSettings.LightshipSimulationParams.UseSimulationPersistentAnchor;
+            var settings = LightshipSettingsHelper.ActiveSettings;
+            _useZBufferDepth = settings.LightshipSimulationParams.UseZBufferDepth;
+            _useSimulationPersistentAnchors = settings.LightshipSimulationParams.UseSimulationPersistentAnchor;
 
             _lightshipLoaderHelper.Initialize(this);
 
@@ -101,11 +72,14 @@ namespace Niantic.Lightship.AR.Loader
                     s_persistentAnchorSubsystemDescriptors,
                     "Lightship-Simulation-PersistentAnchor"
                 );
-
-                _lightshipPersistentAnchorSubsystem = XRGeneralSettings.Instance.Manager.activeLoaders[0].GetLoadedSubsystem<XRPersistentAnchorSubsystem>();
             }
 
             return true;
+        }
+
+        public void InjectLightshipLoaderHelper(LightshipLoaderHelper lightshipLoaderHelper)
+        {
+            _lightshipLoaderHelper = lightshipLoaderHelper;
         }
 
         /// <summary>

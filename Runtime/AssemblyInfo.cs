@@ -17,5 +17,6 @@ using UnityEngine.Scripting;
 [assembly: InternalsVisibleTo("Niantic.Lightship.AR.SQP")]
 [assembly: InternalsVisibleTo("Niantic.Lightship.AR.InternalSamples")]
 [assembly: InternalsVisibleTo("Niantic.Lightship.Spaces")]
-[assembly: InternalsVisibleTo("Niantic.Lightship.MagicLeap2")]
-[assembly: InternalsVisibleTo("Niantic.Lightship.MagicLeap2.InternalSamples")]
+[assembly: InternalsVisibleTo("Niantic.Lightship.MagicLeap")]
+[assembly: InternalsVisibleTo("Niantic.Lightship.MagicLeap.Editor")]
+[assembly: InternalsVisibleTo("Niantic.Lightship.MagicLeap.InternalSamples")]

@@ -23,10 +23,18 @@ namespace Niantic.Lightship.AR.VpsCoverage
         private readonly string _coverageAreasEndpoint;
         private readonly string _localizationTargetsEndpoint;
 
+        [Obsolete("Construct a CoverageClient using default constructor instead.")]
         public CoverageClient(LightshipSettings lightshipSettings)
         {
             _coverageAreasEndpoint = lightshipSettings.VpsCoverageEndpoint + BasePath + CoverageAreasMethodName;
             _localizationTargetsEndpoint = lightshipSettings.VpsCoverageEndpoint + BasePath + LocalizationTargetMethodName;
+        }
+
+        public CoverageClient()
+        {
+            var endpointSettings = LightshipSettingsHelper.ActiveSettings.EndpointSettings;
+            _coverageAreasEndpoint = endpointSettings.VpsCoverageEndpoint + BasePath + CoverageAreasMethodName;
+            _localizationTargetsEndpoint = endpointSettings.VpsCoverageEndpoint + BasePath + LocalizationTargetMethodName;
         }
 
         private async Task<CoverageAreasResult> RequestCoverageAreasAsync(LatLng queryLocation, int queryRadius)

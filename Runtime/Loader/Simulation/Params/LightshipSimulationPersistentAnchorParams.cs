@@ -20,15 +20,15 @@ namespace Niantic.Lightship.AR.Loader
         [SerializeField]
         [Tooltip("Whether to apply a translational offset to the anchor.")]
         bool m_applyTranslationalOffset = false;
-        
+
         [SerializeField]
         [Tooltip("Maximum translational offset in meters to apply to the anchor. An offset from 0 - max will be chosen at random.")]
         float m_translationalOffsetSeverityMeters = 0.05f;
-        
+
         [SerializeField]
         [Tooltip("Whether to apply a rotational offset to the anchor.")]
         bool m_applyRotationalOffset = false;
-        
+
         [SerializeField]
         [Tooltip("Maximum rotational offset in degrees to apply to the anchor. An offset from 0 - max will be chosen at random.")]
         float m_rotationalOffsetSeverityDegrees = 1.0f;
@@ -58,7 +58,7 @@ namespace Niantic.Lightship.AR.Loader
             get => m_applyTranslationalOffset;
             set => m_applyTranslationalOffset = value;
         }
-        
+
         public float translationalOffsetSeverityMeters
         {
             get => m_translationalOffsetSeverityMeters;
@@ -70,7 +70,7 @@ namespace Niantic.Lightship.AR.Loader
             get => m_applyRotationalOffset;
             set => m_applyRotationalOffset = value;
         }
-        
+
         public float rotationalOffsetSeverityDegrees
         {
             get => m_rotationalOffsetSeverityDegrees;
@@ -87,6 +87,25 @@ namespace Niantic.Lightship.AR.Loader
         {
             get => m_trackingStateReason;
             set => m_trackingStateReason = value;
+        }
+
+        internal LightshipSimulationPersistentAnchorParams() { }
+
+        internal LightshipSimulationPersistentAnchorParams(LightshipSimulationPersistentAnchorParams source)
+        {
+            CopyFrom(source);
+        }
+
+        internal void CopyFrom(LightshipSimulationPersistentAnchorParams source)
+        {
+            minimumAnchorDiscoveryTimeSeconds = source.minimumAnchorDiscoveryTimeSeconds;
+            maximumAnchorDiscoveryTimeSeconds = source.maximumAnchorDiscoveryTimeSeconds;
+            applyTranslationalOffset = source.applyTranslationalOffset;
+            translationalOffsetSeverityMeters = source.translationalOffsetSeverityMeters;
+            applyRotationalOffset = source.applyRotationalOffset;
+            rotationalOffsetSeverityDegrees = source.rotationalOffsetSeverityDegrees;
+            surfaceAnchorFailure = source.surfaceAnchorFailure;
+            trackingStateReason = source.trackingStateReason;
         }
     }
 }

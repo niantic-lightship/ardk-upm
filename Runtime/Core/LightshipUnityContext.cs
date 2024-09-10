@@ -27,7 +27,6 @@ namespace Niantic.Lightship.AR.Core
         public static IntPtr UnityContextHandle { get; private set; } = IntPtr.Zero;
 
         internal static PlatformAdapterManager PlatformAdapterManager { get; private set; }
-        internal static LightshipSettings ActiveSettings { get; private set; }
         private static IntPtr s_propertyBagHandle = IntPtr.Zero;
         private static EnvironmentConfig s_environmentConfig;
         private static UserConfig s_userConfig;
@@ -42,9 +41,8 @@ namespace Niantic.Lightship.AR.Core
         // Function that an external plugin can use to register its own PlatformDataAcquirer with PAM
         internal static Func<IntPtr, bool, bool, PlatformAdapterManager> CreatePamWithPlugin;
 
-        internal static void Initialize(LightshipSettings settings, bool isDeviceLidarSupported, bool disableTelemetry = false)
+        internal static void Initialize(bool isDeviceLidarSupported, bool disableTelemetry = false)
         {
-            ActiveSettings = settings;
 #if NIANTIC_LIGHTSHIP_AR_LOADER_ENABLED
             s_isDeviceLidarSupported = isDeviceLidarSupported;
 
@@ -54,21 +52,23 @@ namespace Niantic.Lightship.AR.Core
                 return;
             }
 
+            var settings = LightshipSettingsHelper.ActiveSettings;
+
             Log.Info($"Initializing {nameof(LightshipUnityContext)}");
             s_environmentConfig = new EnvironmentConfig
             {
-                ScanningEndpoint = settings.ScanningEndpoint,
-                ScanningSqcEndpoint = settings.ScanningSqcEndpoint,
-                SharedArEndpoint = settings.SharedArEndpoint,
-                VpsEndpoint = settings.VpsEndpoint,
-                VpsCoverageEndpoint = settings.VpsCoverageEndpoint,
-                FastDepthEndpoint = settings.FastDepthSemanticsEndpoint,
-                MediumDepthEndpoint = settings.DefaultDepthSemanticsEndpoint,
-                SmoothDepthEndpoint = settings.SmoothDepthSemanticsEndpoint,
-                FastSemanticsEndpoint = settings.FastDepthSemanticsEndpoint,
-                MediumSemanticsEndpoint = settings.DefaultDepthSemanticsEndpoint,
-                SmoothSemanticsEndpoint = settings.SmoothDepthSemanticsEndpoint,
-                ObjectDetectionEndpoint = settings.ObjectDetectionEndpoint,
+                ScanningEndpoint = settings.EndpointSettings.ScanningEndpoint,
+                ScanningSqcEndpoint = settings.EndpointSettings.ScanningSqcEndpoint,
+                SharedArEndpoint = settings.EndpointSettings.SharedArEndpoint,
+                VpsEndpoint = settings.EndpointSettings.VpsEndpoint,
+                VpsCoverageEndpoint = settings.EndpointSettings.VpsCoverageEndpoint,
+                FastDepthEndpoint = settings.EndpointSettings.FastDepthSemanticsEndpoint,
+                MediumDepthEndpoint = settings.EndpointSettings.DefaultDepthSemanticsEndpoint,
+                SmoothDepthEndpoint = settings.EndpointSettings.SmoothDepthSemanticsEndpoint,
+                FastSemanticsEndpoint = settings.EndpointSettings.FastDepthSemanticsEndpoint,
+                MediumSemanticsEndpoint = settings.EndpointSettings.DefaultDepthSemanticsEndpoint,
+                SmoothSemanticsEndpoint = settings.EndpointSettings.SmoothDepthSemanticsEndpoint,
+                ObjectDetectionEndpoint = settings.EndpointSettings.ObjectDetectionEndpoint,
                 TelemetryEndpoint = "",
                 TelemetryKey = "",
             };
@@ -79,7 +79,7 @@ namespace Niantic.Lightship.AR.Core
                 FeatureFlagFilePath = GetFeatureFlagPath()
             };
 
-            DeviceInfo deviceInfo = new DeviceInfo
+            var deviceInfo = new DeviceInfo
             {
                 AppId = Metadata.ApplicationId,
                 Platform = Metadata.Platform,
@@ -90,20 +90,30 @@ namespace Niantic.Lightship.AR.Core
                 AppInstanceId = Metadata.AppInstanceId,
                 DeviceLidarSupported = isDeviceLidarSupported,
             };
+
             UnityContextHandle = NativeApi.Lightship_ARDK_Unity_Context_Create(false, ref deviceInfo, ref s_environmentConfig, ref s_userConfig);
-            Log.ConfigureLogger(UnityContextHandle, settings.UnityLightshipLogLevel, settings.FileLightshipLogLevel,
-                settings.StdOutLightshipLogLevel);
+
+            Log.ConfigureLogger
+            (
+                UnityContextHandle,
+                settings.UnityLightshipLogLevel,
+                settings.FileLightshipLogLevel,
+                settings.StdOutLightshipLogLevel
+            );
 
             if (!disableTelemetry)
             {
                 // Cannot use Application.persistentDataPath in testing
                 try
                 {
-                    AnalyticsTelemetryPublisher telemetryPublisher = new AnalyticsTelemetryPublisher(
-                        endpoint: settings.TelemetryEndpoint,
-                        directoryPath: Path.Combine(Application.persistentDataPath, "telemetry"),
-                        key: settings.TelemetryApiKey,
-                        registerLogger: false);
+                    AnalyticsTelemetryPublisher telemetryPublisher =
+                        new AnalyticsTelemetryPublisher
+                        (
+                            endpoint: settings.EndpointSettings.TelemetryEndpoint,
+                            directoryPath: Path.Combine(Application.persistentDataPath, "telemetry"),
+                            key: settings.EndpointSettings.TelemetryApiKey,
+                            registerLogger: false
+                        );
 
                     s_telemetryService = new TelemetryService(UnityContextHandle, telemetryPublisher, settings.ApiKey);
                 }
@@ -127,7 +137,7 @@ namespace Niantic.Lightship.AR.Core
 #endif
         }
 
-        private static void CreatePam(LightshipSettings settings)
+        private static void CreatePam(RuntimeLightshipSettings settings)
         {
             if (PlatformAdapterManager != null)
             {
@@ -172,7 +182,6 @@ namespace Niantic.Lightship.AR.Core
 
         internal static void Deinitialize()
         {
-            ActiveSettings = null;
             OnDeinitialized?.Invoke();
 #if NIANTIC_LIGHTSHIP_AR_LOADER_ENABLED
             if (UnityContextHandle != IntPtr.Zero)

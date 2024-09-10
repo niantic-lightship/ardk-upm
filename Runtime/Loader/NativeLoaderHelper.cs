@@ -23,9 +23,11 @@ namespace Niantic.Lightship.AR.Loader
         private readonly List<XRMeshSubsystemDescriptor> _meshingSubsystemDescriptors = new();
         private readonly List<XRObjectDetectionSubsystemDescriptor> _objectDetectionSubsystemDescriptors = new();
 
-        internal bool Initialize(ILightshipInternalLoaderSupport loader, LightshipSettings settings, bool isLidarSupported)
+        internal bool Initialize(ILightshipInternalLoaderSupport loader, bool isLidarSupported)
         {
-            LightshipUnityContext.Initialize(settings, isLidarSupported, settings.TestSettings.DisableTelemetry);
+            var settings = LightshipSettingsHelper.ActiveSettings;
+
+            LightshipUnityContext.Initialize(isLidarSupported, settings.TestSettings.DisableTelemetry);
 
             Log.Info("Initialize native subsystems");
 

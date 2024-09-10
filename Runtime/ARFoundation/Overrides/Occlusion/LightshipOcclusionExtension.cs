@@ -119,6 +119,12 @@ namespace Niantic.Lightship.AR.Occlusion
             "One in the scene is required to enable occlusion stabilization.";
 
         /// <summary>
+        /// Message logged when an api tries to interact with the fused depth camera without it being initialized.
+        /// </summary>
+        private const string k_MissingFusedDepthCameraMessage =
+            "Fused depth camera is not initialized. Please enable occlusion stabilization first.";
+
+        /// <summary>
         /// Message logged when the occlusion extension shader is missing from the project.
         /// </summary>
         private const string k_MissingShaderResourceMessage =
@@ -312,7 +318,7 @@ namespace Niantic.Lightship.AR.Occlusion
         private static readonly int s_suppressionTransformId = Shader.PropertyToID("_SuppressionTransform");
 
         /// <summary>
-        /// Property ID for the shader parameter used to linearize (compressed) depth.
+        /// Property ID for the shader parameter that describes the depth texture.
         /// </summary>
         private static readonly int s_depthTextureParams = Shader.PropertyToID("_DepthTextureParams");
 
@@ -748,6 +754,31 @@ namespace Niantic.Lightship.AR.Occlusion
         {
             get => _customBackgroundMaterial;
             set => _customBackgroundMaterial = value;
+        }
+
+        /// <summary>
+        /// Get or set the material used for rendering the fused depth texture.
+        /// This is relevant when the occlusion stabilization feature is enabled.
+        /// The shader used by this material should output metric eye depth.
+        /// </summary>
+        public Material FusedDepthMaterial
+        {
+            get
+            {
+                return _fusedDepthCamera == null ? null : _fusedDepthCamera.Material;
+            }
+
+            set
+            {
+                if (_fusedDepthCamera != null)
+                {
+                    _fusedDepthCamera.Material = value;
+                }
+                else
+                {
+                    Log.Error(k_MissingFusedDepthCameraMessage);
+                }
+            }
         }
 
         /// <summary>
@@ -1354,7 +1385,7 @@ namespace Niantic.Lightship.AR.Occlusion
                 }
 
                 // Configure the camera to capture mesh depth
-                _fusedDepthCamera.Configure(meshLayer: _meshManager.meshPrefab.gameObject.layer, _camera.nearClipPlane, _camera.farClipPlane);
+                _fusedDepthCamera.Configure(_camera, meshLayer: _meshManager.meshPrefab.gameObject.layer);
             }
 
             // Enable or disable the camera

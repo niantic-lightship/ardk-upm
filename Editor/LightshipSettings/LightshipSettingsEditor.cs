@@ -44,18 +44,37 @@ namespace Niantic.Lightship.AR.Editor
 
             public static readonly GUIContent apiKeyLabel = new GUIContent("API Key");
             public static readonly GUIContent enabledLabel = new GUIContent("Enabled");
-            public static readonly GUIContent preferLidarLabel = new GUIContent
-                ("Prefer LiDAR if Available");
-            public static readonly GUIContent environmentViewLabel =
-                new GUIContent("Environment Prefab");
+            public static readonly GUIContent preferLidarLabel = new GUIContent("Prefer LiDAR if Available");
+            public static readonly GUIContent environmentViewLabel = new GUIContent("Environment Prefab");
             public static readonly GUIContent environmentViewButton =
                 new GUIContent
                 (
                     "Open XR Environment Window",
                     "To set an environment prefab, open the scene view and use the XR Environment overlay."
                 );
-            public static readonly GUIContent useZBufferDepthInSimulationLabel =
-                new GUIContent("Use Z-Buffer Depth");
+
+            private static readonly GUIContent helpIcon = EditorGUIUtility.IconContent("_Help");
+
+            public static readonly GUIContent playbackLabel =
+                new GUIContent
+                    (
+                        "",
+                        helpIcon.image,
+                        "Enable playback to use recorded camera and sensor data to drive your app's AR session." +
+                        "Click for documentation."
+                    );
+
+            public static readonly GUIContent simulationLabel =
+                new GUIContent
+                (
+                    "",
+                    helpIcon.image,
+                    "Enable the Niantic Lightship Simulation loader for the Standalone platform in " +
+                    "the XR Plug-in Management menu to use Lightship with ARFoundation's simulation mode." +
+                    "Click for documentation"
+                );
+
+            public static readonly GUIContent useZBufferDepthInSimulationLabel = new GUIContent("Use Z-Buffer Depth");
             public static readonly GUIContent useLightshipPersistentAnchorInSimulationLabel =
                 new GUIContent("Use Lightship Persistent Anchors");
 
@@ -168,12 +187,16 @@ namespace Niantic.Lightship.AR.Editor
 
             using (var change = new EditorGUI.ChangeCheckScope())
             {
-                // Disable changes during runtime
+                // Disable changes to the asset during runtime
                 EditorGUI.BeginDisabledGroup(Application.isPlaying);
 
                 // -- Put new Lightship settings here --
                 DrawLightshipSettings();
 
+                EditorGUILayout.Space(20);
+                DrawPlaybackSettings();
+
+                EditorGUILayout.Space(20);
                 // -- Put new simulation settings here --
                 DrawLightshipSimulationSettings();
 
@@ -200,6 +223,7 @@ namespace Niantic.Lightship.AR.Editor
             var editorSDKEnabled =
                 LightshipEditorUtilities.GetStandaloneIsLightshipPluginEnabled() ||
                 IsLightshipSimulatorEnabled();
+
             var androidSDKEnabled = LightshipEditorUtilities.GetAndroidIsLightshipPluginEnabled();
             var iosSDKEnabled = LightshipEditorUtilities.GetIosIsLightshipPluginEnabled();
 
@@ -271,18 +295,12 @@ namespace Niantic.Lightship.AR.Editor
             EditorGUI.indentLevel--;
 
             EditorGUILayout.Space(10);
-            EditorGUILayout.LabelField("Playback", EditorStyles.boldLabel);
+            DrawLoggingSettings();
+        }
 
-            GUILayout.BeginHorizontal();
-            _platformSelected = GUILayout.Toolbar(_platformSelected, Contents._platforms);
-            GUILayout.EndHorizontal();
-
-            _playbackSettingsEditors[_platformSelected].DrawGUI();
-
-            EditorGUILayout.Space(10);
+        private void DrawLoggingSettings()
+        {
             EditorGUILayout.LabelField("Logging", EditorStyles.boldLabel);
-            EditorGUI.indentLevel++;
-
             EditorGUILayout.PropertyField
             (
                 _unityLogLevelProperty,
@@ -310,21 +328,39 @@ namespace Niantic.Lightship.AR.Editor
                     "Recommended to be set to 'off' unless its a niantic support case. File Location: {Project-Root}/data/log.txt"
                 )
             );
+        }
 
-            EditorGUI.indentLevel--;
+        private void DrawPlaybackSettings()
+        {
+            GUILayout.BeginHorizontal();
+            EditorGUILayout.LabelField("Playback", Contents.boldFont18Style, GUILayout.Width(80));
+            if (EditorGUILayout.LinkButton(Contents.playbackLabel))
+            {
+                Application.OpenURL("https://lightship.dev/docs/ardk/how-to/unity/setting_up_playback/");
+            }
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            _platformSelected = GUILayout.Toolbar(_platformSelected, Contents._platforms);
+            GUILayout.EndHorizontal();
+
+            _playbackSettingsEditors[_platformSelected].DrawGUI();
         }
 
         private void DrawLightshipSimulationSettings()
         {
-            EditorGUILayout.Space(10);
-            EditorGUILayout.LabelField
-            (
-                "Simulation",
-                Contents.boldFont18Style
-            );
+            GUILayout.BeginHorizontal();
+            EditorGUILayout.LabelField("Simulation", Contents.boldFont18Style, GUILayout.Width(95));
+            if (EditorGUILayout.LinkButton(Contents.simulationLabel))
+            {
+                Application.OpenURL("https://lightship.dev/docs/ardk/how-to/unity/simulation_mocking/");
+            }
+            GUILayout.EndHorizontal();
 
             // Simulation status label
             LayOutSimulationEnabled();
+
+            EditorGUI.BeginDisabledGroup(!IsLightshipSimulatorEnabled());
 
             // Environment prefab
             EditorGUILayout.Space(10);
@@ -370,6 +406,7 @@ namespace Niantic.Lightship.AR.Editor
             // EditorGUI.indentLevel--;
 
             EditorGUILayout.Space(10);
+            EditorGUI.EndDisabledGroup();
         }
 
         private void DrawExperimentalSettings()

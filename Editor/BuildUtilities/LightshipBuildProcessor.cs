@@ -193,8 +193,9 @@ namespace Niantic.Lightship.AR.Editor
                 }
 
                 BuildHelper.AddBackgroundShaderToProject(LightshipOcclusionExtension.DefaultShaderName);
+                BuildHelper.AddBackgroundShaderToProject(LightshipFusedDepthCamera.DefaultShaderName);
 
-                // TODO: Things that ARKit and ARCore BuildProcessor implementations doe
+                // TODO: Things that ARKit and ARCore BuildProcessor implementations do
                 // - Check camera usage description
                 // - Ensure minimum build targets
                 // - handle ARKit/ARCore required flags

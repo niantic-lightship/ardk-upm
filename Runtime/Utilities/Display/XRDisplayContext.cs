@@ -1,6 +1,7 @@
 // Copyright 2022-2024 Niantic.
 
 using Niantic.Lightship.AR.Loader;
+using Niantic.Lightship.AR.Subsystems.Playback;
 using UnityEngine;
 using UnityEngine.XR.ARSubsystems;
 using UnityEngine.XR.Management;
@@ -53,12 +54,12 @@ namespace Niantic.Lightship.AR.Utilities
 
         /// <summary>
         /// For Lightship, it is important to know the screen orientation in order to know how to rotate the camera
-        /// input image received from the XRCameraSubsystem. UnityEngine.Screen.orientation property only returns
+        /// input image received from the XRCameraSubsystem. The UnityEngine.Screen.orientation property only returns
         /// ScreenOrientation.Portrait when called in Editor, presumably because there is no rotation offset
         /// between the camera image and the displayed screen image in Editor. Thus, use this method to get the
         /// screen orientation value expected by Lightship's APIs, regardless of the active platform.
         /// </summary>
-        /// <returns>The corrected screen orientation. When playing a scene in Lightship's Playback mode, the
+        /// <returns>The corrected screen orientation. When running XR in Lightship's Playback mode, the
         /// returned value will match the screen orientation recorded in the dataset's current frame. Else, will
         /// return the UnityEngine.Screen.orientation value.</returns>
         public static ScreenOrientation GetScreenOrientation()
@@ -68,10 +69,12 @@ namespace Niantic.Lightship.AR.Utilities
             return ScreenOrientation.LandscapeLeft;
 #endif
 
-#if UNITY_EDITOR
             // If using Playback, get the recorded screen orientation
-            if (XRGeneralSettings.Instance != null && XRGeneralSettings.Instance.Manager != null &&
-                XRGeneralSettings.Instance.Manager.activeLoader is LightshipStandaloneLoader)
+            if (XRGeneralSettings.Instance != null
+                && XRGeneralSettings.Instance.Manager != null
+                && XRGeneralSettings.Instance.Manager.isInitializationComplete
+                && XRGeneralSettings.Instance.Manager.activeLoader.GetLoadedSubsystem<XRSessionSubsystem>()
+                    is LightshipPlaybackSessionSubsystem)
             {
                 var deviceOrientation = InputReader.GetDeviceOrientation();
                 switch (deviceOrientation)
@@ -87,11 +90,11 @@ namespace Niantic.Lightship.AR.Utilities
                 }
             }
             // Else (aka if Simulation)
-            else
+            else if (Application.isEditor)
             {
                 return GameViewUtils.GetEditorScreenOrientation();
             }
-#endif
+
             // If on device, or if Playback provided no orientation, use the Screen.orientation value
             return Screen.orientation;
         }

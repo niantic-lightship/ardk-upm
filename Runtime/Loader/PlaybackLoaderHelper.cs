@@ -26,9 +26,11 @@ namespace Niantic.Lightship.AR
         /// helper knows if lidar support is in the dataset.
         /// </summary>
         /// <returns>`True` if the session subsystems were successfully created, otherwise `false`.</returns>
-        internal bool InitializeBeforeNativeHelper(ILightshipInternalLoaderSupport loader, LightshipSettings settings)
+        internal bool InitializeBeforeNativeHelper(ILightshipInternalLoaderSupport loader)
         {
             Log.Info("Initialize Playback subsystems");
+
+            var settings = LightshipSettingsHelper.ActiveSettings;
             var dataset = PlaybackDatasetLoader.Load(settings.PlaybackDatasetPath);
 
             if (dataset == null)
@@ -37,11 +39,7 @@ namespace Niantic.Lightship.AR
                 return false;
             }
 
-            DatasetReader = new PlaybackDatasetReader
-            (
-                dataset,
-                settings.LoopInfinitely
-            );
+            DatasetReader = new PlaybackDatasetReader(dataset, settings.LoopPlaybackInfinitely);
 
             loader.CreateSubsystem<XRSessionSubsystemDescriptor, XRSessionSubsystem>
             (
@@ -51,7 +49,6 @@ namespace Niantic.Lightship.AR
 
             var sessionSubsystem = loader.GetLoadedSubsystem<XRSessionSubsystem>();
             ((IPlaybackDatasetUser)sessionSubsystem).SetPlaybackDatasetReader(DatasetReader);
-            ((ILightshipSettingsUser)sessionSubsystem).SetLightshipSettings(settings);
 
             loader.CreateSubsystem<XRCameraSubsystemDescriptor, XRCameraSubsystem>
             (
@@ -85,7 +82,7 @@ namespace Niantic.Lightship.AR
                 ((IPlaybackDatasetUser)occlusionSubsystem).SetPlaybackDatasetReader(DatasetReader);
             }
 
-            InitializeInput(settings, DatasetReader);
+            InitializeDependents(true, DatasetReader);
 
             return true;
         }
@@ -95,7 +92,7 @@ namespace Niantic.Lightship.AR
         /// context has to exist.
         /// </summary>
         /// <returns>`True` if the session subsystems were successfully created, otherwise `false`.</returns>
-        internal bool InitializeAfterNativeHelper(ILightshipInternalLoaderSupport loader, LightshipSettings settings)
+        internal bool InitializeAfterNativeHelper(ILightshipInternalLoaderSupport loader)
         {
             // Input is an integrated subsystem that must be created after the LightshipUnityContext is initialized,
             // which is why it's done here instead of in the PlaybackLoaderHelper
@@ -128,7 +125,7 @@ namespace Niantic.Lightship.AR
 
             _inputProvider?.Dispose();
             DatasetReader = null;
-            InitializeInput(null, null);
+            InitializeDependents(false, null);
 
             var sessionSubsystem = loader.GetLoadedSubsystem<XRSessionSubsystem>();
             if (sessionSubsystem != null)
@@ -155,12 +152,12 @@ namespace Niantic.Lightship.AR
             return true;
         }
 
-        private static void InitializeInput(LightshipSettings settings, PlaybackDatasetReader datasetReader)
+        private static void InitializeDependents(bool isLoaded, PlaybackDatasetReader datasetReader)
         {
-            ((ILightshipSettingsUser)Input.location).SetLightshipSettings(settings);
+            Input.location.Refresh(isLoaded);
             ((IPlaybackDatasetUser)Input.location).SetPlaybackDatasetReader(datasetReader);
 
-            ((ILightshipSettingsUser)Input.compass).SetLightshipSettings(settings);
+            Input.compass.Refresh(isLoaded);
             ((IPlaybackDatasetUser)Input.compass).SetPlaybackDatasetReader(datasetReader);
         }
     }

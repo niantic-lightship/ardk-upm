@@ -11,27 +11,84 @@ using UnityEngine.XR.Management;
 namespace Niantic.Lightship.AR.Loader
 {
     /// <summary>
-    /// Build time settings for Lightship AR. These are serialized and available at runtime.
+    /// Build time settings for Lightship AR. These are serialized to an asset file and can only be altered
+    /// via the Unity Inspector window.
     /// </summary>
-    /// <note>
-    /// This object is specifically for build time settings, i.e. settings that cannot change at runtime.
-    /// Values can only be set at construction time, or, for the asset instance, through the Inspector
-    /// while in EditMode.
-    /// </note>
     [Serializable]
     [XRConfigurationData("Niantic Lightship SDK", SettingsKey)]
     public partial class LightshipSettings : ScriptableObject
     {
         private const string AssetsPath = "Assets";
         private const string AssetsRelativeSettingsPath = "XR/Settings";
-        private const string ConfigFileName = "ardkConfig.json";
 
         public const string SettingsKey = "Niantic.Lightship.AR.LightshipSettings";
 
         [SerializeField, Tooltip("This should match an API Key found in your Niantic Lightship developer account")]
         private string _apiKey = string.Empty;
 
-        private ArdkConfiguration _ardkConfiguration;
+        [SerializeField]
+        [Tooltip
+            (
+                "When enabled, Lightship's depth and occlusion features can be used via ARFoundation. " +
+                "Additional occlusion features unique to Lightship can be configured in the " +
+                "LightshipOcclusionExtension component."
+            )
+        ]
+        private bool _useLightshipDepth = true;
+
+        [SerializeField]
+        [Tooltip
+            (
+                "When enabled, LiDAR depth will be used instead of Lightship depth on devices where LiDAR is " +
+                "available. Features unique to the LightshipOcclusionExtension cannot be used."
+            )
+        ]
+        private bool _preferLidarIfAvailable = true;
+
+        [SerializeField]
+        [Tooltip
+            (
+                "When enabled, Lightship's meshing features can be used via ARFoundation. Additional mesh features " +
+                "unique to Lightship can be configured in the LightshipMeshingExtension component."
+            )
+        ]
+        private bool _useLightshipMeshing = true;
+
+        [SerializeField, Tooltip("When enabled, Lightship's semantic segmentation features can be used.")]
+        private bool _useLightshipSemanticSegmentation = true;
+
+        [SerializeField, Tooltip("When enabled, Lightship's scanning features can be used.")]
+        private bool _useLightshipScanning = true;
+
+        [SerializeField, Tooltip("When enabled, Lightship VPS can be used.")]
+        private bool _useLightshipPersistentAnchor = true;
+
+        [SerializeField, Tooltip("When true, Lightship's object detection features can be used.")]
+        private bool _useLightshipObjectDetection = true;
+
+#if NIANTIC_ARDK_EXPERIMENTAL_FEATURES
+        [SerializeField, Tooltip("When true, spoof Lightship's location on device.")]
+        private bool _useLightshipSpoofLocation = false;
+#endif
+
+        [SerializeField, Tooltip("The lowest log level to print")]
+        private LogLevel _unityLogLevel = LogLevel.Warn;
+
+        [SerializeField, Tooltip("The lowest log level for file logger")]
+        private LogLevel _fileLogLevel = LogLevel.Off;
+
+        [SerializeField, Tooltip("The lowest log level to print")]
+        private LogLevel _stdoutLogLevel = LogLevel.Off;
+
+        [SerializeField]
+        private LightshipSimulationParams _lightshipSimulationParams;
+
+        [SerializeField]
+        private DevicePlaybackSettings _devicePlaybackSettings;
+
+        private EditorPlaybackSettings _editorPlaybackSettings;
+        private EndpointSettings _endpointSettings;
+        private TestSettings _testSettings;
 
         /// <summary>
         /// Get the Lightship API key.
@@ -46,19 +103,9 @@ namespace Niantic.Lightship.AR.Loader
                     return _apiKey;
                 }
 
-                return _ardkConfiguration.ApiKey;
+                return EndpointSettings.ApiKey;
             }
         }
-
-        [SerializeField]
-        [Tooltip
-            (
-                "When enabled, Lightship's depth and occlusion features can be used via ARFoundation. " +
-                "Additional occlusion features unique to Lightship can be configured in the " +
-                "LightshipOcclusionExtension component."
-            )
-        ]
-        private bool _useLightshipDepth = true;
 
         /// <summary>
         /// When enabled, Lightship's depth and occlusion features can be used via ARFoundation. Additional occlusion
@@ -66,29 +113,11 @@ namespace Niantic.Lightship.AR.Loader
         /// </summary>
         public bool UseLightshipDepth => _useLightshipDepth;
 
-        [SerializeField]
-        [Tooltip
-            (
-                "When enabled, Lightship's meshing features can be used via ARFoundation. Additional mesh features " +
-                "unique to Lightship can be configured in the LightshipMeshingExtension component."
-            )
-        ]
-        private bool _useLightshipMeshing = true;
-
         /// <summary>
         /// When enabled, Lightship's meshing features can be used via ARFoundation. Additional mesh features unique
         /// to Lightship can be configured in the LightshipMeshingExtension component.
         /// </summary>
         public bool UseLightshipMeshing => _useLightshipMeshing;
-
-        [SerializeField]
-        [Tooltip
-            (
-                "When enabled, LiDAR depth will be used instead of Lightship depth on devices where LiDAR is " +
-                "available. Features unique to the LightshipOcclusionExtension cannot be used."
-            )
-        ]
-        private bool _preferLidarIfAvailable = true;
 
         /// <summary>
         /// When enabled, LiDAR depth will be used instead of Lightship depth on devices where LiDAR is available.
@@ -100,33 +129,20 @@ namespace Niantic.Lightship.AR.Loader
         /// </remarks>
         public bool PreferLidarIfAvailable => _preferLidarIfAvailable;
 
-        [SerializeField, Tooltip("When enabled, Lightship VPS can be used.")]
-        private bool _useLightshipPersistentAnchor = true;
-
         /// <summary>
         /// When enabled, Lightship VPS can be used.
         /// </summary>
         public bool UseLightshipPersistentAnchor => _useLightshipPersistentAnchor;
-
-        [SerializeField,
-         Tooltip("When enabled, Lightship's semantic segmentation features can be used.")]
-        private bool _useLightshipSemanticSegmentation = true;
 
         /// <summary>
         /// When enabled, Lightship's semantic segmentation features can be used.
         /// </summary>
         public bool UseLightshipSemanticSegmentation => _useLightshipSemanticSegmentation;
 
-        [SerializeField, Tooltip("When enabled, Lightship's scanning features can be used.")]
-        private bool _useLightshipScanning = true;
-
         /// <summary>
         /// When enabled, Lightship's scanning features can be used.
         /// </summary>
         public bool UseLightshipScanning => _useLightshipScanning;
-
-        [SerializeField, Tooltip("When true, Lightship's object detection features can be used.")]
-        private bool _useLightshipObjectDetection = true;
 
         /// <summary>
         /// When true, Lightship's object detection features can be used.
@@ -135,93 +151,66 @@ namespace Niantic.Lightship.AR.Loader
 
         #region Experimental Settings
 
-#if NIANTIC_ARDK_EXPERIMENTAL_FEATURES
-        [SerializeField, Tooltip("When true, spoof Lightship's location on device.")]
-        private bool _useLightshipSpoofLocation = false;
-#endif
-
         /// <summary>
         /// [Experimental] When true, Lightship's spoof location provider can be used.
         /// </summary>
-#if NIANTIC_ARDK_EXPERIMENTAL_FEATURES
-        public bool UseLightshipSpoofLocation => _useLightshipSpoofLocation;
+#if NIANTIC_LIGHTSHIP_ML2_ENABLED
+        // Magic Leap does not have GPS so we require spoofing to be enabled.
+        public bool UseLightshipSpoofLocation => true;
+#elif NIANTIC_ARDK_EXPERIMENTAL_FEATURES
+        public bool UseLightshipSpoofLocation  => _useLightshipSpoofLocation;
 #else
         public bool UseLightshipSpoofLocation => false;
 #endif
 
         #endregion
 
-        [SerializeField, Tooltip("The lowest log level to print")]
-        private LogLevel _unityLogLevel = LogLevel.Warn;
-
-        [SerializeField,
-         Tooltip("The lowest log level for file logger")]
-        private LogLevel _fileLogLevel = LogLevel.Off;
-
-        [SerializeField,
-         Tooltip("The lowest log level to print")]
-        private LogLevel _stdoutLogLevel = LogLevel.Off;
-
         /// <summary>
         /// The highest log level to print for Unity logger
         /// </summary>
-        internal LogLevel UnityLightshipLogLevel => _unityLogLevel;
+        public LogLevel UnityLightshipLogLevel => _unityLogLevel;
 
         /// <summary>
         /// The highest log level to print for a file logger
         /// </summary>
-        internal LogLevel FileLightshipLogLevel => _fileLogLevel;
+        public LogLevel FileLightshipLogLevel => _fileLogLevel;
 
         /// <summary>
         /// The highest log level to print for the stdout logger - typically for internal testing. Keep this off unless
         /// you know what you are looking for
         /// </summary>
-        internal LogLevel StdOutLightshipLogLevel => _stdoutLogLevel;
+        public LogLevel StdOutLightshipLogLevel => _stdoutLogLevel;
 
-        [SerializeField]
-        private LightshipSimulationParams _lightshipSimulationParams;
-
-        public LightshipSimulationParams LightshipSimulationParams => _lightshipSimulationParams;
-
-        /// <summary>
-        /// All Settings for Playback in the Unity Editor
-        /// </summary>
-        private ILightshipPlaybackSettings PlaybackSettings
+        public LightshipSimulationParams LightshipSimulationParams
         {
             get
             {
-                if (_overloadPlaybackSettings != null)
+                if (_lightshipSimulationParams == null)
                 {
-                    return _overloadPlaybackSettings;
+                    _lightshipSimulationParams = new LightshipSimulationParams();
                 }
 
-                return Application.isEditor ? EditorPlaybackSettings : DevicePlaybackSettings;
+                return _lightshipSimulationParams;
             }
         }
 
-        [SerializeField]
-        private DevicePlaybackSettings _devicePlaybackSettings = new();
-
-        private EditorPlaybackSettings _editorPlaybackSettings;
-        private OverloadPlaybackSettings _overloadPlaybackSettings;
+        /// <summary>
+        /// All Settings for Playback on the active platform
+        /// </summary>
+        private ILightshipPlaybackSettings PlaybackSettings
+        {
+            get => Application.isEditor ? EditorPlaybackSettings : DevicePlaybackSettings;
+        }
 
         public bool UsePlayback => PlaybackSettings.UsePlayback;
-
         public string PlaybackDatasetPath => PlaybackSettings.PlaybackDatasetPath;
-
         public bool RunManually => PlaybackSettings.RunManually;
-
         public bool LoopInfinitely => PlaybackSettings.LoopInfinitely;
 
         public ILightshipPlaybackSettings DevicePlaybackSettings
         {
             get
             {
-                if (_overloadPlaybackSettings != null)
-                {
-                    return _overloadPlaybackSettings;
-                }
-
                 return _devicePlaybackSettings;
             }
         }
@@ -230,29 +219,36 @@ namespace Niantic.Lightship.AR.Loader
         {
             get
             {
-                if (_overloadPlaybackSettings != null)
-                {
-                    return _overloadPlaybackSettings;
-                }
-
                 if (_editorPlaybackSettings == null)
                 {
                     _editorPlaybackSettings = new EditorPlaybackSettings();
                 }
 
                 return _editorPlaybackSettings;
+
             }
         }
 
-        private LightshipTestSettings _testSettings;
+        internal EndpointSettings EndpointSettings
+        {
+            get
+            {
+                if (_endpointSettings == null)
+                {
+                    _endpointSettings = EndpointSettings.GetFromFileOrDefault();
+                }
 
-        internal LightshipTestSettings TestSettings
+                return _endpointSettings;
+            }
+        }
+
+        internal TestSettings TestSettings
         {
             get
             {
                 if (_testSettings == null)
                 {
-                    _testSettings = new LightshipTestSettings(false, true);
+                    _testSettings = new TestSettings { DisableTelemetry = false, TickPamOnUpdate = true };
                 }
 
                 return _testSettings;
@@ -266,6 +262,9 @@ namespace Niantic.Lightship.AR.Loader
         private static LightshipSettings s_RuntimeInstance;
 #endif
 
+        /// <summary>
+        /// On devices, this will be called when the application is loaded.
+        /// </summary>
         private void Awake()
         {
 #if !UNITY_EDITOR
@@ -274,59 +273,36 @@ namespace Niantic.Lightship.AR.Loader
         }
 
         /// <summary>
-        /// Accessor to Lightship settings.
+        /// Accessor to Lightship settings asset instance.
+        /// THIS SHOULD ONLY BE USED IN SPECIFIC SITUATIONS:
+        ///     1) Editor classes that need to read/write values to the asset
+        ///     2) By LightshipLoaderHelper to initialize the runtime settings on application load
+        ///
+        /// All other code should use LightshipLoaderHelper.ActiveSettings to get the settings,
+        /// otherwise it will get the asset instance's values instead of the runtime instance's, which
+        /// may be different in tests or if the dev has modified settings at runtime.
         /// </summary>
-        public static LightshipSettings Instance => GetOrCreateInstance();
+        public static LightshipSettings Instance => GetOrCreateAssetInstance();
 
-        private static LightshipSettings GetOrCreateInstance()
+        private static LightshipSettings GetOrCreateAssetInstance()
         {
             LightshipSettings settings = null;
 
 #if UNITY_EDITOR
             if (!EditorBuildSettings.TryGetConfigObject(SettingsKey, out settings))
             {
-                Log.Info("No LightshipSettings.Instance found, creating new one.");
                 settings = CreateInstanceAsset();
             }
 #else
             settings = s_RuntimeInstance;
             if (settings == null)
-                settings = CreateInstance<LightshipSettings>();
-#endif
-            if (settings._ardkConfiguration == null)
             {
-                var gotConfigurationFromJson =
-                    ArdkConfiguration.TryGetConfigurationFromJson
-                    (
-                        Path.Combine(Application.streamingAssetsPath, ConfigFileName),
-                        out ArdkConfiguration parsedConfig
-                    );
-
-                settings._ardkConfiguration =
-                    gotConfigurationFromJson ? parsedConfig : ArdkConfiguration.GetDefaultEnvironmentConfig();
+                settings = CreateInstance<LightshipSettings>();
             }
-
-            ValidateApiKey(settings.ApiKey);
+#endif
 
             return settings;
         }
-
-
-        private static void ValidateApiKey(string apiKey)
-        {
-
-            if (string.IsNullOrWhiteSpace(apiKey))
-            {
-                Log.Error("Please provide a Lightship API key that has been created for your account for a project at https://lightship.dev/account/projects");
-            }
-
-            if (apiKey is { Length: > 512 })
-            {
-                Log.Error("Provided Lightship API key is too long");
-            }
-        }
-
-
 
 #if UNITY_EDITOR
         [MenuItem("Lightship/Settings", false, 1)]
@@ -369,17 +345,15 @@ namespace Niantic.Lightship.AR.Loader
             var settings = CreateInstance<LightshipSettings>();
             AssetDatabase.CreateAsset(settings, settingsPath);
 
+            settings._endpointSettings = EndpointSettings.GetFromFileOrDefault();
+
             EditorBuildSettings.AddConfigObject(SettingsKey, settings, true);
 
             return settings;
         }
 #endif
 
-        /// <summary>
-        /// FOR TESTING PURPOSES ONLY. DO NOT TRY TO USE THIS NORMALLY. YOU WILL BREAK THE GENERAL SETUP.
-        /// It does not use the configuration provider.
-        /// </summary>
-        internal static LightshipSettings _CreateRuntimeInstance
+        internal static LightshipSettings CreateTestOnlyInstance
         (
             bool enableDepth = false,
             bool enableMeshing = false,
@@ -395,18 +369,20 @@ namespace Niantic.Lightship.AR.Loader
             bool enableScanning = false,
             bool enableObjectDetection = false,
             LogLevel unityLogLevel = LogLevel.Debug,
-            ArdkConfiguration ardkConfiguration = null,
+            EndpointSettings endpointSettings = null,
             LogLevel stdoutLogLevel = LogLevel.Off,
             LogLevel fileLogLevel = LogLevel.Off,
             bool disableTelemetry = true,
             bool tickPamOnUpdate = true,
-            LightshipSimulationParams simulationParams = null
+            LightshipSimulationParams simulationParams = null,
+            bool enableSpoofLocation = false
         )
         {
             var settings = CreateInstance<LightshipSettings>();
 
             settings._apiKey = apiKey;
             settings._useLightshipDepth = enableDepth;
+            settings._preferLidarIfAvailable = preferLidarIfAvailable;
             settings._useLightshipMeshing = enableMeshing;
             settings._useLightshipPersistentAnchor = enablePersistentAnchors;
             settings._useLightshipSemanticSegmentation = enableSemanticSegmentation;
@@ -416,8 +392,8 @@ namespace Niantic.Lightship.AR.Loader
             settings._fileLogLevel = fileLogLevel;
             settings._stdoutLogLevel = stdoutLogLevel;
 
-            settings._overloadPlaybackSettings =
-                new OverloadPlaybackSettings
+            settings._devicePlaybackSettings =
+                new DevicePlaybackSettings()
                 {
                     UsePlayback = usePlayback,
                     PlaybackDatasetPath = playbackDataset,
@@ -426,27 +402,23 @@ namespace Niantic.Lightship.AR.Loader
                     NumberOfIterations = numberOfPlaybackLoops
                 };
 
-            settings._preferLidarIfAvailable = preferLidarIfAvailable;
-
-            if (ardkConfiguration == null)
+            if (endpointSettings == null)
             {
-                settings._ardkConfiguration = ArdkConfiguration.TryGetConfigurationFromJson(
-                    Path.Combine(Application.streamingAssetsPath, ConfigFileName),
-                    out ArdkConfiguration parsedConfig)
-                    ? parsedConfig
-                    : ArdkConfiguration.GetDefaultEnvironmentConfig();
+                settings._endpointSettings = EndpointSettings.GetDefaultEnvironmentConfig();
             }
             else
             {
-                settings._ardkConfiguration = ardkConfiguration;
+                settings._endpointSettings = endpointSettings;
             }
 
-            settings._testSettings = new LightshipTestSettings(disableTelemetry, tickPamOnUpdate);
+            settings._testSettings =
+                new TestSettings { DisableTelemetry = disableTelemetry, TickPamOnUpdate = tickPamOnUpdate };
 
             simulationParams ??= new LightshipSimulationParams();
             settings._lightshipSimulationParams = simulationParams;
 
             return settings;
         }
+
     }
 }

@@ -50,6 +50,11 @@ namespace Niantic.Lightship.AR.PersistentAnchors
         public TrackingStateReason trackingStateReason => trackingStateReasonOverride ?? sessionRelativeData.trackingStateReason;
 
         /// <summary>
+        /// Positive number representing confidence we have in latest tracking update.
+        /// </summary>
+        public float trackingConfidence => trackingConfidenceOverride ?? sessionRelativeData.trackingConfidence;
+
+        /// <summary>
         /// The last predicted pose for this Persistent Anchor. This is used as a source of truth in
         ///     case the GameObject's pose is manipulated by interpolation or other features.
         /// </summary>
@@ -63,6 +68,7 @@ namespace Niantic.Lightship.AR.PersistentAnchors
 
         internal TrackingState? trackingStateOverride { get; set; }
         internal TrackingStateReason? trackingStateReasonOverride { get; set; }
+        internal float? trackingConfidenceOverride { get; set; }
 
         internal bool _markedForDestruction = false;
 
