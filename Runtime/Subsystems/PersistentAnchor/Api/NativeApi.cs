@@ -52,6 +52,12 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
             [MarshalAs(UnmanagedType.U1)]
             public bool enableSlickLocalization;
 
+            [MarshalAs(UnmanagedType.U1)]
+            public bool enableSlickLearnedFeatures;
+
+            [MarshalAs(UnmanagedType.U1)]
+            public bool forceCPULearnedFeatures;
+
             public float cloudLocalizerInitialRequestsPerSecond;
 
             public float cloudLocalizerContinuousRequestsPerSecond;
@@ -77,6 +83,7 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
             bool enableTransformSmoothing,
             bool enableCloudLocalization,
             bool enableSlickLocalization,
+            bool enableSlickLearnedFeatures,
             float cloudLocalizerInitialRequestsPerSecond,
             float cloudLocalizerContinuousRequestsPerSecond,
             float slickLocalizerFps,
@@ -92,6 +99,12 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
             configurationCStruct.enableTransformSmoothing = enableTransformSmoothing;
             configurationCStruct.enableCloudLocalization = enableCloudLocalization;
             configurationCStruct.enableSlickLocalization = enableSlickLocalization;
+            configurationCStruct.enableSlickLearnedFeatures = enableSlickLearnedFeatures;
+#if NIANTIC_LIGHTSHIP_ML2_ENABLED
+            configurationCStruct.forceCPULearnedFeatures = true;
+#else
+            configurationCStruct.forceCPULearnedFeatures = false;
+#endif
             configurationCStruct.cloudLocalizerInitialRequestsPerSecond = cloudLocalizerInitialRequestsPerSecond;
             configurationCStruct.cloudLocalizerContinuousRequestsPerSecond = cloudLocalizerContinuousRequestsPerSecond;
             configurationCStruct.slickLocalizerFps = Convert.ToUInt32(Math.Ceiling(slickLocalizerFps));

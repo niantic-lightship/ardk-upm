@@ -1,6 +1,7 @@
 // Copyright 2022-2024 Niantic.
 
 using Niantic.Lightship.AR.PAM;
+using System;
 using UnityEngine;
 using UnityEngine.XR.ARSubsystems;
 
@@ -46,8 +47,7 @@ namespace Niantic.Lightship.AR.Utilities
         }
 
         // Unity to ARDK Cpu Image Format
-        // Must match cpu_image_format.h
-        public static ImageFormatCEnum FromUnityToArdk(this XRCpuImage.Format format)
+        public static ImageFormatCEnum FromUnityToArdk(this XRCpuImage.Format format, IntPtr plane1Ptr, IntPtr plane2Ptr)
         {
             switch (format)
             {
@@ -55,9 +55,19 @@ namespace Niantic.Lightship.AR.Utilities
                     return ImageFormatCEnum.Unknown;
 
                 case XRCpuImage.Format.AndroidYuv420_888:
-                    return ImageFormatCEnum.AndroidYuv420_888;
+                    long distance = (long) plane1Ptr - (long) plane2Ptr;
+                    // VU, U plane is larger than V by 1 byte
+                    if (distance == 1) {
+                        return ImageFormatCEnum.Yuv420_NV21;
+                    }
+                    // UV, V plane is larger than U by 1 byte
+                    else if (distance == -1) {
+                        return ImageFormatCEnum.Yuv420_NV12;
+                    }
+                    // I420
+                    return ImageFormatCEnum.Yuv420_888;
                 case XRCpuImage.Format.IosYpCbCr420_8BiPlanarFullRange:
-                    return ImageFormatCEnum.IosYpCbCr420_8BiPlanarFullRange;
+                    return ImageFormatCEnum.Yuv420_NV12;
 
                 case XRCpuImage.Format.OneComponent8:
                     return ImageFormatCEnum.OneComponent8;

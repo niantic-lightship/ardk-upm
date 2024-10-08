@@ -6,7 +6,7 @@ namespace Niantic.Lightship.AR.Scanning
 {
     internal interface IScanArchiveBuilderApi
     {
-        public IntPtr Create(IntPtr unityContext, string basePath, string scanId, string userDataStr);
+        public IntPtr Create(IntPtr unityContext, string basePath, string scanId, string userDataStr, int maxFramesPerChunk);
 
         public void Release(IntPtr handle);
 

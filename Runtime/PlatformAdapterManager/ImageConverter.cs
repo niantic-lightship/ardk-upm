@@ -204,7 +204,7 @@ namespace Niantic.Lightship.AR.PAM
             outFocalLength.y *= yRatio;
             outPrincipalPoint.y *= yRatio;
 
-            return new CameraIntrinsicsCStruct(outFocalLength, outPrincipalPoint);
+            return new CameraIntrinsicsCStruct(outFocalLength, outPrincipalPoint, outputResolution);
         }
 
         private static int MatchAspectRatioX(int x, Vector2Int aspectRatio)

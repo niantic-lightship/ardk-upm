@@ -28,6 +28,7 @@ namespace Niantic.Lightship.AR.Editor
         private SerializedProperty _enableMeshDecimation;
 
         private SerializedProperty _isMeshFilteringEnabled;
+        private SerializedProperty _semanticSegmentationManager = null;
         private SerializedProperty _isFilteringAllowListEnabled;
         private SerializedProperty _filteringAllowList;
         private SerializedProperty _isFilteringBlockListEnabled;
@@ -46,7 +47,6 @@ namespace Niantic.Lightship.AR.Editor
         }
 
         private bool _triedLookingForSemanticsManager = false;
-        private ARSemanticSegmentationManager _segmentationManager = null;
 
         private bool _triedLookingForMainCamera = false;
         private Camera _mainCamera = null;
@@ -91,14 +91,17 @@ namespace Niantic.Lightship.AR.Editor
             EditorGUILayout.PropertyField(_isMeshFilteringEnabled);
             if (_isMeshFilteringEnabled.boolValue)
             {
+                EditorGUILayout.PropertyField(_semanticSegmentationManager);
+
                 // If we haven't tried autofinding the segmentation manager yet, try it now.
-                if (_segmentationManager == null && !_triedLookingForSemanticsManager)
+                if (_semanticSegmentationManager.objectReferenceValue == null && !_triedLookingForSemanticsManager)
                 {
                     _triedLookingForSemanticsManager = true;
-                    _segmentationManager = FindObjectOfType<ARSemanticSegmentationManager>();
+                    _semanticSegmentationManager.objectReferenceValue = FindAnyObjectByType<ARSemanticSegmentationManager>(FindObjectsInactive.Include);
                 }
 
-                if (_segmentationManager == null || !_segmentationManager.isActiveAndEnabled)
+                // Now that we've tried auto-filling, show the correct UI
+                if (_semanticSegmentationManager.objectReferenceValue == null)
                 {
                     EditorGUILayout.HelpBox(Contents.noSemanticSegmentationManagerWarning, MessageType.Error);
                 }
@@ -148,6 +151,7 @@ namespace Niantic.Lightship.AR.Editor
             _meshCullingDistance = serializedObject.FindProperty("_meshCullingDistance");
             _enableMeshDecimation = serializedObject.FindProperty("_enableMeshDecimation");
             _isMeshFilteringEnabled = serializedObject.FindProperty("_isMeshFilteringEnabled");
+            _semanticSegmentationManager = serializedObject.FindProperty("_semanticSegmentationManager");
             _isFilteringAllowListEnabled = serializedObject.FindProperty("_isFilteringAllowListEnabled");
             _filteringAllowList = serializedObject.FindProperty("_allowList");
             _isFilteringBlockListEnabled = serializedObject.FindProperty("_isFilteringBlockListEnabled");

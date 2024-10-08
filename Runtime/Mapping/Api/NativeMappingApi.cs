@@ -61,6 +61,12 @@ namespace Niantic.Lightship.AR.Mapping
             [MarshalAs(UnmanagedType.U1)]
             public bool trackingEdgesEnabled;
 
+            [MarshalAs(UnmanagedType.U1)]
+            public bool slickLearnedFeaturesEnabled;
+
+            [MarshalAs(UnmanagedType.U1)]
+            public bool forceCPULearnedFeatures;
+
             public UInt32 slickMapperFps;
 
             public float splitterMaxDistanceMeters;
@@ -71,6 +77,7 @@ namespace Niantic.Lightship.AR.Mapping
         public void Configure
         (
             bool trackingEdgesEnabled,
+            bool slickLearnedFeaturesEnabled,
             UInt32 slickMapperFps,
             float splitterMaxDistanceMeters,
             float splitterMaxDurationSeconds
@@ -83,6 +90,12 @@ namespace Niantic.Lightship.AR.Mapping
 
             var configurationCStruct = new MappingConfigurationCStruct();
             configurationCStruct.trackingEdgesEnabled = trackingEdgesEnabled;
+            configurationCStruct.slickLearnedFeaturesEnabled = slickLearnedFeaturesEnabled;
+#if NIANTIC_LIGHTSHIP_ML2_ENABLED
+            configurationCStruct.forceCPULearnedFeatures = true;
+#else
+            configurationCStruct.forceCPULearnedFeatures = false;
+#endif
             configurationCStruct.slickMapperFps = slickMapperFps;
             configurationCStruct.splitterMaxDistanceMeters = splitterMaxDistanceMeters;
             configurationCStruct.splitterMaxDurationSeconds = splitterMaxDurationSeconds;

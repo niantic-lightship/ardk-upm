@@ -1,25 +1,26 @@
 // Copyright 2022-2024 Niantic.
 #if UNITY_EDITOR
-using System;
 using System.Collections.Generic;
 using System.Linq;
+
+using Niantic.Lightship.AR.Editor.PersistentAR;
 using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.LocationAR;
-using Niantic.Lightship.AR.Subsystems;
 using UnityEditor;
-using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using Niantic.Lightship.AR.Loader;
 
 [CustomEditor(typeof(ARLocationManager))]
 [InitializeOnLoad]
-internal class _ARLocationManagerEditor : Editor
+internal class _ARLocationManagerEditor : _ARPersistentAnchorManagerEditor
 {
     private ARLocation[] _arLocations;
     private string[] _arLocationNames;
 
     private int _selectedLocationIndex = 0;
+
+    private SerializedProperty _autoTrackProperty;
 
     static _ARLocationManagerEditor()
     {
@@ -59,6 +60,11 @@ internal class _ARLocationManagerEditor : Editor
     public override void OnInspectorGUI()
     {
         base.OnInspectorGUI();
+
+        EditorGUILayout.Space();
+        EditorGUILayout.PropertyField(_autoTrackProperty);
+        serializedObject.ApplyModifiedProperties();
+
         if (Application.isPlaying)
         {
             return;
@@ -266,6 +272,12 @@ internal class _ARLocationManagerEditor : Editor
                 }
             }
         }
+    }
+
+    private new void OnEnable()
+    {
+        base.OnEnable();
+        _autoTrackProperty = serializedObject.FindProperty("_autoTrack");
     }
 }
 #endif

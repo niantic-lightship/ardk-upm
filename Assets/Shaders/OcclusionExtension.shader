@@ -195,9 +195,15 @@ Shader "Lightship/OcclusionExtension"
 #ifdef FEATURE_DEBUG
 
 #ifdef UNITY_REVERSED_Z
-              o.color = fixed4(o.depth, o.depth, o.depth, 1.0f);
+              fixed3 out_color = fixed3(o.depth, o.depth, o.depth);
 #else
-              o.color = fixed4(1.0f - o.depth, 1.0f - o.depth, 1.0f - o.depth, 1.0f);
+              fixed3 out_color = fixed3(1.0f - o.depth, 1.0f - o.depth, 1.0f - o.depth);
+#endif
+
+#if UNITY_COLORSPACE_GAMMA
+              o.color = fixed4(LinearToGammaSpace(out_color), 1.0f);
+#else
+              o.color = fixed4(out_color, 1.0f);
 #endif
 
 #endif

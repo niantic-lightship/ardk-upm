@@ -136,33 +136,24 @@ namespace Niantic.Lightship.AR.PAM
             intrinsics = default;
             if (_cameraSubsystem.TryGetIntrinsics(out var xrCameraIntrinsics))
             {
-                intrinsics.SetIntrinsics(xrCameraIntrinsics.focalLength, xrCameraIntrinsics.principalPoint);
+                intrinsics.SetIntrinsics
+                (
+                    xrCameraIntrinsics.focalLength,
+                    xrCameraIntrinsics.principalPoint,
+                    xrCameraIntrinsics.resolution
+                );
+
                 return true;
             }
 
             return false;
         }
 
-        public override bool TryGetDepthCameraIntrinsicsCStruct(out CameraIntrinsicsCStruct depthIntrinsics, Vector2Int depthResolution)
+        public override bool TryGetDepthCameraIntrinsicsCStruct(out CameraIntrinsicsCStruct depthIntrinsics)
         {
             // When both camera and depth images are obtained via ARFoundation's subsystems,
-            // the depth intrinsics are the same as the camera intrinsics but scaled
-            if (TryGetCameraIntrinsicsDeprecated(out XRCameraIntrinsics cameraIntrinsics))
-            {
-                depthIntrinsics =
-                    ImageConverter.ConvertCameraIntrinsics
-                    (
-                        cameraIntrinsics.focalLength,
-                        cameraIntrinsics.principalPoint,
-                        cameraIntrinsics.resolution,
-                        depthResolution
-                    );
-
-                return true;
-            }
-
-            depthIntrinsics = default;
-            return false;
+            // the depth intrinsics are the same as the camera intrinsics, scaled to the depth resolution.
+            return TryGetCameraIntrinsicsCStruct(out depthIntrinsics);
         }
 
         /// Returns the XRSessionSubsystem's reported tracking state.

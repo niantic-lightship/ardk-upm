@@ -19,6 +19,9 @@ namespace Niantic.Lightship.AR.Mapping
     [Experimental]
     public class ARDeviceMap
     {
+        /// <summary>
+        /// A struct representing a single device map node
+        /// </summary>
         [Serializable]
         [Experimental]
         public struct SerializeableDeviceMapNode
@@ -27,15 +30,26 @@ namespace Niantic.Lightship.AR.Mapping
             public ulong _subId2;
             public byte[] _mapData;
             public byte[] _anchorPayload;
+            public string _mapType;
         }
 
+        [Serializable]
+        [Experimental]
+        public struct SerializeableDeviceMapGraph
+        {
+            public byte[] _graphData;
+        }
+
+        /// <summary>
+        /// A struct to serialize/desrialize entire ARDeviceMap
+        /// </summary>
         [Serializable]
         [Experimental]
         public struct SerializableDeviceMap
         {
             public SerializeableDeviceMapNode[] _serializeableSingleDeviceMaps;
 
-            // TODO: add graphs
+            public SerializeableDeviceMapGraph _graphData;
 
             // TODO: add default anchor index
 
@@ -53,12 +67,28 @@ namespace Niantic.Lightship.AR.Mapping
             get => _deviceMapNodes;
         }
 
+        /// <summary>
+        /// Get a SerializeableDeviceMapGraph in this device map
+        /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
+        /// </summary>
+        [Experimental]
+        public SerializeableDeviceMapGraph DeviceMapGraph
+        {
+            get => _deviceMapGraph;
+        }
+
+        public int DefaultAnchorIndex
+        {
+            get => _defaultAnchorIndex;
+        }
+
         public ARDeviceMap()
         {
 
         }
 
         protected List<SerializeableDeviceMapNode> _deviceMapNodes = new ();
+        protected SerializeableDeviceMapGraph _deviceMapGraph = new();
         protected int _defaultAnchorIndex = 0;
 
         /// <summary>
@@ -70,7 +100,13 @@ namespace Niantic.Lightship.AR.Mapping
         /// <param name="mapData"></param>
         /// <param name="anchorPayload"></param>
         [Experimental]
-        public void AddDeviceMapNode(ulong subId1, ulong subId2, byte[] mapData, byte[] anchorPayload)
+        public void AddDeviceMapNode(
+            ulong subId1,
+            ulong subId2,
+            byte[] mapData,
+            byte[] anchorPayload,
+            string mapType
+        )
         {
             if (!DeviceMapFeatureFlag.IsFeatureEnabled())
             {
@@ -82,9 +118,31 @@ namespace Niantic.Lightship.AR.Mapping
                 _subId1 = subId1,
                 _subId2 = subId2,
                 _mapData = mapData,
-                _anchorPayload = anchorPayload
+                _anchorPayload = anchorPayload,
+                _mapType = mapType
             };
             _deviceMapNodes.Add(mapNode);
+        }
+
+        /// <summary>
+        /// Set graph blob data. This method is meant to be called by ARDeviceMappingManager when a device map and graph
+        /// is generated.
+        /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
+        /// </summary>
+        /// <param name="graphData"></param>
+        [Experimental]
+        public void SetDeviceMapGraph(byte[] graphData)
+        {
+            if (!DeviceMapFeatureFlag.IsFeatureEnabled())
+            {
+                return;
+            }
+
+            var graph = new SerializeableDeviceMapGraph()
+            {
+                _graphData = graphData
+            };
+            _deviceMapGraph = graph;
         }
 
         /// <summary>
@@ -93,7 +151,7 @@ namespace Niantic.Lightship.AR.Mapping
         /// </summary>
         /// <returns>Serailized device map as byte array</returns>
         [Experimental]
-        public byte[] SerializeDeviceMap()
+        public byte[] Serialize()
         {
             if (!DeviceMapFeatureFlag.IsFeatureEnabled())
             {
@@ -109,7 +167,8 @@ namespace Niantic.Lightship.AR.Mapping
 
             var serialiableMapNode = new SerializableDeviceMap()
             {
-                _serializeableSingleDeviceMaps = serialzableDeviceMapNodes
+                _serializeableSingleDeviceMaps = serialzableDeviceMapNodes,
+                _graphData = _deviceMapGraph
             };
 
             //
@@ -131,7 +190,7 @@ namespace Niantic.Lightship.AR.Mapping
         /// <param name="serializedDeviceMap">Serialized device map as byte array</param>
         /// <returns>An instance of ARDeviceMap</returns>
         [Experimental]
-        public static ARDeviceMap CreateARDeviceMapFromSerializedData(byte[] serializedDeviceMap)
+        public static ARDeviceMap CreateFromSerializedData(byte[] serializedDeviceMap)
         {
             if (!DeviceMapFeatureFlag.IsFeatureEnabled())
             {
@@ -150,16 +209,19 @@ namespace Niantic.Lightship.AR.Mapping
             {
                 deviceMap._deviceMapNodes.Add(serialiableMapNode._serializeableSingleDeviceMaps[i]) ;
             }
+
+            deviceMap._deviceMapGraph = serialiableMapNode._graphData;
+
             return deviceMap;
         }
 
         /// <summary>
-        /// Get the default anchor payload of this device map
+        /// Get the anchor payload of this device map
         /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
         /// </summary>
         /// <returns>Persistent anchor payload as byte array</returns>
         [Experimental]
-        public byte[] GetDefaultAnchorPayload()
+        public byte[] GetAnchorPayload()
         {
             if (!DeviceMapFeatureFlag.IsFeatureEnabled())
             {

@@ -282,8 +282,6 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
 
             }
 
-#if NIANTIC_ARDK_EXPERIMENTAL_FEATURES
-
             public override bool GetFrameDiagnosticsUpdate(out XRPersistentAnchorFrameDiagnostics[] diagnosticsArray)
             {
                 diagnosticsArray = default;
@@ -340,8 +338,6 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
                 return true;
 
             }
-
-#endif
 
             public override bool GetVpsSessionId(out string vpsSessionId)
             {
@@ -532,7 +528,6 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
                 };
             }
 
-#if NIANTIC_ARDK_EXPERIMENTAL_FEATURES
             private XRPersistentAnchorFrameDiagnostics GetFrameDiagnostics(IntPtr diagnosticsIntPtr)
             {
                 if (!_nativeProviderHandle.IsValidHandle())
@@ -598,7 +593,6 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
                     ScoresPerDiagnosticLabel = scoresPerDiagnosticLabel
                 };
             }
-#endif
 
             public override XRPersistentAnchorConfiguration CurrentConfiguration
             {
@@ -620,6 +614,7 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
                         _currentConfiguration.TransformUpdateSmoothingEnabled,
                         _currentConfiguration.CloudLocalizationEnabled,
                         _currentConfiguration.SlickLocalizationEnabled,
+                        _currentConfiguration.SlickLearnedFeaturesEnabled,
                         _currentConfiguration.CloudLocalizerInitialRequestsPerSecond,
                         _currentConfiguration.CloudLocalizerContinuousRequestsPerSecond,
                         _currentConfiguration.SlickLocalizationFps,

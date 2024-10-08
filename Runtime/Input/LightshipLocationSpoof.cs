@@ -48,7 +48,7 @@ namespace Niantic.Lightship.AR
 
         private LocationInfo _locationInfo;
 
-        private float _latitude = 0.0f;
+        private float _latitude = 37.795322f;
 
         public float Latitude
         {
@@ -59,7 +59,7 @@ namespace Niantic.Lightship.AR
             }
         }
 
-        private float _longitude = 0.0f;
+        private float _longitude = -122.39243f;
 
         public float Longitude
         {

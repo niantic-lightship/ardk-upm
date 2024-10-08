@@ -39,7 +39,7 @@ namespace Niantic.Lightship.AR.PAM
 
         public abstract bool TryGetCameraIntrinsicsCStruct(out CameraIntrinsicsCStruct intrinsics);
 
-        public abstract bool TryGetDepthCameraIntrinsicsCStruct(out CameraIntrinsicsCStruct depthIntrinsics, Vector2Int depthResolution);
+        public abstract bool TryGetDepthCameraIntrinsicsCStruct(out CameraIntrinsicsCStruct depthIntrinsics);
 
         public abstract bool TryGetGpsLocation(out GpsLocationCStruct gps);
 

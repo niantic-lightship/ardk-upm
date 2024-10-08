@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 
 using Niantic.Lightship.AR.Common;
 using Niantic.Lightship.AR.Core;
+using Niantic.Lightship.AR.Subsystems.PersistentAnchor;
 using Niantic.Lightship.AR.Utilities;
 using Niantic.Lightship.AR.XRSubsystems;
 
@@ -61,14 +62,20 @@ namespace Niantic.Lightship.AR.PersistentAnchors
         /// <summary>
         /// Called when the state of an anchor has changed
         ///
-        /// Each invocation of this event contains a single Persistent Anchor that has had a state or pose change
-        ///     this frame.
-        /// Query the arg's arPersistentAnchor's TrackingState to determine its new
-        ///     TrackingState.
-        /// Query the arPersistentAnchor's PredictedPose to determine its new
-        ///     PredictedPose.
+        /// Each invocation of this event contains a single Persistent Anchor that has had a state or pose change this frame.
+        /// Query the arg's arPersistentAnchor's TrackingState to determine its new TrackingState.
+        /// Query the arPersistentAnchor's PredictedPose to determine its new PredictedPose.
         /// </summary>
         public event Action<ARPersistentAnchorStateChangedEventArgs> arPersistentAnchorStateChanged;
+
+        /// <summary>
+        /// Called when debug info is available
+        ///
+        /// Each invocation of this event contains a XRPersistentAnchorDebugInfo object
+        /// that contains arrays of XRPersistentAnchorNetworkRequestStatus, XRPersistentAnchorLocalizationStatus,
+        /// and XRPersistentAnchorFrameDiagnostics
+        /// </summary>
+        public event Action<XRPersistentAnchorDebugInfo> DebugInfoUpdated;
 
         /// <summary>
         /// The singleton instance reference of the ARPersistentAnchorManager.
@@ -88,7 +95,6 @@ namespace Niantic.Lightship.AR.PersistentAnchors
         /// </summary>
         protected override GameObject GetPrefab() => _defaultAnchorGameobject;
 
-        [Header("Experimental: Drift Mitigation")]
         [Tooltip("Continue to send localization requests after initial localization is achieved. " +
             "This refines the localization over time and mitigates drift, but consumes more bandwidth")]
         [SerializeField]
@@ -97,6 +103,31 @@ namespace Niantic.Lightship.AR.PersistentAnchors
         [Tooltip("Interpolate anchor updates instead of snapping. Only works when continuous localization is enabled")]
         [SerializeField]
         private bool _InterpolationEnabled = XRPersistentAnchorConfiguration.DefaultTransformUpdateSmoothingEnabled;
+
+        [Tooltip("Averages/Fuses multiple localization results to provide a more stable localization. Only works when continuous localization is enabled")]
+        [SerializeField]
+        private bool _TemporalFusionEnabled = XRPersistentAnchorConfiguration.DefaultTemporalFusionEnabled;
+
+        [Tooltip("JPEG compression quality for localization images. Must be between 1 and 100. This only applies to cloud localization.")]
+        [SerializeField]
+        [Range(1,100)]
+        private int _JpegCompressionQuality = XRPersistentAnchorConfiguration.DefaultJpegCompressionQuality;
+
+        [Tooltip("Number of seconds between server requests for initial localization. 0 value means as many requests as possible.")]
+        [SerializeField]
+        private float _InitialServiceRequestIntervalSeconds = XRPersistentAnchorConfiguration.DefaultCloudLocalizerInitialRequestsPerSecond.ZeroOrReciprocal();
+
+        [Tooltip("Number of seconds between server requests for continuous localization. 0 value means as many requests as possible.")]
+        [SerializeField]
+        private float _ContinuousServiceRequestIntervalSeconds = XRPersistentAnchorConfiguration.DefaultCloudLocalizerContinuousRequestsPerSecond.ZeroOrReciprocal();
+
+        [Tooltip("Whether to enable or disable frame diagnostics")]
+        [SerializeField]
+        private bool _DiagnosticsEnabled = XRPersistentAnchorConfiguration.DefaultDiagnosticsEnabled;
+
+        [Tooltip("Automatically tune VPS parameters based on preset configurations")]
+        [SerializeField]
+        private LightshipVpsUsageUtility.LightshipVpsUsageMode _VpsUsageMode = LightshipVpsUsageUtility.LightshipVpsUsageMode.Default;
 
         /// <summary>
         /// Number of seconds over which anchor interpolation occurs.
@@ -112,7 +143,6 @@ namespace Niantic.Lightship.AR.PersistentAnchors
 
         /// <summary>
         /// Whether to enable or disable continuous localization
-        /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
         /// </summary>
         public bool ContinuousLocalizationEnabled
         {
@@ -123,51 +153,12 @@ namespace Niantic.Lightship.AR.PersistentAnchors
         /// <summary>
         /// Whether to enable or disable legacy MonoBehaviour driven interpolation
         /// It is recommended to use the native solution "TransformUpdateSmoothingEnabled" instead of this property
-        /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
         /// </summary>
         public bool InterpolationEnabled { get; set; } = false;
 
-#if NIANTIC_ARDK_EXPERIMENTAL_FEATURES
-        [Tooltip("Averages/Fuses multiple localization results to provide a more stable localization. Only works when continuous localization is enabled")]
-        [SerializeField]
-        private bool _TemporalFusionEnabled = XRPersistentAnchorConfiguration.DefaultTemporalFusionEnabled;
-
-        [Tooltip("JPEG compression quality for localization images. Must be between 1 and 100.")]
-        [SerializeField]
-        [Range(1,100)]
-        private int _JpegCompressionQuality = XRPersistentAnchorConfiguration.DefaultJpegCompressionQuality;
-
-        [Header("Experimental: Drift Mitigation tuning")]
-        [FormerlySerializedAs("_CloudLocalizerMaxRequestsPerSecond")]
-        [Tooltip("Number of seconds between server requests for initial localization. 0 value means as many requests as possible.")]
-        [SerializeField]
-        private float _InitialServiceRequestIntervalSeconds = 1 / XRPersistentAnchorConfiguration.DefaultCloudLocalizerInitialRequestsPerSecond;
-
-        [Tooltip("Number of seconds between server requests for continuous localization. 0 value means as many requests as possible.")]
-        [SerializeField]
-        private float _ContinuousServiceRequestIntervalSeconds = 1 / XRPersistentAnchorConfiguration.DefaultCloudLocalizerContinuousRequestsPerSecond;
-
-        [Tooltip("Number of localization samples used to fuse. This value should account for the rate of localization requests. " +
-            "By default, it is recommended to cache around 5 seconds of localization samples to fuse")]
-        [SerializeField]
-        private uint _CloudLocalizationTemporalFusionWindowSize = XRPersistentAnchorConfiguration.DefaultCloudLocalizationTemporalFusionWindowSize;
-
-        [Header("Experimental: Diagnostics")]
-        [Tooltip("Whether to enable or disable frame diagnostics")]
-        [SerializeField]
-        private bool _DiagnosticsEnabled = XRPersistentAnchorConfiguration.DefaultDiagnosticsEnabled;
-
-        [Header("Experimental: Limited Localizations")]
-        [Tooltip("Suppress successful localizations and only report limited localizations. " +
-            "This is useful for debugging and testing limited localization flows. " +
-            "This is not recommended for production use.")]
-        [SerializeField]
-        private bool _LimitedLocalizationsOnly =
-            XRPersistentAnchorConfiguration.DefaultLimitedLocalizationsOnly;
-
         /// <summary>
         /// Whether to enable or disable temporal fusion.
-        /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
+        /// Fusion will average multiple localization results to provide a more stable localization.
         /// </summary>
         public bool TemporalFusionEnabled
         {
@@ -175,6 +166,12 @@ namespace Niantic.Lightship.AR.PersistentAnchors
             set => _TemporalFusionEnabled = value;
         }
 
+        /// <summary>
+        /// Defines the JPEG compression quality for localization images.
+        /// This only applies to cloud localization.
+        /// Lower compression qualities will result in less bandwidth usage
+        /// It is recommended to keep this above 20 to avoid localization quality loss
+        /// </summary>
         public int JpegCompressionQuality
         {
             get => _JpegCompressionQuality;
@@ -190,7 +187,6 @@ namespace Niantic.Lightship.AR.PersistentAnchors
 
         /// <summary>
         /// Whether to enable or disable transform update smoothing
-        /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
         /// </summary>
         public bool TransformUpdateSmoothingEnabled
         {
@@ -200,7 +196,6 @@ namespace Niantic.Lightship.AR.PersistentAnchors
 
         /// <summary>
         /// Number of seconds between server requests for initial localization. 0 value means as many requests as possible.
-        /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
         /// </summary>
         public float InitialServiceRequestIntervalSeconds
         {
@@ -210,13 +205,39 @@ namespace Niantic.Lightship.AR.PersistentAnchors
 
         /// <summary>
         /// Number of seconds between server requests for continuous localization. 0 value means as many requests as possible.
-        /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
         /// </summary>
         public float ContinuousServiceRequestIntervalSeconds
         {
             get => _ContinuousServiceRequestIntervalSeconds;
             set => _ContinuousServiceRequestIntervalSeconds = value;
         }
+
+        /// <summary>
+        /// Whether to enable or disable frame diagnostics
+        /// Listen to the DebugInfoUpdated event to get the diagnostics data
+        /// </summary>
+        public bool DiagnosticsEnabled
+        {
+            get => _DiagnosticsEnabled;
+            set => _DiagnosticsEnabled = value;
+        }
+
+#if NIANTIC_ARDK_EXPERIMENTAL_FEATURES
+        [Tooltip("Synchronize the fusion window size with the continuous service request interval")]
+        [SerializeField]
+        private bool _SyncFusionWindow = true;
+
+        [Tooltip("Number of localization samples used to fuse. This value should account for the rate of localization requests. " +
+            "By default, it is recommended to cache around 5 seconds of localization samples to fuse")]
+        [SerializeField]
+        private uint _CloudLocalizationTemporalFusionWindowSize = XRPersistentAnchorConfiguration.DefaultCloudLocalizationTemporalFusionWindowSize;
+
+        [Tooltip("Suppress successful localizations and only report limited localizations. " +
+            "This is useful for debugging and testing limited localization flows. " +
+            "This is not recommended for production use.")]
+        [SerializeField]
+        private bool _LimitedLocalizationsOnly =
+            XRPersistentAnchorConfiguration.DefaultLimitedLocalizationsOnly;
 
         /// <summary>
         /// Number of localization samples used to fuse
@@ -226,16 +247,6 @@ namespace Niantic.Lightship.AR.PersistentAnchors
         {
             get => _CloudLocalizationTemporalFusionWindowSize;
             set => _CloudLocalizationTemporalFusionWindowSize = value;
-        }
-
-        /// <summary>
-        /// Whether to enable or disable frame diagnostics
-        /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
-        /// </summary>
-        public bool DiagnosticsEnabled
-        {
-            get => _DiagnosticsEnabled;
-            set => _DiagnosticsEnabled = value;
         }
 
         /// <summary>
@@ -253,9 +264,7 @@ namespace Niantic.Lightship.AR.PersistentAnchors
         /// Set to 0 for processing every frame.
         /// </summary>
         public float SlickLocalizationRequestIntervalSeconds { get; set; }
-            = XRPersistentAnchorConfiguration.DefaultSlickLocalizationFps == 0
-                ? 0
-                : 1 / XRPersistentAnchorConfiguration.DefaultSlickLocalizationFps;
+            = XRPersistentAnchorConfiguration.DefaultSlickLocalizationFps.ZeroOrReciprocal();
 
         /// <summary>
         /// Defines the size of the temporal fusion window for Slick Localization.
@@ -301,12 +310,27 @@ namespace Niantic.Lightship.AR.PersistentAnchors
                     Log.Warning("Slick Localization feature cannot be enabled. Use feature flag.");
                     return;
                 }
-                if (subsystem != null && subsystem.running)
-                {
-                    Log.Warning("Configured SlickLocalizationEnabled while the subsystem is running." +
-                        "Stop the subsystem and set the CurrentConfiguration instead.");
-                }
                 _slickLocalizationEnabled = value;
+            }
+        }
+
+        /// <summary>
+        /// Enable Learned Features in Device Localization
+        /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
+        /// </summary>
+        private bool _slickLearnedFeaturesEnabled = XRPersistentAnchorConfiguration.DefaultSlickLearnedFeaturesEnabled;
+
+        public bool SlickLearnedFeaturesEnabled
+        {
+            get => _slickLearnedFeaturesEnabled;
+            set
+            {
+                if (!LightshipUnityContext.FeatureEnabled(XRPersistentAnchorSubsystem.SlickLocalizationFeatureFlagName))
+                {
+                    Log.Warning("Slick LearnedFeatures feature cannot be enabled. Use feature flag.");
+                    return;
+                }
+                _slickLearnedFeaturesEnabled = value;
             }
         }
 
@@ -383,25 +407,30 @@ namespace Niantic.Lightship.AR.PersistentAnchors
             cfg.CloudLocalizationEnabled = CloudLocalizationEnabled;
             cfg.ContinuousLocalizationEnabled = ContinuousLocalizationEnabled;
             cfg.TransformUpdateSmoothingEnabled = _InterpolationEnabled;
+            cfg.TemporalFusionEnabled = TemporalFusionEnabled;
+
+            cfg.JpegCompressionQuality = _JpegCompressionQuality;
+            cfg.CloudLocalizerInitialRequestsPerSecond = InitialServiceRequestIntervalSeconds.ZeroOrReciprocal();
+            cfg.CloudLocalizerContinuousRequestsPerSecond = ContinuousServiceRequestIntervalSeconds.ZeroOrReciprocal();
+
+            cfg.DiagnosticsEnabled = DiagnosticsEnabled;
 
 #if NIANTIC_ARDK_EXPERIMENTAL_FEATURES
-            cfg.TemporalFusionEnabled = TemporalFusionEnabled;
-            cfg.CloudLocalizerInitialRequestsPerSecond = InitialServiceRequestIntervalSeconds == 0
-                ? 0
-                : 1 / InitialServiceRequestIntervalSeconds;
+            if (_SyncFusionWindow)
+            {
+                cfg.CloudLocalizationTemporalFusionWindowSize =
+                    XRPersistentAnchorConfiguration.DetermineFusionWindowFromRequestRate
+                        (cfg.CloudLocalizerContinuousRequestsPerSecond);
+            }
+            else
+            {
+                cfg.CloudLocalizationTemporalFusionWindowSize = CloudLocalizationTemporalFusionWindowSize;
+            }
 
-            cfg.CloudLocalizerContinuousRequestsPerSecond =
-                ContinuousServiceRequestIntervalSeconds == 0
-                    ? 0
-                    : 1 / ContinuousServiceRequestIntervalSeconds;
-            cfg.CloudLocalizationTemporalFusionWindowSize = CloudLocalizationTemporalFusionWindowSize;
-            cfg.DiagnosticsEnabled = DiagnosticsEnabled;
             cfg.LimitedLocalizationsOnly = LimitedLocalizationsOnly;
-            cfg.JpegCompressionQuality = _JpegCompressionQuality;
             cfg.SlickLocalizationEnabled = SlickLocalizationEnabled;
-            cfg.SlickLocalizationFps = SlickLocalizationRequestIntervalSeconds == 0
-                ? 0
-                : 1 / SlickLocalizationRequestIntervalSeconds;
+            cfg.SlickLearnedFeaturesEnabled = SlickLearnedFeaturesEnabled;
+            cfg.SlickLocalizationFps = SlickLocalizationRequestIntervalSeconds.ZeroOrReciprocal();
             cfg.SlickLocalizationTemporalFusionWindowSize = SlickLocalizationTemporalFusionWindowSize;
 #endif
 
@@ -414,9 +443,22 @@ namespace Niantic.Lightship.AR.PersistentAnchors
             {
                 subsystem.OnSubsystemStop += OnSubsystemStop;
                 subsystem.OnBeforeSubsystemStart += OnBeforeSubsystemStart;
+                subsystem.debugInfoProvided += OnDebugInfoUpdated;
             }
 
             RequestLocationPermission();
+        }
+
+        private void OnDebugInfoUpdated(XRPersistentAnchorDebugInfo args)
+        {
+            try
+            {
+                DebugInfoUpdated?.Invoke(args);
+            }
+            catch (Exception e)
+            {
+                Log.Error("Error invoking DebugInfoUpdated event: " + e);
+            }
         }
 
         private void OnBeforeSubsystemStart()
@@ -446,6 +488,7 @@ namespace Niantic.Lightship.AR.PersistentAnchors
             {
                 subsystem.OnSubsystemStop -= OnSubsystemStop;
                 subsystem.OnBeforeSubsystemStart -= OnBeforeSubsystemStart;
+                subsystem.debugInfoProvided -= OnDebugInfoUpdated;
 
                 // There is a weird behavior on Android that skips OnDisable
                 // We explicitly call subsystem.Stop() here to ensure the proper state of subsystem

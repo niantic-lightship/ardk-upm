@@ -66,6 +66,7 @@ namespace Niantic.Lightship.AR.Meshing
       [Tooltip("Enable mesh filtering to select which semantic segmentation channels to include in the mesh.")]
       private bool _isMeshFilteringEnabled = false;
 
+      [SerializeField]
       private ARSemanticSegmentationManager _semanticSegmentationManager;
 
       [SerializeField]
@@ -246,9 +247,18 @@ namespace Niantic.Lightship.AR.Meshing
           get => _isMeshFilteringEnabled;
           set
           {
-              if (value == true)
+              if (value)
               {
-                  value = ValidateSemanticSegmentationManager();
+                  if (_semanticSegmentationManager == null)
+                  {
+                      _semanticSegmentationManager = FindAnyObjectByType<ARSemanticSegmentationManager>(FindObjectsInactive.Include);
+                      if (_semanticSegmentationManager == null)
+                      {
+                          Log.Error("There must be an ARSemanticSegmentationManager " +
+                              "in the scene to enable mesh filtering.");
+                          value = false;
+                      }
+                  }
               }
 
               if (value != _isMeshFilteringEnabled)
@@ -408,22 +418,6 @@ namespace Niantic.Lightship.AR.Meshing
         return mask;
       }
 
-      private bool ValidateSemanticSegmentationManager()
-      {
-          if (_semanticSegmentationManager == null)
-          {
-              _semanticSegmentationManager = FindObjectOfType<ARSemanticSegmentationManager>();
-              if (_semanticSegmentationManager == null || !_semanticSegmentationManager.isActiveAndEnabled)
-              {
-                  Log.Warning(
-                      "An active Semantic Segmentation Manager needs to be present in the scene to configure with mesh filtering. Automatically disabling mesh filtering.");
-                  return false;
-              }
-          }
-
-          return true;
-      }
-
       public void Configure()
       {
           // Only call into native code if an XRMeshSubsystem is loaded.
@@ -434,22 +428,26 @@ namespace Niantic.Lightship.AR.Meshing
 
           if (IsMeshFilteringEnabled)
           {
-              IsMeshFilteringEnabled = ValidateSemanticSegmentationManager();
-          }
-
-          if (IsMeshFilteringEnabled)
-          {
-              // If Mesh Filtering is enabled, but the Semantic Segmentation Manager does not have metadata,
-              // we can't configure yet, so wait.
-              _semanticSegmentationManager.MetadataInitialized += OnMetadataInitialized;
-              if (!_semanticSegmentationManager.IsMetadataAvailable)
+              if (_semanticSegmentationManager == null)
               {
-                  _isDirty = true;
-                  return;
+                  Log.Error("Missing ARSemanticSegmentationManager component reference. " +
+                      "One in the scene is required to enable mesh filtering.");
+                  IsMeshFilteringEnabled = false;
               }
+              else
+              {
+                  // If Mesh Filtering is enabled, but the Semantic Segmentation Manager does not have metadata,
+                  // we can't configure yet, so wait.
+                  _semanticSegmentationManager.MetadataInitialized += OnMetadataInitialized;
+                  if (!_semanticSegmentationManager.IsMetadataAvailable)
+                  {
+                      _isDirty = true;
+                      return;
+                  }
 
-              _packedAllowList = (int)ChannelListToPackedMask(_allowList);
-              _packedBlockList = (int)ChannelListToPackedMask(_blockList);
+                  _packedAllowList = (int)ChannelListToPackedMask(_allowList);
+                  _packedBlockList = (int)ChannelListToPackedMask(_blockList);
+              }
           }
 
           _isDirty = false;

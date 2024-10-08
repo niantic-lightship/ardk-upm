@@ -22,6 +22,13 @@ namespace Niantic.Lightship.AR.Mapping
         public bool TrackingEdgesEnabled { get; set; }  = true;
 
         /// <summary>
+        /// Config to enable/disable use of learned features during mapping
+        /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
+        /// </summary>
+        [Experimental]
+        public bool LearnedFeaturesEnabled { get; set; }  = false;
+
+        /// <summary>
         /// Target Framerate to run Mappers. The 0 value indicates maximun framerate
         /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
         /// </summary>
@@ -42,9 +49,21 @@ namespace Niantic.Lightship.AR.Mapping
         [Experimental]
         public float SplitterMaxDurationSeconds { get; set; } = 10.0f;
 
+        /// <summary>
+        /// Status if running mapping or not
+        /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
+        /// </summary>
+        [Experimental]
+        public bool IsMapping
+        {
+            get => _isMapping;
+        }
+
         private IMappingApi _mapper;
 
         private bool _isRunning;
+
+        private bool _isMapping;
 
         internal void Init()
         {
@@ -55,6 +74,7 @@ namespace Niantic.Lightship.AR.Mapping
             _mapper = new NativeMappingApi();
             _mapper.Create(LightshipUnityContext.UnityContextHandle);
             _isRunning = false;
+            _isMapping = false;
         }
 
         internal void Destroy()
@@ -69,6 +89,7 @@ namespace Niantic.Lightship.AR.Mapping
                 _mapper.Stop();
                 _isRunning = false;
             }
+            _isMapping = false;
             _mapper.Dispose();
         }
 
@@ -81,9 +102,10 @@ namespace Niantic.Lightship.AR.Mapping
             {
                 return;
             }
-            _mapper.Configure(TrackingEdgesEnabled, TargetFrameRate, SplitterMaxDistanceMeters, SplitterMaxDurationSeconds);
+            _mapper.Configure(TrackingEdgesEnabled, LearnedFeaturesEnabled, TargetFrameRate, SplitterMaxDistanceMeters, SplitterMaxDurationSeconds);
             _mapper.Start();
             _isRunning = true;
+            _isMapping = false;
         }
 
         /// <summary>
@@ -97,6 +119,15 @@ namespace Niantic.Lightship.AR.Mapping
             }
             _mapper.Stop();
             _isRunning = false;
+            _isMapping = false;
+        }
+
+        /// <summary>
+        /// Update configuration into the lower layer
+        /// </summary>
+        internal void UpdateConfiguration()
+        {
+            _mapper.Configure(TrackingEdgesEnabled, LearnedFeaturesEnabled, TargetFrameRate, SplitterMaxDistanceMeters, SplitterMaxDurationSeconds);
         }
 
         /// <summary>
@@ -111,6 +142,7 @@ namespace Niantic.Lightship.AR.Mapping
                 return;
             }
             _mapper.StartMapping();
+            _isMapping = true;
         }
 
         /// <summary>
@@ -125,6 +157,7 @@ namespace Niantic.Lightship.AR.Mapping
                 return;
             }
             _mapper.StopMapping();
+            _isMapping = false;
         }
 
         internal void UseFakeMappingApi(IMappingApi mappingApi)

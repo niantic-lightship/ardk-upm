@@ -17,6 +17,7 @@ namespace Niantic.Lightship.AR.Mapping
         void Configure
         (
             bool trackingEdgesEnabled,
+            bool slickLearnedFeaturesEnabled,
             UInt32 slickMapperFps,
             float splitterMaxDistanceMeters,
             float splitterMaxDurationSeconds

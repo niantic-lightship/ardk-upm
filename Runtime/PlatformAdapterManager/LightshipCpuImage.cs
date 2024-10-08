@@ -31,7 +31,7 @@ namespace Niantic.Lightship.AR.PAM
     }
 
     /// <summary>
-    /// A Niantic ARDK intermediate class to hold image data before sending down to native via FrameDataCStruct.
+    /// A Niantic ARDK intermediate class to hold image data before sending down to native via ARDKFrameData.
     /// Should be able to hold references to XRCpuImage, MagicLeap and others' data. Does not own any of it.
     ///
     /// Is not related to LightshipCpuImageApi.
@@ -48,21 +48,29 @@ namespace Niantic.Lightship.AR.PAM
                 return false;
             }
 
-            lightshipCpuImage = new LightshipCpuImage(xrCpuImage.format.FromUnityToArdk(),
-                (uint)xrCpuImage.width, (uint)xrCpuImage.height);
-
+            LightshipCpuImagePlane[] planes =  new LightshipCpuImagePlane[MaxPlanes];
             for (int i = 0; i < xrCpuImage.planeCount; ++i)
             {
                 unsafe
                 {
                     var plane = xrCpuImage.GetPlane(i);
-                    lightshipCpuImage.Planes[i].DataPtr = (IntPtr)plane.data.GetUnsafeReadOnlyPtr();
-                    lightshipCpuImage.Planes[i].DataSize = (uint)plane.data.Length;
-                    lightshipCpuImage.Planes[i].PixelStride = (uint)plane.pixelStride;
-                    lightshipCpuImage.Planes[i].RowStride = (uint)plane.rowStride;
+                    planes[i].DataPtr = (IntPtr)plane.data.GetUnsafeReadOnlyPtr();
+                    planes[i].DataSize = (uint)plane.data.Length;
+                    planes[i].PixelStride = (uint)plane.pixelStride;
+                    planes[i].RowStride = (uint)plane.rowStride;
                 }
             }
 
+            // Passing plane 1 and 2 represents U and V on Android to determine type
+            IntPtr plane1Ptr = IntPtr.Zero;
+            IntPtr plane2Ptr = IntPtr.Zero;
+            if (xrCpuImage.planeCount == 3) {
+                plane1Ptr = planes[1].DataPtr;
+                plane2Ptr = planes[2].DataPtr;
+            }
+            lightshipCpuImage = new LightshipCpuImage(xrCpuImage.format.FromUnityToArdk(plane1Ptr, plane2Ptr),
+                (uint)xrCpuImage.width, (uint)xrCpuImage.height);
+            lightshipCpuImage.Planes = planes;
             return true;
         }
 

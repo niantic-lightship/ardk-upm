@@ -30,6 +30,7 @@ namespace Niantic.Lightship.AR.MapStorageAccess
             {
                 return;
             }
+
             Lightship_ARDK_Unity_MapStorageAccess_Release(_nativeHandle);
             _nativeHandle = IntPtr.Zero;
         }
@@ -40,6 +41,7 @@ namespace Niantic.Lightship.AR.MapStorageAccess
             {
                 return;
             }
+
             Lightship_ARDK_Unity_MapStorageAccess_Start(_nativeHandle);
         }
 
@@ -49,6 +51,7 @@ namespace Niantic.Lightship.AR.MapStorageAccess
             {
                 return;
             }
+
             Lightship_ARDK_Unity_MapStorageAccess_Stop(_nativeHandle);
         }
 
@@ -67,7 +70,7 @@ namespace Niantic.Lightship.AR.MapStorageAccess
             {
                 return;
             }
-    
+
             var configurationCStruct = new MapStorageAccessConfigurationCStruct();
             configurationCStruct.outputEdgeType = (UInt64)edgeType;
             Lightship_ARDK_Unity_MapStorageAccess_Configure(_nativeHandle, configurationCStruct);
@@ -88,10 +91,10 @@ namespace Niantic.Lightship.AR.MapStorageAccess
                 fixed (byte* bytePtr = dataBytes)
                 {
                     dataPtr = (IntPtr)bytePtr;
+                    Lightship_ARDK_Unity_MapStorageAccess_AddMap(_nativeHandle, dataPtr, dataSize);
                 }
             }
 
-            Lightship_ARDK_Unity_MapStorageAccess_AddMap(_nativeHandle, dataPtr, dataSize);
         }
 
         public void AddSubGraph(byte[] dataBytes)
@@ -108,10 +111,10 @@ namespace Niantic.Lightship.AR.MapStorageAccess
                 fixed (byte* bytePtr = dataBytes)
                 {
                     dataPtr = (IntPtr)bytePtr;
+                    Lightship_ARDK_Unity_MapStorageAccess_AddGraph(_nativeHandle, dataPtr, dataSize);
                 }
             }
 
-            Lightship_ARDK_Unity_MapStorageAccess_AddGraph(_nativeHandle, dataPtr, dataSize);
         }
 
         public void Clear()
@@ -132,7 +135,8 @@ namespace Niantic.Lightship.AR.MapStorageAccess
                 return false;
             }
 
-            var handle = Lightship_ARDK_Unity_MapStorageAccess_AcquireMaps(_nativeHandle, out var mapList, out var listCount);
+            var handle =
+                Lightship_ARDK_Unity_MapStorageAccess_AcquireMaps(_nativeHandle, out var mapList, out var listCount);
             if (!handle.IsValidHandle())
             {
                 Log.Warning("Invalid handle returned when attempt to acquire map data");
@@ -190,7 +194,8 @@ namespace Niantic.Lightship.AR.MapStorageAccess
                 return false;
             }
 
-            var handle = Lightship_ARDK_Unity_MapStorageAccess_AcquireGraphs(_nativeHandle, out var blobList, out var listCount);
+            var handle =
+                Lightship_ARDK_Unity_MapStorageAccess_AcquireGraphs(_nativeHandle, out var blobList, out var listCount);
 
             if (listCount == 0)
             {
@@ -204,6 +209,7 @@ namespace Niantic.Lightship.AR.MapStorageAccess
                 {
                     Log.Warning("Invalid graph handle");
                 }
+
                 return false;
             }
 
@@ -250,55 +256,54 @@ namespace Niantic.Lightship.AR.MapStorageAccess
                 return false;
             }
 
-
             // Get data from subgraphs array
-
-            List<IntPtr> subgraphPtrs = new();
-            List<UInt32> subgraphSizes = new();
-
-            for (int i = 0; i < subgraphs.Length; i++)
+            var ptrHandles = new GCHandle[subgraphs.Length];
+            var ptrsArray = new IntPtr[subgraphs.Length];
+            var sizesArray = new UInt32[subgraphs.Length];
+            for (var i = 0; i < subgraphs.Length; i++)
             {
                 var subgraphData = subgraphs[i].GetData();
-                subgraphSizes.Add((UInt32)subgraphData.Length);
+                sizesArray[i] = (UInt32)subgraphData.Length;
+                ptrHandles[i] = GCHandle.Alloc(subgraphData, GCHandleType.Pinned);
                 unsafe
                 {
                     fixed (byte* ptr = subgraphData)
                     {
-                        subgraphPtrs.Add((IntPtr)ptr);
+                        ptrsArray[i] = (IntPtr)ptr;
                     }
                 }
             }
 
             // Merge
-
             IntPtr mergedSubGraphHandle = IntPtr.Zero;
-
-            IntPtr[] ptrsArray = subgraphPtrs.ToArray();
-            UInt32[] sizesArray = subgraphSizes.ToArray();
+            UInt32 subgraphsCount = (UInt32)subgraphs.Length;
             unsafe
             {
                 IntPtr dataPtr = IntPtr.Zero;
-                fixed (IntPtr* ptr = ptrsArray)
-                {
-                    dataPtr = (IntPtr)ptr;
-                }
-
                 IntPtr sizesPtr = IntPtr.Zero;
-                fixed (UInt32* ptr = sizesArray)
+                fixed (IntPtr* dataRawPtr = ptrsArray)
                 {
-                    sizesPtr = (IntPtr)ptr;
+                    dataPtr = (IntPtr) dataRawPtr;
+                    fixed (UInt32* sizesRawPtr = sizesArray)
+                    {
+                        sizesPtr = (IntPtr)sizesRawPtr;
+                        mergedSubGraphHandle =
+                            Lightship_ARDK_Unity_MapStorageAccess_MergeSubGraphs(dataPtr, sizesPtr, subgraphsCount,
+                                onlyKeepLatestEdges);
+                    }
                 }
-
-                UInt32 subgraphsCount = (UInt32)subgraphs.Length;
-
-                mergedSubGraphHandle = Lightship_ARDK_Unity_MapStorageAccess_MergeSubGraphs(dataPtr, sizesPtr, subgraphsCount, onlyKeepLatestEdges);
             }
 
+            // Clean up pinned subgraph pointer handles
+            foreach (var ptrHandle in ptrHandles)
+            {
+                ptrHandle.Free();
+            }
 
             // Extract
             mergedSubgraph = GetMapSubGraph(mergedSubGraphHandle);
 
-            // Clean Up
+            // Clean Up merged graph resource
             Lightship_ARDK_Unity_MapStorageAccess_ReleaseResource(mergedSubGraphHandle);
 
             return true;
@@ -315,6 +320,48 @@ namespace Niantic.Lightship.AR.MapStorageAccess
             anchorPayload = new byte[dataSize];
             Marshal.Copy(dataPtr, anchorPayload, 0, (int)dataSize);
             Lightship_ARDK_Unity_MapStorageAccess_ReleaseResource(anchorHandle);
+        }
+
+        public void ExtractMapMetaData(byte[] mapBlob, out Vector3[] points, out float[] errors, out Vector3 center, out string mapType)
+        {
+
+            IntPtr mapBlobPtr = IntPtr.Zero;
+            unsafe
+            {
+                fixed (byte* bytePtr = mapBlob)
+                {
+                    mapBlobPtr = (IntPtr)bytePtr;
+                    var handle = Lightship_ARDK_Unity_MapStorageAccess_ExtractMapMetadata
+                    (
+                        mapBlobPtr,
+                        (UInt64)mapBlob.Length,
+                        out var pointsXyzPtr,
+                        out var errorsPtr,
+                        out var pointsCount,
+                        out var centerX,
+                        out var centerY,
+                        out var centerZ,
+                        out var decriptor_name
+                    );
+                    var pointsArray = new float[pointsCount * 3];
+                    errors = new float[pointsCount];
+                    Marshal.Copy(pointsXyzPtr, pointsArray, 0, pointsArray.Length);
+                    Marshal.Copy(errorsPtr, errors, 0, errors.Length);
+                    points = new Vector3[pointsCount];
+                    for (var i = 0; i < (int)pointsCount; i++)
+                    {
+                        points[i].x = pointsArray[i * 3] - centerX;
+                        points[i].y = -(pointsArray[i * 3 + 1] - centerY); // convert to unity coords
+                        points[i].z = pointsArray[i * 3 + 2] - centerZ;
+                    }
+
+                    center = new Vector3(centerX, -centerY, centerZ);  // convert to unity coords
+                    mapType = Marshal.PtrToStringAnsi(decriptor_name);
+
+                    // clean up the native side resource for the metadata
+                    Lightship_ARDK_Unity_MapStorageAccess_ReleaseMapMetadata(handle);
+                }
+            }
         }
 
         private MapNode GetMapNode(IntPtr handle)
@@ -341,7 +388,9 @@ namespace Niantic.Lightship.AR.MapStorageAccess
             // handle validity has to be checked in the caller side
 
             // Get data bytes
-            bool success = Lightship_ARDK_Unity_MapStorageAccess_ExtractGraph(handle, out var dataPtr, out var dataSize, out var edgeType);
+            bool success =
+                Lightship_ARDK_Unity_MapStorageAccess_ExtractGraph(handle, out var dataPtr, out var dataSize,
+                    out var edgeType);
             if (!success || dataPtr == IntPtr.Zero)
             {
                 Log.Error("GetMapNode(): Couldn't extract device graph blob!");
@@ -361,6 +410,7 @@ namespace Niantic.Lightship.AR.MapStorageAccess
                 Debug.LogWarning("No valid MapStorageAccess module handle");
                 return false;
             }
+
             return true;
         }
 
@@ -379,14 +429,17 @@ namespace Niantic.Lightship.AR.MapStorageAccess
         private static extern void Lightship_ARDK_Unity_MapStorageAccess_Stop(IntPtr feature_handle);
 
         [DllImport(LightshipPlugin.Name)]
-        private static extern void Lightship_ARDK_Unity_MapStorageAccess_Configure(IntPtr feature_handle, MapStorageAccessConfigurationCStruct config);
+        private static extern void Lightship_ARDK_Unity_MapStorageAccess_Configure(IntPtr feature_handle,
+            MapStorageAccessConfigurationCStruct config);
 
         [DllImport(LightshipPlugin.Name)]
-        private static extern void Lightship_ARDK_Unity_MapStorageAccess_AddMap(IntPtr feature_handle, IntPtr dataPtr, int dataSize);
+        private static extern void Lightship_ARDK_Unity_MapStorageAccess_AddMap(IntPtr feature_handle, IntPtr dataPtr,
+            int dataSize);
 
 
         [DllImport(LightshipPlugin.Name)]
-        private static extern void Lightship_ARDK_Unity_MapStorageAccess_AddGraph(IntPtr feature_handle, IntPtr dataPtr, int dataSize);
+        private static extern void Lightship_ARDK_Unity_MapStorageAccess_AddGraph(IntPtr feature_handle, IntPtr dataPtr,
+            int dataSize);
 
         [DllImport(LightshipPlugin.Name)]
         private static extern void Lightship_ARDK_Unity_MapStorageAccess_Clear(IntPtr feature_handle);
@@ -408,7 +461,7 @@ namespace Niantic.Lightship.AR.MapStorageAccess
         );
 
         [DllImport(LightshipPlugin.Name)]
-        [return:MarshalAs(UnmanagedType.I1)]
+        [return: MarshalAs(UnmanagedType.I1)]
         private static extern bool Lightship_ARDK_Unity_MapStorageAccess_ExtractMap
         (
             IntPtr map_handle,
@@ -418,7 +471,7 @@ namespace Niantic.Lightship.AR.MapStorageAccess
         );
 
         [DllImport(LightshipPlugin.Name)]
-        [return:MarshalAs(UnmanagedType.I1)]
+        [return: MarshalAs(UnmanagedType.I1)]
         private static extern bool Lightship_ARDK_Unity_MapStorageAccess_ExtractGraph
         (
             IntPtr blob_handle,
@@ -429,7 +482,7 @@ namespace Niantic.Lightship.AR.MapStorageAccess
 
         [DllImport(LightshipPlugin.Name)]
         private static extern IntPtr Lightship_ARDK_Unity_MapStorageAccess_MergeSubGraphs
-        (   
+        (
             IntPtr dataPtr,
             IntPtr sizesPtr,
             UInt32 subgraphsCount,
@@ -457,5 +510,24 @@ namespace Niantic.Lightship.AR.MapStorageAccess
             IntPtr anchorHandle
         );
 
+        [DllImport(LightshipPlugin.Name)]
+        private static extern IntPtr Lightship_ARDK_Unity_MapStorageAccess_ExtractMapMetadata
+        (
+            IntPtr map_blob,
+            UInt64 map_blob_size,
+            out IntPtr points_xyz,
+            out IntPtr errors,
+            out UInt64 points_count,
+            out float center_x,
+            out float center_y,
+            out float center_z,
+            out IntPtr decriptor_name
+        );
+
+        [DllImport(LightshipPlugin.Name)]
+        private static extern void Lightship_ARDK_Unity_MapStorageAccess_ReleaseMapMetadata
+        (
+            IntPtr map_metadata_handle
+        );
     }
 }

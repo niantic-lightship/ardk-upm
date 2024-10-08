@@ -27,7 +27,6 @@ namespace Niantic.Lightship.AR.Core
         public static IntPtr UnityContextHandle { get; private set; } = IntPtr.Zero;
 
         internal static PlatformAdapterManager PlatformAdapterManager { get; private set; }
-        private static IntPtr s_propertyBagHandle = IntPtr.Zero;
         private static EnvironmentConfig s_environmentConfig;
         private static UserConfig s_userConfig;
         private static TelemetryService s_telemetryService;
@@ -128,8 +127,6 @@ namespace Niantic.Lightship.AR.Core
             }
             OnUnityContextHandleInitialized?.Invoke();
 
-            s_propertyBagHandle = NativeApi.Lightship_ARDK_Unity_Property_Bag_Create(UnityContextHandle);
-
             ProfilerUtility.RegisterProfiler(new UnityProfiler());
             ProfilerUtility.RegisterProfiler(new CTraceProfiler());
 
@@ -189,12 +186,6 @@ namespace Niantic.Lightship.AR.Core
                 Log.Info($"Shutting down {nameof(LightshipUnityContext)}");
 
                 DisposePam();
-
-                if (s_propertyBagHandle != IntPtr.Zero)
-                {
-                    NativeApi.Lightship_ARDK_Unity_Property_Bag_Release(s_propertyBagHandle);
-                    s_propertyBagHandle = IntPtr.Zero;
-                }
 
                 s_telemetryService?.Dispose();
                 s_telemetryService = null;
@@ -256,6 +247,16 @@ namespace Niantic.Lightship.AR.Core
             return pathInTempCache;
         }
 
+        public static IntPtr GetCoreContext(IntPtr unityContext)
+        {
+            return NativeApi.Lightship_ARDK_Unity_Context_GetCoreContext(unityContext);
+        }
+
+        public static IntPtr GetCommonContext(IntPtr unityContext)
+        {
+            return NativeApi.Lightship_ARDK_Unity_Context_GetCommonContext(unityContext);
+        }
+
         /// <summary>
         /// Container to wrap the native Lightship C APIs
         /// </summary>
@@ -269,17 +270,13 @@ namespace Niantic.Lightship.AR.Core
             public static extern void Lightship_ARDK_Unity_Context_Shutdown(IntPtr unityContext);
 
             [DllImport(LightshipPlugin.Name)]
-            public static extern IntPtr Lightship_ARDK_Unity_Property_Bag_Create(IntPtr unityContext);
-
-            [DllImport(LightshipPlugin.Name)]
-            public static extern void Lightship_ARDK_Unity_Property_Bag_Release(IntPtr bagHandle);
-
-            [DllImport(LightshipPlugin.Name)]
-            public static extern bool Lightship_ARDK_Unity_Property_Bag_Put(IntPtr bagHandle, string key, string value);
-
-            [DllImport(LightshipPlugin.Name)]
             public static extern bool Lightship_ARDK_Unity_Context_FeatureEnabled(IntPtr unityContext, string featureName);
 
+            [DllImport(LightshipPlugin.Name)]
+            public static extern IntPtr Lightship_ARDK_Unity_Context_GetCoreContext(IntPtr unityContext);
+
+            [DllImport(LightshipPlugin.Name)]
+            public static extern IntPtr Lightship_ARDK_Unity_Context_GetCommonContext(IntPtr unityContext);
         }
 
 

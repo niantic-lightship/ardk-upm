@@ -1,6 +1,7 @@
 // Copyright 2022-2024 Niantic.
 
 using System;
+using System.Collections;
 using Niantic.Lightship.AR.MapStorageAccess;
 using Niantic.Lightship.AR.Utilities;
 using Niantic.Lightship.AR.Utilities.Logging;
@@ -121,7 +122,14 @@ namespace Niantic.Lightship.AR.Mapping
         /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
         /// </summary>
         [Experimental]
-        public event Action<ARDeviceMap> OnDeviceMapUpdated;
+        public event Action<ARDeviceMap> DeviceMapUpdated;
+
+        /// <summary>
+        /// An event when device map is finalized and ready to save
+        /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
+        /// </summary>
+        [Experimental]
+        public event Action<ARDeviceMap> DeviceMapFinalized;
 
         // private vars
 
@@ -130,6 +138,10 @@ namespace Niantic.Lightship.AR.Mapping
         private OutputEdgeType _outputEdgeType = OutputEdgeType.All;
 
         private ARDeviceMap _arDeviceMap = new ();
+
+        private bool _mapFinalizedEventInvoked = false;
+
+        private const float TimeoutToForceInvokeMapFinalizedEvent = 4.0f;
 
         // Monobehaviour methods
         private void Awake()
@@ -143,6 +155,27 @@ namespace Niantic.Lightship.AR.Mapping
             DeviceMappingController.Init();
         }
 
+        private void OnEnable()
+        {
+            if (!DeviceMapFeatureFlag.IsFeatureEnabled())
+            {
+                return;
+            }
+            DeviceMapAccessController.StartNativeModule();
+            DeviceMappingController.StartNativeModule();
+        }
+
+        private void OnDisable()
+        {
+            if (!DeviceMapFeatureFlag.IsFeatureEnabled())
+            {
+                return;
+            }
+            DeviceMapAccessController.StopNativeModule();
+            DeviceMappingController.StopNativeModule();
+
+        }
+
         private void Start()
         {
             if (!DeviceMapFeatureFlag.IsFeatureEnabled())
@@ -153,8 +186,6 @@ namespace Niantic.Lightship.AR.Mapping
             DeviceMappingController.TargetFrameRate = _mappingTargetFrameRate;
             DeviceMappingController.SplitterMaxDistanceMeters = _mappingSplitterMaxDistanceMeters;
             DeviceMappingController.SplitterMaxDurationSeconds = _mappingSplitterMaxDurationSeconds;
-            DeviceMapAccessController.StartNativeModule();
-            DeviceMappingController.StartNativeModule();
         }
 
         private void OnDestroy()
@@ -187,6 +218,28 @@ namespace Niantic.Lightship.AR.Mapping
         // public methods
 
         /// <summary>
+        /// Asynchronously restarts the underlying module with the current configuration.
+        /// </summary>
+        public IEnumerator RestartModuleAsyncCoroutine()
+        {
+            if (DeviceMapFeatureFlag.IsFeatureEnabled())
+            {
+                DeviceMappingController.TargetFrameRate = _mappingTargetFrameRate;
+                DeviceMappingController.SplitterMaxDistanceMeters = _mappingSplitterMaxDistanceMeters;
+                DeviceMappingController.SplitterMaxDurationSeconds = _mappingSplitterMaxDurationSeconds;
+                DeviceMappingController.UpdateConfiguration();
+
+                // restart native modules to enable new configs
+                yield return null;
+                DeviceMapAccessController.StopNativeModule();
+                DeviceMappingController.StopNativeModule();
+                yield return null;
+                DeviceMapAccessController.StartNativeModule();
+                DeviceMappingController.StartNativeModule();
+            }
+        }
+
+        /// <summary>
         ///  Start map generation
         /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
         /// </summary>
@@ -198,10 +251,9 @@ namespace Niantic.Lightship.AR.Mapping
                 return;
             }
 
-            DeviceMappingController.TargetFrameRate = _mappingTargetFrameRate;
-            DeviceMappingController.SplitterMaxDistanceMeters = _mappingSplitterMaxDistanceMeters;
-            DeviceMappingController.SplitterMaxDurationSeconds = _mappingSplitterMaxDurationSeconds;
+            // Run mapping
             DeviceMappingController.StartMapping();
+            _mapFinalizedEventInvoked = false;
         }
 
         /// <summary>
@@ -216,6 +268,7 @@ namespace Niantic.Lightship.AR.Mapping
                 return;
             }
             DeviceMappingController.StopMapping();
+            StartCoroutine(MonitorFinalizedEventCoroutine());
         }
 
         /// <summary>
@@ -239,6 +292,36 @@ namespace Niantic.Lightship.AR.Mapping
             {
                 DeviceMapAccessController.AddMapNode(mapNode._mapData);
             }
+            // set graphs to the localizer
+            if (_arDeviceMap.DeviceMapGraph._graphData != null)
+            {
+                DeviceMapAccessController.AddSubGraph(_arDeviceMap.DeviceMapGraph._graphData);
+            }
+        }
+
+        /// <summary>
+        /// Extract map metadata from the currently set device map. Could be used for debugging and/or visual user feedback
+        /// where map is
+        /// </summary>
+        /// <param name="points">feature points coordinates relative to the anchor/map center</param>
+        /// <param name="errors">estimated errors of each points. Smaller error points could be more significant feature points</param>
+        /// <param name="center">center point coordinates in the mapped coordinate system</param>
+        [Experimental]
+        public void ExtractMapMetadata(
+            out Vector3[] points,
+            out float[] errors,
+            out Vector3 center,
+            out string mapType
+        )
+        {
+            // Get the points for the first node only
+            DeviceMapAccessController.ExtractMapMetaData(
+                _arDeviceMap.DeviceMapNodes[_arDeviceMap.DefaultAnchorIndex]._mapData,
+                out points,
+                out errors,
+                out center,
+                out mapType
+            );
         }
 
         // Private methods
@@ -262,23 +345,77 @@ namespace Niantic.Lightship.AR.Mapping
             // Create a struct which is ready to serialize and invoke OnDeviceMapUpdated event
             for (var i = 0; i < maps.Length; i++)
             {
-                // Create an anchor at current camera position
-                // TODO: map data should contain map center info and use that
-                var pos = Camera.main.transform.position;
+                // Create an anchor for the map node at the center of the map key points
+                DeviceMapAccessController.ExtractMapMetaData(
+                    maps[i].GetData(),
+                    out var points, // unused here
+                    out var errors, // unused here
+                    out var center,
+                    out var mapType
+                );
                 DeviceMapAccessController.CreateAnchorFromMapNode(
-                    maps[i], Matrix4x4.Translate(pos) , out var anchorPayload);
+                    maps[i], Matrix4x4.Translate(center) , out var anchorPayload);
 
                 // add the new map node to ARDeviceMap
                 _arDeviceMap.AddDeviceMapNode(
                     maps[i].GetNodeId().subId1,
                     maps[i].GetNodeId().subId2,
                     maps[i].GetData(),
-                    anchorPayload
+                    anchorPayload,
+                    mapType
                 );
+                Log.Debug($"map type = {mapType}");
             }
 
-            // Invoke an event
-            OnDeviceMapUpdated?.Invoke(_arDeviceMap);
+            // Add graphs if available
+            var graphCreated = DeviceMapAccessController.GetSubGraphs(out var newGraphs);
+            if (graphCreated && newGraphs.Length > 0)
+            {
+                MapSubGraph[] graphs;
+                if (_arDeviceMap.DeviceMapGraph._graphData == null)
+                {
+                    graphs = newGraphs;
+                }
+                else
+                {
+                    graphs = new MapSubGraph[newGraphs.Length + 1];
+                    Array.Copy(newGraphs, graphs, newGraphs.Length);
+                    graphs[^1] = new MapSubGraph(_arDeviceMap.DeviceMapGraph._graphData);
+                }
+                var mergeSucceeded = DeviceMapAccessController.MergeSubGraphs(
+                    graphs,
+                    true,
+                    out var mergedGraph
+                );
+                if (mergeSucceeded)
+                {
+                    _arDeviceMap.SetDeviceMapGraph(mergedGraph.GetData());
+                }
+            }
+
+            // Invoke events
+
+            // invoke "update" event always
+            DeviceMapUpdated?.Invoke(_arDeviceMap);
+
+            // invoke "finalized" event if not mapping
+            if (!DeviceMappingController.IsMapping)
+            {
+                // TODO: what if second time? prevent envent?
+                DeviceMapFinalized?.Invoke(_arDeviceMap);
+                _mapFinalizedEventInvoked = true;
+            }
+        }
+
+        private IEnumerator MonitorFinalizedEventCoroutine()
+        {
+            // TODO: modify native side to tell final map update or not, instead of this way
+            yield return new WaitForSeconds(TimeoutToForceInvokeMapFinalizedEvent);
+
+            if (!_mapFinalizedEventInvoked)
+            {
+                DeviceMapFinalized?.Invoke(_arDeviceMap);
+            }
         }
     }
 }

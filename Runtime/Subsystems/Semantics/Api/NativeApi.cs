@@ -678,15 +678,15 @@ namespace  Niantic.Lightship.AR.Subsystems.Semantics
             int imageHeight
         )
         {
-            var samplerMatrix = Matrix4x4.identity;
+            Matrix4x4 samplerMatrix;
 
-            // Calculate the sampler matrix
-            if (!cameraParams.HasValue)
+            // If the camera params are not provided, default to the image container
+            var viewport = cameraParams ?? new XRCameraParams
             {
-                return samplerMatrix;
-            }
-
-            var viewport = cameraParams.Value;
+                screenWidth = imageWidth,
+                screenHeight = imageHeight,
+                screenOrientation = ScreenOrientation.LandscapeLeft
+            };
 
             if (currentPose.HasValue)
             {

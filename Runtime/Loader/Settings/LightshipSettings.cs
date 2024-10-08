@@ -63,11 +63,14 @@ namespace Niantic.Lightship.AR.Loader
         [SerializeField, Tooltip("When enabled, Lightship VPS can be used.")]
         private bool _useLightshipPersistentAnchor = true;
 
-        [SerializeField, Tooltip("When true, Lightship's object detection features can be used.")]
+        [SerializeField, Tooltip("When enabled, Lightship's object detection features can be used.")]
         private bool _useLightshipObjectDetection = true;
 
+        [SerializeField, Tooltip("When enabled, Lightship's World Positioning System (WPS) feature can be used")]
+        private bool _useLightshipWorldPositioning = true;
+
 #if NIANTIC_ARDK_EXPERIMENTAL_FEATURES
-        [SerializeField, Tooltip("When true, spoof Lightship's location on device.")]
+        [SerializeField, Tooltip("When enabled, spoof Lightship's location on device.")]
         private bool _useLightshipSpoofLocation = false;
 #endif
 
@@ -164,6 +167,8 @@ namespace Niantic.Lightship.AR.Loader
 #endif
 
         #endregion
+
+        public bool UseLightshipWorldPositioning => _useLightshipWorldPositioning;
 
         /// <summary>
         /// The highest log level to print for Unity logger

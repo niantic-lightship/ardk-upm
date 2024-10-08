@@ -12,35 +12,40 @@ namespace Niantic.Lightship.AR.PAM
     {
         Unknown = 0,
 
-        // Three-Plane YUV 420 format used by Android
-        AndroidYuv420_888 = 1,
+        // Bi-planar Y'CbCr 4:2:0 format
+        // NV12, UV are interleaved into one plane.
+        Yuv420_NV12 = 1,
 
-        // Bi-Planar Y'CbCr 8-bit 4:2:0, full-range used by iOS
-        IosYpCbCr420_8BiPlanarFullRange = 2,
+        // Bi-planar Y'CbCr 4:2:0 format
+        // NV21, VU are interleaved into one plane.
+        Yuv420_NV21 = 2,
+
+        // Tri-planar YUV 8-bit 4:2:0 separate planes
+        Yuv420_888 = 3,
 
         // Single channel with 8 bits per pixel
-        OneComponent8 = 3,
+        OneComponent8 = 4,
 
         // IEEE754-2008 binary32 float, describing the depth (distance to an object)
-        DepthFloat32 = 4,
+        DepthFloat32 = 5,
 
         // 16-bit unsigned integer, describing the depth (distance to an object) in
-        DepthUint16 = 5,
+        DepthUint16 = 6,
 
         // Single channel image format with 32 bits per pixel
-        OneComponent32 = 6,
+        OneComponent32 = 7,
 
         // 4 channel image with 8 bits per channel, describing the color in ARGB order
-        ARGB32 = 7,
+        ARGB32 = 8,
 
         // 4 channel image with 8 bits per channel, describing the color in RGBA order
-        RGBA32 = 8,
+        RGBA32 = 9,
 
         // 4 channel image with 8 bits per channel, describing the color in BGRA order
-        BGRA32 = 9,
+        BGRA32 = 10,
 
         // 3 8-bit unsigned integer channels, describing the color in RGB order
-        RGB24 = 10,
+        RGB24 = 11,
     }
 
     // IMPORTANT – This struct has explicit matching C# and pure-C alignment/padding requirements
@@ -94,26 +99,42 @@ namespace Niantic.Lightship.AR.PAM
     [StructLayout(LayoutKind.Sequential)]
     internal struct CameraIntrinsicsCStruct
     {
-        public CameraIntrinsicsCStruct(UnityEngine.Vector2 focalLength, UnityEngine.Vector2 principalPoint)
-        {
-            FocalLengthX = focalLength.x;
-            FocalLengthY = focalLength.y;
-            PrincipalPointX = principalPoint.x;
-            PrincipalPointY = principalPoint.y;
-        }
-
-        public void SetIntrinsics(UnityEngine.Vector2 focalLength, UnityEngine.Vector2 principalPoint)
-        {
-            FocalLengthX = focalLength.x;
-            FocalLengthY = focalLength.y;
-            PrincipalPointX = principalPoint.x;
-            PrincipalPointY = principalPoint.y;
-        }
-
         public float FocalLengthX;
         public float FocalLengthY;
         public float PrincipalPointX;
         public float PrincipalPointY;
+        public uint ResolutionX;
+        public uint ResolutionY;
+
+        public CameraIntrinsicsCStruct
+        (
+            UnityEngine.Vector2 focalLength,
+            UnityEngine.Vector2 principalPoint,
+            UnityEngine.Vector2Int resolution
+        )
+        {
+            FocalLengthX = focalLength.x;
+            FocalLengthY = focalLength.y;
+            PrincipalPointX = principalPoint.x;
+            PrincipalPointY = principalPoint.y;
+            ResolutionX = (uint)resolution.x;
+            ResolutionY = (uint)resolution.y;
+        }
+
+        public void SetIntrinsics
+        (
+            UnityEngine.Vector2 focalLength,
+            UnityEngine.Vector2 principalPoint,
+            UnityEngine.Vector2Int resolution
+        )
+        {
+            FocalLengthX = focalLength.x;
+            FocalLengthY = focalLength.y;
+            PrincipalPointX = principalPoint.x;
+            PrincipalPointY = principalPoint.y;
+            ResolutionX = (uint)resolution.x;
+            ResolutionY = (uint)resolution.y;
+        }
     }
 
     // IMPORTANT – This struct has explicit matching C# and pure-C alignment/padding requirements
@@ -170,7 +191,7 @@ namespace Niantic.Lightship.AR.PAM
     // IMPORTANT – This struct has explicit matching C# and pure-C alignment/padding requirements
     // C# to C struct. Must match frame_data.h
     [StructLayout(LayoutKind.Sequential)]
-    internal struct FrameDataCStruct
+    internal struct ARDKFrameData
     {
         // Most recent Compass data from the device
         // 64b aligned struct

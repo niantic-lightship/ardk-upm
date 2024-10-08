@@ -1,7 +1,7 @@
 {
   "name": "com.nianticlabs.lightship",
   "displayName": "Niantic Lightship AR Plugin",
-  "version": "3.8.0-2409081646",
+  "version": "3.9.0-2410041643",
   "unity": "2021.3",
   "description": "Provides native Niantic Lightship SDK integration for use with Unity's multi-platform XR API.\n* Lightship is a trademark of Niantic Labs Inc., registered in the U.S. and other countries and regions. \n Samples available at https://github.com/niantic-lightship/ardk-samples",
   "keywords": [
@@ -27,7 +27,8 @@
     "com.unity.xr.core-utils": "2.1.0",
     "com.unity.xr.management": "4.0.1",
     "com.unity.nuget.newtonsoft-json": "3.2.1",
-    "com.unity.cloud.draco": "5.1.4"
+    "com.unity.cloud.draco": "5.1.4",
+    "com.unity.burst": "1.8.17"
   },
   "documentationUrl": "https://lightship.dev/docs/ardk/",
   "changelogUrl": "https://lightship.dev/docs/ardk/release_notes/release3.0/",

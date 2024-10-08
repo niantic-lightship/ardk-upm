@@ -135,6 +135,7 @@ namespace Niantic.Lightship.AR.Editor
         private SerializedProperty _useLightshipSemanticSegmentationProperty;
         private SerializedProperty _useLightshipScanningProperty;
         private SerializedProperty _useLightshipObjectDetectionProperty;
+        private SerializedProperty _useLightshipWorldPositioningProperty;
         private SerializedProperty _useLightshipSpoofLocationProperty;
         private SerializedProperty _unityLogLevelProperty;
         private SerializedProperty _fileLogLevelProperty;
@@ -160,6 +161,7 @@ namespace Niantic.Lightship.AR.Editor
             _useLightshipScanningProperty = _lightshipSettings.FindProperty("_useLightshipScanning");
             _useLightshipObjectDetectionProperty =
                 _lightshipSettings.FindProperty("_useLightshipObjectDetection");
+            _useLightshipWorldPositioningProperty = _lightshipSettings.FindProperty("_useLightshipWorldPositioning");
             _useLightshipSpoofLocationProperty = _lightshipSettings.FindProperty("_useLightshipSpoofLocation");
             _unityLogLevelProperty = _lightshipSettings.FindProperty("_unityLogLevel");
             _fileLogLevelProperty = _lightshipSettings.FindProperty("_fileLogLevel");
@@ -244,6 +246,8 @@ namespace Niantic.Lightship.AR.Editor
                 Application.OpenURL("https://lightship.dev/account/projects");
             }
 
+            // Depth settings
+
             EditorGUILayout.Space(10);
             EditorGUILayout.LabelField("Depth", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(_useLightshipDepthProperty, Contents.enabledLabel);
@@ -257,11 +261,14 @@ namespace Niantic.Lightship.AR.Editor
 
             EditorGUI.indentLevel--;
 
+            // Semantic Segmentation settings
             EditorGUILayout.Space(10);
             EditorGUILayout.LabelField("Semantic Segmentation", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField
                 (_useLightshipSemanticSegmentationProperty, Contents.enabledLabel);
 
+
+            // Meshing settings
             EditorGUILayout.Space(10);
             EditorGUILayout.LabelField("Meshing", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(_useLightshipMeshingProperty, Contents.enabledLabel);
@@ -269,6 +276,7 @@ namespace Niantic.Lightship.AR.Editor
             // Put Meshing sub-settings here
             EditorGUI.indentLevel--;
 
+            // Persistent Anchors settings
             EditorGUILayout.Space(10);
             EditorGUILayout.LabelField("Persistent Anchors", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField
@@ -278,6 +286,7 @@ namespace Niantic.Lightship.AR.Editor
             // Put Persistent Anchors sub-settings here
             EditorGUI.indentLevel--;
 
+            // Scanning settings
             EditorGUILayout.Space(10);
             EditorGUILayout.LabelField("Scanning", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(_useLightshipScanningProperty, Contents.enabledLabel);
@@ -285,6 +294,7 @@ namespace Niantic.Lightship.AR.Editor
             // Put Scanning sub-settings here
             EditorGUI.indentLevel--;
 
+            // Object Detection settings
             EditorGUILayout.Space(10);
             EditorGUILayout.LabelField("Object Detection", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField
@@ -292,6 +302,16 @@ namespace Niantic.Lightship.AR.Editor
 
             EditorGUI.indentLevel++;
             // Put Object Detection sub-settings here
+            EditorGUI.indentLevel--;
+
+            // World Positioning settings
+            EditorGUILayout.Space(10);
+            EditorGUILayout.LabelField("World Positioning System", EditorStyles.boldLabel);
+            EditorGUILayout.PropertyField
+                (_useLightshipWorldPositioningProperty, Contents.enabledLabel);
+
+            EditorGUI.indentLevel++;
+            // Put World Positioning sub-settings here
             EditorGUI.indentLevel--;
 
             EditorGUILayout.Space(10);

@@ -93,9 +93,16 @@ Shader "Unlit/LightshipPlaybackBackground"
 
             fragment_output frag(v2f i)
             {
+                // Infer the far plane distance
+#ifdef UNITY_REVERSED_Z
+                const float maxDepth = 0.0f;
+#else
+                const float maxDepth = 1.0f;
+#endif
+
                 // Sample color
                 float4 color = tex2D(_CameraTex, i.texcoord);
-                float depth = 0.0f;
+                float depth = maxDepth;
 
 #if LIGHTSHIP_ENVIRONMENT_DEPTH_ENABLED
                 // Sample the environment depth (in meters).

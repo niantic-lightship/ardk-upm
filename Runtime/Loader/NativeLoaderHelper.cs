@@ -1,5 +1,6 @@
 // Copyright 2022-2024 Niantic.
 using System.Collections.Generic;
+
 using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.Core;
 using Niantic.Lightship.AR.Subsystems.Meshing;
@@ -7,6 +8,7 @@ using Niantic.Lightship.AR.Subsystems.ObjectDetection;
 using Niantic.Lightship.AR.Subsystems.Scanning;
 using Niantic.Lightship.AR.Subsystems.Semantics;
 using Niantic.Lightship.AR.Subsystems.PersistentAnchor;
+using Niantic.Lightship.AR.Subsystems.WorldPositioning;
 using Niantic.Lightship.AR.XRSubsystems;
 using UnityEngine;
 using UnityEngine.XR;
@@ -22,6 +24,7 @@ namespace Niantic.Lightship.AR.Loader
         private readonly List<XRScanningSubsystemDescriptor> _scanningSubsystemDescriptors = new();
         private readonly List<XRMeshSubsystemDescriptor> _meshingSubsystemDescriptors = new();
         private readonly List<XRObjectDetectionSubsystemDescriptor> _objectDetectionSubsystemDescriptors = new();
+        private readonly List<XRWorldPositioningSubsystemDescriptor> _worldPositioningSubsystemDescriptors = new ();
 
         internal bool Initialize(ILightshipInternalLoaderSupport loader, bool isLidarSupported)
         {
@@ -102,6 +105,16 @@ namespace Niantic.Lightship.AR.Loader
                 );
             }
 
+            if (settings.UseLightshipWorldPositioning)
+            {
+                Log.Info("Creating " + nameof(LightshipWorldPositioningSubsystem));
+                loader.CreateSubsystem<XRWorldPositioningSubsystemDescriptor, XRWorldPositioningSubsystem>
+                    (
+                        _worldPositioningSubsystemDescriptors,
+                        "Lightship-WorldPositioning"
+                    );
+            }
+
             return true;
         }
 
@@ -125,6 +138,7 @@ namespace Niantic.Lightship.AR.Loader
             loader.DestroySubsystem<XRScanningSubsystem>();
             loader.DestroySubsystem<XRMeshSubsystem>();
             loader.DestroySubsystem<XRObjectDetectionSubsystem>();
+            loader.DestroySubsystem<XRWorldPositioningSubsystem>();
 
             // Unity's native lifecycle handler for integrated subsystems does call Stop() before Shutdown() if
             // the subsystem is running when the latter is called. However, for the XRInputSubsystem, this causes

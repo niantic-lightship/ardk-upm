@@ -30,6 +30,7 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
             bool enableTransformSmoothing,
             bool enableCloudLocalization,
             bool enableSlickLocalization,
+            bool enableSlickLearnedFeatures,
             float cloudLocalizerInitialRequestsPerSecond,
             float cloudLocalizerContinuousRequestsPerSecond,
             float slickLocalizerFps,

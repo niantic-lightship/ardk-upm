@@ -100,7 +100,7 @@ namespace Niantic.Lightship.AR.XRSubsystems
         ///
         /// Each invocation of this event contains a XRPersistentAnchorDebugInfo object
         /// that contains arrays of XRPersistentAnchorNetworkRequestStatus, XRPersistentAnchorLocalizationStatus,
-        /// and (experimental) XRPersistentAnchorFrameDiagnostics
+        /// and XRPersistentAnchorFrameDiagnostics
         /// </summary>
         public event Action<XRPersistentAnchorDebugInfo> debugInfoProvided;
 
@@ -153,25 +153,17 @@ namespace Niantic.Lightship.AR.XRSubsystems
                 }
             }
 
-#if NIANTIC_ARDK_EXPERIMENTAL_FEATURES
             var gotDiagnostics = provider.GetFrameDiagnosticsUpdate(out var diagnosticsArray);
             if (gotDiagnostics)
             {
                 // TODO: How do we want to expose diagnostics?
             }
-#else
-            var gotDiagnostics = false;
-#endif
 
             // We send debug info out
             bool debugInfoIsAvailable = gotNetworkStatus || gotLocalizationStatus || gotDiagnostics;
             if (debugInfoIsAvailable)
             {
-#if NIANTIC_ARDK_EXPERIMENTAL_FEATURES
                 var debugInfo = new XRPersistentAnchorDebugInfo(networkStatuses, localizationStatuses, diagnosticsArray);
-#else
-                var debugInfo = new XRPersistentAnchorDebugInfo(networkStatuses, localizationStatuses);
-#endif
                 debugInfoProvided?.Invoke(debugInfo);
             }
 
@@ -285,13 +277,12 @@ namespace Niantic.Lightship.AR.XRSubsystems
             /// <returns>True if an update is present, false otherwise</returns>
             public abstract bool GetLocalizationStatusUpdate(out XRPersistentAnchorLocalizationStatus[] statuses);
 
-#if NIANTIC_ARDK_EXPERIMENTAL_FEATURES
             /// <summary>
             /// Get a list of frame diagnostics updates, if any
             /// </summary>
             /// <returns>True if an update is present, false otherwise</returns>
             public abstract bool GetFrameDiagnosticsUpdate(out XRPersistentAnchorFrameDiagnostics[] statuses);
-#endif
+
             /// <summary>
             /// Get the vps session id, if any
             /// </summary>

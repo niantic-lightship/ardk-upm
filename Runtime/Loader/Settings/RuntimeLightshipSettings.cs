@@ -17,6 +17,7 @@ namespace Niantic.Lightship.AR.Loader
         private bool _useLightshipScanning;
         private bool _useLightshipPersistentAnchor;
         private bool _useLightshipObjectDetection;
+        private bool _useLightshipWorldPositioning;
         private bool _useLightshipSpoofLocation;
 
         private LogLevel _unityLogLevel;
@@ -115,6 +116,15 @@ namespace Niantic.Lightship.AR.Loader
         {
             get => _useLightshipObjectDetection;
             set => _useLightshipObjectDetection = value;
+        }
+
+        /// <summary>
+        /// When true, Lightship's World Positioning System (WPS) feature can be used.
+        /// </summary>
+        public bool UseLightshipWorldPositioning
+        {
+            get => _useLightshipWorldPositioning;
+            set => _useLightshipWorldPositioning = value;
         }
 
         #region Experimental Settings
@@ -235,6 +245,7 @@ namespace Niantic.Lightship.AR.Loader
             UseLightshipSemanticSegmentation = source.UseLightshipSemanticSegmentation;
             UseLightshipScanning = source.UseLightshipScanning;
             UseLightshipObjectDetection = source.UseLightshipObjectDetection;
+            UseLightshipWorldPositioning = source.UseLightshipWorldPositioning;
 
 #if NIANTIC_ARDK_EXPERIMENTAL_FEATURES
             _useLightshipSpoofLocation = source.UseLightshipSpoofLocation;
@@ -271,6 +282,7 @@ namespace Niantic.Lightship.AR.Loader
             bool preferLidarIfAvailable = false,
             bool enableScanning = false,
             bool enableObjectDetection = false,
+            bool enableWorldPositioning = false,
             LogLevel unityLogLevel = LogLevel.Debug,
             EndpointSettings endpointSettings = null,
             LogLevel stdoutLogLevel = LogLevel.Off,
@@ -291,6 +303,7 @@ namespace Niantic.Lightship.AR.Loader
                     UseLightshipSemanticSegmentation = enableSemanticSegmentation,
                     UseLightshipScanning = enableScanning,
                     UseLightshipObjectDetection = enableObjectDetection,
+                    UseLightshipWorldPositioning = enableWorldPositioning,
                     UnityLightshipLogLevel = unityLogLevel,
                     FileLightshipLogLevel = fileLogLevel,
                     StdOutLightshipLogLevel = stdoutLogLevel,
@@ -333,6 +346,7 @@ namespace Niantic.Lightship.AR.Loader
                 "\t UseLightshipSemanticSegmentation: " + UseLightshipSemanticSegmentation + "\n" +
                 "\t UseLightshipScanning: " + UseLightshipScanning + "\n" +
                 "\t UseLightshipObjectDetection: " + UseLightshipObjectDetection + "\n" +
+                "\t UseLightshipWorldPositioning: " + UseLightshipWorldPositioning + "\n" +
                 "\t UnityLogLevel: " + UnityLightshipLogLevel;
         }
     }

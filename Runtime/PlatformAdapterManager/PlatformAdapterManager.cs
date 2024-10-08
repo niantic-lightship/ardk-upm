@@ -1,4 +1,3 @@
-// #define NIANTIC_ARDK_USE_FAST_LIGHTWEIGHT_PAM
 // Copyright 2022-2024 Niantic.
 
 using System;
@@ -18,15 +17,10 @@ namespace Niantic.Lightship.AR.PAM
     {
         public Action<PamEventArgs> SentData;
         private uint _lastSentFrameId;
-        private readonly DeprecatedFrameData _currentDeprecatedFrameDataDeprecated;
 
         private readonly IApi _api;
         private readonly PlatformDataAcquirer _platformDataAcquirer;
-#if NIANTIC_ARDK_USE_FAST_LIGHTWEIGHT_PAM
-        public static bool UseNewDataPipeline = true;
-#else
-        public static bool UseNewDataPipeline = false;
-#endif
+
         private IntPtr _nativeHandle;
         private NativeArray<DataFormat> _addedDataFormats;
         private NativeArray<DataFormat> _readyDataFormats;
@@ -36,15 +30,19 @@ namespace Niantic.Lightship.AR.PAM
         private uint _frameCounter;
         private bool _alreadyDisposed;
 
-        private readonly AbstractTexturesSetter _texturesSetter;
-
         private const string TraceCategory = "PlatformAdapterManager";
 
-        public static PlatformAdapterManager Create<TApi, TXRDataAcquirer>(IntPtr contextHandle, bool isLidarDepthEnabled, bool trySendOnUpdate)
+        public static PlatformAdapterManager Create<TApi, TXRDataAcquirer>
+        (
+            IntPtr contextHandle,
+            bool isLidarDepthEnabled,
+            bool trySendOnUpdate
+        )
             where TApi : IApi, new()
             where TXRDataAcquirer : PlatformDataAcquirer, new()
         {
-            return new PlatformAdapterManager(new TApi(), new TXRDataAcquirer(), contextHandle, isLidarDepthEnabled, trySendOnUpdate);
+            return new PlatformAdapterManager(new TApi(), new TXRDataAcquirer(), contextHandle, isLidarDepthEnabled,
+                trySendOnUpdate);
         }
 
         public PlatformAdapterManager
@@ -58,7 +56,7 @@ namespace Niantic.Lightship.AR.PAM
         {
             _api = api;
             _platformDataAcquirer = platformDataAcquirer;
-            _nativeHandle = _api.Lightship_ARDK_Unity_PAM_Create(unityContext, isLidarDepthEnabled);
+            _nativeHandle = _api.ARDK_SAH_Create(unityContext, isLidarDepthEnabled);
 
             var numFormats = Enum.GetValues(typeof(DataFormat)).Length;
             _addedDataFormats = new NativeArray<DataFormat>(numFormats, Allocator.Persistent);
@@ -67,8 +65,6 @@ namespace Niantic.Lightship.AR.PAM
 
             _frameCounter = 0;
             _lastSentFrameId = UInt32.MaxValue;
-            _currentDeprecatedFrameDataDeprecated = new DeprecatedFrameData();
-            _texturesSetter = new CpuTexturesSetter(_platformDataAcquirer, _currentDeprecatedFrameDataDeprecated);
 
             Log.Info
             (
@@ -79,22 +75,7 @@ namespace Niantic.Lightship.AR.PAM
             Application.onBeforeRender += OnBeforeRender;
             if (trySendOnUpdate)
             {
-                AddUpdateListeners();
-            }
-        }
-
-        internal void AddUpdateListeners()
-        {
-            MonoBehaviourEventDispatcher.Updating.RemoveListener(SendUpdatedFrameData);
-            MonoBehaviourEventDispatcher.Updating.RemoveListener(DeprecatedSendUpdatedFrameData);
-
-            if (UseNewDataPipeline)
-            {
                 MonoBehaviourEventDispatcher.Updating.AddListener(SendUpdatedFrameData);
-            }
-            else
-            {
-                MonoBehaviourEventDispatcher.Updating.AddListener(DeprecatedSendUpdatedFrameData);
             }
         }
 
@@ -121,7 +102,7 @@ namespace Niantic.Lightship.AR.PAM
             _alreadyDisposed = true;
             if (_nativeHandle != IntPtr.Zero)
             {
-                _api.Lightship_ARDK_Unity_PAM_Release(_nativeHandle);
+                _api.ARDK_SAH_Release(_nativeHandle);
                 _nativeHandle = IntPtr.Zero;
             }
 
@@ -130,305 +111,16 @@ namespace Niantic.Lightship.AR.PAM
             _removedDataFormats.Dispose();
 
             _platformDataAcquirer.Dispose();
-            _currentDeprecatedFrameDataDeprecated.Dispose();
-
-            if (_texturesSetter != null)
-                _texturesSetter.Dispose();
 
             MonoBehaviourEventDispatcher.Updating.RemoveListener(SendUpdatedFrameData);
-            MonoBehaviourEventDispatcher.Updating.RemoveListener(DeprecatedSendUpdatedFrameData);
 
             Application.onBeforeRender -= OnBeforeRender;
         }
 
-        private void SetRgba256x144CameraIntrinsics()
-        {
-            if (_platformDataAcquirer.TryGetCameraIntrinsicsDeprecated(out XRCameraIntrinsics cameraIntrinsics))
-            {
-                ImageConverter.ConvertCameraIntrinsics
-                (
-                    cameraIntrinsics,
-                    _currentDeprecatedFrameDataDeprecated.Rgba256x144ImageResolution,
-                    _currentDeprecatedFrameDataDeprecated.Rgba256x144CameraIntrinsicsData
-                );
-
-                _currentDeprecatedFrameDataDeprecated.Rgba256x144CameraIntrinsicsLength = DataFormatConstants.FlatMatrix3x3Length;
-            }
-            else
-            {
-                _currentDeprecatedFrameDataDeprecated.Rgba256x144CameraIntrinsicsLength = 0;
-            }
-        }
-
-        private void SetRgb256x256CameraIntrinsics()
-        {
-            if (_platformDataAcquirer.TryGetCameraIntrinsicsDeprecated(out XRCameraIntrinsics cameraIntrinsics))
-            {
-                ImageConverter.ConvertCameraIntrinsics
-                (
-                    cameraIntrinsics,
-                    _currentDeprecatedFrameDataDeprecated.Rgb256x256ImageResolution,
-                    _currentDeprecatedFrameDataDeprecated.Rgb256x256CameraIntrinsicsData
-                );
-
-                _currentDeprecatedFrameDataDeprecated.Rgb256x256CameraIntrinsicsLength = DataFormatConstants.FlatMatrix3x3Length;
-            }
-            else
-            {
-                _currentDeprecatedFrameDataDeprecated.Rgb256x256CameraIntrinsicsLength = 0;
-            }
-        }
-
-        private void SetJpeg720x540CameraIntrinsics()
-        {
-            if (_platformDataAcquirer.TryGetCameraIntrinsicsDeprecated(out XRCameraIntrinsics jpegCameraIntrinsics))
-            {
-                ImageConverter.ConvertCameraIntrinsics
-                (
-                    jpegCameraIntrinsics,
-                    _currentDeprecatedFrameDataDeprecated.Jpeg720x540ImageResolution,
-                    _currentDeprecatedFrameDataDeprecated.Jpeg720x540CameraIntrinsicsData
-                );
-                _currentDeprecatedFrameDataDeprecated.Jpeg720x540CameraIntrinsicsLength = DataFormatConstants.FlatMatrix3x3Length;
-            }
-            else
-            {
-                _currentDeprecatedFrameDataDeprecated.Jpeg720x540CameraIntrinsicsLength = 0;
-            }
-        }
-
-        private void SetPlatformDepthCameraIntrinsics(Vector2Int resolution)
-        {
-            if (_platformDataAcquirer.TryGetCameraIntrinsicsDeprecated(out XRCameraIntrinsics cameraIntrinsics))
-            {
-                // TODO (AR-16968): Collate calls to TryGetCameraIntrinsicsDeprecated
-                ImageConverter.ConvertCameraIntrinsics
-                (
-                    cameraIntrinsics,
-                    resolution,
-                    _currentDeprecatedFrameDataDeprecated.PlatformDepthCameraIntrinsicsData
-                );
-
-                _currentDeprecatedFrameDataDeprecated.PlatformDepthCameraIntrinsicsLength = DataFormatConstants.FlatMatrix3x3Length;
-            }
-            else
-            {
-                _currentDeprecatedFrameDataDeprecated.PlatformDepthCameraIntrinsicsLength = 0;
-            }
-        }
-
-        private void SetGpsLocation()
-        {
-            if (_platformDataAcquirer.TryGetGpsLocation(out GpsLocationCStruct gps))
-            {
-                _currentDeprecatedFrameDataDeprecated.SetGpsData(gps);
-                _currentDeprecatedFrameDataDeprecated.GpsLocationLength = (UInt32)UnsafeUtility.SizeOf<GpsLocationCStruct>();
-            }
-            else
-            {
-                _currentDeprecatedFrameDataDeprecated.GpsLocationLength = 0;
-            }
-        }
-
-        private void SetCompass()
-        {
-            if (_platformDataAcquirer.TryGetCompass(out CompassDataCStruct compass))
-            {
-                _currentDeprecatedFrameDataDeprecated.SetCompassData(compass);
-                _currentDeprecatedFrameDataDeprecated.CompassDataLength = (UInt32)UnsafeUtility.SizeOf<CompassDataCStruct>();
-            }
-            else
-            {
-                _currentDeprecatedFrameDataDeprecated.CompassDataLength = 0;
-            }
-        }
-
-        private void SetCameraPose()
-        {
-            if (_platformDataAcquirer.TryGetCameraPose(out Matrix4x4 cameraToLocal))
-            {
-                _currentDeprecatedFrameDataDeprecated.SetPoseData(cameraToLocal.FromUnityToArdk().ToColumnMajorArray());
-                _currentDeprecatedFrameDataDeprecated.CameraPoseLength = DataFormatConstants.FlatMatrix4x4Length;
-            }
-            else
-            {
-                _currentDeprecatedFrameDataDeprecated.CameraPoseLength = 0;
-            }
-        }
-
-        // Note, all the data lengths needs to be invalidated after sending the frame to SAH,
-        // otherwise the same data will be assumed being valid and used again.
-        private void InvalidateFrameData()
-        {
-            _currentDeprecatedFrameDataDeprecated.CompassDataLength = 0;
-            _currentDeprecatedFrameDataDeprecated.CameraPoseLength = 0;
-            _currentDeprecatedFrameDataDeprecated.GpsLocationLength = 0;
-            _currentDeprecatedFrameDataDeprecated.Jpeg720x540CameraIntrinsicsLength = 0;
-            _currentDeprecatedFrameDataDeprecated.PlatformDepthDataLength = 0;
-            _currentDeprecatedFrameDataDeprecated.Rgba256x144CameraIntrinsicsLength = 0;
-            _currentDeprecatedFrameDataDeprecated.CpuJpeg720x540ImageDataLength = 0;
-            _currentDeprecatedFrameDataDeprecated.CpuRgba256x144ImageDataLength = 0;
-            _currentDeprecatedFrameDataDeprecated.JpegFullResCameraIntrinsicsLength = 0;
-            _currentDeprecatedFrameDataDeprecated.CpuJpegFullResImageHeight = 0;
-            _currentDeprecatedFrameDataDeprecated.CpuJpegFullResImageWidth = 0;
-            _currentDeprecatedFrameDataDeprecated.CpuJpegFullResImageDataLength = 0;
-        }
-
         private void OnBeforeRender()
         {
-            ProfilerUtility.EventInstance("Rendering", "FrameUpdate", new CustomProcessingOptions
-            {
-                ProcessingType = CustomProcessingOptions.Type.TIME_UNTIL_NEXT
-            });
-        }
-
-        public void DeprecatedSendUpdatedFrameData()
-        {
-            if (!_platformDataAcquirer.TryToBeReady())
-            {
-                return;
-            }
-
-            const string traceMethodName = "SendUpdatedFrameData_OLD";
-            ProfilerUtility.EventBegin(TraceCategory, traceMethodName);
-
-            _api.Lightship_ARDK_Unity_PAM_GetDataFormatUpdatesForNewFrame
-            (
-                _nativeHandle,
-                _addedDataFormats,
-                out var addedDataFormatsSize,
-                _readyDataFormats,
-                out _readyDataFormatsSize,
-                _removedDataFormats,
-                out var removedDataFormatsSize
-            );
-
-            for (int i = 0; i < addedDataFormatsSize; ++i)
-            {
-                _platformDataAcquirer.OnFormatAdded(_addedDataFormats[i]);
-            }
-
-            for (int i = 0; i < removedDataFormatsSize; ++i)
-            {
-                _platformDataAcquirer.OnFormatRemoved(_removedDataFormats[i]);
-            }
-
-            if (_readyDataFormatsSize == 0)
-            {
-                ProfilerUtility.EventEnd(TraceCategory, traceMethodName);
-                return;
-            }
-
-            // Profile group by ready formats
-            string traceReadyFormats = "_";
-            for (int i = 0; i < _readyDataFormatsSize; i++)
-            {
-                traceReadyFormats += DataFormatNames.GetName(_readyDataFormats[i]) + "_";
-            }
-            ProfilerUtility.EventBegin(TraceCategory, traceMethodName + traceReadyFormats);
-
-            for (int i = 0; i < _readyDataFormatsSize; i++)
-            {
-                var dataFormat = _readyDataFormats[i];
-
-                ProfilerUtility.EventBegin(TraceCategory, dataFormat.ToString());
-                switch (dataFormat)
-                {
-                    case DataFormat.kCpuRgba_256_144_Uint8:
-                        SetRgba256x144CameraIntrinsics();
-
-                        // Not going to bother checking if the resolution is large enough here, because presumably
-                        // any AR camera image is going to be larger than 256 x 144
-                        _texturesSetter.SetRgba256x144Image();
-                        break;
-
-                    case DataFormat.kCpuRgb_256_256_Uint8:
-                        SetRgb256x256CameraIntrinsics();
-                        _texturesSetter.SetRgb256x256Image();
-                        break;
-
-                    case DataFormat.kJpeg_720_540_Uint8:
-                        SetJpeg720x540CameraIntrinsics();
-                        _texturesSetter.SetJpeg720x540Image();
-                        break;
-
-                    case DataFormat.kGpsLocation:
-                        SetGpsLocation();
-                        break;
-
-                    case DataFormat.kCompass:
-                        SetCompass();
-                        break;
-
-                    case DataFormat.kJpeg_full_res_Uint8:
-                        _texturesSetter.SetJpegFullResImage();
-                        break;
-
-                    case DataFormat.kPlatform_depth:
-                        _texturesSetter.SetPlatformDepthBuffer();
-
-                        // Need to acquire platform depth buffer first, so that resolution is known
-                        if (_currentDeprecatedFrameDataDeprecated.PlatformDepthDataLength > 0)
-                        {
-                            SetPlatformDepthCameraIntrinsics(_currentDeprecatedFrameDataDeprecated.PlatformDepthResolution);
-                        }
-                        break;
-                }
-
-                ProfilerUtility.EventEnd(TraceCategory, dataFormat.ToString());
-            }
-
-            SetCameraPose();
-            _currentDeprecatedFrameDataDeprecated.FrameId = _frameCounter++;
-            _currentDeprecatedFrameDataDeprecated.TimestampMs = (ulong)_texturesSetter.GetCurrentTimestampMs();
-            _currentDeprecatedFrameDataDeprecated.TrackingState = _platformDataAcquirer.GetTrackingState().FromUnityToArdk();
-            _currentDeprecatedFrameDataDeprecated.ScreenOrientation = _platformDataAcquirer.GetScreenOrientation().FromUnityToArdk();
-            _currentDeprecatedFrameDataDeprecated.CameraImageResolution = _platformDataAcquirer.TryGetCameraIntrinsicsDeprecated(out var intrinsics)
-                ? intrinsics.resolution
-                : Vector2Int.zero;
-
-            // Deprecated PAM codepath
-            // SAH handles checking if all required data is in this frame
-            const string nativePamOnFrameDeprecatedEventName = "Lightship_ARDK_Unity_PAM_OnFrame_Deprecated";
-            ProfilerUtility.EventBegin(TraceCategory, nativePamOnFrameDeprecatedEventName);
-            {
-                unsafe
-                {
-                    fixed (void* pointerToFrameStruct = &_currentDeprecatedFrameDataDeprecated._frameCStruct)
-                    {
-                        _api.Lightship_ARDK_Unity_PAM_OnFrame_Deprecated(_nativeHandle, (IntPtr)pointerToFrameStruct);
-                    }
-                }
-            }
-            ProfilerUtility.EventEnd(TraceCategory, nativePamOnFrameDeprecatedEventName);
-            ProfilerUtility.EventEnd(TraceCategory, traceMethodName + traceReadyFormats);
-
-            if (SentData != null)
-            {
-                const string sentDataEventName = "SentData";
-                ProfilerUtility.EventBegin(TraceCategory, sentDataEventName);
-
-                DataFormat[] sentDataFormats = DeprecatedCollateSentDataFormats();
-
-                if (sentDataFormats.Length > 0)
-                {
-                    Log.Debug
-                        (
-                            $"PAM sending data: {string.Join(',', sentDataFormats)}, " +
-                            $"orientation: {_platformDataAcquirer.GetScreenOrientation()}, " +
-                            $"time: ulong={(ulong)_texturesSetter.GetCurrentTimestampMs()}"
-                        );
-                }
-
-                SentData?.Invoke(new PamEventArgs(sentDataFormats));
-                ProfilerUtility.EventEnd(TraceCategory, sentDataEventName);
-            }
-
-            // Invalidate the data lengths so that SAH won't pick them up in the next frame.
-            InvalidateFrameData();
-            _texturesSetter.InvalidateCachedTextures();
-
-            ProfilerUtility.EventEnd(TraceCategory, traceMethodName);
+            ProfilerUtility.EventInstance("Rendering", "FrameUpdate",
+                new CustomProcessingOptions { ProcessingType = CustomProcessingOptions.Type.TIME_UNTIL_NEXT });
         }
 
         public void SendUpdatedFrameData()
@@ -441,7 +133,7 @@ namespace Niantic.Lightship.AR.PAM
             const string traceMethodName = "SendUpdatedFrameData";
             ProfilerUtility.EventBegin(TraceCategory, traceMethodName);
 
-            _api.Lightship_ARDK_Unity_PAM_GetDataFormatsReadyForNewFrame
+            _api.ARDK_SAH_GetDataFormatsReadyForNewFrame
             (
                 _nativeHandle,
                 _readyDataFormats,
@@ -463,7 +155,7 @@ namespace Niantic.Lightship.AR.PAM
 
             ProfilerUtility.EventBegin(TraceCategory, traceMethodName + traceReadyFormats);
 
-            FrameDataCStruct frameData = new FrameDataCStruct();
+            ARDKFrameData frameData = new ARDKFrameData();
 
             var getCameraImage = false;
             var getDepthImage = false;
@@ -498,20 +190,32 @@ namespace Niantic.Lightship.AR.PAM
                         break;
 
                     default:
-                        Log.Error($"Native layer requested a format {_readyDataFormats[i]} that is not handled by the PAM.");
+                        Log.Error(
+                            $"Native layer requested a format {_readyDataFormats[i]} that is not handled by the PAM.");
                         break;
                 }
             }
 
             // Pose
-            _platformDataAcquirer.TryGetCameraPose(out Matrix4x4 cameraToLocal);
-            var cameraPose = cameraToLocal.FromUnityToArdk();
-            frameData.CameraPose.SetTransform(cameraPose);
+            if (_platformDataAcquirer.TryGetCameraPose(out Matrix4x4 cameraToLocal))
+            {
+                frameData.CameraPose.SetTransform(cameraToLocal.FromUnityToArdk());
+            }
+            else
+            {
+                // The SAH checks the CameraPose against the Identity transform to validate if
+                // a valid value was received or not
+                frameData.CameraPose.SetTransform(Matrix4x4.identity.FromUnityToArdk());
+            }
 
             frameData.FrameId = _frameCounter++;
-            frameData.CameraTimestampMs = _platformDataAcquirer.TryGetCameraTimestampMs(out var timestampMs) ? (ulong)timestampMs : 0;
-            frameData.TrackingState = _platformDataAcquirer.GetTrackingState().FromUnityToArdk();
+
+            frameData.CameraTimestampMs = _platformDataAcquirer.TryGetCameraTimestampMs(out var timestampMs)
+                ? (ulong)timestampMs
+                : 0;
+
             frameData.ScreenOrientation = _platformDataAcquirer.GetScreenOrientation().FromUnityToArdk();
+            frameData.TrackingState = _platformDataAcquirer.GetTrackingState().FromUnityToArdk();
 
             if (getCameraImage && _platformDataAcquirer.TryGetCpuImage(out var cpuCamera))
             {
@@ -524,7 +228,8 @@ namespace Niantic.Lightship.AR.PAM
                 frameData.CameraImageHeight = cpuCamera.Height;
             }
 
-            if (getDepthImage && _platformDataAcquirer.TryGetDepthCpuImage(out var cpuDepth, out var cpuDepthConfidence))
+            if (getDepthImage &&
+                _platformDataAcquirer.TryGetDepthCpuImage(out var cpuDepth, out var cpuDepthConfidence))
             {
                 frameData.DepthDataPtr = cpuDepth.Planes[0].DataPtr;
                 frameData.DepthDataWidth = cpuDepth.Width;
@@ -536,21 +241,17 @@ namespace Niantic.Lightship.AR.PAM
                 }
 
                 // TODO [ARDK-3966]: Move scaling calculation to C++
-                _platformDataAcquirer.TryGetDepthCameraIntrinsicsCStruct
-                (
-                    out frameData.DepthCameraIntrinsics,
-                    new Vector2Int((int)cpuDepth.Width, (int)cpuDepth.Height)
-                );
+                _platformDataAcquirer.TryGetDepthCameraIntrinsicsCStruct(out frameData.DepthCameraIntrinsics);
             }
 
             // New WIP PAM codepath
-            const string nativePamOnFrameEventName = "Lightship_ARDK_Unity_PAM_OnFrame";
+            const string nativePamOnFrameEventName = "ARDK_SAH_OnFrame";
             ProfilerUtility.EventBegin(TraceCategory, nativePamOnFrameEventName);
             {
                 unsafe
                 {
                     void* nonMoveablePtr = &frameData;
-                    _api.Lightship_ARDK_Unity_PAM_OnFrame(_nativeHandle, (IntPtr)nonMoveablePtr);
+                    _api.ARDK_SAH_OnFrame(_nativeHandle, (IntPtr)nonMoveablePtr);
                 }
             }
             ProfilerUtility.EventEnd(TraceCategory, nativePamOnFrameEventName);
@@ -558,7 +259,7 @@ namespace Niantic.Lightship.AR.PAM
 
             if (SentData != null)
             {
-                _api.Lightship_ARDK_Core_SAH_GetDispatchedFormatsToModules(_nativeHandle,
+                _api.ARDK_SAH_GetDispatchedFormatsToModules(_nativeHandle,
                     out var dispatchedFrameId,
                     out var dispatchedToModules,
                     out var dispatchedDataFormats);
@@ -573,24 +274,25 @@ namespace Niantic.Lightship.AR.PAM
         }
 
         // Returns only the data formats that were actually sent to SAH
-        private DataFormat[] DeprecatedCollateSentDataFormats()
+        private DataFormat[] CollateSentDataFormats(ref ARDKFrameData frameData)
         {
             List<DataFormat> sentDataFormats = new();
+            var hasCameraImage = frameData.CameraImageWidth > 0 && frameData.CameraImageHeight > 0;
+            var hasDepthImage = frameData.DepthDataWidth > 0 && frameData.DepthDataHeight > 0;
 
             foreach (var dataFormat in _readyDataFormats)
             {
                 switch (dataFormat)
                 {
                     case DataFormat.kCpuRgba_256_144_Uint8:
-                        if (_currentDeprecatedFrameDataDeprecated._frameCStruct.CpuRgba256x144ImageDataLength > 0)
+                        if (hasCameraImage)
                         {
                             sentDataFormats.Add(DataFormat.kCpuRgba_256_144_Uint8);
                         }
 
                         break;
-
                     case DataFormat.kCpuRgb_256_256_Uint8:
-                        if (_currentDeprecatedFrameDataDeprecated._frameCStruct.CpuRgb256x256ImageDataLength > 0)
+                        if (hasCameraImage)
                         {
                             sentDataFormats.Add(DataFormat.kCpuRgb_256_256_Uint8);
                         }
@@ -598,7 +300,7 @@ namespace Niantic.Lightship.AR.PAM
                         break;
 
                     case DataFormat.kJpeg_720_540_Uint8:
-                        if (_currentDeprecatedFrameDataDeprecated._frameCStruct.CpuJpeg720x540ImageDataLength > 0)
+                        if (hasCameraImage)
                         {
                             sentDataFormats.Add(DataFormat.kJpeg_720_540_Uint8);
                         }
@@ -606,7 +308,7 @@ namespace Niantic.Lightship.AR.PAM
                         break;
 
                     case DataFormat.kGpsLocation:
-                        if (_currentDeprecatedFrameDataDeprecated._frameCStruct.GpsLocationLength > 0)
+                        if (frameData.GpsLocation.TimestampMs > 0)
                         {
                             sentDataFormats.Add(DataFormat.kGpsLocation);
                         }
@@ -614,7 +316,7 @@ namespace Niantic.Lightship.AR.PAM
                         break;
 
                     case DataFormat.kCompass:
-                        if (_currentDeprecatedFrameDataDeprecated._frameCStruct.CompassDataLength > 0)
+                        if (frameData.CompassData.TimestampMs > 0)
                         {
                             sentDataFormats.Add(DataFormat.kCompass);
                         }
@@ -623,7 +325,7 @@ namespace Niantic.Lightship.AR.PAM
 
 
                     case DataFormat.kJpeg_full_res_Uint8:
-                        if (_currentDeprecatedFrameDataDeprecated._frameCStruct.CpuJpegFullResImageDataLength > 0)
+                        if (hasCameraImage)
                         {
                             sentDataFormats.Add(DataFormat.kJpeg_full_res_Uint8);
                         }
@@ -631,7 +333,7 @@ namespace Niantic.Lightship.AR.PAM
                         break;
 
                     case DataFormat.kPlatform_depth:
-                        if (_currentDeprecatedFrameDataDeprecated._frameCStruct.PlatformDepthDataLength > 0)
+                        if (hasDepthImage)
                         {
                             sentDataFormats.Add(DataFormat.kPlatform_depth);
                         }
@@ -664,6 +366,7 @@ namespace Niantic.Lightship.AR.PAM
                     formatsSent.Add((DataFormat)enumItem);
                 }
             }
+
             FormatsSent = formatsSent.ToArray();
         }
     }

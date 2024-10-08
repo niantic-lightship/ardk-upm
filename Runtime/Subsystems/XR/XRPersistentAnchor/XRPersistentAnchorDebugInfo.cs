@@ -19,12 +19,10 @@ namespace Niantic.Lightship.AR.XRSubsystems
         /// </summary>
         public XRPersistentAnchorLocalizationStatus[] localizationStatusArray { get; private set; }
 
-#if NIANTIC_ARDK_EXPERIMENTAL_FEATURES
         /// <summary>
         /// Array of XRPersistentAnchorFrameDiagnostics
         /// </summary>
         public XRPersistentAnchorFrameDiagnostics[] frameDiagnosticsArray { get; private set; }
-#endif
 
         /// <summary>
         /// XRPersistentAnchorDebugInfo Contructor
@@ -32,19 +30,12 @@ namespace Niantic.Lightship.AR.XRSubsystems
         /// <param name="XRPersistentAnchorDebugInfo">The XRPersistentAnchorDebugInfo with the debug data arrays</param>
         public XRPersistentAnchorDebugInfo(
             XRPersistentAnchorNetworkRequestStatus[] networkStatusArray,
-#if NIANTIC_ARDK_EXPERIMENTAL_FEATURES
             XRPersistentAnchorLocalizationStatus[] localizationStatusArray,
             XRPersistentAnchorFrameDiagnostics[] frameDiagnosticsArray)
-#else
-            XRPersistentAnchorLocalizationStatus[] localizationStatusArray)
-#endif
         {
             this.networkStatusArray = networkStatusArray;
             this.localizationStatusArray = localizationStatusArray;
-#if NIANTIC_ARDK_EXPERIMENTAL_FEATURES
             this.frameDiagnosticsArray = frameDiagnosticsArray;
-#endif
-
         }
     }
 }

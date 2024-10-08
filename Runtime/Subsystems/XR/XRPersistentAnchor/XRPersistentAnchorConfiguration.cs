@@ -1,4 +1,6 @@
 // Copyright 2022-2024 Niantic.
+
+using System;
 using System.Runtime.InteropServices;
 using Niantic.Lightship.AR.Utilities;
 using Niantic.Lightship.AR.Utilities.Logging;
@@ -18,6 +20,7 @@ namespace Niantic.Lightship.AR.XRSubsystems
         internal const bool DefaultTransformUpdateSmoothingEnabled = false;
         internal const bool DefaultCloudLocalizationEnabled = true;
         internal const bool DefaultSlickLocalizationEnabled = false;
+        internal const bool DefaultSlickLearnedFeaturesEnabled = false;
         internal const float DefaultCloudLocalizerInitialRequestsPerSecond = 1.0f;
         internal const float DefaultCloudLocalizerContinuousRequestsPerSecond = 0.2f;
         internal const float DefaultSlickLocalizationFps = 0; // Full Frame-rate
@@ -32,6 +35,7 @@ namespace Niantic.Lightship.AR.XRSubsystems
         private bool _transformUpdateSmoothingEnabled;
         private bool _cloudLocalizationEnabled;
         private bool _slickLocalizationEnabled;
+        private bool _slickLearnedFeaturesEnabled;
         private float _cloudLocalizerInitialRequestsPerSecond;
         private float _cloudLocalizerContinuousRequestsPerSecond;
         private float _slickLocalizationFps;
@@ -69,6 +73,12 @@ namespace Niantic.Lightship.AR.XRSubsystems
         {
             get => _slickLocalizationEnabled;
             set => _slickLocalizationEnabled = value;
+        }
+
+        public bool SlickLearnedFeaturesEnabled
+        {
+            get => _slickLearnedFeaturesEnabled;
+            set => _slickLearnedFeaturesEnabled = value;
         }
 
         // Define the rate of server requests for initial localization
@@ -180,6 +190,7 @@ namespace Niantic.Lightship.AR.XRSubsystems
             _transformUpdateSmoothingEnabled = DefaultTransformUpdateSmoothingEnabled;
             _cloudLocalizationEnabled = DefaultCloudLocalizationEnabled;
             _slickLocalizationEnabled = DefaultSlickLocalizationEnabled;
+            _slickLearnedFeaturesEnabled = DefaultSlickLearnedFeaturesEnabled;
             _cloudLocalizerInitialRequestsPerSecond = DefaultCloudLocalizerInitialRequestsPerSecond;
             _cloudLocalizerContinuousRequestsPerSecond = DefaultCloudLocalizerContinuousRequestsPerSecond;
             _slickLocalizationFps = DefaultSlickLocalizationFps;
@@ -197,6 +208,7 @@ namespace Niantic.Lightship.AR.XRSubsystems
             bool transformUpdateSmoothingEnabled = DefaultTransformUpdateSmoothingEnabled,
             bool cloudLocalizationEnabled = DefaultCloudLocalizationEnabled,
             bool slickLocalizationEnabled = DefaultSlickLocalizationEnabled,
+            bool slickLearnedFeaturesEnabled = DefaultSlickLearnedFeaturesEnabled,
             float cloudLocalizerInitialRequestsPerSecond = DefaultCloudLocalizerInitialRequestsPerSecond,
             float cloudLocalizerContinuousRequestsPerSecond = DefaultCloudLocalizerContinuousRequestsPerSecond,
             float slickLocalizationFps = DefaultSlickLocalizationFps,
@@ -212,6 +224,7 @@ namespace Niantic.Lightship.AR.XRSubsystems
             _transformUpdateSmoothingEnabled = transformUpdateSmoothingEnabled;
             _cloudLocalizationEnabled = cloudLocalizationEnabled;
             _slickLocalizationEnabled = slickLocalizationEnabled;
+            _slickLearnedFeaturesEnabled = slickLearnedFeaturesEnabled;
             _cloudLocalizerInitialRequestsPerSecond = cloudLocalizerInitialRequestsPerSecond;
             _cloudLocalizerContinuousRequestsPerSecond = cloudLocalizerContinuousRequestsPerSecond;
             _slickLocalizationFps = slickLocalizationFps;
@@ -234,6 +247,7 @@ namespace Niantic.Lightship.AR.XRSubsystems
             _transformUpdateSmoothingEnabled = other._transformUpdateSmoothingEnabled;
             _cloudLocalizationEnabled = other._cloudLocalizationEnabled;
             _slickLocalizationEnabled = other._slickLocalizationEnabled;
+            _slickLearnedFeaturesEnabled = other._slickLearnedFeaturesEnabled;
             _cloudLocalizerInitialRequestsPerSecond = other._cloudLocalizerInitialRequestsPerSecond;
             _cloudLocalizerContinuousRequestsPerSecond = other._cloudLocalizerContinuousRequestsPerSecond;
             _slickLocalizationFps = other._slickLocalizationFps;
@@ -261,6 +275,7 @@ namespace Niantic.Lightship.AR.XRSubsystems
                     _transformUpdateSmoothingEnabled == other._transformUpdateSmoothingEnabled &&
                     _cloudLocalizationEnabled == other._cloudLocalizationEnabled &&
                     _slickLocalizationEnabled == other._slickLocalizationEnabled &&
+                    _slickLearnedFeaturesEnabled == other._slickLearnedFeaturesEnabled &&
                     FloatEqualityHelper.NearlyEquals(_cloudLocalizerInitialRequestsPerSecond, other._cloudLocalizerInitialRequestsPerSecond) &&
                     FloatEqualityHelper.NearlyEquals(_cloudLocalizerContinuousRequestsPerSecond, other._cloudLocalizerContinuousRequestsPerSecond) &&
                     FloatEqualityHelper.NearlyEquals(_slickLocalizationFps, other._slickLocalizationFps) &&
@@ -294,6 +309,42 @@ namespace Niantic.Lightship.AR.XRSubsystems
                 _cloudLocalizationTemporalFusionWindowSize.GetHashCode() ^
                 _slickLocalizationTemporalFusionWindowSize.GetHashCode() ^
                 _jpegCompressionQuality.GetHashCode();
+        }
+
+        // Fusion wants to cache a window of requests to determine the best pose to surface
+        // This should be around 5-25 seconds of requests to mitigate drift over time
+        public static uint DetermineFusionWindowFromRequestRate(float requestsPerSecond)
+        {
+            // If requests per second is zero or negative, assume we are requesting every frame.
+            // Cache up to 100 frames of requests (last 1.5-3 seconds).
+            if (requestsPerSecond <= 0)
+            {
+                return 100;
+            }
+
+            // Request rate = interval between requests
+            var rate = 1 / requestsPerSecond;
+
+            // If requests are happening more than once per second, we can afford to have a smaller window
+            // Cache 5 seconds of requests, up to 100
+            if (rate <= 1.0f)
+            {
+                return Math.Min((uint)(5 / rate), 100);
+            }
+
+            // Between 1-5 requests per second, we want to hold older poses for a bit longer to have more samples
+            // Cache between 10-25 seconds of requests depending on rate
+            else if (rate <= 5.0f)
+            {
+                return Math.Max((uint)(10 / rate), 5);
+            }
+
+            // At any higher rates, we don't want to hold old poses for too long to avoid drift
+            // Just fuse the last 3 results
+            else
+            {
+                return 3;
+            }
         }
     }
 }

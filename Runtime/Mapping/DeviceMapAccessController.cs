@@ -42,10 +42,6 @@ namespace Niantic.Lightship.AR.Mapping
 
         internal void Init()
         {
-            if (!DeviceMapFeatureFlag.IsFeatureEnabled())
-            {
-                return;
-            }
             _api = new NativeMapStorageAccessApi();
             _api.Create(LightshipUnityContext.UnityContextHandle);
             _isRunning = false;
@@ -53,11 +49,6 @@ namespace Niantic.Lightship.AR.Mapping
 
         internal void Destroy()
         {
-            if (!DeviceMapFeatureFlag.IsFeatureEnabled())
-            {
-                return;
-            }
-
             if (_isRunning)
             {
                 // stop before dispose if still running
@@ -77,16 +68,22 @@ namespace Niantic.Lightship.AR.Mapping
             _isRunning = true;
         }
 
+        internal void StopNativeModule()
+        {
+            if (!DeviceMapFeatureFlag.IsFeatureEnabled())
+            {
+                return;
+            }
+            _api.Stop();
+            _isRunning = false;
+        }
+
         /// <summary>
         /// Clear map/graph node locally registered in the localizer
         /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
         /// </summary>
         [Experimental]
         public void ClearDeviceMap() {
-            if (!DeviceMapFeatureFlag.IsFeatureEnabled())
-            {
-                return;
-            }
             _api.Clear();
         }
 
@@ -206,6 +203,34 @@ namespace Niantic.Lightship.AR.Mapping
             }
             _api.MergeSubGraphs(subgraphs, onlyKeepLatestEdges, out mergedSubgraph);
             return true;
+        }
+
+        /// <summary>
+        /// Extract map metadata from the map blob data
+        /// </summary>
+        /// <param name="mapBlob">map blob data as byte array</param>
+        /// <param name="points">feature points relative to the map center</param>
+        /// <param name="errors">error of each points</param>
+        /// <param name="center">map center in the mapping coordinate system</param>
+        /// <param name="mapType">indicate type of the map data</param>
+        [Experimental]
+        public void ExtractMapMetaData(
+            byte[] mapBlob,
+            out Vector3[] points,
+            out float[] errors,
+            out Vector3 center,
+            out string mapType
+        )
+        {
+            if (!DeviceMapFeatureFlag.IsFeatureEnabled())
+            {
+                points = default;
+                errors = default;
+                center = default;
+                mapType = default;
+                return;
+            }
+            _api.ExtractMapMetaData(mapBlob, out points, out errors, out center, out mapType);
         }
 
         internal void UseFakeMapStorageAccessApi(IMapStorageAccessApi mapStorageAccessApi)

@@ -10,7 +10,7 @@ namespace Niantic.Lightship.AR.Scanning
 {
     internal class NativeScanArchiveBuilderApi : IScanArchiveBuilderApi
     {
-        public IntPtr Create(IntPtr unityContext, string scanPath, string scanId, string userDataStr)
+        public IntPtr Create(IntPtr unityContext, string scanPath, string scanId, string userDataStr, int maxFramesPerChunk)
         {
             if (string.IsNullOrEmpty(scanPath) || string.IsNullOrEmpty(scanId))
             {
@@ -19,7 +19,7 @@ namespace Niantic.Lightship.AR.Scanning
             }
 
             return Native.Lightship_ARDK_Unity_Scanning_Archive_Builder_Create(
-                unityContext, scanPath, scanId, userDataStr);
+                unityContext, scanPath, scanId, userDataStr, maxFramesPerChunk);
         }
 
         public void Release(IntPtr handle)
@@ -109,7 +109,7 @@ namespace Niantic.Lightship.AR.Scanning
         {
             [DllImport(LightshipPlugin.Name)]
             public static extern IntPtr Lightship_ARDK_Unity_Scanning_Archive_Builder_Create(
-                IntPtr unityContext, string scanPath, string scanId, string userDataStr);
+                IntPtr unityContext, string scanPath, string scanId, string userDataStr, int maxFramesPerChunk);
 
             [DllImport(LightshipPlugin.Name)]
             public static extern void Lightship_ARDK_Unity_Scanning_Archive_Builder_Release(IntPtr handle);

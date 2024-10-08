@@ -28,14 +28,14 @@ namespace Niantic.Lightship.AR.PAM
 
         private bool _isLidarDepthEnabled = false;
 
-        public IntPtr Lightship_ARDK_Unity_PAM_Create(IntPtr unityContext, bool isLidarDepthEnabled)
+        public IntPtr ARDK_SAH_Create(IntPtr unityContext, bool isLidarDepthEnabled)
         {
             _handle = new IntPtr((int)(Random.value * int.MaxValue));
             _isLidarDepthEnabled = isLidarDepthEnabled;
             return _handle;
         }
 
-        public virtual void Lightship_ARDK_Unity_PAM_OnFrame_Deprecated(IntPtr handle, IntPtr frameData)
+        public virtual void ARDK_SAH_OnFrame_Deprecated(IntPtr handle, IntPtr frameData)
         {
             if (handle == _handle)
             {
@@ -43,7 +43,7 @@ namespace Niantic.Lightship.AR.PAM
             }
         }
 
-        public virtual void Lightship_ARDK_Unity_PAM_OnFrame(IntPtr handle, IntPtr frameData)
+        public virtual void ARDK_SAH_OnFrame(IntPtr handle, IntPtr frameData)
         {
             if (handle == _handle)
             {
@@ -51,7 +51,7 @@ namespace Niantic.Lightship.AR.PAM
             }
         }
 
-        public void Lightship_ARDK_Unity_PAM_Release(IntPtr handle)
+        public void ARDK_SAH_Release(IntPtr handle)
         {
             if (handle == _handle)
             {
@@ -59,7 +59,7 @@ namespace Niantic.Lightship.AR.PAM
             }
         }
 
-        public void Lightship_ARDK_Unity_PAM_GetDataFormatsReadyForNewFrame
+        public void ARDK_SAH_GetDataFormatsReadyForNewFrame
         (
             IntPtr handle,
             NativeArray<DataFormat> dataFormatsReady, out int readySize
@@ -71,7 +71,7 @@ namespace Niantic.Lightship.AR.PAM
             ClearDataFormats();
         }
 
-        public void Lightship_ARDK_Unity_PAM_GetDataFormatUpdatesForNewFrame
+        public void ARDK_SAH_GetDataFormatUpdatesForNewFrame
         (
             IntPtr handle,
             NativeArray<DataFormat> dataFormatsAdded, out int addedSize,
@@ -91,7 +91,7 @@ namespace Niantic.Lightship.AR.PAM
             ClearDataFormats();
         }
 
-        public void Lightship_ARDK_Core_SAH_GetDispatchedFormatsToModules
+        public void ARDK_SAH_GetDispatchedFormatsToModules
         (
             IntPtr handle,
             out uint dispatchedFrameId,
@@ -134,9 +134,9 @@ namespace Niantic.Lightship.AR.PAM
             _removedDataFormatsSize = formats.Length;
         }
 
-        public static FrameDataCStruct IntPtrToFrameDataCStruct(IntPtr ptr)
+        public static ARDKFrameData IntPtrToFrameDataCStruct(IntPtr ptr)
         {
-            return (FrameDataCStruct)Marshal.PtrToStructure(ptr, typeof(FrameDataCStruct));
+            return (ARDKFrameData)Marshal.PtrToStructure(ptr, typeof(ARDKFrameData));
         }
 
         public static DeprecatedFrameCStruct IntPtrToDeprecatedFrameCStruct(IntPtr ptr)

@@ -30,14 +30,15 @@ namespace Niantic.ARDK.AR.Scanning
         /// <summary>
         /// Creates an ScanArchiveBuilder for getting scan archive paths for async uploading.
         /// </summary>
-        /// <param name="scan">A SavedScan instance </param>
-        /// <param name="uploadUserInfo">Scan Metadata</param>
+        /// <param name="scan">A SavedScan instance.</param>
+        /// <param name="uploadUserInfo">Scan Metadata.</param>
+        /// <param name="maxFramesPerChunk">Max number of frames per output file.</param>
         /// <returns>An instance of ScanArchiveBuilder. Only one should be used at a time.</returns>
-        public ScanArchiveBuilder(ScanStore.SavedScan scan, UploadUserInfo uploadUserInfo)
+        public ScanArchiveBuilder(ScanStore.SavedScan scan, UploadUserInfo uploadUserInfo, int maxFramesPerChunk = 900)
         {
             _api = new NativeScanArchiveBuilderApi();
 #if NIANTIC_LIGHTSHIP_AR_LOADER_ENABLED
-            _nativeHandle = _api.Create(LightshipUnityContext.UnityContextHandle, scan.ScanPath, scan.ScanId, JsonUtility.ToJson(uploadUserInfo));
+            _nativeHandle = _api.Create(LightshipUnityContext.UnityContextHandle, scan.ScanPath, scan.ScanId, JsonUtility.ToJson(uploadUserInfo), maxFramesPerChunk);
 #endif
         }
 

@@ -21,7 +21,7 @@ namespace Niantic.Lightship.AR.Settings
     [PublicAPI]
     public static class Metadata
     {
-        private const string ArdkVersion = "3.8.0-2409081646";
+        private const string ArdkVersion = "3.9.0-2410041643";
 
         private const string AuthorizationHeaderKey = "Authorization";
         private const string ApplicationIdHeaderKey = "x-ardk-application-id";

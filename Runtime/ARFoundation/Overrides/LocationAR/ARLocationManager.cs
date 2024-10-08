@@ -2,6 +2,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+
+using Niantic.Lightship.AR.Mapping;
 using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.PersistentAnchors;
 using Niantic.Lightship.AR.Utilities;
@@ -91,6 +93,8 @@ namespace Niantic.Lightship.AR.LocationAR
         // _coverageARLocationHolders will be populated by OnCoverageLocationsQueried
         private readonly List<GameObject> _coverageARLocationHolders = new();
 
+        private DeviceMapAccessController _deviceMapAccessController;
+
         protected override void OnEnable()
         {
             // This will invoke OnBeforeStart and then start the subsystem. Put any initialization logic
@@ -115,6 +119,9 @@ namespace Niantic.Lightship.AR.LocationAR
                     arLocation.gameObject.SetActive(false);
                 }
             }
+
+            _deviceMapAccessController = new DeviceMapAccessController();
+            _deviceMapAccessController.Init();
             if (arLocations.Count != 0)
             {
                 SetARLocations(arLocations.ToArray());
@@ -135,7 +142,7 @@ namespace Niantic.Lightship.AR.LocationAR
         /// Selects the AR Locations to try to track when StartTracking() is called. At most one of these locations will
         /// actually be tracked.
         /// </summary>
-        /// <param name="arLocation">The locations to try to track.</param>
+        /// <param name="arLocations">The locations to try to track.</param>
         public void SetARLocations(params ARLocation[] arLocations)
         {
             _targetARLocations.Clear();
@@ -550,6 +557,14 @@ namespace Niantic.Lightship.AR.LocationAR
                 Destroy(arLocationHolder);
             }
             _coverageARLocationHolders.Clear();
+            _deviceMapAccessController.ClearDeviceMap();
+        }
+
+        private new void OnDestroy()
+        {
+            _deviceMapAccessController.ClearDeviceMap();
+            _deviceMapAccessController.Destroy();
+            base.OnDestroy();
         }
     }
 }

@@ -51,7 +51,6 @@ namespace Niantic.Lightship.AR.Simulation
             private readonly Random _random = new Random();
             private readonly List<XRPersistentAnchor> _anchors = new List<XRPersistentAnchor>();
 
-
             public override XRPersistentAnchorConfiguration CurrentConfiguration { get; set; } = new XRPersistentAnchorConfiguration();
 
             public override bool IsMockProvider
@@ -165,7 +164,6 @@ namespace Niantic.Lightship.AR.Simulation
                 return false;
             }
 
-#if NIANTIC_ARDK_EXPERIMENTAL_FEATURES
             public override bool GetFrameDiagnosticsUpdate
             (
                 out XRPersistentAnchorFrameDiagnostics[] statuses
@@ -174,7 +172,6 @@ namespace Niantic.Lightship.AR.Simulation
                 statuses = default;
                 return false;
             }
-#endif
 
             public override bool GetVpsSessionId(out string vpsSessionId)
             {

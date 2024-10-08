@@ -1,5 +1,4 @@
 // Copyright 2022-2024 Niantic.
-#if NIANTIC_ARDK_EXPERIMENTAL_FEATURES
 
 using System;
 using System.Collections;
@@ -56,5 +55,3 @@ namespace Niantic.Lightship.AR.XRSubsystems
         public Dictionary<DiagnosticLabel, float> ScoresPerDiagnosticLabel;
     }
 }
-
-#endif

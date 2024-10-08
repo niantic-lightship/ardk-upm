@@ -73,15 +73,27 @@ namespace Niantic.Lightship.AR.PAM
 
         public override bool TryGetCameraIntrinsicsCStruct(out CameraIntrinsicsCStruct intrinsics)
         {
-            intrinsics = default;
-            intrinsics.SetIntrinsics(new Vector2(554.256f, 579.411f), new Vector2(320, 240));
+            intrinsics =
+                new CameraIntrinsicsCStruct
+                (
+                    new Vector2(554.256f, 579.411f),
+                    new Vector2(320, 240),
+                    new Vector2Int(720, 540)
+                );
+
             return true;
         }
 
-        public override bool TryGetDepthCameraIntrinsicsCStruct(out CameraIntrinsicsCStruct depthIntrinsics, Vector2Int depthResolution)
+        public override bool TryGetDepthCameraIntrinsicsCStruct(out CameraIntrinsicsCStruct depthIntrinsics)
         {
-            depthIntrinsics = default;
-            depthIntrinsics.SetIntrinsics(new Vector2(554.256f, 579.411f), new Vector2(320, 240));
+            depthIntrinsics =
+                new CameraIntrinsicsCStruct
+                (
+                    new Vector2(554.256f, 579.411f),
+                    new Vector2(320, 240),
+                    new Vector2Int(720, 540)
+                );
+
             return true;
         }
 
