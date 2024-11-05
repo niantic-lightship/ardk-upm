@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Niantic.Lightship.AR.PAM;
 using Niantic.Lightship.AR.Subsystems.Playback;
 using Niantic.Lightship.AR.Utilities;
 using UnityEngine;
@@ -185,6 +186,13 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
             public XRCameraIntrinsics Intrinsics =>
                 new XRCameraIntrinsics
                 (
+                    new Vector2((float)intrinsics[0], (float)intrinsics[1]),
+                    new Vector2((float)intrinsics[2], (float)intrinsics[3]),
+                    new Vector2Int(resolution[0], resolution[1])
+                );
+
+            public CameraIntrinsicsCStruct IntrinsicsCStruct =>
+                new CameraIntrinsicsCStruct(
                     new Vector2((float)intrinsics[0], (float)intrinsics[1]),
                     new Vector2((float)intrinsics[2], (float)intrinsics[3]),
                     new Vector2Int(resolution[0], resolution[1])

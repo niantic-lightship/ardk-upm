@@ -15,14 +15,6 @@ namespace Niantic.Lightship.AR.PAM
 
         public abstract bool TryGetCameraPose(out Matrix4x4 pose);
 
-        public abstract bool TryGetCpuImageDeprecated(out XRCpuImage cpuImage);
-
-        public abstract bool TryGetDepthCpuImageDeprecated
-        (
-            out XRCpuImage cpuDepthImage,
-            out XRCpuImage cpuDepthConfidenceImage
-        );
-
         public abstract bool TryGetCpuImage(out LightshipCpuImage cpuImage);
 
         public abstract bool TryGetDepthCpuImage
@@ -35,8 +27,6 @@ namespace Niantic.Lightship.AR.PAM
 
         public abstract TrackingState GetTrackingState();
 
-        public abstract bool TryGetCameraIntrinsicsDeprecated(out XRCameraIntrinsics intrinsics);
-
         public abstract bool TryGetCameraIntrinsicsCStruct(out CameraIntrinsicsCStruct intrinsics);
 
         public abstract bool TryGetDepthCameraIntrinsicsCStruct(out CameraIntrinsicsCStruct depthIntrinsics);
@@ -46,10 +36,5 @@ namespace Niantic.Lightship.AR.PAM
         public abstract bool TryGetCompass(out CompassDataCStruct compass);
 
         public virtual void Dispose() { }
-
-        // DEPRECATED – New PAM does FormatAdded on Register, reduces interface for new HMDs
-        public abstract void OnFormatAdded(DataFormat addedFormat);
-        // DEPRECATED – New PAM does FormatAdded on Register, reduces interface for new HMDs
-        public abstract void OnFormatRemoved(DataFormat addedFormat);
     }
 }

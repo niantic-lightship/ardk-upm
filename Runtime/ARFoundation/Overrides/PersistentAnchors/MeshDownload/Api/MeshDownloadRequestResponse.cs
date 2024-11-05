@@ -100,6 +100,38 @@ namespace Niantic.Lightship.AR.Subsystems
         }
 
         [Serializable]
+        internal class GetSpaceDataRequest {
+            public string requestIdentifier;
+            public string[] spaceIdentifiers;
+        }
+
+        [Serializable]
+        internal class GetSpaceDataResponse {
+            public string requestIdentifier;
+            public GraphStatusCode statusCode;
+            public SpaceData[] spaceDataList;
+        }
+
+        [Serializable]
+        internal class SpaceData
+        {
+            public string spaceIdentifier;
+            public double spaceQualityScore;
+            public SpaceLabel[] spaceLabels;
+        }
+
+        [Serializable]
+        internal class SpaceLabel
+        {
+            public string spaceIdentifier;
+            public string label;
+            public double totalArea;
+            public long countObjects;
+            public double[] polygonVerticesWrtOrigin;
+            public float floatValue;
+        }
+
+        [Serializable]
         internal class Node {
             public string identifier;
             public UInt32 version;

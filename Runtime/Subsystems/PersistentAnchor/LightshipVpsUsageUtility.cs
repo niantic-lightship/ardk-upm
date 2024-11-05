@@ -36,7 +36,7 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
         {
             var config = new XRPersistentAnchorConfiguration();
             config.CloudLocalizationEnabled = true;
-            config.SlickLocalizationEnabled = false;
+            config.DeviceMappingLocalizationEnabled = false;
 
             switch (usageMode)
             {

@@ -1,6 +1,7 @@
 // Copyright 2022-2024 Niantic.
 using System;
 using System.Collections.Generic;
+using Niantic.Lightship.AR.Common;
 using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.Semantics;
 using Niantic.Lightship.AR.Subsystems.Occlusion;
@@ -11,6 +12,7 @@ using UnityEngine.XR.ARFoundation;
 using UnityEngine.XR.ARSubsystems;
 using UnityEngine.XR.Management;
 using Niantic.Lightship.AR.Utilities;
+using UnityEngine.Serialization;
 
 namespace Niantic.Lightship.AR.Occlusion
 {
@@ -19,178 +21,11 @@ namespace Niantic.Lightship.AR.Occlusion
     /// Lightship's implementation of <see cref="XROcclusionSubsystem"/>.
     /// </summary>
     [PublicAPI("apiref/Niantic/Lightship/AR/Occlusion/LightshipOcclusionExtension/")]
-    [RequireComponent(typeof(Camera))]
-    [RequireComponent(typeof(ARCameraManager))]
+    [RequireComponent(typeof(ARCameraBackground))]
     [RequireComponent(typeof(AROcclusionManager))]
     [DefaultExecutionOrder(ARUpdateOrder.k_OcclusionManager - 1)]
-    public class LightshipOcclusionExtension : MonoBehaviour
+    public partial class LightshipOcclusionExtension : ConditionalRenderer
     {
-        #region Nested Types
-
-        /// <summary>
-        /// The sampling mode for determining the distance to the occluder.
-        /// This distance is used to transform the depth buffer to provide
-        /// accurate occlusions.
-        /// </summary>
-        public enum OptimalOcclusionDistanceMode
-        {
-            /// Take a few samples of the full depth buffer to
-            /// determine the closest occluder on the screen.
-            /// This will provide the best available occlusions
-            /// if there are many occluded virtual objects of similar
-            /// size and importance.
-            ClosestOccluder,
-
-            /// Sample the sub-region of the buffer that is directly over
-            /// the main CG object, to determine the distance of its occluder
-            /// in the world. This will provide the best quality occlusions
-            /// if there is only one occluded virtual object, or if one is more
-            /// visually prominent than the others
-            SpecifiedGameObject,
-
-            /// Stabilize the depth buffer relative to a pre-determined,
-            /// unchanging depth. Not recommended if there are occluded virtual objects
-            /// in the scene, but is more performant and thus optimal when
-            /// occlusions are not needed.
-            Static,
-        }
-
-        #endregion
-
-        #region Constants
-
-        /// <summary>
-        /// Name of the default Lightship Occlusion Extension shader.
-        /// </summary>
-        public const string DefaultShaderName = "Lightship/OcclusionExtension";
-
-        /// <summary>
-        /// Name for the custom rendering command buffer.
-        /// </summary>
-        private const string k_CustomRenderPassName = "LightshipOcclusionExtension Pass (LegacyRP)";
-
-        /// <summary>
-        /// Message logged when the extension tries to set a frame rate that is not supported by the subsystem.
-        /// </summary>
-        private const string k_TargetFrameRateNotSupportedMessage =
-            "TargetFrameRate is not supported on non-Lightship implementations of the XROcclusionSubsystem.";
-
-        /// <summary>
-        /// Message logged when the LatestInrinsicsMatrix API is not supported by the subsystem.
-        /// </summary>
-        private const string k_LatestIntrinsicsMatrixNotSupportedMessage =
-            "LatestInrinsicsMatrix is not supported on non-Lightship implementations of the XROcclusionSubsystem.";
-
-        /// <summary>
-        /// Message logged when the LatestExtrinsicsMatrix API is not supported by the subsystem.
-        /// </summary>
-        private const string k_LatestExtrinsicsMatrixNotSupportedMessage =
-            "LatestExtrinsicsMatrix is not supported on non-Lightship implementations of the XROcclusionSubsystem.";
-
-        /// <summary>
-        /// Message logged when the extension tries to use the cpu image it failed to acquire.
-        /// </summary>
-        private const string k_MissingCpuImageMessage = "Could not acquire the cpu depth image.";
-
-        /// <summary>
-        /// Message logged when there has been an error updating the suppression texture.
-        /// </summary>
-        private const string k_SuppressionTextureErrorMessage = "Unable to update the depth suppresion texture.";
-
-        /// <summary>
-        /// Message logged when the OptimalOcclusionDistanceMode is invalidly set to SpecifiedGameObject.
-        /// </summary>
-        private const string k_MissingOccludeeMessage =
-            "Active OptimalOcclusionDistanceMode is SpecifiedGameObject but the Principal Occludee " +
-            "object is null. Falling back to the ClosestOccluder mode.";
-
-        /// <summary>
-        /// Message logged when the semantic depth suppression is enabled without the required components in the scene.
-        /// </summary>
-        private const string k_MissingSemanticManagerMessage =
-            "Missing ARSemanticSegmentationManager component reference. " +
-            "One in the scene is required to enable semantic depth suppression.";
-
-        /// <summary>
-        /// Message logged when the occlusion stabilization feature is enabled without the required components in the scene.
-        /// </summary>
-        private const string k_MissingMeshManagerMessage =
-            "Missing ARMeshManager component reference. " +
-            "One in the scene is required to enable occlusion stabilization.";
-
-        /// <summary>
-        /// Message logged when an api tries to interact with the fused depth camera without it being initialized.
-        /// </summary>
-        private const string k_MissingFusedDepthCameraMessage =
-            "Fused depth camera is not initialized. Please enable occlusion stabilization first.";
-
-        /// <summary>
-        /// Message logged when the occlusion extension shader is missing from the project.
-        /// </summary>
-        private const string k_MissingShaderResourceMessage =
-            "Missing " + DefaultShaderName + " shader resource.";
-
-        /// <summary>
-        /// Message logged when the component is set to use a custom material, but the the material resource is null.
-        /// </summary>
-        private const string k_MissingCustomBackgroundMaterialMessage =
-            "Set to use a custom background material without a valid reference.";
-
-        /// <summary>
-        /// Shader keyword for occlusion stabilization.
-        /// </summary>
-        private const string k_OcclusionStabilizationFeature = "FEATURE_STABILIZATION";
-
-        /// <summary>
-        /// Shader keyword for semantic suppression.
-        /// </summary>
-        private const string k_OcclusionSuppressionFeature = "FEATURE_SUPPRESSION";
-
-        /// <summary>
-        /// Shader keyword for depth edge smoothing.
-        /// </summary>
-        private const string k_DepthEdgeSmoothingFeature = "FEATURE_EDGE_SMOOTHING";
-
-        /// <summary>
-        /// Shader keyword for debug view.
-        /// </summary>
-        private const string k_DebugViewFeature = "FEATURE_DEBUG";
-
-        /// <summary>
-        /// Minimum possible value for the optimal occlusion depth.
-        /// </summary>
-        private const float k_MinimumDepthSample = 0.2f;
-
-        /// <summary>
-        /// Maximum possible value for the optimal occlusion depth.
-        /// </summary>
-        private const float k_MaximumDepthSample = 100.0f;
-
-        /// <summary>
-        /// Value used to exclude the edges of the image from 'ClosestOccluder' occlusion mode, since objects at
-        /// the edges should be ignored for the calculation.
-        /// </summary>
-        private const float k_FullScreenSampleBorder = 0.2f;
-
-        /// <summary>
-        /// Rectangle used to sample the depth buffer for the optimal occlusion depth.
-        /// </summary>
-        private static readonly Rect s_fullScreenRect = new
-        (
-            k_FullScreenSampleBorder,
-            k_FullScreenSampleBorder,
-            1 - k_FullScreenSampleBorder,
-            1 - k_FullScreenSampleBorder
-        );
-
-        /// <summary>
-        /// ARFoundation's renderer gets added to the camera on the first AR frame, so this component needs
-        ///  to wait this number of AR frames before attaching its command buffers.
-        /// </summary>
-        private const int k_attachDelay = 2;
-
-        #endregion
-
         #region Serialized Fields
 
         [SerializeField]
@@ -233,17 +68,18 @@ namespace Niantic.Lightship.AR.Occlusion
         private List<string> _suppressionChannels = new();
 
         [SerializeField]
-        [Tooltip("Whether to use the custom material for processing the AR background depth buffer.")]
-        private bool _useCustomBackgroundMaterial;
+        [HideInInspector]
+        private bool _useCustomMaterial;
 
+        [FormerlySerializedAs("_customBackgroundMaterial")]
         [SerializeField]
-        private Material _customBackgroundMaterial;
+        private Material _customMaterial;
 
         [SerializeField]
         private bool _bypassOcclusionManagerUpdates;
 
         [SerializeField]
-        [Tooltip("Allow the occlusion extension to override the occlusion manager's settings to set " 
+        [Tooltip("Allow the occlusion extension to override the occlusion manager's settings to set "
             + "the most optimal configuration (see documentation for more details).")]
         private bool _overrideOcclusionManagerSettings = true;
 
@@ -257,14 +93,7 @@ namespace Niantic.Lightship.AR.Occlusion
 
         #region Private Fields
 
-        /// <summary>
-        /// Whether the application is using the default render pipeline.
-        /// </summary>
-        private static bool IsUsingLegacyRenderPipeline => GraphicsSettings.currentRenderPipeline == null;
-
         // Required components
-        private Camera _camera;
-        private ARCameraManager _cameraManager;
         private XROcclusionSubsystem _occlusionSubsystem;
         private AROcclusionManager _occlusionManager;
 
@@ -275,8 +104,6 @@ namespace Niantic.Lightship.AR.Occlusion
         private Texture2D _defaultDepthTexture;
         private Texture2D _defaultNonLinearDepthTexture;
         private Matrix4x4 _depthTransform;
-        private CommandBuffer _backgroundCommandBuffer;
-        private Material _backgroundMaterial;
         private LightshipFusedDepthCamera _fusedDepthCamera;
 
         // The number of AR frames received while waiting to attach command buffers.
@@ -285,56 +112,36 @@ namespace Niantic.Lightship.AR.Occlusion
         // Additional helpers
         private bool _isValidated;
         private bool _isVisualizationEnabled;
-        private bool _areCommandBuffersAttached;
         private bool _showedTargetFrameRateNotSupportedMessage;
 
         #endregion
 
-        #region Shader Properties
-
-        /// <summary>
-        /// Property ID for the shader parameter for the depth texture.
-        /// </summary>
-        private static readonly int s_depthTextureId = Shader.PropertyToID("_Depth");
-
-        /// <summary>
-        /// Property ID for the shader parameter for the semantics texture.
-        /// </summary>
-        private static readonly int s_suppressionTextureId = Shader.PropertyToID("_Suppression");
-
-        /// <summary>
-        /// Property ID for the shader parameter for the fused depth texture (generated from the mesh).
-        /// </summary>
-        private static readonly int s_fusedDepthTextureId = Shader.PropertyToID("_FusedDepth");
-
-        /// <summary>
-        /// Property ID for the shader parameter for the depth display matrix.
-        /// </summary>
-        private static readonly int s_depthTransformId = Shader.PropertyToID("_DepthTransform");
-
-        /// <summary>
-        /// Property ID for the shader parameter for the semantics display matrix.
-        /// </summary>
-        private static readonly int s_suppressionTransformId = Shader.PropertyToID("_SuppressionTransform");
-
-        /// <summary>
-        /// Property ID for the shader parameter that describes the depth texture.
-        /// </summary>
-        private static readonly int s_depthTextureParams = Shader.PropertyToID("_DepthTextureParams");
-
-        /// <summary>
-        /// Property ID for the shader parameter that controls the blending between instant depth and fused depth.
-        /// </summary>
-        private static readonly int s_stabilizationThreshold = Shader.PropertyToID("_StabilizationThreshold");
-
-        /// <summary>
-        /// Property ID for the shader parameter for the Unity camera forward scale.
-        /// </summary>
-        private static readonly int s_cameraForwardScaleId = Shader.PropertyToID("_UnityCameraForwardScale");
-
-        #endregion
-
         #region Properties
+
+        protected override string ShaderName
+        {
+            get => DefaultShaderName;
+        }
+
+        protected override string RendererName
+        {
+            get => k_CustomRenderPassName;
+        }
+
+        /// <summary>
+        /// The occlusion extension pass needs to run after the background is drawn.
+        /// </summary>
+        private readonly string[] _externalPassDependencies = {"AR Background"};
+
+        /// <summary>
+        /// Invoked to query the external command buffers that need to run before our own.
+        /// </summary>
+        /// <param name="evt">The camera event to search command buffers for.</param>
+        /// <returns>Names or partial names of the command buffers.</returns>
+        protected override string[] OnRequestExternalPassDependencies(CameraEvent evt)
+        {
+            return _externalPassDependencies;
+        }
 
         /// <summary>
         /// Get or set the frame rate that depth inference will aim to run at
@@ -386,11 +193,11 @@ namespace Niantic.Lightship.AR.Occlusion
                 {
                     if (value)
                     {
-                        BackgroundMaterial.EnableKeyword(k_DebugViewFeature);
+                        Material.EnableKeyword(k_DebugViewFeature);
                     }
                     else
                     {
-                        BackgroundMaterial.DisableKeyword(k_DebugViewFeature);
+                        Material.DisableKeyword(k_DebugViewFeature);
                     }
 
                     _isVisualizationEnabled = value;
@@ -412,11 +219,11 @@ namespace Niantic.Lightship.AR.Occlusion
                 {
                     if (enableFeature)
                     {
-                        BackgroundMaterial.EnableKeyword(k_DepthEdgeSmoothingFeature);
+                        Material.EnableKeyword(k_DepthEdgeSmoothingFeature);
                     }
                     else
                     {
-                        BackgroundMaterial.DisableKeyword(k_DepthEdgeSmoothingFeature);
+                        Material.DisableKeyword(k_DepthEdgeSmoothingFeature);
                     }
 
                     _preferSmoothEdges = enableFeature;
@@ -430,7 +237,7 @@ namespace Niantic.Lightship.AR.Occlusion
         /// </summary>
         private bool EligibleForEdgeSmoothing
         {
-            // Low resolution images are produced using lightship or lidar with fastest setting
+            // Low resolution images are produced using lightship or lidar with the fastest setting
             get => IsUsingLightshipOcclusionSubsystem ||
                 _occlusionSubsystem.currentEnvironmentDepthMode == EnvironmentDepthMode.Fastest;
         }
@@ -533,12 +340,12 @@ namespace Niantic.Lightship.AR.Occlusion
                             }
                         }
 
-                        BackgroundMaterial.EnableKeyword(k_OcclusionSuppressionFeature);
+                        Material.EnableKeyword(k_OcclusionSuppressionFeature);
                         _semanticSegmentationManager.SuppressionMaskChannels = _suppressionChannels;
                     }
                     else
                     {
-                        BackgroundMaterial.DisableKeyword(k_OcclusionSuppressionFeature);
+                        Material.DisableKeyword(k_OcclusionSuppressionFeature);
                         _semanticSegmentationManager.SuppressionMaskChannels = new List<string>();
                     }
 
@@ -570,12 +377,12 @@ namespace Niantic.Lightship.AR.Occlusion
                             }
                         }
 
-                        BackgroundMaterial.EnableKeyword(k_OcclusionStabilizationFeature);
+                        Material.EnableKeyword(k_OcclusionStabilizationFeature);
                         ToggleFusedDepthCamera(true);
                     }
                     else
                     {
-                        BackgroundMaterial.DisableKeyword(k_OcclusionStabilizationFeature);
+                        Material.DisableKeyword(k_OcclusionStabilizationFeature);
                         ToggleFusedDepthCamera(false);
                     }
 
@@ -589,8 +396,19 @@ namespace Niantic.Lightship.AR.Occlusion
         /// </summary>
         public float StabilizationThreshold
         {
-            get { return BackgroundMaterial.GetFloat(s_stabilizationThreshold); }
-            set { BackgroundMaterial.SetFloat(s_stabilizationThreshold, Mathf.Clamp(value, 0.0f, 1.0f)); }
+            get { return Material.GetFloat(s_stabilizationThreshold); }
+            set { Material.SetFloat(s_stabilizationThreshold, Mathf.Clamp(value, 0.0f, 1.0f)); }
+        }
+
+        /// <summary>
+        /// Determines whether the command buffer should be attached.
+        /// </summary>
+        protected override bool ShouldAddCommandBuffer
+        {
+            get
+            {
+                return IsUsingLegacyRenderPipeline && IsAnyFeatureEnabled;
+            }
         }
 
         /// <summary>
@@ -598,7 +416,7 @@ namespace Niantic.Lightship.AR.Occlusion
         /// </summary>
         public bool IsRenderingActive
         {
-            get => (_areCommandBuffersAttached || !IsUsingLegacyRenderPipeline) && IsAnyFeatureEnabled;
+            get => IsCommandBufferAdded || (!IsUsingLegacyRenderPipeline && IsAnyFeatureEnabled);
         }
 
         /// <summary>
@@ -651,11 +469,11 @@ namespace Niantic.Lightship.AR.Occlusion
 
         /// <summary>
         /// Whether to override the occlusion manager's settings to set the most optimal configuration
-        /// for the occlusion extension. 
-        /// Currently the following overrides are applied: 
+        /// for the occlusion extension.
+        /// Currently, the following overrides are applied:
         /// 1) On iPhone devices with Lidar sensor, the best and medium occlusion mode will cause a significant performance hit
-        /// as well as a crash. We will override the occlusion mode to fastest to avoid this issue and enable smooth edges 
-        /// for the best results. 
+        /// as well as a crash. We will override the occlusion mode to fastest to avoid this issue and enable smooth edges
+        /// for the best results.
         /// </summary>
         public bool OverrideOcclusionManagerSettings
         {
@@ -683,7 +501,7 @@ namespace Niantic.Lightship.AR.Occlusion
 
         /// <summary>
         /// The default texture bound to the depth property on the material.
-        /// It let's every pixel pass through until the real depth texture is ready to use.
+        /// It lets every pixel pass through until the real depth texture is ready to use.
         /// This resource only gets allocated if custom occlusion features are used during
         /// the lifetime of the occlusion extension component.
         /// </summary>
@@ -694,7 +512,7 @@ namespace Niantic.Lightship.AR.Occlusion
                 // Lazy
                 if (_defaultDepthTexture == null)
                 {
-                    var maxDistance = _camera.farClipPlane;
+                    var maxDistance = Camera.farClipPlane;
                     _defaultDepthTexture = new Texture2D(2, 2, TextureFormat.RFloat, mipChain: false);
                     _defaultDepthTexture.SetPixelData(new[] {maxDistance, maxDistance, maxDistance, maxDistance}, 0);
                     _defaultDepthTexture.Apply(false);
@@ -706,7 +524,7 @@ namespace Niantic.Lightship.AR.Occlusion
 
         /// <summary>
         /// The default texture bound to the fused depth property on the material.
-        /// It let's every pixel pass through until the real depth texture is ready to use.
+        /// It lets every pixel pass through until the real depth texture is ready to use.
         /// This resource only gets allocated if custom occlusion features are used during
         /// the lifetime of the occlusion extension component.
         /// </summary>
@@ -717,7 +535,7 @@ namespace Niantic.Lightship.AR.Occlusion
                 // Lazy
                 if (_defaultNonLinearDepthTexture == null)
                 {
-                    var val = LightshipOcclusionExtensionUtils.IsDepthReversed() ? 0.0f : 1.0f;
+                    var val = OcclusionExtensionUtils.IsDepthReversed() ? 0.0f : 1.0f;
                     _defaultNonLinearDepthTexture = new Texture2D(2, 2, TextureFormat.RFloat, mipChain: false);
                     _defaultNonLinearDepthTexture.SetPixelData(new[] {val, val, val, val}, 0);
                     _defaultNonLinearDepthTexture.Apply(false);
@@ -725,35 +543,6 @@ namespace Niantic.Lightship.AR.Occlusion
 
                 return _defaultNonLinearDepthTexture;
             }
-        }
-
-        /// <summary>
-        /// Get or set whether to use the custom material for processing the AR background depth buffer.
-        /// </summary>
-        public bool UseCustomBackgroundMaterial
-        {
-            get => _useCustomBackgroundMaterial;
-            set
-            {
-                _useCustomBackgroundMaterial = value;
-                if (value)
-                {
-                    // Release the unused material
-                    if (_backgroundMaterial != null)
-                    {
-                        Destroy(_backgroundMaterial);
-                    }
-                }
-            }
-        }
-
-        /// <summary>
-        /// Get or set the custom material used for processing the AR background depth buffer.
-        /// </summary>
-        public Material CustomBackgroundMaterial
-        {
-            get => _customBackgroundMaterial;
-            set => _customBackgroundMaterial = value;
         }
 
         /// <summary>
@@ -782,43 +571,69 @@ namespace Niantic.Lightship.AR.Occlusion
         }
 
         /// <summary>
-        /// The background rendering material in use.
+        /// Get or set the custom material used for processing the AR background depth buffer.
         /// </summary>
-        /// <exception cref="InvalidOperationException">Thrown if the the background shader resource cannot be found.</exception>
+        public Material CustomMaterial
+        {
+            get => _customMaterial;
+            set
+            {
+                OverrideMaterial(value);
+                _customMaterial = value;
+            }
+        }
+
+        [Obsolete("Use the CustomMaterial property instead.")]
+        public Material CustomBackgroundMaterial
+        {
+            get => CustomMaterial;
+            set => CustomMaterial = value;
+        }
+
+        [Obsolete("Use the Material property instead.")]
         public Material BackgroundMaterial
         {
-            get
-            {
-                var result = _useCustomBackgroundMaterial ? _customBackgroundMaterial : _backgroundMaterial;
-                if (result == null)
-                {
-                    if (!_useCustomBackgroundMaterial)
-                    {
-                        // Load the background material for the first time
-                        var shader = Shader.Find(DefaultShaderName);
-                        if (shader == null)
-                        {
-                            throw new InvalidOperationException
-                            (
-                                $"Could not find shader named '{DefaultShaderName}' required " +
-                                "for depth processing."
-                            );
-                        }
+            get => Material;
+        }
 
-                        _backgroundMaterial = new Material(shader);
-                        result = _backgroundMaterial;
-                    }
-                    else
+        [Obsolete("Use the CustomBackgroundMaterial property instead. Assign null to use the default material.")]
+        public bool UseCustomBackgroundMaterial
+        {
+            get => _customMaterial != null;
+            set
+            {
+                if (value)
+                {
+                    if (_customMaterial == null)
                     {
                         Log.Error(k_MissingCustomBackgroundMaterialMessage);
+                        return;
                     }
-                }
 
-                return result;
+                    OverrideMaterial(_customMaterial);
+                }
+                else
+                {
+                    _customMaterial = null;
+                    OverrideMaterial(null);
+                }
             }
         }
 
         #endregion
+
+        protected override bool OnAddRenderCommands(CommandBuffer cmd, Material mat)
+        {
+            cmd.Blit(null, BuiltinRenderTextureType.CameraTarget, mat);
+            return true;
+        }
+
+        protected override void OnInitializeMaterial(Material mat)
+        {
+            // Bind pass-through texture by default
+            mat.SetTexture(s_depthTextureId, DefaultDepthTexture);
+            mat.SetTexture(s_fusedDepthTextureId, DefaultNonLinearDepthTexture);
+        }
 
         #region Public API
 
@@ -908,13 +723,11 @@ namespace Niantic.Lightship.AR.Occlusion
 
         #endregion
 
-        #region Unity Engine Callbacks
-
-        private void Awake()
+        protected override void Awake()
         {
+            base.Awake();
+
             // Acquire components
-            _camera = GetComponent<Camera>();
-            _cameraManager = GetComponent<ARCameraManager>();
             _occlusionManager = GetComponent<AROcclusionManager>();
 
             // Acquire the subsystem
@@ -926,16 +739,12 @@ namespace Niantic.Lightship.AR.Occlusion
             // Validate settings
             ValidateOcclusionDistanceMode();
             ValidateFeatures();
+            ValidateRenderSettings();
         }
 
-        private void OnDestroy()
+        protected override void OnDestroy()
         {
-            _backgroundCommandBuffer?.Dispose();
-
-            if (_backgroundMaterial)
-            {
-                Destroy(_backgroundMaterial);
-            }
+            base.OnDestroy();
 
             if (_fusedDepthCamera != null)
             {
@@ -968,24 +777,10 @@ namespace Niantic.Lightship.AR.Occlusion
             }
         }
 
-        private void OnEnable()
+        protected override void Update()
         {
-            _cameraManager.frameReceived += CameraManager_OnFrameReceived;
-            HandleCommandBufferBehaviour();
-        }
+            base.Update();
 
-        private void OnDisable()
-        {
-            if (_cameraManager != null)
-            {
-                _cameraManager.frameReceived -= CameraManager_OnFrameReceived;
-            }
-
-            HandleCommandBufferBehaviour();
-        }
-
-        private void Update()
-        {
             // If automatic XR loading is enabled, then subsystems will be available before the Awake call.
             // However, if XR loading is done manually, then this component needs to check every Update call
             // if a compatible XROcclusionSubsystem has been loaded.
@@ -1005,7 +800,7 @@ namespace Niantic.Lightship.AR.Occlusion
             {
                 ApplyOverrideOcclusionManagerSettings();
             }
-            
+
 
             if (!_occlusionSubsystem.running ||
                 _occlusionManager.currentOcclusionPreferenceMode == OcclusionPreferenceMode.NoOcclusion)
@@ -1029,20 +824,6 @@ namespace Niantic.Lightship.AR.Occlusion
                 DepthTexture = null;
             }
         }
-
-        private void CameraManager_OnFrameReceived(ARCameraFrameEventArgs args)
-        {
-            if (!_areCommandBuffersAttached)
-            {
-                // Accumulate the number of frames
-                _numberOfARFramesReceived = (_numberOfARFramesReceived + 1) % int.MaxValue;
-            }
-
-            // Handle automatic command buffer attachment
-            HandleCommandBufferBehaviour();
-        }
-
-        #endregion
 
         /// <summary>
         /// Updates the XRCpuImage reference by fetching the latest depth image on cpu memory.
@@ -1123,7 +904,7 @@ namespace Niantic.Lightship.AR.Occlusion
 
                     // We make a special case for Lidar on fastest setting, because there is
                     // a bug in ARFoundation that makes the manager owned texture flicker.
-                    // By creating a texture from the cpu image and retaining ourself, the
+                    // By creating a texture from the cpu image and retaining ourselves, the
                     // image becomes stable. This issue is probably due to the changes introduced
                     // in iOS 16 where the metal command buffer do not implicitly retain textures.
                     if (_occlusionSubsystem.currentEnvironmentDepthMode == EnvironmentDepthMode.Fastest)
@@ -1175,7 +956,7 @@ namespace Niantic.Lightship.AR.Occlusion
                 if (_principalOccludee != null)
                 {
                     // Calculate subregion
-                    region = LightshipOcclusionExtensionUtils.CalculateScreenRect(_principalOccludee, _camera);
+                    region = OcclusionExtensionUtils.CalculateScreenRect(_principalOccludee, Camera);
                 }
                 else
                 {
@@ -1189,7 +970,7 @@ namespace Niantic.Lightship.AR.Occlusion
             }
 
             // Sparsely sample depth within bounds
-            var depth = LightshipOcclusionExtensionUtils.SampleImageSubregion(_cpuDepth, _depthTransform, region);
+            var depth = OcclusionExtensionUtils.SampleImageSubregion(_cpuDepth, _depthTransform, region);
 
             // Cache result
             XRDisplayContext.OccludeeEyeDepth = Mathf.Clamp(depth, k_MinimumDepthSample, k_MaximumDepthSample);
@@ -1198,63 +979,66 @@ namespace Niantic.Lightship.AR.Occlusion
         private void HandleOcclusionRendering(Texture2D depthTexture)
         {
             // Handle custom rendering
-            if (_areCommandBuffersAttached || !IsUsingLegacyRenderPipeline)
+            if (!IsRenderingActive)
             {
-                // Acquire the material in use
-                var material = BackgroundMaterial;
+                return;
+            }
 
-                // Bind depth
-                material.SetTexture(s_depthTextureId, depthTexture);
-                material.SetMatrix(s_depthTransformId, _depthTransform);
+            // Acquire the material in use
+            var material = Material;
+            var unityCamera = Camera;
 
-                // Set scale: this computes the affect the camera's localToWorld has on the the length of the
-                // forward vector, i.e., how much farther from the camera are things than with unit scale.
-                var forward = transform.localToWorldMatrix.GetColumn(2);
-                var scale = forward.magnitude;
-                material.SetFloat(s_cameraForwardScaleId, scale);
+            // Bind depth
+            material.SetTexture(s_depthTextureId, depthTexture);
+            material.SetMatrix(s_depthTransformId, _depthTransform);
 
-                // Semantic depth suppression
-                if (_isOcclusionSuppressionEnabled)
+            // Set scale: this computes the affect the camera's localToWorld has on the length of the
+            // forward vector, i.e., how much farther from the camera are things than with unit scale.
+            var forward = unityCamera.transform.localToWorldMatrix.GetColumn(2);
+            var scale = forward.magnitude;
+            material.SetFloat(s_cameraForwardScaleId, scale);
+
+            // Semantic depth suppression
+            if (_isOcclusionSuppressionEnabled)
+            {
+                // Let the manager know which channels do we want to suppress with
+                _semanticSegmentationManager.SuppressionMaskChannels = _suppressionChannels;
+
+                // Update the suppression mask texture
+                if (_semanticSegmentationManager.TryAcquireSuppressionMaskCpuImage(out var cpuSuppression,
+                        out var suppressionTransform))
                 {
-                    // Let the manager know which channels do we want to suppress with
-                    _semanticSegmentationManager.SuppressionMaskChannels = _suppressionChannels;
-
-                    // Update the suppression mask texture
-                    if (_semanticSegmentationManager.TryAcquireSuppressionMaskCpuImage(out var cpuSuppression,
-                            out var suppressionTransform))
+                    // Copy to gpu
+                    if (ImageSamplingUtils.CreateOrUpdateTexture(cpuSuppression, ref _gpuSuppression))
                     {
-                        // Copy to gpu
-                        if (ImageSamplingUtils.CreateOrUpdateTexture(cpuSuppression, ref _gpuSuppression))
-                        {
-                            // Bind the gpu image
-                            material.SetTexture(s_suppressionTextureId, _gpuSuppression);
-                            material.SetMatrix(s_suppressionTransformId, suppressionTransform);
-                        }
-                        else
-                        {
-                            Log.Error(k_SuppressionTextureErrorMessage);
-                        }
-
-                        // Release the cpu image
-                        cpuSuppression.Dispose();
+                        // Bind the gpu image
+                        material.SetTexture(s_suppressionTextureId, _gpuSuppression);
+                        material.SetMatrix(s_suppressionTransformId, suppressionTransform);
                     }
-                }
+                    else
+                    {
+                        Log.Error(k_SuppressionTextureErrorMessage);
+                    }
 
-                // Occlusion stabilization with mesh
-                if (_isOcclusionStabilizationEnabled)
-                {
-                    // Sync pose and bind mesh depth
-                    _fusedDepthCamera.SetViewProjection(_camera.worldToCameraMatrix, _camera.projectionMatrix);
-                    material.SetTexture(s_fusedDepthTextureId, _fusedDepthCamera.GpuTexture);
+                    // Release the cpu image
+                    cpuSuppression.Dispose();
                 }
+            }
 
-                if (_preferSmoothEdges)
-                {
-                    var width = depthTexture.width;
-                    var height = depthTexture.height;
-                    material.SetVector(s_depthTextureParams,
-                        new Vector4(1.0f / width, 1.0f / height, width, height));
-                }
+            // Occlusion stabilization with mesh
+            if (_isOcclusionStabilizationEnabled)
+            {
+                // Sync pose and bind mesh depth
+                _fusedDepthCamera.SetViewProjection(unityCamera.worldToCameraMatrix, unityCamera.projectionMatrix);
+                material.SetTexture(s_fusedDepthTextureId, _fusedDepthCamera.GpuTexture);
+            }
+
+            if (_preferSmoothEdges)
+            {
+                var width = depthTexture.width;
+                var height = depthTexture.height;
+                material.SetVector(s_depthTextureParams,
+                    new Vector4(1.0f / width, 1.0f / height, width, height));
             }
         }
 
@@ -1307,6 +1091,18 @@ namespace Niantic.Lightship.AR.Occlusion
         }
 
         /// <summary>
+        /// Ensures that the render settings are correctly configured.
+        /// </summary>
+        private void ValidateRenderSettings()
+        {
+            // Apply custom material
+            if (_customMaterial != null)
+            {
+                OverrideMaterial(_customMaterial);
+            }
+        }
+
+        /// <summary>
         /// Ensures that the occlusion features have access to the appropriate resources.
         /// </summary>
         private void ValidateFeatures()
@@ -1323,7 +1119,8 @@ namespace Niantic.Lightship.AR.Occlusion
                 return;
             }
 
-            if (BackgroundMaterial == null)
+            var material = Material;
+            if (material == null)
             {
                 Log.Error(k_MissingShaderResourceMessage);
                 return;
@@ -1332,33 +1129,33 @@ namespace Niantic.Lightship.AR.Occlusion
             // Recompile the shader for suppression
             if (_isOcclusionSuppressionEnabled)
             {
-                BackgroundMaterial.EnableKeyword(k_OcclusionSuppressionFeature);
+                material.EnableKeyword(k_OcclusionSuppressionFeature);
             }
             else
             {
-                BackgroundMaterial.DisableKeyword(k_OcclusionSuppressionFeature);
+                material.DisableKeyword(k_OcclusionSuppressionFeature);
             }
 
             // Recompile the shader for stabilization
             if (_isOcclusionStabilizationEnabled)
             {
-                BackgroundMaterial.EnableKeyword(k_OcclusionStabilizationFeature);
+                material.EnableKeyword(k_OcclusionStabilizationFeature);
                 ToggleFusedDepthCamera(true);
             }
             else
             {
-                BackgroundMaterial.DisableKeyword(k_OcclusionStabilizationFeature);
+                material.DisableKeyword(k_OcclusionStabilizationFeature);
                 ToggleFusedDepthCamera(false);
             }
 
             // Recompile the shader for depth compression
             if (_preferSmoothEdges && EligibleForEdgeSmoothing)
             {
-                BackgroundMaterial.EnableKeyword(k_DepthEdgeSmoothingFeature);
+                material.EnableKeyword(k_DepthEdgeSmoothingFeature);
             }
             else
             {
-                BackgroundMaterial.DisableKeyword(k_DepthEdgeSmoothingFeature);
+                material.DisableKeyword(k_DepthEdgeSmoothingFeature);
 
                 // Bypass this feature on foreign occlusion subsystems
                 _preferSmoothEdges = false;
@@ -1385,7 +1182,7 @@ namespace Niantic.Lightship.AR.Occlusion
                 }
 
                 // Configure the camera to capture mesh depth
-                _fusedDepthCamera.Configure(_camera, meshLayer: _meshManager.meshPrefab.gameObject.layer);
+                _fusedDepthCamera.Configure(Camera, meshLayer: _meshManager.meshPrefab.gameObject.layer);
             }
 
             // Enable or disable the camera
@@ -1408,15 +1205,15 @@ namespace Niantic.Lightship.AR.Occlusion
 
                 // Bypass occlusion manager updates
                 lsSubsystem.RequestDisableFetchTextureDescriptors =
-                    _areCommandBuffersAttached && _bypassOcclusionManagerUpdates;
+                    IsRenderingActive && _bypassOcclusionManagerUpdates;
             }
         }
 
 
         /// <summary>
-        /// As we discover some limitations with the ARFoundation occlusion manager, we may need to override 
+        /// As we discover some limitations with the ARFoundation occlusion manager, we may need to override
         /// some of its settings to ensure that the occlusion extension works optimally
-        /// This method will be the central place where these settings are overridden. 
+        /// This method will be the central place where these settings are overridden.
         /// </summary>
         private void ApplyOverrideOcclusionManagerSettings()
         {
@@ -1426,10 +1223,10 @@ namespace Niantic.Lightship.AR.Occlusion
             }
 
             // On devices with Lidar sensor, the best and medium occlusion mode will cause a significant performance hit
-            // as well as a crash. We will override the occlusion mode to fastest to avoid this issue and enable smooth edges 
-            // for the best results. 
+            // as well as a crash. We will override the occlusion mode to fastest to avoid this issue and enable smooth edges
+            // for the best results.
         #if UNITY_IOS
-            if (_occlusionSubsystem is not LightshipOcclusionSubsystem && 
+            if (_occlusionSubsystem is not LightshipOcclusionSubsystem &&
                 (_occlusionManager.currentEnvironmentDepthMode == EnvironmentDepthMode.Medium ||
                  _occlusionManager.currentEnvironmentDepthMode == EnvironmentDepthMode.Best))
             {
@@ -1437,95 +1234,7 @@ namespace Niantic.Lightship.AR.Occlusion
                 PreferSmoothEdges = true;
             }
         #endif
-        
-        }
 
-        /// <summary>
-        /// Verifies the state of the component and enables or disables custom rendering accordingly.
-        /// </summary>
-        private void HandleCommandBufferBehaviour()
-        {
-            // Evaluate state
-            var canAttachCommandBuffer = _numberOfARFramesReceived > k_attachDelay;
-            var shouldAttachCommandBuffer = gameObject.activeInHierarchy && enabled && IsAnyFeatureEnabled;
-
-            if (!_areCommandBuffersAttached)
-            {
-                // Attach?
-                if (canAttachCommandBuffer && shouldAttachCommandBuffer)
-                {
-                    ConfigureCameraCommandBuffers(addBuffers: true);
-                }
-            }
-            else
-            {
-                // Detach?
-                if (!shouldAttachCommandBuffer)
-                {
-                    _numberOfARFramesReceived = 0;
-                    ConfigureCameraCommandBuffers(addBuffers: false);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Attaches or detaches the background rendering command buffer to the main camera.
-        /// </summary>
-        /// <param name="addBuffers">Whether background rendering should be enabled.</param>
-        private void ConfigureCameraCommandBuffers(bool addBuffers)
-        {
-            // Omit this step if the application is using URP
-            if (!IsUsingLegacyRenderPipeline)
-            {
-                return;
-            }
-
-            Log.Info("ConfigureCameraCommandBuffers: " + addBuffers);
-            if (addBuffers == _areCommandBuffersAttached)
-            {
-                return;
-            }
-
-            // Acquire the command buffer
-            if (addBuffers)
-            {
-                var commandBuffer = GetOrConstructCommandBuffer();
-
-                // Attach to the camera
-                _camera.AddCommandBuffer(CameraEvent.BeforeForwardOpaque, commandBuffer);
-                _camera.AddCommandBuffer(CameraEvent.BeforeGBuffer, commandBuffer);
-
-                // Bind pass-through texture by default
-                BackgroundMaterial.SetTexture(s_depthTextureId, DefaultDepthTexture);
-                BackgroundMaterial.SetTexture(s_fusedDepthTextureId, DefaultNonLinearDepthTexture);
-            }
-            else if (_backgroundCommandBuffer != null)
-            {
-                // Detach from the camera
-                _camera.RemoveCommandBuffer(CameraEvent.BeforeForwardOpaque, _backgroundCommandBuffer);
-                _camera.RemoveCommandBuffer(CameraEvent.BeforeGBuffer, _backgroundCommandBuffer);
-
-                // Release the command buffer
-                _backgroundCommandBuffer?.Dispose();
-                _backgroundCommandBuffer = null;
-            }
-
-            _areCommandBuffersAttached = addBuffers;
-        }
-
-        /// <summary>
-        /// Retrieves the background rendering command buffer. If it doesn't exist, it will be constructed.
-        /// </summary>
-        private CommandBuffer GetOrConstructCommandBuffer()
-        {
-            if (_backgroundCommandBuffer == null)
-            {
-                _backgroundCommandBuffer = new CommandBuffer();
-                _backgroundCommandBuffer.name = k_CustomRenderPassName;
-                _backgroundCommandBuffer.Blit(null, BuiltinRenderTextureType.CameraTarget, BackgroundMaterial);
-            }
-
-            return _backgroundCommandBuffer;
         }
     }
 }

@@ -136,7 +136,9 @@ namespace Niantic.Lightship.AR.Editor
         private SerializedProperty _useLightshipScanningProperty;
         private SerializedProperty _useLightshipObjectDetectionProperty;
         private SerializedProperty _useLightshipWorldPositioningProperty;
-        private SerializedProperty _useLightshipSpoofLocationProperty;
+        private SerializedProperty _locationAndCompassDataSourceProperty;
+        private SerializedProperty _spoofLocationInfoProperty;
+        private SerializedProperty _spoofCompassInfoProperty;
         private SerializedProperty _unityLogLevelProperty;
         private SerializedProperty _fileLogLevelProperty;
         private SerializedProperty _stdOutLogLevelProperty;
@@ -162,10 +164,15 @@ namespace Niantic.Lightship.AR.Editor
             _useLightshipObjectDetectionProperty =
                 _lightshipSettings.FindProperty("_useLightshipObjectDetection");
             _useLightshipWorldPositioningProperty = _lightshipSettings.FindProperty("_useLightshipWorldPositioning");
-            _useLightshipSpoofLocationProperty = _lightshipSettings.FindProperty("_useLightshipSpoofLocation");
+
+            _locationAndCompassDataSourceProperty = _lightshipSettings.FindProperty("_locationAndCompassDataSource");
+            _spoofLocationInfoProperty = _lightshipSettings.FindProperty("_spoofLocationInfo");
+            _spoofCompassInfoProperty = _lightshipSettings.FindProperty("_spoofCompassInfo");
+
             _unityLogLevelProperty = _lightshipSettings.FindProperty("_unityLogLevel");
             _fileLogLevelProperty = _lightshipSettings.FindProperty("_fileLogLevel");
             _stdOutLogLevelProperty = _lightshipSettings.FindProperty("_stdoutLogLevel");
+
             // Simulation sub-properties
             _useZBufferDepthInSimulationProperty = _lightshipSettings.FindProperty("_lightshipSimulationParams._useZBufferDepth");
             _useSimulationPersistentAnchorInSimulationProperty = _lightshipSettings.FindProperty("_lightshipSimulationParams._useSimulationPersistentAnchor");
@@ -202,9 +209,9 @@ namespace Niantic.Lightship.AR.Editor
                 // -- Put new simulation settings here --
                 DrawLightshipSimulationSettings();
 
-                // -- Put new experimental settings here --
+                // -- Put experimental settings here, when there are any --
 #if NIANTIC_ARDK_EXPERIMENTAL_FEATURES
-                DrawExperimentalSettings();
+                // DrawExperimentalSettings();
 #endif
 
                 EditorGUI.EndDisabledGroup();
@@ -307,12 +314,14 @@ namespace Niantic.Lightship.AR.Editor
             // World Positioning settings
             EditorGUILayout.Space(10);
             EditorGUILayout.LabelField("World Positioning System", EditorStyles.boldLabel);
-            EditorGUILayout.PropertyField
-                (_useLightshipWorldPositioningProperty, Contents.enabledLabel);
+            EditorGUILayout.PropertyField(_useLightshipWorldPositioningProperty, Contents.enabledLabel);
 
             EditorGUI.indentLevel++;
             // Put World Positioning sub-settings here
             EditorGUI.indentLevel--;
+
+            EditorGUILayout.Space(10);
+            DrawLocationSourceSettings();
 
             EditorGUILayout.Space(10);
             DrawLoggingSettings();
@@ -324,8 +333,7 @@ namespace Niantic.Lightship.AR.Editor
             EditorGUILayout.PropertyField
             (
                 _unityLogLevelProperty,
-                new GUIContent
-                    ("Unity Log Level", tooltip: "Log level for Unity's built-in logging system")
+                new GUIContent("Unity Log Level", tooltip: "Log level for Unity's built-in logging system")
             );
 
             EditorGUILayout.PropertyField
@@ -361,8 +369,17 @@ namespace Niantic.Lightship.AR.Editor
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
-            _platformSelected = GUILayout.Toolbar(_platformSelected, Contents._platforms);
+            var currPlatform = GUILayout.Toolbar(_platformSelected, Contents._platforms);
             GUILayout.EndHorizontal();
+
+            // If the playback dataset text field is focused when the Playback platform is changed,
+            // the text field content will not switch to the new platform's dataset path, causing confusion.
+            // To prevent this, we clear the focus when the platform is changed.
+            if (currPlatform != _platformSelected)
+            {
+                GUI.FocusControl(null);
+                _platformSelected = currPlatform;
+            }
 
             _playbackSettingsEditors[_platformSelected].DrawGUI();
         }
@@ -429,6 +446,16 @@ namespace Niantic.Lightship.AR.Editor
             EditorGUI.EndDisabledGroup();
         }
 
+        private void DrawLocationSourceSettings()
+        {
+            EditorGUILayout.Space(10);
+            EditorGUILayout.LabelField("Location & Compass", EditorStyles.boldLabel);
+            EditorGUILayout.PropertyField(_locationAndCompassDataSourceProperty, new GUIContent("Data Source"));
+
+            EditorGUILayout.PropertyField(_spoofLocationInfoProperty);
+            EditorGUILayout.PropertyField(_spoofCompassInfoProperty);
+        }
+
         private void DrawExperimentalSettings()
         {
             EditorGUILayout.Space(10);
@@ -437,14 +464,6 @@ namespace Niantic.Lightship.AR.Editor
                 "Experimental",
                 Contents.boldFont18Style
             );
-            EditorGUILayout.Space(10);
-            EditorGUILayout.LabelField("Spoof Location", EditorStyles.boldLabel);
-            EditorGUILayout.PropertyField
-                (_useLightshipSpoofLocationProperty, Contents.enabledLabel);
-
-            EditorGUI.indentLevel++;
-            // Put Spoof Location sub-settings here
-            EditorGUI.indentLevel--;
         }
 
         private void LayOutSDKEnabled(string platform, bool enabled, BuildTargetGroup group = BuildTargetGroup.Unknown)

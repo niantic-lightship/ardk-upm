@@ -84,6 +84,7 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
             bool enableCloudLocalization,
             bool enableSlickLocalization,
             bool enableSlickLearnedFeatures,
+            bool useSlickCpuLearnedFeatures,
             float cloudLocalizerInitialRequestsPerSecond,
             float cloudLocalizerContinuousRequestsPerSecond,
             float slickLocalizerFps,
@@ -103,7 +104,7 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
 #if NIANTIC_LIGHTSHIP_ML2_ENABLED
             configurationCStruct.forceCPULearnedFeatures = true;
 #else
-            configurationCStruct.forceCPULearnedFeatures = false;
+            configurationCStruct.forceCPULearnedFeatures = useSlickCpuLearnedFeatures;
 #endif
             configurationCStruct.cloudLocalizerInitialRequestsPerSecond = cloudLocalizerInitialRequestsPerSecond;
             configurationCStruct.cloudLocalizerContinuousRequestsPerSecond = cloudLocalizerContinuousRequestsPerSecond;
@@ -113,7 +114,7 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
                 : cloudTemporalFusionWindowSize;
 
             configurationCStruct.slickTemporalFusionWindowSize = slickTemporalFusionWindowSize == 0
-                ? XRPersistentAnchorConfiguration.DefaultSlickLocalizationTemporalFusionWindowSize
+                ? XRPersistentAnchorConfiguration.DefaultDeviceMappingLocalizationTemporalFusionWindowSize
                 : slickTemporalFusionWindowSize;
             configurationCStruct.enableDiagnostics = enableDiagnostics;
             configurationCStruct.limitedLocalizationsOnly = limitedLocalizationsOnly;

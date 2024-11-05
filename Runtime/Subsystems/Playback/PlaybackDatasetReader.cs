@@ -2,6 +2,7 @@
 
 using System;
 using System.IO;
+using Niantic.Lightship.AR.PAM;
 using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.Utilities.Profiling;
 using Niantic.Lightship.Utilities.UnityAssets;
@@ -24,6 +25,8 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
         private double _timestampLoopOffset;
 
         private const string TraceCategory = "PlaybackDatasetReader";
+
+        internal Action FrameChanged;
 
         public PlaybackDatasetReader(PlaybackDataset dataset, bool loopInfinitely = false)
         {
@@ -48,7 +51,6 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
                 return false;
             }
 
-            Log.Debug("Playback moved to frame " + _currentFrameIndex);
             return true;
         }
 
@@ -69,7 +71,6 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
                 return false;
             }
 
-            Log.Debug("Playback moved to frame " + _currentFrameIndex);
             return true;
         }
 
@@ -83,6 +84,10 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
             }
 
             _currentFrameIndex++;
+
+            Log.Debug("Playback moved to frame " + _currentFrameIndex);
+            FrameChanged?.Invoke();
+
             return true;
         }
 
@@ -103,6 +108,10 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
             // double that offset because of every frame we go back we have to add the offset once to not go backwards
             // and then another time to actually move forward in time.
             _timestampLoopOffset += 2 * deltaTimeBetweenFrames;
+
+            Log.Debug("Playback moved to frame " + _currentFrameIndex);
+            FrameChanged?.Invoke();
+
             return true;
         }
 
@@ -132,6 +141,8 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
         public Matrix4x4 GetCurrentProjectionMatrix() => CurrFrame?.ProjectionMatrix ?? MatrixUtils.InvalidMatrix;
 
         public XRCameraIntrinsics GetCurrentIntrinsics() => CurrFrame?.Intrinsics ?? default;
+
+        public CameraIntrinsicsCStruct GetCurrentIntrinsicsCstruct() => CurrFrame?.IntrinsicsCStruct ?? default;
 
         public byte[] GetCurrentImageData() =>
             CurrFrame != null ? ReadImageData(_currentFrameIndex, CurrFrame.ImagePath) : null;

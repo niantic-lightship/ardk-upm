@@ -28,8 +28,8 @@ namespace Niantic.Lightship.AR.Editor
         private SerializedProperty _isOcclusionStabilizationEnabled;
         private SerializedProperty _meshManager;
 
-        private SerializedProperty _useCustomBackgroundMaterial;
-        private SerializedProperty _customBackgroundMaterial;
+        private SerializedProperty _useCustomMaterial;
+        private SerializedProperty _customMaterial;
 
         private SerializedProperty _smoothEdgePreferred;
 
@@ -179,16 +179,16 @@ namespace Niantic.Lightship.AR.Editor
                 if (lightshipRenderPassEnabled)
                 {
                     EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
-                    EditorGUILayout.PropertyField(_useCustomBackgroundMaterial);
-                    if (_useCustomBackgroundMaterial.boolValue)
+                    EditorGUILayout.PropertyField(_useCustomMaterial);
+                    if (_useCustomMaterial.boolValue)
                     {
                         ++EditorGUI.indentLevel;
-                        EditorGUILayout.PropertyField(_customBackgroundMaterial);
+                        EditorGUILayout.PropertyField(_customMaterial);
                         --EditorGUI.indentLevel;
                     }
                     else
                     {
-                        _customBackgroundMaterial.objectReferenceValue = null;
+                        _customMaterial.objectReferenceValue = null;
                     }
                 }
             }
@@ -208,8 +208,8 @@ namespace Niantic.Lightship.AR.Editor
             _suppressionChannels = serializedObject.FindProperty("_suppressionChannels");
             _isOcclusionStabilizationEnabled = serializedObject.FindProperty("_isOcclusionStabilizationEnabled");
             _meshManager = serializedObject.FindProperty("_meshManager");
-            _useCustomBackgroundMaterial = serializedObject.FindProperty("_useCustomBackgroundMaterial");
-            _customBackgroundMaterial = serializedObject.FindProperty("_customBackgroundMaterial");
+            _useCustomMaterial = serializedObject.FindProperty("_useCustomMaterial");
+            _customMaterial = serializedObject.FindProperty("_customMaterial");
             _smoothEdgePreferred = serializedObject.FindProperty("_preferSmoothEdges");
         }
     }

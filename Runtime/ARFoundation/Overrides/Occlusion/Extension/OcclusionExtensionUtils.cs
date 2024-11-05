@@ -6,7 +6,7 @@ using UnityEngine.XR.ARSubsystems;
 
 namespace Niantic.Lightship.AR.Occlusion
 {
-    internal static class LightshipOcclusionExtensionUtils
+    internal static class OcclusionExtensionUtils
     {
         /// <summary>
         /// Sparsely samples the specified subregion for the closest depth value.

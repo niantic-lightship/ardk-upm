@@ -78,6 +78,7 @@ namespace Niantic.Lightship.AR.Mapping
         (
             bool trackingEdgesEnabled,
             bool slickLearnedFeaturesEnabled,
+            bool useCpuLeanedFeatures,
             UInt32 slickMapperFps,
             float splitterMaxDistanceMeters,
             float splitterMaxDurationSeconds
@@ -94,7 +95,7 @@ namespace Niantic.Lightship.AR.Mapping
 #if NIANTIC_LIGHTSHIP_ML2_ENABLED
             configurationCStruct.forceCPULearnedFeatures = true;
 #else
-            configurationCStruct.forceCPULearnedFeatures = false;
+            configurationCStruct.forceCPULearnedFeatures = useCpuLeanedFeatures;
 #endif
             configurationCStruct.slickMapperFps = slickMapperFps;
             configurationCStruct.splitterMaxDistanceMeters = splitterMaxDistanceMeters;

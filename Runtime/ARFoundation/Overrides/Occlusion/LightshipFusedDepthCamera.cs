@@ -2,6 +2,7 @@
 
 using System;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 #if !MODULE_URP_ENABLED
 using UnityEngine.Rendering;
@@ -109,13 +110,6 @@ namespace Niantic.Lightship.AR.Occlusion
             _internalMaterial = new Material(shader);
         }
 
-#if !MODULE_URP_ENABLED
-        private void OnRenderImage(RenderTexture source, RenderTexture destination)
-        {
-            Graphics.Blit(null, GpuTexture, Material);
-        }
-#endif
-
         private void OnDestroy()
         {
             if (_camera != null)
@@ -133,5 +127,44 @@ namespace Niantic.Lightship.AR.Occlusion
                 Destroy(GpuTexture);
             }
         }
+
+#if !MODULE_URP_ENABLED
+        private void OnRenderImage(RenderTexture source, RenderTexture destination)
+        {
+            Graphics.Blit(null, GpuTexture, Material);
+        }
+#else
+        private OffScreenBlitPass _renderPass;
+
+        private void OnEnable()
+        {
+            // Allocate the render pass
+            _renderPass = new OffScreenBlitPass(
+                name: "Lightship Occlusion Extension (Fused Depth)",
+                renderPassEvent: RenderPassEvent.AfterRendering);
+
+            RenderPipelineManager.beginCameraRendering += OnBeginCameraRendering;
+        }
+
+        private void OnDisable()
+        {
+            RenderPipelineManager.beginCameraRendering -= OnBeginCameraRendering;
+
+            // Release the render pass
+            _renderPass = null;
+        }
+
+        private void OnBeginCameraRendering(ScriptableRenderContext context, Camera cam)
+        {
+            if (cam == _camera)
+            {
+                // Configure the render pass
+                _renderPass.Setup(Material, GpuTexture);
+
+                // Enqueue the render pass
+                cam.GetUniversalAdditionalCameraData().scriptableRenderer.EnqueuePass(_renderPass);
+            }
+        }
+#endif
     }
 }

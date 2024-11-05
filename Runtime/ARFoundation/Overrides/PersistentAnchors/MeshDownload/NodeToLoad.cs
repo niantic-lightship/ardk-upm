@@ -28,16 +28,19 @@ namespace Niantic.Lightship.AR.Subsystems
         // URL of the texture to download
         public string textureUrl;
 
+        public bool isOrigin;
+
         public NodeToLoad()
         {
         }
 
-        public NodeToLoad(string nodeId, string spaceId, Vector3 t, Vector4 r)
+        public NodeToLoad(string nodeId, string spaceId, Vector3 t, Vector4 r, bool isOrigin = false)
         {
             this.nodeId = nodeId;
             this.spaceId = spaceId;
             this.position = new Vector3(t.x, t.y, t.z);
             this.rotation = new Quaternion(r.x, r.y, r.z, r.w);
+            this.isOrigin = isOrigin;
         }
     }
 }

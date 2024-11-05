@@ -7,10 +7,12 @@ using System.Threading;
 using System.Threading.Tasks;
 using Niantic.Lightship.AR.Core;
 using Niantic.Lightship.AR.Loader;
+using Niantic.Lightship.AR.PersistentAnchors.Spaces;
 using Niantic.Lightship.AR.VpsCoverage;
 
 using UnityEngine;
 using UnityEngine.Networking;
+using UnityEngine.XR.ARSubsystems;
 
 namespace Niantic.Lightship.AR.Subsystems
 {
@@ -22,6 +24,7 @@ namespace Niantic.Lightship.AR.Subsystems
         private static string configEndpointFormatter = "{0}/vps_frontend.protogen.Localizer/{1}";
         private static string meshingMethod = "GetMeshUrl";
         private static string graphMethod = "GetGraph";
+        private static string spaceDataMethod = "GetSpaceData";
         private const int KB = 1024;
 
         // Downloads a mesh from a signed url
@@ -291,7 +294,8 @@ namespace Niantic.Lightship.AR.Subsystems
                             nodeId,
                             space,
                             Vector3.zero,
-                            new Vector4(0,0,0,1)
+                            new Vector4(0, 0, 0, 1),
+                            true
                         )
                     );
 
@@ -346,7 +350,8 @@ namespace Niantic.Lightship.AR.Subsystems
                             nodesInSpaceList.First(),
                             space,
                             Vector3.zero,
-                            new Vector4(0, 0, 0, 1)
+                            new Vector4(0, 0, 0, 1),
+                            true
                         )
                     );
                 }
@@ -398,6 +403,84 @@ namespace Niantic.Lightship.AR.Subsystems
             }
 
             return totalBytesToDownload;
+        }
+
+        internal static async Task<LightshipVpsSpaceResponse> GetSpaceDataForNode(string nodeId)
+        {
+            var apiKey = LightshipSettingsHelper.ActiveSettings.ApiKey;
+
+            if (string.IsNullOrWhiteSpace(apiKey))
+            {
+                // This class uses Debug instead of ARLog to support editor logging without Lightship Native loaded
+                Debug.LogError("No API key set");
+            }
+
+            var authHeaderDict = new Dictionary<string, string>();
+            authHeaderDict["Authorization"] = apiKey;
+
+            var nodeRepresentation = await GetNodesInSpace(nodeId, authHeaderDict);
+            if (nodeRepresentation == null || nodeRepresentation.Count == 0)
+            {
+                return default;
+            }
+
+            var spaceId = nodeRepresentation.First().spaceId;
+
+            var request = new MeshDownloadRequestResponse.GetSpaceDataRequest()
+            {
+                spaceIdentifiers = new []{spaceId},
+                requestIdentifier = Guid.NewGuid().ToString("N").ToUpper()
+            };
+
+            var endpoint = GetUrlForMethod(spaceDataMethod);
+            var response =
+                await HttpClient
+                    .SendPostAsync<MeshDownloadRequestResponse.GetSpaceDataRequest,
+                            MeshDownloadRequestResponse.GetSpaceDataResponse>
+                        (endpoint, request, authHeaderDict);
+
+            if (response.Status == ResponseStatus.Success)
+            {
+                if (response.Data.spaceDataList.Length != 1)
+                {
+                    Debug.LogError($"GetSpaceData expected 1 space, but got {response.Data.spaceDataList.Length}. Using first space.");
+                }
+
+                var spaceData = new LightshipVpsSpace();
+                spaceData.Nodes = new List<LightshipVpsNode>();
+                spaceData.SpaceId = spaceId;
+                foreach (var node in nodeRepresentation)
+                {
+                    if (node.spaceId != spaceId)
+                    {
+                        Debug.LogError($"Node {node.nodeId} is not in space {spaceId}");
+                        return default;
+                    }
+
+                    var lightshipNode = new LightshipVpsNode
+                    {
+                        NodeId = node.nodeId,
+                        NodeToSpaceOriginPose = new Pose(node.position, node.rotation),
+                        IsOrigin = node.isOrigin
+                    };
+
+                    if (lightshipNode.IsOrigin)
+                    {
+                        spaceData.OriginNodeId = lightshipNode.NodeId;
+                    }
+
+                    spaceData.Nodes.Add(lightshipNode);
+                }
+
+                spaceData.SpaceLabels = response.Data.spaceDataList.First().spaceLabels.Select(label => new LightshipVpsSpace.LightshipVpsSpaceLabel(label)).ToList();
+                spaceData.SpaceQualityScore = response.Data.spaceDataList.First().spaceQualityScore;
+                var res = new LightshipVpsSpaceResponse(true, spaceData);
+                return res;
+            }
+
+            // This class uses Debug instead of ARLog to support editor logging without Lightship Native loaded
+            Debug.LogError("Failed to get space data");
+            return default;
         }
 
         private static string GetUrlForMethod(string method)

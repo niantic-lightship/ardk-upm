@@ -69,10 +69,16 @@ namespace Niantic.Lightship.AR.Loader
         [SerializeField, Tooltip("When enabled, Lightship's World Positioning System (WPS) feature can be used")]
         private bool _useLightshipWorldPositioning = true;
 
-#if NIANTIC_ARDK_EXPERIMENTAL_FEATURES
-        [SerializeField, Tooltip("When enabled, spoof Lightship's location on device.")]
-        private bool _useLightshipSpoofLocation = false;
-#endif
+        [SerializeField, Tooltip("Source of location and compass data")]
+        private LocationDataSource _locationAndCompassDataSource = LocationDataSource.Sensors;
+
+        // Default to the Ferry Building location, so that non-zero location info is
+        // surfaced even if the dev has not specified spoof location values.
+        [SerializeField, Tooltip("Values returned by location service when in Spoof mode")]
+        private SpoofLocationInfo _spoofLocationInfo = SpoofLocationInfo.Default;
+
+        [SerializeField, Tooltip("Values returned by compass service when in Spoof mode")]
+        private SpoofCompassInfo _spoofCompassInfo = SpoofCompassInfo.Default;
 
         [SerializeField, Tooltip("The lowest log level to print")]
         private LogLevel _unityLogLevel = LogLevel.Warn;
@@ -152,21 +158,60 @@ namespace Niantic.Lightship.AR.Loader
         /// </summary>
         public bool UseLightshipObjectDetection => _useLightshipObjectDetection;
 
-        #region Experimental Settings
+        /// <summary>
+        /// Source of location and compass data fetched from the Niantic.Lightship.AR.Input APIs
+        /// </summary>
+        public LocationDataSource LocationAndCompassDataSource
+        {
+            get => _locationAndCompassDataSource;
+            set => _locationAndCompassDataSource = value;
+        }
 
         /// <summary>
-        /// [Experimental] When true, Lightship's spoof location provider can be used.
+        /// Values returned by location service when in Spoof mode
         /// </summary>
-#if NIANTIC_LIGHTSHIP_ML2_ENABLED
-        // Magic Leap does not have GPS so we require spoofing to be enabled.
-        public bool UseLightshipSpoofLocation => true;
-#elif NIANTIC_ARDK_EXPERIMENTAL_FEATURES
-        public bool UseLightshipSpoofLocation  => _useLightshipSpoofLocation;
-#else
-        public bool UseLightshipSpoofLocation => false;
-#endif
+        public SpoofLocationInfo SpoofLocationInfo
+        {
+            get
+            {
+                if (_spoofLocationInfo == null)
+                {
+                    // Default to the Ferry Building location, so that non-zero location info is
+                    // surfaced even if the dev has not specified spoof location values.
+                    _spoofLocationInfo =
+                        new SpoofLocationInfo
+                        {
+                            Latitude = 37.795322f,
+                            Longitude = -122.39243f,
+                            Timestamp = 123456,
+                            Altitude = 16,
+                            HorizontalAccuracy = 10,
+                            VerticalAccuracy = 10
+                        };
+                }
 
-        #endregion
+                return _spoofLocationInfo;
+            }
+
+            set => _spoofLocationInfo = value;
+        }
+
+        /// <summary>
+        /// Values returned by compass service when in Spoof mode
+        /// </summary>
+        public SpoofCompassInfo SpoofCompassInfo
+        {
+            get
+            {
+                if (_spoofCompassInfo == null)
+                {
+                    _spoofCompassInfo = new SpoofCompassInfo();
+                }
+
+                return _spoofCompassInfo;
+            }
+            set => _spoofCompassInfo = value;
+        }
 
         public bool UseLightshipWorldPositioning => _useLightshipWorldPositioning;
 
@@ -380,7 +425,7 @@ namespace Niantic.Lightship.AR.Loader
             bool disableTelemetry = true,
             bool tickPamOnUpdate = true,
             LightshipSimulationParams simulationParams = null,
-            bool enableSpoofLocation = false
+            LocationDataSource locationAndCompassDataSource = LocationDataSource.Sensors
         )
         {
             var settings = CreateInstance<LightshipSettings>();
@@ -393,6 +438,7 @@ namespace Niantic.Lightship.AR.Loader
             settings._useLightshipSemanticSegmentation = enableSemanticSegmentation;
             settings._useLightshipScanning = enableScanning;
             settings._useLightshipObjectDetection = enableObjectDetection;
+            settings._locationAndCompassDataSource = locationAndCompassDataSource;
             settings._unityLogLevel = unityLogLevel;
             settings._fileLogLevel = fileLogLevel;
             settings._stdoutLogLevel = stdoutLogLevel;

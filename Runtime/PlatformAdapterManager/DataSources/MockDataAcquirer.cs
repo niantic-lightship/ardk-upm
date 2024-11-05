@@ -24,19 +24,6 @@ namespace Niantic.Lightship.AR.PAM
             return true;
         }
 
-        public override bool TryGetCpuImageDeprecated(out XRCpuImage cpuImage)
-        {
-            cpuImage = new XRCpuImage();
-            return true;
-        }
-
-        public override bool TryGetDepthCpuImageDeprecated(out XRCpuImage cpuDepthImage, out XRCpuImage cpuDepthConfidenceImage)
-        {
-            cpuDepthImage = default;
-            cpuDepthConfidenceImage = default;
-            return false;
-        }
-
         public override bool TryGetCpuImage(out LightshipCpuImage cpuImage)
         {
             cpuImage = new LightshipCpuImage();
@@ -62,13 +49,6 @@ namespace Niantic.Lightship.AR.PAM
         public override TrackingState GetTrackingState()
         {
             return TrackingState.Tracking;
-        }
-
-        public override bool TryGetCameraIntrinsicsDeprecated(out XRCameraIntrinsics intrinsics)
-        {
-            intrinsics =
-                new XRCameraIntrinsics(new Vector2(554.256f, 579.411f), new Vector2(320, 240), new Vector2Int(640, 480));
-            return true;
         }
 
         public override bool TryGetCameraIntrinsicsCStruct(out CameraIntrinsicsCStruct intrinsics)
@@ -107,14 +87,6 @@ namespace Niantic.Lightship.AR.PAM
         {
             compass = default;
             return true;
-        }
-
-        public override void OnFormatAdded(DataFormat addedFormat)
-        {
-        }
-
-        public override void OnFormatRemoved(DataFormat addedFormat)
-        {
         }
     }
 }

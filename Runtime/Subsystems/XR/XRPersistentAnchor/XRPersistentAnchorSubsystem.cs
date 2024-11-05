@@ -26,7 +26,6 @@ namespace Niantic.Lightship.AR.XRSubsystems
         : TrackingSubsystem<XRPersistentAnchor, XRPersistentAnchorSubsystem, XRPersistentAnchorSubsystemDescriptor,
             XRPersistentAnchorSubsystem.Provider>
     {
-        internal const string SlickLocalizationFeatureFlagName = "SlickLocalization";
 
 #if DEVELOPMENT_BUILD || UNITY_EDITOR
         private ValidationUtility<XRPersistentAnchor> m_ValidationUtility;

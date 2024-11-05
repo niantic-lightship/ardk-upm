@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.Core;
+using Niantic.Lightship.AR.Mapping;
 using Niantic.Lightship.AR.Subsystems;
 using Niantic.Lightship.AR.XRSubsystems;
 using Unity.Collections;
@@ -606,6 +607,12 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
                             "PersistentAnchorSubsystem to use the new configuration");
                     }
 
+                    var enableLearnedFeatures =
+                        _currentConfiguration.DeviceMappingType == DeviceMappingType.CpuLearnedFeatures ||
+                        _currentConfiguration.DeviceMappingType == DeviceMappingType.GpuLearnedFeatures;
+                    var useCpuLearnedFeatures =
+                        _currentConfiguration.DeviceMappingType == DeviceMappingType.CpuLearnedFeatures;
+
                     _api.Configure
                     (
                         _nativeProviderHandle,
@@ -613,13 +620,14 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
                         _currentConfiguration.TemporalFusionEnabled,
                         _currentConfiguration.TransformUpdateSmoothingEnabled,
                         _currentConfiguration.CloudLocalizationEnabled,
-                        _currentConfiguration.SlickLocalizationEnabled,
-                        _currentConfiguration.SlickLearnedFeaturesEnabled,
+                        _currentConfiguration.DeviceMappingLocalizationEnabled,
+                        enableLearnedFeatures,
+                        useCpuLearnedFeatures,
                         _currentConfiguration.CloudLocalizerInitialRequestsPerSecond,
                         _currentConfiguration.CloudLocalizerContinuousRequestsPerSecond,
-                        _currentConfiguration.SlickLocalizationFps,
+                        _currentConfiguration.DeviceMappingLocalizationFps,
                         _currentConfiguration.CloudLocalizationTemporalFusionWindowSize,
-                        _currentConfiguration.SlickLocalizationTemporalFusionWindowSize,
+                        _currentConfiguration.DeviceMappingLocalizationTemporalFusionWindowSize,
                         _currentConfiguration.DiagnosticsEnabled,
                         _currentConfiguration.LimitedLocalizationsOnly,
                         _currentConfiguration.JpegCompressionQuality

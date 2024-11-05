@@ -243,14 +243,10 @@ namespace Niantic.Lightship.AR.PAM
 
         // Orientation of current frame. See orientation.h for definitions
         // Use XREnumConversions.FromUnityToArdk() to calculate the correct value
-        public byte ScreenOrientation;
+        public uint ScreenOrientation;
 
         // Tracking state of current frame. See tracking_state.h for definitions.
         // Use XREnumConversions.FromUnityToArdk() to calculate the correct value
-        public byte TrackingState;
-
-        // Reserved for future enums
-        public byte _DontUsePad0;
-        public byte _DontUsePad1;
+        public uint TrackingState;
     }
 }

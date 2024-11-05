@@ -82,7 +82,7 @@ namespace Niantic.Lightship.AR
                 ((IPlaybackDatasetUser)occlusionSubsystem).SetPlaybackDatasetReader(DatasetReader);
             }
 
-            InitializeDependents(true, DatasetReader);
+            ConfigureLocationAndCompass(true, DatasetReader);
 
             return true;
         }
@@ -125,7 +125,7 @@ namespace Niantic.Lightship.AR
 
             _inputProvider?.Dispose();
             DatasetReader = null;
-            InitializeDependents(false, null);
+            ConfigureLocationAndCompass(false, null);
 
             var sessionSubsystem = loader.GetLoadedSubsystem<XRSessionSubsystem>();
             if (sessionSubsystem != null)
@@ -152,12 +152,9 @@ namespace Niantic.Lightship.AR
             return true;
         }
 
-        private static void InitializeDependents(bool isLoaded, PlaybackDatasetReader datasetReader)
+        private static void ConfigureLocationAndCompass(bool isLoaded, PlaybackDatasetReader datasetReader)
         {
-            Input.location.Refresh(isLoaded);
             ((IPlaybackDatasetUser)Input.location).SetPlaybackDatasetReader(datasetReader);
-
-            Input.compass.Refresh(isLoaded);
             ((IPlaybackDatasetUser)Input.compass).SetPlaybackDatasetReader(datasetReader);
         }
     }

@@ -126,11 +126,6 @@ namespace Niantic.Lightship.AR.PAM
             _usingLightshipOcclusion = _occlusionSubsystem is LightshipOcclusionSubsystem;
         }
 
-        public override bool TryGetCameraIntrinsicsDeprecated(out XRCameraIntrinsics intrinsics)
-        {
-            return _cameraSubsystem.TryGetIntrinsics(out intrinsics);
-        }
-
         public override bool TryGetCameraIntrinsicsCStruct(out CameraIntrinsicsCStruct intrinsics)
         {
             intrinsics = default;
@@ -199,35 +194,6 @@ namespace Niantic.Lightship.AR.PAM
         public override bool TryGetCameraPose(out Matrix4x4 pose)
         {
             return InputReader.TryGetPose(out pose);
-        }
-
-        /// Will return the latest XRCpuImage acquired through the XRCameraSubsystem. The returned image can be invalid,
-        /// for example because the session startup was not completed. XRCpuImages must be disposed by the consumer.
-        public override bool TryGetCpuImageDeprecated(out XRCpuImage cpuImage)
-        {
-            return _cameraSubsystem.TryAcquireLatestCpuImage(out cpuImage);
-        }
-
-        public override bool TryGetDepthCpuImageDeprecated(out XRCpuImage cpuDepthImage, out XRCpuImage cpuDepthConfidenceImage)
-        {
-            if (_usingLightshipOcclusion)
-            {
-                cpuDepthImage = default;
-                cpuDepthConfidenceImage = default;
-                return false;
-            }
-
-            bool gotDepth = _occlusionSubsystem.TryAcquireRawEnvironmentDepthCpuImage(out cpuDepthImage);
-            if (gotDepth)
-            {
-                _occlusionSubsystem.TryAcquireEnvironmentDepthConfidenceCpuImage(out cpuDepthConfidenceImage);
-            }
-            else
-            {
-                cpuDepthConfidenceImage = default;
-            }
-
-            return gotDepth;
         }
 
         public override bool TryGetCpuImage(out LightshipCpuImage cpuImage)
@@ -331,48 +297,6 @@ namespace Niantic.Lightship.AR.PAM
             compass.RawDataZ = Input.compass.rawVector.z;
             compass.TrueHeading = Input.compass.trueHeading;
             return true;
-        }
-
-        public override void OnFormatAdded(DataFormat formatAdded)
-        {
-            switch (formatAdded)
-            {
-                case DataFormat.kGpsLocation:
-                    if (Input.location.status == LocationServiceStatus.Stopped)
-                    {
-                        RequestLocationPermissions();
-                    }
-                    break;
-                case DataFormat.kCompass:
-                    if (Input.location.status == LocationServiceStatus.Stopped)
-                    {
-                        // Lazy start of location services with compass.
-                        EnableCompass();
-                        RequestLocationPermissions();
-                    }
-
-                    if (Input.compass.enabled == false)
-                    {
-                        // We shouldn't need to restart the location service, but simply
-                        // enable the compass.
-                        EnableCompass();
-                    }
-                    break;
-            }
-        }
-
-        public override void OnFormatRemoved(DataFormat formatRemoved)
-        {
-            switch (formatRemoved)
-            {
-                case DataFormat.kGpsLocation:
-                    // We don't want to stop the location service in case the developer needs it for other non-lightship functionality
-                    break;
-
-                case DataFormat.kCompass:
-                    // We don't want to stop the location service in case the developer needs it for other non-lightship functionality
-                    break;
-            }
         }
 
         /// <summary>

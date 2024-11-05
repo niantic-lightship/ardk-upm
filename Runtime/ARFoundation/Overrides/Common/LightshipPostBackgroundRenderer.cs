@@ -1,5 +1,6 @@
 // Copyright 2022-2024 Niantic.
 
+using System;
 using Niantic.Lightship.AR.Utilities.Logging;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -7,6 +8,7 @@ using UnityEngine.XR.ARFoundation;
 
 namespace Niantic.Lightship.AR.Common
 {
+    [Obsolete("Use ConditionalRenderer instead.")]
     [RequireComponent(typeof(ARCameraManager))]
     public abstract class LightshipPostBackgroundRenderer : MonoBehaviour
     {

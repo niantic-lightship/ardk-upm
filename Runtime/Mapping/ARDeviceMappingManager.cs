@@ -14,6 +14,7 @@ namespace Niantic.Lightship.AR.Mapping
     /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
     /// </summary>
     [Experimental]
+    [PublicAPI]
     public class ARDeviceMappingManager : MonoBehaviour
     {
 
@@ -92,12 +93,22 @@ namespace Niantic.Lightship.AR.Mapping
         }
 
         /// <summary>
+        /// A state if mapping is in progress or not. True is mapping is ongoing. Becomes false after calling StopMapping()
+        /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
+        /// </summary>
+        [Experimental]
+        public bool IsMappingInProgress
+        {
+            get => DeviceMappingController.IsMapping;
+        }
+
+        /// <summary>
         /// Define how fast to run device mapping. Default is 0, meaning process every frame.
         /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
         /// </summary>
         [SerializeField]
         [Experimental]
-        private uint _mappingTargetFrameRate = 0;
+        private uint _mappingTargetFrameRate = DeviceMappingController.DefaultTargetFrameRate;
 
         /// <summary>
         /// Define device map split based on how far the user traveled.
@@ -105,7 +116,7 @@ namespace Niantic.Lightship.AR.Mapping
         /// </summary>
         [SerializeField]
         [Experimental]
-        private float _mappingSplitterMaxDistanceMeters = 30.0f;
+        private float _mappingSplitterMaxDistanceMeters = DeviceMappingController.DefaultSplitterMaxDistanceMeters;
 
         /// <summary>
         /// Define device map split based on how long in time the user mapped.
@@ -113,7 +124,7 @@ namespace Niantic.Lightship.AR.Mapping
         /// </summary>
         [SerializeField]
         [Experimental]
-        private float _mappingSplitterMaxDurationSeconds = 30.0f;
+        private float _mappingSplitterMaxDurationSeconds = DeviceMappingController.DefaultSplitterMaxDurationSeconds;
 
         // Events
 
@@ -133,44 +144,28 @@ namespace Niantic.Lightship.AR.Mapping
 
         // private vars
 
-        private IMappingApi _mapper;
-        private IMapStorageAccessApi _api;
-        private OutputEdgeType _outputEdgeType = OutputEdgeType.All;
-
         private ARDeviceMap _arDeviceMap = new ();
 
         private bool _mapFinalizedEventInvoked = false;
 
-        private const float TimeoutToForceInvokeMapFinalizedEvent = 4.0f;
+        private const float TimeoutToForceInvokeMapFinalizedEvent = 2.0f;
 
         // Monobehaviour methods
         private void Awake()
         {
-            if (!DeviceMapFeatureFlag.IsFeatureEnabled())
-            {
-                return;
-            }
-
             DeviceMapAccessController.Init();
             DeviceMappingController.Init();
         }
 
         private void OnEnable()
         {
-            if (!DeviceMapFeatureFlag.IsFeatureEnabled())
-            {
-                return;
-            }
             DeviceMapAccessController.StartNativeModule();
+            DeviceMappingController.UpdateConfiguration();
             DeviceMappingController.StartNativeModule();
         }
 
         private void OnDisable()
         {
-            if (!DeviceMapFeatureFlag.IsFeatureEnabled())
-            {
-                return;
-            }
             DeviceMapAccessController.StopNativeModule();
             DeviceMappingController.StopNativeModule();
 
@@ -178,11 +173,6 @@ namespace Niantic.Lightship.AR.Mapping
 
         private void Start()
         {
-            if (!DeviceMapFeatureFlag.IsFeatureEnabled())
-            {
-                return;
-            }
-
             DeviceMappingController.TargetFrameRate = _mappingTargetFrameRate;
             DeviceMappingController.SplitterMaxDistanceMeters = _mappingSplitterMaxDistanceMeters;
             DeviceMappingController.SplitterMaxDurationSeconds = _mappingSplitterMaxDurationSeconds;
@@ -190,20 +180,12 @@ namespace Niantic.Lightship.AR.Mapping
 
         private void OnDestroy()
         {
-            if (!DeviceMapFeatureFlag.IsFeatureEnabled())
-            {
-                return;
-            }
             DeviceMapAccessController.Destroy();
             DeviceMappingController.Destroy();
         }
 
         private void Update()
         {
-            if (!DeviceMapFeatureFlag.IsFeatureEnabled())
-            {
-                return;
-            }
             // Check map/graph generated and sync every 10 frames
             // TODO: make it configurable how often processing map/graph sync
             if (Time.frameCount % 10 != 0)
@@ -222,21 +204,18 @@ namespace Niantic.Lightship.AR.Mapping
         /// </summary>
         public IEnumerator RestartModuleAsyncCoroutine()
         {
-            if (DeviceMapFeatureFlag.IsFeatureEnabled())
-            {
-                DeviceMappingController.TargetFrameRate = _mappingTargetFrameRate;
-                DeviceMappingController.SplitterMaxDistanceMeters = _mappingSplitterMaxDistanceMeters;
-                DeviceMappingController.SplitterMaxDurationSeconds = _mappingSplitterMaxDurationSeconds;
-                DeviceMappingController.UpdateConfiguration();
+            DeviceMappingController.TargetFrameRate = _mappingTargetFrameRate;
+            DeviceMappingController.SplitterMaxDistanceMeters = _mappingSplitterMaxDistanceMeters;
+            DeviceMappingController.SplitterMaxDurationSeconds = _mappingSplitterMaxDurationSeconds;
+            DeviceMappingController.UpdateConfiguration();
 
-                // restart native modules to enable new configs
-                yield return null;
-                DeviceMapAccessController.StopNativeModule();
-                DeviceMappingController.StopNativeModule();
-                yield return null;
-                DeviceMapAccessController.StartNativeModule();
-                DeviceMappingController.StartNativeModule();
-            }
+            // restart native modules to enable new configs
+            yield return null;
+            DeviceMapAccessController.StopNativeModule();
+            DeviceMappingController.StopNativeModule();
+            yield return null;
+            DeviceMapAccessController.StartNativeModule();
+            DeviceMappingController.StartNativeModule();
         }
 
         /// <summary>
@@ -246,11 +225,6 @@ namespace Niantic.Lightship.AR.Mapping
         [Experimental]
         public void StartMapping()
         {
-            if (!DeviceMapFeatureFlag.IsFeatureEnabled())
-            {
-                return;
-            }
-
             // Run mapping
             DeviceMappingController.StartMapping();
             _mapFinalizedEventInvoked = false;
@@ -263,10 +237,6 @@ namespace Niantic.Lightship.AR.Mapping
         [Experimental]
         public void StopMapping()
         {
-            if (!DeviceMapFeatureFlag.IsFeatureEnabled())
-            {
-                return;
-            }
             DeviceMappingController.StopMapping();
             StartCoroutine(MonitorFinalizedEventCoroutine());
         }
@@ -279,11 +249,6 @@ namespace Niantic.Lightship.AR.Mapping
         [Experimental]
         public void SetDeviceMap(ARDeviceMap arDeviceMap)
         {
-            if (!DeviceMapFeatureFlag.IsFeatureEnabled())
-            {
-                return;
-            }
-
             _arDeviceMap = arDeviceMap;
 
             // set map nodes to localizer
@@ -332,11 +297,13 @@ namespace Niantic.Lightship.AR.Mapping
 
             if (!mapCreated)
             {
+                // Ignore if there is no additional map nodes
                 return;
             }
 
             if (maps.Length == 0)
             {
+                // Ignore if there is no additional map nodes
                 return;
             }
 

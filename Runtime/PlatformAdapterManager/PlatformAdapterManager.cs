@@ -4,9 +4,7 @@ using System;
 using System.Collections.Generic;
 using Niantic.Lightship.AR.Utilities.Logging;
 using Unity.Collections;
-using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
-using UnityEngine.XR.ARSubsystems;
 using Niantic.Lightship.AR.Utilities;
 using Niantic.Lightship.AR.Utilities.Profiling;
 using Matrix4x4 = UnityEngine.Matrix4x4;
@@ -271,78 +269,6 @@ namespace Niantic.Lightship.AR.PAM
             }
 
             ProfilerUtility.EventEnd(TraceCategory, traceMethodName);
-        }
-
-        // Returns only the data formats that were actually sent to SAH
-        private DataFormat[] CollateSentDataFormats(ref ARDKFrameData frameData)
-        {
-            List<DataFormat> sentDataFormats = new();
-            var hasCameraImage = frameData.CameraImageWidth > 0 && frameData.CameraImageHeight > 0;
-            var hasDepthImage = frameData.DepthDataWidth > 0 && frameData.DepthDataHeight > 0;
-
-            foreach (var dataFormat in _readyDataFormats)
-            {
-                switch (dataFormat)
-                {
-                    case DataFormat.kCpuRgba_256_144_Uint8:
-                        if (hasCameraImage)
-                        {
-                            sentDataFormats.Add(DataFormat.kCpuRgba_256_144_Uint8);
-                        }
-
-                        break;
-                    case DataFormat.kCpuRgb_256_256_Uint8:
-                        if (hasCameraImage)
-                        {
-                            sentDataFormats.Add(DataFormat.kCpuRgb_256_256_Uint8);
-                        }
-
-                        break;
-
-                    case DataFormat.kJpeg_720_540_Uint8:
-                        if (hasCameraImage)
-                        {
-                            sentDataFormats.Add(DataFormat.kJpeg_720_540_Uint8);
-                        }
-
-                        break;
-
-                    case DataFormat.kGpsLocation:
-                        if (frameData.GpsLocation.TimestampMs > 0)
-                        {
-                            sentDataFormats.Add(DataFormat.kGpsLocation);
-                        }
-
-                        break;
-
-                    case DataFormat.kCompass:
-                        if (frameData.CompassData.TimestampMs > 0)
-                        {
-                            sentDataFormats.Add(DataFormat.kCompass);
-                        }
-
-                        break;
-
-
-                    case DataFormat.kJpeg_full_res_Uint8:
-                        if (hasCameraImage)
-                        {
-                            sentDataFormats.Add(DataFormat.kJpeg_full_res_Uint8);
-                        }
-
-                        break;
-
-                    case DataFormat.kPlatform_depth:
-                        if (hasDepthImage)
-                        {
-                            sentDataFormats.Add(DataFormat.kPlatform_depth);
-                        }
-
-                        break;
-                }
-            }
-
-            return sentDataFormats.ToArray();
         }
     }
 

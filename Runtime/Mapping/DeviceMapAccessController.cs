@@ -1,5 +1,7 @@
 // Copyright 2022-2024 Niantic.
 
+using System;
+
 using Niantic.Lightship.AR.Core;
 using Niantic.Lightship.AR.MapStorageAccess;
 using Niantic.Lightship.AR.Utilities;
@@ -13,8 +15,53 @@ namespace Niantic.Lightship.AR.Mapping
     /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
     /// </summary>
     [Experimental]
+    [PublicAPI]
     public class DeviceMapAccessController
     {
+        private static IntPtr _unityContextHandleCache = IntPtr.Zero;
+        private static DeviceMapAccessController _instance;
+
+        private static object _instanceLock = new object();
+        public static DeviceMapAccessController Instance {
+            get
+            {
+                lock (_instanceLock)
+                {
+                    if (_instance == null)
+                    {
+                        _instance = new DeviceMapAccessController();
+                        LightshipUnityContext.OnDeinitialized += DestroyNativeInstance;
+                    }
+
+                    if (_unityContextHandleCache == IntPtr.Zero)
+                    {
+                        if (LightshipUnityContext.UnityContextHandle == IntPtr.Zero)
+                        {
+                            Log.Error("Unity context handle is not initialized yet. DeviceMapAccessController Instance cannot be created");
+                            _instance = null;
+                            return null;
+                        }
+
+                        _unityContextHandleCache = LightshipUnityContext.UnityContextHandle;
+                        _instance.Init();
+                    }
+                    else if (_unityContextHandleCache != LightshipUnityContext.UnityContextHandle)
+                    {
+                        Log.Error
+                        (
+                            "Unity context handle has changed. Reinitializing DeviceMapAccessController Instance"
+                        );
+
+                        _instance.Destroy();
+                        _unityContextHandleCache = LightshipUnityContext.UnityContextHandle;
+                        _instance.Init();
+                    }
+                }
+
+                return _instance;
+            }
+        }
+
         /// <summary>
         /// Specifies what type of edges will be output by GetSubGraphs()
         /// When set, this config takes in effect immediately
@@ -26,10 +73,6 @@ namespace Niantic.Lightship.AR.Mapping
             get => _outputEdgeType;
             set
             {
-                if (!DeviceMapFeatureFlag.IsFeatureEnabled())
-                {
-                    return;
-                }
                 _outputEdgeType = value;
                 // We can configure anytime so SetConfiguration whenever a value is changed
                 SetConfiguration();
@@ -42,6 +85,13 @@ namespace Niantic.Lightship.AR.Mapping
 
         internal void Init()
         {
+            if (LightshipUnityContext.UnityContextHandle == IntPtr.Zero)
+            {
+                Log.Error("Unity context handle is not initialized yet. " +
+                    "DeviceMapAccessController cannot be initialized");
+                return;
+            }
+
             _api = new NativeMapStorageAccessApi();
             _api.Create(LightshipUnityContext.UnityContextHandle);
             _isRunning = false;
@@ -49,6 +99,11 @@ namespace Niantic.Lightship.AR.Mapping
 
         internal void Destroy()
         {
+            if (_api == null)
+            {
+                return;
+            }
+
             if (_isRunning)
             {
                 // stop before dispose if still running
@@ -56,24 +111,27 @@ namespace Niantic.Lightship.AR.Mapping
                 _isRunning = false;
             }
             _api.Dispose();
+            _api = null;
         }
 
         internal void StartNativeModule()
         {
-            if (!DeviceMapFeatureFlag.IsFeatureEnabled())
+            if (_api == null)
             {
                 return;
             }
+
             _api.Start();
             _isRunning = true;
         }
 
         internal void StopNativeModule()
         {
-            if (!DeviceMapFeatureFlag.IsFeatureEnabled())
+            if (_api == null)
             {
                 return;
             }
+
             _api.Stop();
             _isRunning = false;
         }
@@ -84,7 +142,7 @@ namespace Niantic.Lightship.AR.Mapping
         /// </summary>
         [Experimental]
         public void ClearDeviceMap() {
-            _api.Clear();
+            _api?.Clear();
         }
 
         /// <summary>
@@ -95,18 +153,13 @@ namespace Niantic.Lightship.AR.Mapping
         [Experimental]
         public void AddMapNode(byte[] dataBytes)
         {
-            if (!DeviceMapFeatureFlag.IsFeatureEnabled())
-            {
-                return;
-            }
-
             if (dataBytes == null || dataBytes.Length == 0)
             {
                 Log.Error("Map node data is empty");
                 return;
             }
 
-            _api.AddMapNode(dataBytes);
+            _api?.AddMapNode(dataBytes);
         }
 
         /// <summary>
@@ -117,18 +170,13 @@ namespace Niantic.Lightship.AR.Mapping
         [Experimental]
         public void AddSubGraph(byte[] dataBytes)
         {
-            if (!DeviceMapFeatureFlag.IsFeatureEnabled())
-            {
-                return;
-            }
-
             if (dataBytes == null || dataBytes.Length == 0)
             {
                 Log.Error("Subgraph data is empty");
                 return;
             }
 
-            _api.AddSubGraph(dataBytes);
+            _api?.AddSubGraph(dataBytes);
         }
 
         /// <summary>
@@ -140,11 +188,12 @@ namespace Niantic.Lightship.AR.Mapping
         [Experimental]
         public bool GetMapNodes(out MapNode[] maps)
         {
-            if (!DeviceMapFeatureFlag.IsFeatureEnabled())
+            if (_api == null)
             {
-                maps = default;
+                maps = Array.Empty<MapNode>();
                 return false;
             }
+
             return _api.GetMapNodes(out maps);
         }
 
@@ -157,11 +206,12 @@ namespace Niantic.Lightship.AR.Mapping
         [Experimental]
         public bool GetSubGraphs(out MapSubGraph[] blobs)
         {
-            if (!DeviceMapFeatureFlag.IsFeatureEnabled())
+            if (_api == null)
             {
-                blobs = default;
+                blobs = Array.Empty<MapSubGraph>();
                 return false;
             }
+
             return _api.GetSubGraphs(out blobs);
         }
 
@@ -176,11 +226,12 @@ namespace Niantic.Lightship.AR.Mapping
         [Experimental]
         public bool CreateAnchorFromMapNode(MapNode map, Matrix4x4 pose, out byte[] anchorPayload)
         {
-            if (!DeviceMapFeatureFlag.IsFeatureEnabled())
+            if (_api == null)
             {
-                anchorPayload = default;
+                anchorPayload = null;
                 return false;
             }
+
             _api.CreateAnchorPayloadFromMapNode(map, pose, out anchorPayload);
             return true;
         }
@@ -196,11 +247,12 @@ namespace Niantic.Lightship.AR.Mapping
         [Experimental]
         public bool MergeSubGraphs(MapSubGraph[] subgraphs, bool onlyKeepLatestEdges, out MapSubGraph mergedSubgraph)
         {
-            if (!DeviceMapFeatureFlag.IsFeatureEnabled())
+            if (_api == null)
             {
                 mergedSubgraph = default;
                 return false;
             }
+
             _api.MergeSubGraphs(subgraphs, onlyKeepLatestEdges, out mergedSubgraph);
             return true;
         }
@@ -222,14 +274,15 @@ namespace Niantic.Lightship.AR.Mapping
             out string mapType
         )
         {
-            if (!DeviceMapFeatureFlag.IsFeatureEnabled())
+            if (_api == null)
             {
-                points = default;
-                errors = default;
-                center = default;
-                mapType = default;
+                points = Array.Empty<Vector3>();
+                errors = Array.Empty<float>();
+                center = Vector3.zero;
+                mapType = string.Empty;
                 return;
             }
+
             _api.ExtractMapMetaData(mapBlob, out points, out errors, out center, out mapType);
         }
 
@@ -242,11 +295,21 @@ namespace Niantic.Lightship.AR.Mapping
         private OutputEdgeType _outputEdgeType = OutputEdgeType.All;
         private void SetConfiguration()
         {
-            if (!DeviceMapFeatureFlag.IsFeatureEnabled())
+            _api?.Configure(_outputEdgeType);
+        }
+
+        private static void DestroyNativeInstance()
+        {
+            lock (_instanceLock)
             {
-                return;
+                if (_instance != null &&
+                    _instance._api != null &&
+                    _unityContextHandleCache != IntPtr.Zero)
+                {
+                    _instance.Destroy();
+                    _unityContextHandleCache = IntPtr.Zero;
+                }
             }
-            _api.Configure(_outputEdgeType);
         }
     }
 }

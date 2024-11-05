@@ -1,88 +1,51 @@
+#if MODULE_URP_ENABLED
+
 // Copyright 2022-2024 Niantic.
 
 using UnityEngine;
 using UnityEngine.Rendering;
-#if MODULE_URP_ENABLED
 using UnityEngine.Rendering.Universal;
-#endif
 
 namespace Niantic.Lightship.AR.Occlusion
 {
-#if MODULE_URP_ENABLED
     /// <summary>
     /// Renders a full screen quad with the provided material.
     /// </summary>
-    internal abstract class FullScreenBlitPass : ScriptableRenderPass
+    internal class FullScreenBlitPass : ExternalMaterialPass
     {
-
-        /// <summary>
-        /// The name for the custom render pass which will display in graphics debugging tools.
-        /// </summary>
-        private readonly string _name;
-
-        /// <summary>
-        /// Profiling sampler for the render pass.
-        /// </summary>
-        private readonly ProfilingSampler _profilingSampler;
-
-        /// <summary>
-        /// The material used for performing operations on the input image.
-        /// </summary>
-        private Material _material;
-
-        /// <summary>
-        /// Whether the culling mode should be inverted.
-        /// </summary>
-        internal bool InvertCulling { get; set; }
-
-        protected FullScreenBlitPass(string name, RenderPassEvent renderPassEvent)
+        protected FullScreenBlitPass(string name, RenderPassEvent renderPassEvent) : base(name, renderPassEvent)
         {
-            _name = name;
-            _profilingSampler = new ProfilingSampler(name);
-            this.renderPassEvent = renderPassEvent;
         }
 
-        public virtual void Configure(Material material, RenderTargetIdentifier target)
+        public override void Configure(CommandBuffer cmd, RenderTextureDescriptor cameraTextureDescriptor)
         {
-            _material = material;
-            ConfigureTarget(target);
+            base.Configure(cmd, cameraTextureDescriptor);
+            ConfigureClear(ClearFlag.None, Color.clear);
         }
 
-        public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
+        /// <summary>
+        /// Invoked when the render pass is executed.
+        /// </summary>
+        /// <param name="cmd">The temporary command buffer used to issue draw commands.</param>
+        /// <param name="renderingData">Current rendering state information</param>
+        protected override void OnExecute(CommandBuffer cmd, ref RenderingData renderingData)
         {
-            // Prerequisites
-            var cameraData = renderingData.cameraData;
-            if (cameraData.camera.cameraType != CameraType.Game || _material == null)
-                return;
+            // Push matrix
+            cmd.SetViewProjectionMatrices(Matrix4x4.identity,
+                renderPassEvent == RenderPassEvent.BeforeRenderingOpaques
+                    ? BeforeOpaquesProjection
+                    : AfterOpaquesProjection);
 
-            // Acquire a command buffer
-            var cmd = CommandBufferPool.Get(_name);
-            using (new ProfilingScope(cmd, _profilingSampler))
-            {
-                // Set culling
-                cmd.SetInvertCulling(InvertCulling);
+            // Draw
+            cmd.DrawMesh(
+                renderPassEvent == RenderPassEvent.BeforeRenderingOpaques
+                    ? FullScreenNearClipMesh
+                    : FullScreenFarClipMesh,
+                Matrix4x4.identity, Material);
 
-                // Push matrix
-                cmd.SetViewProjectionMatrices(Matrix4x4.identity,
-                    renderPassEvent == RenderPassEvent.BeforeRenderingOpaques
-                        ? BeforeOpaquesProjection
-                        : AfterOpaquesProjection);
-
-                // Draw
-                cmd.DrawMesh(
-                    renderPassEvent == RenderPassEvent.BeforeRenderingOpaques
-                        ? FullScreenNearClipMesh
-                        : FullScreenFarClipMesh,
-                    Matrix4x4.identity, _material);
-
-                // Pop matrix
-                cmd.SetViewProjectionMatrices(renderingData.cameraData.camera.worldToCameraMatrix,
-                    renderingData.cameraData.camera.projectionMatrix);
-            }
-
-            // Commit and release
-            context.ExecuteCommandBuffer(cmd);
-            CommandBufferPool.Release(cmd);
+            // Pop matrix
+            cmd.SetViewProjectionMatrices(renderingData.cameraData.camera.worldToCameraMatrix,
+                renderingData.cameraData.camera.projectionMatrix);
         }
 
         #region Utils
@@ -161,5 +124,5 @@ namespace Niantic.Lightship.AR.Occlusion
 
         #endregion
     }
-#endif // MODULE_URP_ENABLED
 }
+#endif // MODULE_URP_ENABLED

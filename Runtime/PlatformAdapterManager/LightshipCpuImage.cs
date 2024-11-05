@@ -1,7 +1,9 @@
 // Copyright 2022-2024 Niantic.
 
 using System;
+using System.Runtime.InteropServices;
 using Niantic.Lightship.AR.Utilities;
+using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine.XR.ARSubsystems;
 
@@ -28,6 +30,14 @@ namespace Niantic.Lightship.AR.PAM
 
         // Bytes per row of pixels. Generally some multiple of width: PixelStride for RGB, or 1/2 for subsampled YUV.
         public uint RowStride;
+
+        // Helper function to get a COPY of the image plane data in a byte array. Useful for tests.
+        public byte[] GetByteArrayCopy()
+        {
+            var bytes = new byte[DataSize];
+            Marshal.Copy(DataPtr, bytes, 0, (int)DataSize);
+            return bytes;
+        }
     }
 
     /// <summary>
@@ -70,6 +80,15 @@ namespace Niantic.Lightship.AR.PAM
             }
             lightshipCpuImage = new LightshipCpuImage(xrCpuImage.format.FromUnityToArdk(plane1Ptr, plane2Ptr),
                 (uint)xrCpuImage.width, (uint)xrCpuImage.height);
+
+            // Convert the plane data to fit the format of what native expects
+            // If NV12 or NV21, make sure that the UV/VU plane is in the second slot and remove the third slot
+            if (lightshipCpuImage.Format == ImageFormatCEnum.Yuv420_NV21) {
+                planes[1] = planes[2];
+                planes[2] = new LightshipCpuImagePlane(IntPtr.Zero, 0, 0, 0);
+            } else if (lightshipCpuImage.Format == ImageFormatCEnum.Yuv420_NV12) {
+                planes[2] = new LightshipCpuImagePlane(IntPtr.Zero, 0, 0, 0);
+            }
             lightshipCpuImage.Planes = planes;
             return true;
         }

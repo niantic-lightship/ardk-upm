@@ -318,15 +318,7 @@ namespace Niantic.Lightship.AR.Editor
                     CheckPredicate = getAndroidIsLightshipPluginEnabled.Invoke,
                     FixIt = () =>
                     {
-                        var generalSettings = XRGeneralSettingsPerBuildTarget.XRGeneralSettingsForBuildTarget(BuildTargetGroup.Android);
-                        if (null == generalSettings)
-                            return;
-
-                        var managerSettings = generalSettings.AssignedSettings;
-                        if (null == managerSettings)
-                            return;
-
-                        XRPackageMetadataStore.AssignLoader(managerSettings, typeof(LightshipARCoreLoader).FullName, BuildTargetGroup.Android);
+                        EditorApplication.ExecuteMenuItem("Lightship/XR Plug-in Management");
                     },
                     FixItMessage = "Open `Project Settings` > `XR Plug-in Management` > `Android settings` and enable the 'Niantic Lightship SDK' plug-in.",
                     FixItAutomatic = false,

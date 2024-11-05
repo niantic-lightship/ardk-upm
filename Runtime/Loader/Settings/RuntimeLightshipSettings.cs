@@ -18,7 +18,9 @@ namespace Niantic.Lightship.AR.Loader
         private bool _useLightshipPersistentAnchor;
         private bool _useLightshipObjectDetection;
         private bool _useLightshipWorldPositioning;
-        private bool _useLightshipSpoofLocation;
+        private LocationDataSource _locationAndCompassDataSource;
+        private SpoofLocationInfo _spoofLocationInfo;
+        private SpoofCompassInfo _spoofCompassInfo;
 
         private LogLevel _unityLogLevel;
         private LogLevel _fileLogLevel;
@@ -127,25 +129,30 @@ namespace Niantic.Lightship.AR.Loader
             set => _useLightshipWorldPositioning = value;
         }
 
-        #region Experimental Settings
+        /// <summary>
+        /// Source of location and compass data fetched from the Niantic.Lightship.AR.Input APIs
+        /// </summary>
+        public LocationDataSource LocationAndCompassDataSource
+        {
+            get => _locationAndCompassDataSource;
+            set { _locationAndCompassDataSource = value; }
+        }
 
         /// <summary>
-        /// [Experimental] When true, Lightship's spoof location provider can be used.
-        /// This property cannot be changed at runtime.
+        /// Values returned by location service when in Spoof mode
         /// </summary>
-#if NIANTIC_LIGHTSHIP_ML2_ENABLED
-        // Magic Leap does not have GPS so we require spoofing to be enabled.
-        public bool UseLightshipSpoofLocation => true;
-#elif NIANTIC_ARDK_EXPERIMENTAL_FEATURES
-        public bool UseLightshipSpoofLocation
+        public SpoofLocationInfo SpoofLocationInfo
         {
-            get => _useLightshipSpoofLocation;
+            get => _spoofLocationInfo;
         }
-#else
-        public bool UseLightshipSpoofLocation => false;
-#endif
 
-        #endregion
+        /// <summary>
+        /// Values returned by compass service when in Spoof mode
+        /// </summary>
+        public SpoofCompassInfo SpoofCompassInfo
+        {
+            get => _spoofCompassInfo;
+        }
 
         /// <summary>
         /// The highest log level to print for Unity logger
@@ -228,6 +235,9 @@ namespace Niantic.Lightship.AR.Loader
             _lightshipSimulationParams = new LightshipSimulationParams();
             _testSettings = new TestSettings();
             _endpointSettings = EndpointSettings.GetDefaultEnvironmentConfig();
+
+            _spoofLocationInfo = SpoofLocationInfo.Default;
+            _spoofCompassInfo = SpoofCompassInfo.Default;
         }
 
         internal RuntimeLightshipSettings(LightshipSettings source)
@@ -246,10 +256,10 @@ namespace Niantic.Lightship.AR.Loader
             UseLightshipScanning = source.UseLightshipScanning;
             UseLightshipObjectDetection = source.UseLightshipObjectDetection;
             UseLightshipWorldPositioning = source.UseLightshipWorldPositioning;
+            LocationAndCompassDataSource = source.LocationAndCompassDataSource;
 
-#if NIANTIC_ARDK_EXPERIMENTAL_FEATURES
-            _useLightshipSpoofLocation = source.UseLightshipSpoofLocation;
-#endif
+            _spoofLocationInfo = new SpoofLocationInfo(source.SpoofLocationInfo);
+            _spoofCompassInfo = new SpoofCompassInfo(source.SpoofCompassInfo);
 
             UnityLightshipLogLevel = source.UnityLightshipLogLevel;
             FileLightshipLogLevel = source.FileLightshipLogLevel;
