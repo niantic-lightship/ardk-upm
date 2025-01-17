@@ -9,15 +9,14 @@ using Niantic.Lightship.AR.PersistentAnchors;
 using Niantic.Lightship.AR.Utilities;
 using Niantic.Lightship.AR.VpsCoverage;
 using Niantic.Lightship.AR.XRSubsystems;
+
 using UnityEngine;
-using UnityEngine.Serialization;
+using UnityEngine.XR.ARFoundation;
 using UnityEngine.XR.ARSubsystems;
 
 #if !UNITY_EDITOR && UNITY_ANDROID
 using UnityEngine.Android;
 #endif
-
-using Input = Niantic.Lightship.AR.Input;
 
 namespace Niantic.Lightship.AR.LocationAR
 {
@@ -93,7 +92,13 @@ namespace Niantic.Lightship.AR.LocationAR
         // _coverageARLocationHolders will be populated by OnCoverageLocationsQueried
         private readonly List<GameObject> _coverageARLocationHolders = new();
 
-        private DeviceMapAccessController _deviceMapAccessController;
+        // Workaround for ARSessionState no longer triggering anchor tracking lost
+        // TODO: Solidify anchor tracking expectations
+        private ARSessionState _lastARSessionState = ARSessionState.None;
+        private ARLocationTrackedEventArgs? _lastLocationTrackedEventArgs;
+
+        // Workaround for frequent anchor pose updates
+        private Pose _lastAnchorPose;
 
         protected override void OnEnable()
         {
@@ -101,6 +106,8 @@ namespace Niantic.Lightship.AR.LocationAR
             //  dependent on the subsystem in OnBeforeStart.
             base.OnEnable();
             arPersistentAnchorStateChanged += HandleARPersistentAnchorStateChanged;
+            _lastARSessionState = ARSession.state;
+            ARSession.stateChanged += HandleARSessionStateChanged;
         }
 
         protected override void Start()
@@ -120,8 +127,6 @@ namespace Niantic.Lightship.AR.LocationAR
                 }
             }
 
-            _deviceMapAccessController = new DeviceMapAccessController();
-            _deviceMapAccessController.Init();
             if (arLocations.Count != 0)
             {
                 SetARLocations(arLocations.ToArray());
@@ -133,6 +138,7 @@ namespace Niantic.Lightship.AR.LocationAR
         {
             base.OnDisable();
             arPersistentAnchorStateChanged -= HandleARPersistentAnchorStateChanged;
+            ARSession.stateChanged -= HandleARSessionStateChanged;
 
             // This stops TryStartLocationServiceForCoverage coroutine
             _keepTryingStartLocationServices = true;
@@ -323,7 +329,9 @@ namespace Niantic.Lightship.AR.LocationAR
                     }
 
                     var args = new ARLocationTrackedEventArgs(arLocation, tracking, reason, anchor.trackingConfidence);
-                    locationTrackingStateChanged?.Invoke(args);
+                    InvokeTrackingStateChangedWithARSessionState(args, _lastARSessionState);
+                    _lastAnchorPose = anchor.PredictedPose;
+                    _lastLocationTrackedEventArgs = args;
                 }
                 else
                 {
@@ -352,9 +360,51 @@ namespace Niantic.Lightship.AR.LocationAR
 
                     // Note: You could call arLocation.gameObject.SetActive(false) in locationTrackingStateChanged event if you wanted to de-activate gameObject when tracking is lost
                     var args = new ARLocationTrackedEventArgs(arLocation, false, reason, anchor.trackingConfidence);
-                    locationTrackingStateChanged?.Invoke(args);
+                    InvokeTrackingStateChangedWithARSessionState(args, _lastARSessionState);
+                    _lastAnchorPose = anchor.PredictedPose;
+                    _lastLocationTrackedEventArgs = args;
                 }
             }
+        }
+
+        // Evaluate ARSessionState as well as ARLocationTrackedEventArgs to determine if the tracking state has changed
+        private void InvokeTrackingStateChangedWithARSessionState(ARLocationTrackedEventArgs? args, ARSessionState sessionState)
+        {
+            // This can happen if ARSessionState changes before ARLocationTrackedEventArgs is set
+            if (!args.HasValue)
+            {
+                return;
+            }
+
+            // If we've previously localized, check that there is new info to report
+            // This is a temporary workaround for native firing multiple identical updates
+            if (_lastLocationTrackedEventArgs.HasValue)
+            {
+                var locationTransform = args.Value.ARLocation.transform;
+                var allInfoIdentical = _lastAnchorPose.position ==
+                    locationTransform.position &&
+                    _lastAnchorPose.rotation == locationTransform.rotation &&
+                    args.Value.Tracking == _lastLocationTrackedEventArgs.Value.Tracking &&
+                    args.Value.TrackingStateReason ==
+                    _lastLocationTrackedEventArgs.Value.TrackingStateReason &&
+                    sessionState == _lastARSessionState;
+
+                if (allInfoIdentical)
+                {
+                    return;
+                }
+            }
+
+            var newArgs = args.Value;
+
+            // If ARSessionState is not SessionTracking, fire the event as not tracking
+            if (sessionState != ARSessionState.SessionTracking)
+            {
+                newArgs = new ARLocationTrackedEventArgs
+                    (args.Value.ARLocation, false, ARLocationTrackingStateReason.None, 0.0f);
+            }
+
+            locationTrackingStateChanged?.Invoke(newArgs);
         }
 
         private void TryTrackLocations(params ARLocation[] arLocations)
@@ -557,14 +607,22 @@ namespace Niantic.Lightship.AR.LocationAR
                 Destroy(arLocationHolder);
             }
             _coverageARLocationHolders.Clear();
-            _deviceMapAccessController.ClearDeviceMap();
+            DeviceMapAccessController.Instance.ClearDeviceMap();
         }
 
         private new void OnDestroy()
         {
-            _deviceMapAccessController.ClearDeviceMap();
-            _deviceMapAccessController.Destroy();
+            if (DeviceMapAccessController.Instance != null)
+            {
+                DeviceMapAccessController.Instance.ClearDeviceMap();
+            }
             base.OnDestroy();
+        }
+
+        private void HandleARSessionStateChanged(ARSessionStateChangedEventArgs args)
+        {
+            _lastARSessionState = args.state;
+            InvokeTrackingStateChangedWithARSessionState(_lastLocationTrackedEventArgs, _lastARSessionState);
         }
     }
 }

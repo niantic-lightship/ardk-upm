@@ -67,7 +67,7 @@ namespace  Niantic.Lightship.AR.Subsystems.Semantics
         /// array of semantic channels returned by <c>TryGetChannelNames</c>. A negative value will have no effect and will
         /// leave the threshold at the default or previously set value. A new threshold setting must be between 0 and
         /// 1, inclusive.</param>
-        public void Configure(IntPtr nativeProviderHandle, UInt32 framesPerSecond, UInt32 numThresholds, IntPtr thresholds, List<string> suppressionMaskChannelNames)
+        public void Configure(IntPtr nativeProviderHandle, UInt32 framesPerSecond, UInt32 numThresholds, IntPtr thresholds, HashSet<string> suppressionMaskChannelNames)
         {
             if (!_initializedMetadataDependencies && HasMetadata(nativeProviderHandle))
             {

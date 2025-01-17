@@ -2,8 +2,6 @@
 using System;
 using System.Runtime.InteropServices;
 using Niantic.Lightship.AR.Core;
-using Unity.Collections;
-using Unity.Collections.LowLevel.Unsafe;
 
 namespace Niantic.Lightship.AR.PAM
 {
@@ -12,9 +10,7 @@ namespace Niantic.Lightship.AR.PAM
         public IntPtr ARDK_SAH_Create(IntPtr unityContext, bool isLidarDepthEnabled)
         {
             IntPtr coreContext = LightshipUnityContext.GetCoreContext(unityContext);
-            IntPtr componentManager = ARDK_CoreContext_GetComponentManagerHandle(coreContext);
-
-            return Native.ARDK_SAH_Create(componentManager, isLidarDepthEnabled);
+            return Native.ARDK_SAH_Create(coreContext, isLidarDepthEnabled);
         }
 
         public void ARDK_SAH_OnFrame_Deprecated(IntPtr handle, IntPtr frameData)
@@ -29,31 +25,13 @@ namespace Niantic.Lightship.AR.PAM
 
         public void ARDK_SAH_GetDataFormatsReadyForNewFrame(
             IntPtr handle,
-            NativeArray<DataFormat> dataFormatsReady,
-            out int readySize
+            out uint dataFormatsReady
         )
         {
             unsafe
             {
                 Native.ARDK_SAH_GetDataFormatsReadyForNewFrame(handle,
-                    (IntPtr)dataFormatsReady.GetUnsafePtr(), out readySize);
-            }
-        }
-
-        public void ARDK_SAH_GetDataFormatUpdatesForNewFrame(IntPtr handle, NativeArray<DataFormat> dataFormatsAdded,
-            out int addedSize, NativeArray<DataFormat> dataFormatsReady, out int readySize, NativeArray<DataFormat> dataFormatsRemoved,
-            out int removedSize)
-        {
-            unsafe
-            {
-                Native.ARDK_SAH_GetDataFormatUpdatesForNewFrame(handle,
-                    (IntPtr)dataFormatsAdded.GetUnsafePtr(), out UInt32 addedDataFormatsSize,
-                    (IntPtr)dataFormatsReady.GetUnsafePtr(), out UInt32 readyDataFormatsSize,
-                    (IntPtr)dataFormatsRemoved.GetUnsafePtr(), out UInt32 removedDataFormatsSize);
-
-                addedSize = (int)addedDataFormatsSize;
-                readySize = (int)readyDataFormatsSize;
-                removedSize = (int)removedDataFormatsSize;
+                    out dataFormatsReady);
             }
         }
 
@@ -62,7 +40,7 @@ namespace Niantic.Lightship.AR.PAM
             IntPtr handle,
             out uint dispatchedFrameId,
             out ulong dispatchedToModules,
-            out ulong dispatchedDataFormats
+            out uint dispatchedDataFormats
         )
         {
             unsafe
@@ -72,7 +50,7 @@ namespace Niantic.Lightship.AR.PAM
                     handle,
                     out uint outDispatchedFrameId,
                     out ulong outDispatchedToModules,
-                    out ulong outDispatchedDataFormats
+                    out uint outDispatchedDataFormats
                 );
 
                 dispatchedFrameId = outDispatchedFrameId;
@@ -89,7 +67,7 @@ namespace Niantic.Lightship.AR.PAM
         private static class Native
         {
             [DllImport(LightshipPlugin.Name)]
-            public static extern IntPtr ARDK_SAH_Create(IntPtr componentManager, bool isLidarDepthEnabled);
+            public static extern IntPtr ARDK_SAH_Create(IntPtr coreContext, bool isLidarDepthEnabled);
 
             [DllImport(LightshipPlugin.Name)]
             public static extern void ARDK_SAH_OnFrame_Deprecated(IntPtr handle, IntPtr frameData);
@@ -101,21 +79,14 @@ namespace Niantic.Lightship.AR.PAM
             public static extern void ARDK_SAH_GetDataFormatsReadyForNewFrame
             (
                 IntPtr handle,
-                IntPtr readyDataFormats,
-                out Int32 readyDataFormatsSize
+                out UInt32 readyDataFormats
             );
-
-            [DllImport(LightshipPlugin.Name)]
-            public static extern void ARDK_SAH_GetDataFormatUpdatesForNewFrame(IntPtr handle,
-                IntPtr addedDataFormats, out UInt32 addedDataFormatsSize,
-                IntPtr readyDataFormats, out UInt32 readyDataFormatsSize,
-                IntPtr removedDataFormats, out UInt32 removedDataFormatsSize);
 
             [DllImport(LightshipPlugin.Name)]
             public static extern void ARDK_SAH_GetDispatchedFormatsToModules(IntPtr handle,
                 out uint dispatchedFrameId,
                 out ulong dispatchedToModules,
-                out ulong dispatchedDataFormats);
+                out uint dispatchedDataFormats);
 
             [DllImport(LightshipPlugin.Name)]
             public static extern void ARDK_SAH_Release(IntPtr handle);

@@ -1,7 +1,6 @@
 // Copyright 2022-2024 Niantic.
 
 using System;
-using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using Niantic.Lightship.AR.Core;
 using Niantic.Lightship.AR.Utilities;
@@ -9,7 +8,8 @@ using Niantic.Lightship.AR.Utilities.Logging;
 using Unity.Collections;
 using UnityEngine;
 using UnityEngine.XR.ARSubsystems;
-using Niantic.Lightship.AR.PersistentAnchors;
+
+using Unity.Collections.LowLevel.Unsafe;
 
 namespace Niantic.Lightship.AR.MapStorageAccess
 {
@@ -34,48 +34,6 @@ namespace Niantic.Lightship.AR.MapStorageAccess
             Lightship_ARDK_Unity_MapStorageAccess_Release(_nativeHandle);
             _nativeHandle = IntPtr.Zero;
         }
-
-        public void Start()
-        {
-            if (!CheckNativeHandle())
-            {
-                return;
-            }
-
-            Lightship_ARDK_Unity_MapStorageAccess_Start(_nativeHandle);
-        }
-
-        public void Stop()
-        {
-            if (!CheckNativeHandle())
-            {
-                return;
-            }
-
-            Lightship_ARDK_Unity_MapStorageAccess_Stop(_nativeHandle);
-        }
-
-        /// <summary>
-        /// Defined in ardk_map_storage_access_configuration.h file.
-        /// </summary>
-        [StructLayout(LayoutKind.Sequential)]
-        public struct MapStorageAccessConfigurationCStruct
-        {
-            public UInt64 outputEdgeType;
-        }
-
-        public void Configure(OutputEdgeType edgeType)
-        {
-            if (!CheckNativeHandle())
-            {
-                return;
-            }
-
-            var configurationCStruct = new MapStorageAccessConfigurationCStruct();
-            configurationCStruct.outputEdgeType = (UInt64)edgeType;
-            Lightship_ARDK_Unity_MapStorageAccess_Configure(_nativeHandle, configurationCStruct);
-        }
-
 
         public void AddMapNode(byte[] dataBytes)
         {
@@ -127,33 +85,201 @@ namespace Niantic.Lightship.AR.MapStorageAccess
             Lightship_ARDK_Unity_MapStorageAccess_Clear(_nativeHandle);
         }
 
-        public bool GetMapNodes(out MapNode[] maps)
+        public void StartUploadingMaps()
         {
             if (!CheckNativeHandle())
             {
-                maps = default;
+                return;
+            }
+
+            Lightship_ARDK_Unity_MapStorageAccess_StartUploadingMaps(_nativeHandle);
+        }
+
+        public void StopUploadingMaps()
+        {
+            if (!CheckNativeHandle())
+            {
+                return;
+            }
+
+            Lightship_ARDK_Unity_MapStorageAccess_StopUploadingMaps(_nativeHandle);
+        }
+
+        public void StartDownloadingMaps()
+        {
+            if (!CheckNativeHandle())
+            {
+                return;
+            }
+
+            Lightship_ARDK_Unity_MapStorageAccess_StartDownloadingMaps(_nativeHandle);
+        }
+
+        public void StopDownloadingMaps()
+        {
+            if (!CheckNativeHandle())
+            {
+                return;
+            }
+
+            Lightship_ARDK_Unity_MapStorageAccess_StopDownloadingMaps(_nativeHandle);
+        }
+
+        public bool MarkMapNodeForUpload(TrackableId mapId)
+        {
+            if (!CheckNativeHandle())
+            {
                 return false;
             }
 
-            var handle =
-                Lightship_ARDK_Unity_MapStorageAccess_AcquireMaps(_nativeHandle, out var mapList, out var listCount);
+            return Lightship_ARDK_Unity_MapStorageAccess_MarkNodeForUpload(_nativeHandle, ref mapId);
+        }
+
+        public bool HasMapNodeBeenUploaded(TrackableId mapId)
+        {
+            if (!CheckNativeHandle())
+            {
+                return false;
+            }
+
+            return Lightship_ARDK_Unity_MapStorageAccess_HasNodeBeenUploaded(_nativeHandle, ref mapId);
+        }
+
+        public bool GetMapNodeIds(out TrackableId[] mapIds)
+        {
+            mapIds = default;
+            if (!CheckNativeHandle())
+            {
+                return false;
+            }
+
+            var handle = Lightship_ARDK_Unity_MapStorageAccess_GetMapIds(_nativeHandle, out var mapIdList, out var listCount);
             if (!handle.IsValidHandle())
             {
                 Log.Warning("Invalid handle returned when attempt to acquire map data");
-                maps = default;
                 return false;
             }
 
             if (listCount == 0)
             {
                 Lightship_ARDK_Unity_MapStorageAccess_ReleaseResource(handle);
-                maps = default;
                 return false;
             }
 
             try
             {
-                maps = new MapNode[listCount];
+                NativeArray<TrackableId> trackableIdList;
+                unsafe
+                {
+                    trackableIdList = NativeCopyUtility.PtrToNativeArrayWithDefault
+                    (
+                        TrackableId.invalidId,
+                        mapIdList.ToPointer(),
+                        sizeof(TrackableId),
+                        (int)listCount,
+                        Allocator.Temp
+                    );
+                }
+
+                mapIds = trackableIdList.ToArray();
+            }
+            finally
+            {
+                if (!handle.IsValidHandle())
+                {
+                    Log.Error("Tried to release map handle with invalid pointer.");
+                }
+
+                Lightship_ARDK_Unity_MapStorageAccess_ReleaseResource(handle);
+            }
+
+            return true;
+        }
+
+        public bool GetSubGraphIds(out TrackableId[] graphIds, OutputEdgeType edgeType = OutputEdgeType.All)
+        {
+            graphIds = default;
+            if (!CheckNativeHandle())
+            {
+                return false;
+            }
+
+            var handle = Lightship_ARDK_Unity_MapStorageAccess_GetGraphIds(_nativeHandle, out var graphIdList, out var listCount, (UInt32) edgeType);
+            if (!handle.IsValidHandle())
+            {
+                Log.Warning("Invalid handle returned when attempt to acquire map data");
+                return false;
+            }
+
+            if (listCount == 0)
+            {
+                Lightship_ARDK_Unity_MapStorageAccess_ReleaseResource(handle);
+                return false;
+            }
+
+            try
+            {
+                NativeArray<TrackableId> trackableIdList;
+                unsafe
+                {
+                    trackableIdList = NativeCopyUtility.PtrToNativeArrayWithDefault
+                    (
+                        TrackableId.invalidId,
+                        graphIdList.ToPointer(),
+                        sizeof(TrackableId),
+                        (int)listCount,
+                        Allocator.Temp
+                    );
+                }
+
+                graphIds = trackableIdList.ToArray();
+            }
+            finally
+            {
+                if (!handle.IsValidHandle())
+                {
+                    Log.Error("Tried to release map handle with invalid pointer.");
+                }
+
+                Lightship_ARDK_Unity_MapStorageAccess_ReleaseResource(handle);
+            }
+
+            return true;
+        }
+
+        public bool GetMapNodes(TrackableId[] mapIds, out MapNode[] maps)
+        {
+            maps = default;
+            if (!CheckNativeHandle())
+            {
+                return false;
+            }
+
+            var listCount = mapIds.Length;
+            var mapIdList = new NativeArray<TrackableId>(mapIds, Allocator.Temp);
+
+            IntPtr mapListPtr;
+            unsafe
+            {
+                mapListPtr = new IntPtr(NativeArrayUnsafeUtility.GetUnsafeReadOnlyPtr(mapIdList));
+            }
+
+            var mapListHandle = Lightship_ARDK_Unity_MapStorageAccess_GetMaps
+                (_nativeHandle, mapListPtr, (uint)listCount, out var mapList, out var mapCount);
+
+            if (mapListHandle == IntPtr.Zero || mapCount == 0)
+            {
+                if (mapListHandle.IsValidHandle())
+                {
+                    Lightship_ARDK_Unity_MapStorageAccess_ReleaseResource(mapListHandle);
+                }
+
+                return false;
+            }
+
+            try
+            {
+                maps = new MapNode[mapCount];
                 NativeArray<IntPtr> mapPtrList;
                 unsafe
                 {
@@ -162,7 +288,7 @@ namespace Niantic.Lightship.AR.MapStorageAccess
                         IntPtr.Zero,
                         mapList.ToPointer(),
                         sizeof(IntPtr),
-                        (int)listCount,
+                        (int)mapCount,
                         Allocator.Temp
                     );
                 }
@@ -174,40 +300,126 @@ namespace Niantic.Lightship.AR.MapStorageAccess
             }
             finally
             {
-                if (!handle.IsValidHandle())
+                if (!mapListHandle.IsValidHandle())
                 {
-                    Log.Error("Tried to release map handle with invalid pointer.");
+                    Log.Error("Tried to release mapListHandle with invalid pointer.");
                 }
 
-                Lightship_ARDK_Unity_MapStorageAccess_ReleaseResource(handle);
+                Lightship_ARDK_Unity_MapStorageAccess_ReleaseResource(mapListHandle);
             }
-
 
             return true;
         }
 
-        public bool GetSubGraphs(out MapSubGraph[] blobs)
+        public bool GetLatestUpdates
+        (
+            OutputEdgeType edgeType,
+            out MapNode[] mapNodes,
+            out MapSubGraph[] blobs
+        )
         {
+            mapNodes = default;
+            blobs = default;
+
             if (!CheckNativeHandle())
             {
-                blobs = default;
                 return false;
             }
 
-            var handle =
-                Lightship_ARDK_Unity_MapStorageAccess_AcquireGraphs(_nativeHandle, out var blobList, out var listCount);
+            var handle = Lightship_ARDK_Unity_MapStorageAccess_GetLatestUpdates
+            (
+                _nativeHandle,
+                (UInt32)edgeType,
+                out var mapListPtr,
+                out var mapCount,
+                out var graphListPtr,
+                out var graphCount
+            );
 
-            if (listCount == 0)
+            if (handle == IntPtr.Zero)
             {
-                blobs = default;
+                return false;
+            }
 
-                if (handle.IsValidHandle())
+            try
+            {
+                if (mapCount > 0)
                 {
-                    Lightship_ARDK_Unity_MapStorageAccess_ReleaseResource(handle);
+                    NativeArray<IntPtr> nativeMapPtrs;
+                    unsafe
+                    {
+                        nativeMapPtrs = NativeCopyUtility.PtrToNativeArrayWithDefault
+                        (
+                            IntPtr.Zero,
+                            mapListPtr.ToPointer(),
+                            sizeof(IntPtr),
+                            (int)mapCount,
+                            Allocator.Temp
+                        );
+                    }
+
+                    mapNodes = new MapNode[mapCount];
+                    for (int i = 0; i < mapCount; i++)
+                    {
+                        mapNodes[i] = GetMapNode(nativeMapPtrs[i]);
+                    }
                 }
-                else
+
+                if (graphCount > 0)
                 {
-                    Log.Warning("Invalid graph handle");
+                    NativeArray<IntPtr> nativeGraphPtrs;
+                    unsafe
+                    {
+                        nativeGraphPtrs = NativeCopyUtility.PtrToNativeArrayWithDefault
+                        (
+                            IntPtr.Zero,
+                            graphListPtr.ToPointer(),
+                            sizeof(IntPtr),
+                            (int)graphCount,
+                            Allocator.Temp
+                        );
+                    }
+
+                    blobs = new MapSubGraph[graphCount];
+                    for (int i = 0; i < graphCount; i++)
+                    {
+                        blobs[i] = GetMapSubGraph(nativeGraphPtrs[i]);
+                    }
+                }
+            }
+            finally
+            {
+                Lightship_ARDK_Unity_MapStorageAccess_ReleaseResource(handle);
+            }
+
+            return true;
+        }
+
+        public bool GetSubGraphs(TrackableId[] graphIds, out MapSubGraph[] blobs)
+        {
+            blobs = default;
+            if (!CheckNativeHandle())
+            {
+                return false;
+            }
+
+            var listCount = graphIds.Length;
+            var graphIdPtr = new NativeArray<TrackableId>(graphIds, Allocator.Temp);
+
+            IntPtr graphListPtr;
+            unsafe
+            {
+                graphListPtr = new IntPtr(NativeArrayUnsafeUtility.GetUnsafeReadOnlyPtr(graphIdPtr));
+            }
+
+            var mapListHandle = Lightship_ARDK_Unity_MapStorageAccess_GetGraphs
+                (_nativeHandle, graphListPtr, (uint)listCount, out var graphList, out var graphCount);
+
+            if (mapListHandle == IntPtr.Zero || graphCount == 0)
+            {
+                if (mapListHandle.IsValidHandle())
+                {
+                    Lightship_ARDK_Unity_MapStorageAccess_ReleaseResource(mapListHandle);
                 }
 
                 return false;
@@ -215,36 +427,37 @@ namespace Niantic.Lightship.AR.MapStorageAccess
 
             try
             {
-                blobs = new MapSubGraph[listCount];
-                NativeArray<IntPtr> blobPtrList;
+                blobs = new MapSubGraph[graphCount];
+                NativeArray<IntPtr> mapPtrList;
                 unsafe
                 {
-                    blobPtrList = NativeCopyUtility.PtrToNativeArrayWithDefault
+                    mapPtrList = NativeCopyUtility.PtrToNativeArrayWithDefault
                     (
                         IntPtr.Zero,
-                        blobList.ToPointer(),
+                        graphList.ToPointer(),
                         sizeof(IntPtr),
-                        (int)listCount,
+                        (int)graphCount,
                         Allocator.Temp
                     );
                 }
 
                 for (int i = 0; i < listCount; i++)
                 {
-                    blobs[i] = GetMapSubGraph(blobPtrList[i]);
+                    blobs[i] = GetMapSubGraph(mapPtrList[i]);
                 }
             }
             finally
             {
-                if (!handle.IsValidHandle())
+                if (!mapListHandle.IsValidHandle())
                 {
-                    Log.Error("Tried to release map handle with invalid pointer.");
+                    Log.Error("Tried to release mapListHandle with invalid pointer.");
                 }
 
-                Lightship_ARDK_Unity_MapStorageAccess_ReleaseResource(handle);
+                Lightship_ARDK_Unity_MapStorageAccess_ReleaseResource(mapListHandle);
             }
 
             return true;
+
         }
 
         public bool MergeSubGraphs(MapSubGraph[] subgraphs, bool onlyKeepLatestEdges, out MapSubGraph mergedSubgraph)
@@ -373,7 +586,7 @@ namespace Niantic.Lightship.AR.MapStorageAccess
                 (handle, out var nodeId, out var dataPtr, out var dataSize);
             if (!success || dataPtr == IntPtr.Zero)
             {
-                Debug.Log("GetMapNode(): Couldn't extract device map!");
+                Log.Error("GetMapNode(): Couldn't extract device map!");
                 return default;
             }
 
@@ -407,7 +620,7 @@ namespace Niantic.Lightship.AR.MapStorageAccess
         {
             if (!_nativeHandle.IsValidHandle())
             {
-                Debug.LogWarning("No valid MapStorageAccess module handle");
+                Log.Warning("No valid MapStorageAccess module handle");
                 return false;
             }
 
@@ -423,19 +636,8 @@ namespace Niantic.Lightship.AR.MapStorageAccess
         private static extern void Lightship_ARDK_Unity_MapStorageAccess_Release(IntPtr feature_handle);
 
         [DllImport(LightshipPlugin.Name)]
-        private static extern void Lightship_ARDK_Unity_MapStorageAccess_Start(IntPtr feature_handle);
-
-        [DllImport(LightshipPlugin.Name)]
-        private static extern void Lightship_ARDK_Unity_MapStorageAccess_Stop(IntPtr feature_handle);
-
-        [DllImport(LightshipPlugin.Name)]
-        private static extern void Lightship_ARDK_Unity_MapStorageAccess_Configure(IntPtr feature_handle,
-            MapStorageAccessConfigurationCStruct config);
-
-        [DllImport(LightshipPlugin.Name)]
         private static extern void Lightship_ARDK_Unity_MapStorageAccess_AddMap(IntPtr feature_handle, IntPtr dataPtr,
             int dataSize);
-
 
         [DllImport(LightshipPlugin.Name)]
         private static extern void Lightship_ARDK_Unity_MapStorageAccess_AddGraph(IntPtr feature_handle, IntPtr dataPtr,
@@ -445,19 +647,77 @@ namespace Niantic.Lightship.AR.MapStorageAccess
         private static extern void Lightship_ARDK_Unity_MapStorageAccess_Clear(IntPtr feature_handle);
 
         [DllImport(LightshipPlugin.Name)]
-        private static extern IntPtr Lightship_ARDK_Unity_MapStorageAccess_AcquireMaps
+        private static extern void Lightship_ARDK_Unity_MapStorageAccess_StartUploadingMaps(IntPtr feature_handle);
+
+        [DllImport(LightshipPlugin.Name)]
+        private static extern void Lightship_ARDK_Unity_MapStorageAccess_StopUploadingMaps(IntPtr feature_handle);
+
+        [DllImport(LightshipPlugin.Name)]
+        private static extern void Lightship_ARDK_Unity_MapStorageAccess_StartDownloadingMaps(IntPtr feature_handle);
+
+        [DllImport(LightshipPlugin.Name)]
+        private static extern void Lightship_ARDK_Unity_MapStorageAccess_StopDownloadingMaps(IntPtr feature_handle);
+
+        [DllImport(LightshipPlugin.Name)]
+        [return: MarshalAs(UnmanagedType.I1)]
+        private static extern bool Lightship_ARDK_Unity_MapStorageAccess_MarkNodeForUpload
         (
             IntPtr feature_handle,
+            ref TrackableId mapNodeId
+        );
+        [DllImport(LightshipPlugin.Name)]
+        private static extern bool Lightship_ARDK_Unity_MapStorageAccess_HasNodeBeenUploaded
+        (
+            IntPtr feature_handle,
+            ref TrackableId mapNodeId
+        );
+
+        [DllImport(LightshipPlugin.Name)]
+        private static extern IntPtr Lightship_ARDK_Unity_MapStorageAccess_GetMaps
+        (
+            IntPtr featureHandle,
+            IntPtr mapIdList,
+            UInt32 mapCount,
             out IntPtr elements,
             out UInt32 count
         );
 
         [DllImport(LightshipPlugin.Name)]
-        private static extern IntPtr Lightship_ARDK_Unity_MapStorageAccess_AcquireGraphs
+        private static extern IntPtr Lightship_ARDK_Unity_MapStorageAccess_GetGraphs
+        (
+            IntPtr handle,
+            IntPtr graphIdList,
+            UInt32 graphCount,
+            out IntPtr elements,
+            out UInt32 count
+        );
+
+        [DllImport(LightshipPlugin.Name)]
+        private static extern IntPtr Lightship_ARDK_Unity_MapStorageAccess_GetMapIds
+        (
+            IntPtr featureHandle,
+            out IntPtr elements,
+            out UInt32 count
+        );
+
+        [DllImport(LightshipPlugin.Name)]
+        private static extern IntPtr Lightship_ARDK_Unity_MapStorageAccess_GetGraphIds
         (
             IntPtr handle,
             out IntPtr elements,
-            out UInt32 count
+            out UInt32 count,
+            UInt32 graphTypeFilter
+        );
+
+        [DllImport(LightshipPlugin.Name)]
+        private static extern IntPtr Lightship_ARDK_Unity_MapStorageAccess_GetLatestUpdates
+        (
+            IntPtr handle,
+            UInt32 graphTypeFilter,
+            out IntPtr outMapsPtr,
+            out UInt32 outMapsCount,
+            out IntPtr outGraphsPtr,
+            out UInt32 outGraphsCount
         );
 
         [DllImport(LightshipPlugin.Name)]

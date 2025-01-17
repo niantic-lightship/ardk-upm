@@ -286,6 +286,8 @@ namespace Niantic.Lightship.SharedAR.Networking
             {
                 return;
             }
+
+            SharedArApiKeyUtility.CheckApiKey();
             _nativeApi.Join(_nativeHandle);
         }
 

@@ -8,6 +8,7 @@ Shader "Unlit/LightshipScanningStripes"
         _PositionAndConfidenceTex("RaycastPositionAndConfidence", 2D) = "white" {}
         _ScreenOrientation("ScreenOrientation", int) = 0
         _StripeColor ("StripeColor", Color) = (1,0,0,1)
+        _ArCameraTex ("ArCameraImage", 2D) = "white" {}
     }
     SubShader
     {
@@ -24,8 +25,10 @@ Shader "Unlit/LightshipScanningStripes"
             fixed4 _StripeColor;
             sampler2D _MainTex;
             sampler2D _ColorTex;
+            sampler2D _ArCameraTex;
             float4 _MainTex_TexelSize;
             float4 _ColorTex_TexelSize;
+            float4 _ArCameraTex_TexelSize;
             int _ScreenOrientation;
 
             struct v2f
@@ -66,17 +69,33 @@ Shader "Unlit/LightshipScanningStripes"
                 return uv * scale + 0.5f;
             }
 
+            // Returns cropped camera buffer coordinates to match the raycast buffer.
+            inline float2 CropCameraImage(float2 uv)
+            {
+                uv -= 0.5f;
+                float outAspect = _ColorTex_TexelSize.z / _ColorTex_TexelSize.w;
+                // Inverted aspect to account for raycast rotated to landscape left
+                float inAspect = _ArCameraTex_TexelSize.w / _ArCameraTex_TexelSize.z;
+
+                // If the camera image is wider than the raycast, crop the width.
+                float uScaled = inAspect > outAspect ? uv.x * outAspect / inAspect : uv.x;
+                // If the camera image is taller than the raycast, crop the height.
+                float vScaled = inAspect < outAspect ? uv.y * inAspect / outAspect : uv.y;
+                return float2(uScaled, vScaled) + 0.5f;
+            }
+
             fixed4 frag (v2f i, UNITY_VPOS_TYPE screenPos : VPOS) : SV_Target
             {
                 // Sample the raycast color from _ColorTex.
                 fixed4 color = tex2D(_ColorTex, GetRaycastSampleUV(i.uv));
+                fixed4 cameraColor = tex2D(_ArCameraTex, CropCameraImage(i.uv));
 
                 // Compute the color of the diagonal stripes.
                 unsigned int stripeCoord = ((int) (screenPos.x + _ScreenParams.y - screenPos.y)) & 15;
                 fixed4 stripeColor = (stripeCoord < 10) ? _StripeColor : 1;
 
-                // Blend raycast color over the stripe color.
-                return color * color.a + stripeColor * (1 - color.a);
+                // Blend raycast color, AR camera view and the stripe color.
+                return cameraColor * color.a / 2 + color * color.a / 2 + stripeColor * (1 - color.a);
             }
             ENDCG
         }

@@ -46,7 +46,7 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
             ((IPlaybackDatasetUser)provider).SetPlaybackDatasetReader(reader);
         }
 
-        internal Matrix4x4? _LatestIntrinsicsMatrix
+        internal Matrix4x4? LatestIntrinsicsMatrix
         {
             get
             {
@@ -59,7 +59,7 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
             }
         }
 
-        internal Matrix4x4? _LatestExtrinsicsMatrix
+        internal Matrix4x4? LatestExtrinsicsMatrix
         {
             get
             {

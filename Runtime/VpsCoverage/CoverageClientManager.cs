@@ -7,7 +7,7 @@ using Niantic.Lightship.AR.LocationAR;
 using Niantic.Lightship.AR.Subsystems;
 using Niantic.Lightship.AR.Utilities;
 using UnityEngine;
-#if !UNITY_EDITOR && UNITY_ANDROID
+#if UNITY_ANDROID
 using UnityEngine.Android;
 #endif
 
@@ -140,6 +140,17 @@ namespace Niantic.Lightship.AR.VpsCoverage
                         TryGetCoverage(onTryGetCoverage);
                     }
                 };
+
+                void OnPermissionDenied(string permissionName)
+                {
+                    if (permissionName == "android.permission.ACCESS_FINE_LOCATION")
+                    {
+                        Debug.LogError("Fine location permission denied. Cannot query coverage.");
+                    }
+                }
+
+                androidPermissionCallbacks.PermissionDenied += OnPermissionDenied;
+                androidPermissionCallbacks.PermissionDeniedAndDontAskAgain += OnPermissionDenied;
 
                 Permission.RequestUserPermission(Permission.FineLocation, androidPermissionCallbacks);
                 return;

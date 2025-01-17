@@ -223,6 +223,7 @@ namespace Niantic.Lightship.AR.PersistentAnchors
             set => _DiagnosticsEnabled = value;
         }
 
+
 #if NIANTIC_ARDK_EXPERIMENTAL_FEATURES
         [Tooltip("Synchronize the fusion window size with the continuous service request interval")]
         [SerializeField]
@@ -329,6 +330,21 @@ namespace Niantic.Lightship.AR.PersistentAnchors
             }
         }
 
+        private bool _deviceMapDownloadEnabled = false;
+        private bool _deviceMapDownloadRunning = false;
+
+        /// <summary>
+        /// Whether to enable or disable map download for device localization
+        /// The maps will be downloaded from Niantic Cloud and download will be based on GPS location
+        /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
+        /// </summary>
+        [Experimental]
+        public bool DeviceMapDownloadEnabled
+        {
+            get => _deviceMapDownloadEnabled;
+            set => _deviceMapDownloadEnabled = value;
+        }
+
         /// <summary>
         /// Asynchronously restarts the subsystem with the current configuration.
         /// This will remove all anchors and stop the subsystem before restarting it.
@@ -396,6 +412,14 @@ namespace Niantic.Lightship.AR.PersistentAnchors
 
         protected override void OnBeforeStart()
         {
+
+            if (_deviceMapDownloadEnabled)
+            {
+                DeviceMapAccessController.Instance.StartDownloadingMaps();
+                _deviceMapDownloadRunning = true;
+            }
+
+
             // We capture the current subsystem configurations so we don't overwrite unwanted configs with default
             XRPersistentAnchorConfiguration cfg = new(subsystem.CurrentConfiguration);
 
@@ -850,6 +874,13 @@ namespace Niantic.Lightship.AR.PersistentAnchors
 
         private void OnSubsystemStop()
         {
+
+           if (_deviceMapDownloadRunning)
+            {
+                DeviceMapAccessController.Instance.StopDownloadingMaps();
+                _deviceMapDownloadRunning = false;
+            }
+
             RemoveAllAnchorsImmediate();
             HandleTelemetryForSessionEnd();
         }

@@ -8,6 +8,7 @@ using System.Text;
 using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.Loader;
 using Niantic.Lightship.AR.Occlusion;
+using Niantic.Lightship.AR.Occlusion.Features;
 using Niantic.Lightship.AR.Subsystems.Playback;
 using Unity.EditorCoroutines.Editor;
 using UnityEditor;
@@ -192,8 +193,9 @@ namespace Niantic.Lightship.AR.Editor
                     BuildHelper.AddBackgroundShaderToProject(backgroundShaderName);
                 }
 
-                BuildHelper.AddBackgroundShaderToProject(LightshipOcclusionExtension.DefaultShaderName);
-                BuildHelper.AddBackgroundShaderToProject(LightshipFusedDepthCamera.DefaultShaderName);
+                BuildHelper.AddBackgroundShaderToProject(ZBufferOcclusion.RequiredShaderName);
+                BuildHelper.AddBackgroundShaderToProject(OcclusionMesh.RequiredShaderName);
+                BuildHelper.AddBackgroundShaderToProject(Stabilization.RequiredShaderName);
 
                 // TODO: Things that ARKit and ARCore BuildProcessor implementations do
                 // - Check camera usage description

@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.Core;
-using Niantic.Lightship.AR.Subsystems.Playback;
 using Niantic.Lightship.AR.XRSubsystems;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
@@ -91,7 +90,7 @@ namespace Niantic.Lightship.AR.Subsystems.Semantics
             private const float _useDefaultConfidenceThreshold = -1.0f;
 
             private List<string> _channelNames = new();
-            private List<string> _suppressionMaskChannels = new();
+            private HashSet<string> _suppressionMaskChannels = new();
 
             public LightshipSemanticsProvider() : this(new NativeApi()) { }
 
@@ -120,14 +119,20 @@ namespace Niantic.Lightship.AR.Subsystems.Semantics
                 }
             }
 
-            public override List<string> SuppressionMaskChannels
+            public override HashSet<string> SuppressionMaskChannels
             {
                 get => _suppressionMaskChannels;
                 set
                 {
-                    if (_suppressionMaskChannels != value)
+                    // Only update the suppression mask channels if the new set is different
+                    var overwrite = value == null || !_suppressionMaskChannels.SetEquals(value);
+
+                    if (overwrite)
                     {
-                        _suppressionMaskChannels = value;
+                        // Make a copy to avoid modifying the set from outside the subsystem
+                        _suppressionMaskChannels = value == null ? new HashSet<string>() : new HashSet<string>(value);
+
+                        // Reconfigure the provider
                         ConfigureProvider();
                     }
                 }
@@ -432,6 +437,40 @@ namespace Niantic.Lightship.AR.Subsystems.Semantics
             }
 
             /// <summary>
+            /// Try to acquire the suppression mask XRCpuImage.
+            /// </summary>
+            /// <param name="cpuImage">If the method returns 'true', an acquired <see cref="XRCpuImage"/>. The XRCpuImage must be disposed by the caller.</param>
+            /// <param name="samplerMatrix">A matrix that converts from viewport to texture coordinates.</param>
+            /// <param name="cameraParams">Describes the viewport.</param>
+            /// <param name="referencePose">The pose to calculate the <see cref="samplerMatrix"/> for.</param>
+            /// <returns>True if the XRCpuImage is acquired. Otherwise, false</returns>
+            internal override bool TryAcquireSuppressionMaskCpuImage
+            (
+                out XRCpuImage cpuImage,
+                out Matrix4x4 samplerMatrix,
+                XRCameraParams? cameraParams,
+                Matrix4x4? referencePose)
+            {
+                cpuImage = default;
+                samplerMatrix = default;
+
+                if (!_nativeProviderHandle.IsValidHandle())
+                {
+                    return false;
+                }
+
+                return
+                    _api.TryAcquireSuppressionMaskCpuImage
+                    (
+                        _nativeProviderHandle,
+                        cameraParams,
+                        referencePose,
+                        out cpuImage,
+                        out samplerMatrix
+                    );
+            }
+
+            /// <summary>
             /// Tries to get a list of the semantic channel names for the current semantic model.
             /// </summary>
             public override bool TryGetChannelNames(out IReadOnlyList<string> names)
@@ -576,7 +615,8 @@ namespace Niantic.Lightship.AR.Subsystems.Semantics
                 // Set config values
                 unsafe
                 {
-                    _api.Configure(_nativeProviderHandle, TargetFrameRate, (uint) confidenceList.Length, (IntPtr) confidenceList.GetUnsafePtr(), SuppressionMaskChannels);
+                    _api.Configure(_nativeProviderHandle, TargetFrameRate, (uint)confidenceList.Length,
+                        (IntPtr)confidenceList.GetUnsafePtr(), SuppressionMaskChannels);
                 }
 
                 confidenceList.Dispose();

@@ -21,3 +21,4 @@ using UnityEngine.Scripting;
 [assembly: InternalsVisibleTo("Niantic.Lightship.MagicLeap")]
 [assembly: InternalsVisibleTo("Niantic.Lightship.MagicLeap.Editor")]
 [assembly: InternalsVisibleTo("Niantic.Lightship.MagicLeap.InternalSamples")]
+[assembly: InternalsVisibleTo("Niantic.Lightship.ScanReconstruction")]

@@ -112,20 +112,27 @@ namespace Niantic.Lightship.AR.NavigationMesh
 
     private static float CalculateElevation(IEnumerable<GridNode> nodes)
     {
+      // The maximum deviation from flatness we'll
+      // consider when weighing the elevation.
+      const float maxDeviation = 0.1f;
+
       var groupElevation = 0.0f;
       var groupElevationAvgCount = 0;
       foreach (var entry in nodes)
       {
-        // Standard deviation tells us the general flatness around this cell
-        // When calculating the elevation of the plane,
-        // flat areas contribute more to the combined value
-        var elevationWeight = Mathf.FloorToInt((0.1f - entry.Deviation) * 100);
+        // Standard deviation tells us the general flatness around
+        // this cell. When calculating the elevation of the plane,
+        // flat areas contribute more to the combined value.
+        var deviation = Mathf.Clamp(entry.Deviation, 0.0f, maxDeviation);
+        var elevationWeight = Mathf.FloorToInt((maxDeviation - deviation) * 100);
+
+        // Aggregate elevation
         groupElevation += entry.Elevation * elevationWeight;
         groupElevationAvgCount += elevationWeight;
       }
 
       // AVG elevation
-      groupElevation /= groupElevationAvgCount;
+      groupElevation = groupElevationAvgCount > 0 ? groupElevation / groupElevationAvgCount : 0.0f;
 
       return groupElevation;
     }

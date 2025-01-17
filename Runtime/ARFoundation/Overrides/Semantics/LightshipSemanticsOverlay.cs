@@ -1,18 +1,26 @@
 // Copyright 2022-2024 Niantic.
 
+using System;
 using System.Linq;
 using Niantic.Lightship.AR.Common;
+
 using Niantic.Lightship.AR.Subsystems.Semantics;
 using Niantic.Lightship.AR.Utilities;
 using Niantic.Lightship.AR.XRSubsystems;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.XR.ARFoundation;
 using UnityEngine.XR.ARSubsystems;
 using UnityEngine.XR.Management;
 
+#if MODULE_URP_ENABLED
+using Niantic.Lightship.AR.Occlusion;
+using UnityEngine.Rendering.Universal;
+#endif
+
 namespace Niantic.Lightship.AR.Semantics
 {
-    public sealed class LightshipSemanticsOverlay : LightshipPostBackgroundRenderer
+    public sealed class LightshipSemanticsOverlay : ConditionalRenderer
     {
         private static readonly int s_semanticsTextureId = Shader.PropertyToID("_Semantics");
         private static readonly int s_samplerMatrixId = Shader.PropertyToID("_SamplerMatrix");
@@ -43,12 +51,16 @@ namespace Niantic.Lightship.AR.Semantics
         }
 
         // Components
-        private Camera _camera;
         private LightshipSemanticsSubsystem _semanticsSubsystem;
 
         // Resources
         private Texture2D _tempTexture;
         private Mesh _mesh;
+
+        // URP render pass
+#if MODULE_URP_ENABLED
+        private MeshRenderingPass _renderPass;
+#endif
 
         // Helpers
         private string[] _channelNames;
@@ -107,11 +119,44 @@ namespace Niantic.Lightship.AR.Semantics
             }
         }
 
+        protected override CameraEvent[] CameraEvents
+        {
+            get => new[] {CameraEvent.AfterEverything};
+        }
+
+        protected override string[] OnRequestExternalPassDependencies(CameraEvent evt)
+        {
+#if !UNITY_EDITOR && NIANTIC_LIGHTSHIP_ML2_ENABLED
+            // We don't expect built-in command buffers (e.g. background rendering) on ML2
+            return null;
+#endif
+            // The AR Background Pass is not required for this effect,
+            // but we have to schedule ourselves after it, if it is present.
+            return GetComponent<ARCameraBackground>() != null ? new[] {"AR Background"} : null;
+        }
+
         protected override void Awake()
         {
             base.Awake();
-            _camera = Camera.GetComponent<Camera>();
             _mesh = CreateMesh();
+
+#if MODULE_URP_ENABLED
+            // Allocate the render pass
+            _renderPass = new MeshRenderingPass(
+                name: "Lightship Semantics Overlay",
+                renderPassEvent: RenderPassEvent.AfterRendering);
+#endif
+        }
+
+        private void OnEnable()
+        {
+            RenderPipelineManager.beginCameraRendering += EnqueueUniversalRenderPass;
+        }
+
+        protected override void OnDisable()
+        {
+            base.OnDisable();
+            RenderPipelineManager.beginCameraRendering -= EnqueueUniversalRenderPass;
         }
 
         protected override void OnDestroy()
@@ -181,7 +226,7 @@ namespace Niantic.Lightship.AR.Semantics
                 var extrinsics =
 
                     // The inverse view matrix transforms from camera space to world space
-                    _camera.cameraToWorldMatrix *
+                    Camera.cameraToWorldMatrix *
 
                     // This will rotate the mesh (and the image with it) to match the display orientation
                     Matrix4x4.Rotate(CameraMath.CameraToDisplayRotation(XRDisplayContext.GetScreenOrientation()));
@@ -209,7 +254,7 @@ namespace Niantic.Lightship.AR.Semantics
                     samplerMatrix: out samplerMatrix))
             {
                 // Copy the image to a Texture2D
-                cpuImage.CreateOrUpdateTexture(ref _tempTexture);
+                ImageSamplingUtils.CreateOrUpdateTexture(cpuImage, ref _tempTexture);
                 cpuImage.Dispose();
                 texture = _tempTexture;
 
@@ -227,11 +272,15 @@ namespace Niantic.Lightship.AR.Semantics
             return false;
         }
 
-        protected override bool ConfigureCommandBuffer(CommandBuffer commandBuffer)
+        protected override bool OnAddRenderCommands(CommandBuffer cmd, Material mat)
         {
-            commandBuffer.Clear();
-            commandBuffer.DrawMesh(_mesh, Matrix4x4.identity, Material);
+            cmd.DrawMesh(_mesh, Matrix4x4.identity, mat);
             return true;
+        }
+
+        protected override void OnInitializeMaterial(Material mat)
+        {
+            mat.SetTexture(s_semanticsTextureId, null);
         }
 
         private bool TryAcquireSubsystems()
@@ -278,6 +327,21 @@ namespace Niantic.Lightship.AR.Semantics
 
             mesh.UploadMeshData(true);
             return mesh;
+        }
+
+        private void EnqueueUniversalRenderPass(ScriptableRenderContext context, Camera cam)
+        {
+#if MODULE_URP_ENABLED
+            if (cam == Camera)
+            {
+                // Configure the render pass
+                _renderPass.SetMaterial(Material);
+                _renderPass.SetMesh(_mesh);
+
+                // Enqueue the render pass
+                cam.GetUniversalAdditionalCameraData().scriptableRenderer.EnqueuePass(_renderPass);
+            }
+#endif
         }
     }
 }

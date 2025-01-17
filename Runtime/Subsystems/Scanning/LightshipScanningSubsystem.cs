@@ -3,6 +3,7 @@
 using System;
 using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.Core;
+using Niantic.Lightship.AR.Loader;
 using UnityEngine.XR.ARSubsystems;
 using Niantic.Lightship.AR.Utilities.Textures;
 using Niantic.Lightship.AR.XRSubsystems;
@@ -215,9 +216,17 @@ namespace Niantic.Lightship.AR.Subsystems.Scanning
                     {
                         if (!value.UseEstimatedDepth)
                         {
-                            Log.Error("Disabling depth estimation but " +
-                                "enabling visualization is not supported.");
-                            value.UseEstimatedDepth = true;
+                            // This check doesn't guarantee if lidar is actually supported on the device.
+                            // Due to the complexity of determining if lidar is present, it's best handled in native
+                            // code.
+                            bool lidarEnabled = LightshipSettingsHelper.ActiveSettings.PreferLidarIfAvailable;
+                            if (!lidarEnabled)
+                            {
+                                Log.Error("Depth data is required for scanning visualization, but Lightship's " +
+                                    "Prefer LiDAR if Available option is disabled, " +
+                                    "hence Niantic depth is being enabled for this session.");
+                                value.UseEstimatedDepth = true;
+                            }
                         }
                     }
 

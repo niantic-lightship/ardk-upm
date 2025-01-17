@@ -57,36 +57,6 @@ namespace Niantic.Lightship.AR.Semantics
             }
         }
 
-        // This is used to cache the suppression mask channels until metadata is available
-        private List<string> _cachedSuppressionMaskChannels = new List<string>();
-
-        internal List<string> SuppressionMaskChannels
-        {
-            get
-            {
-                if (subsystem != null && subsystem.IsMetadataAvailable)
-                {
-                    return subsystem?.SuppressionMaskChannels ?? new List<string>();
-                }
-                else
-                {
-                    return _cachedSuppressionMaskChannels;
-                }
-            }
-            set
-            {
-                if (subsystem != null && subsystem.IsMetadataAvailable)
-                {
-                    subsystem.SuppressionMaskChannels = value;
-                    _cachedSuppressionMaskChannels = value;
-                }
-                else
-                {
-                    _cachedSuppressionMaskChannels = value;
-                }
-            }
-        }
-
         /// <summary>
         /// The names of the semantic channels that the current model is able to detect.
         /// </summary>
@@ -187,10 +157,6 @@ namespace Niantic.Lightship.AR.Semantics
         /// </summary>
         protected override void OnDisable()
         {
-            // Reset suppression channels before
-            // shutting down the subsystem
-            SuppressionMaskChannels = null;
-
             // Stop the subsystem
             base.OnDisable();
 
@@ -217,7 +183,6 @@ namespace Niantic.Lightship.AR.Semantics
                 if (!subsystem.TryGetChannelNames(out var channelNames))
                     return;
 
-                subsystem.SuppressionMaskChannels = _cachedSuppressionMaskChannels;
                 SetModelMetadata(channelNames);
 
                 var args =

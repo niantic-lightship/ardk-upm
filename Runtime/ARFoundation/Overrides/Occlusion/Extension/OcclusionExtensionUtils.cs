@@ -117,5 +117,51 @@ namespace Niantic.Lightship.AR.Occlusion
                     return false;
             }
         }
+
+        /// <summary>
+        /// Creates a quad mesh such that each vertex will correspond to a pixel on the image.
+        /// </summary>
+        /// <param name="width">The width of the image.</param>
+        /// <param name="height">The height of the image.</param>
+        /// <returns>A quad mesh.</returns>
+        public static Mesh CreateGeometry(int width, int height)
+        {
+            var numPoints = width * height;
+            var vertices = new Vector3[numPoints];
+            var numTriangles = 2 * (width - 1) * (height - 1); // just under 2 triangles per point, total
+
+            // Map vertex indices to triangle in triplets
+            var triangleIdx = new int[numTriangles * 3]; // 3 vertices per triangle
+            var startIndex = 0;
+
+            for (var i = 0; i < width * height; ++i)
+            {
+                var h = i / width;
+                var w = i % width;
+                if (h == height - 1 || w == width - 1)
+                {
+                    continue;
+                }
+
+                // Triangle indices are counter-clockwise to face you
+                triangleIdx[startIndex] = i;
+                triangleIdx[startIndex + 1] = i + width;
+                triangleIdx[startIndex + 2] = i + width + 1;
+                triangleIdx[startIndex + 3] = i;
+                triangleIdx[startIndex + 4] = i + width + 1;
+                triangleIdx[startIndex + 5] = i + 1;
+                startIndex += 6;
+            }
+
+            var mesh = new Mesh
+            {
+                indexFormat = width * height >= 65534 ? IndexFormat.UInt32 : IndexFormat.UInt16,
+                vertices = vertices,
+                triangles = triangleIdx
+            };
+            mesh.UploadMeshData(true);
+
+            return mesh;
+        }
     }
 }

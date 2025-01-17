@@ -2,20 +2,21 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
+using System.Runtime.InteropServices;
+using Niantic.Lightship.AR.Common;
+using Niantic.Lightship.AR.PAM;
 using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.Subsystems.Common;
 using Niantic.Lightship.AR.Utilities;
 using Niantic.Lightship.AR.Utilities.Textures;
 using Niantic.Lightship.Utilities.UnityAssets;
+using Niantic.Platform.Analytics.Telemetry;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Scripting;
 using UnityEngine.XR.ARSubsystems;
-using Object = UnityEngine.Object;
 
 namespace Niantic.Lightship.AR.Subsystems.Playback
 {
@@ -25,7 +26,8 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
         private const string BeforeOpaquesBackgroundShaderName = "Unlit/LightshipPlaybackBackground";
         private const string LightshipImageConversionShaderName = "Unlit/LightshipImageConversion";
 
-        public static readonly string[] BackgroundShaderNames = new[] { BeforeOpaquesBackgroundShaderName, LightshipImageConversionShaderName };
+        public static readonly string[] BackgroundShaderNames =
+            new[] { BeforeOpaquesBackgroundShaderName, LightshipImageConversionShaderName };
 
         /// <summary>
         /// The list of shader keywords to avoid during compilation.
@@ -231,7 +233,7 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
                         reverseRotation: true
 #else
                         invertVertically: true,
-                        layout:CameraMath.MatrixLayout.RowMajor
+                        layout: CameraMath.MatrixLayout.RowMajor
 #endif
                     );
 
@@ -280,13 +282,43 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
                 UpdateCachedCurrentFrameInfo(frame);
 
                 IntPtr dataPtr;
+                int dataSize = 0;
                 unsafe
                 {
-                    dataPtr = (IntPtr) _currentFrame.Frame.GetRawTextureData<byte>().GetUnsafeReadOnlyPtr();
+                    var rawTextureData = _currentFrame.Frame.GetRawTextureData<byte>();
+                    dataPtr = (IntPtr)rawTextureData.GetUnsafeReadOnlyPtr();
+                    dataSize = rawTextureData.Length;
                 }
 
                 var lightshipCpuImageApi = (LightshipCpuImageApi)cpuImageApi;
-                var gotCpuImage = lightshipCpuImageApi.TryAddManagedXRCpuImage
+#if NIANTIC_LIGHTSHIP_YUV_PLAYBACK
+                int res = LightshipImageApi.Convert(
+                    ImageFormatCEnum.RGB24,
+                    dataPtr,
+                    dataSize,
+                    _currentFrame.Frame.width,
+                    _currentFrame.Frame.height,
+                    ImageFormatCEnum.Yuv420_888,
+                    out var destData,
+                    out int destSize
+                );
+                if (res != 0)
+                {
+                    cinfo = default;
+                    return false;
+                }
+
+                return lightshipCpuImageApi.TryAddManagedXRCpuImage(
+                    destData,
+                    _currentFrame.Frame.width,
+                    _currentFrame.Frame.height,
+                    XRCpuImage.Format.AndroidYuv420_888,
+                    (ulong)(frame.TimestampInSeconds * 1000.0),
+                    out cinfo
+                );
+#endif
+
+                return lightshipCpuImageApi.TryAddManagedXRCpuImage
                 (
                     dataPtr,
                     _currentFrame.Frame.width * _currentFrame.Frame.height * _currentFrame.Frame.format.BytesPerPixel(),
@@ -296,8 +328,6 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
                     (ulong)(frame.TimestampInSeconds * 1000.0),
                     out cinfo
                 );
-
-                return gotCpuImage;
             }
 
             public override bool TryGetIntrinsics(out XRCameraIntrinsics cameraIntrinsics)

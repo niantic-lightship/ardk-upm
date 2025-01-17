@@ -7,6 +7,7 @@ using Niantic.Lightship.AR.MapStorageAccess;
 using Niantic.Lightship.AR.Utilities;
 using Niantic.Lightship.AR.Utilities.Logging;
 using UnityEngine;
+using UnityEngine.XR.ARSubsystems;
 
 namespace Niantic.Lightship.AR.Mapping
 {
@@ -18,7 +19,7 @@ namespace Niantic.Lightship.AR.Mapping
     [PublicAPI]
     public class DeviceMapAccessController
     {
-        private static IntPtr _unityContextHandleCache = IntPtr.Zero;
+        private IntPtr _unityContextHandleCache = IntPtr.Zero;
         private static DeviceMapAccessController _instance;
 
         private static object _instanceLock = new object();
@@ -27,39 +28,49 @@ namespace Niantic.Lightship.AR.Mapping
             {
                 lock (_instanceLock)
                 {
+                    // If LightshipUnityContext is not initialized, return null
+                    if (LightshipUnityContext.UnityContextHandle == IntPtr.Zero)
+                    {
+                        if (_instance != null)
+                        {
+                            _instance.Destroy();
+                            _instance = null;
+                        }
+                        return null;
+                    }
+
+                    // If the instance hasn't been created yet, create it and initialize it
                     if (_instance == null)
                     {
                         _instance = new DeviceMapAccessController();
+                        // Deregister no-ops if we haven't registered yet. Prevents double registration
+                        //  in case someone else destroys the instance
+                        LightshipUnityContext.OnDeinitialized -= DestroyNativeInstance;
                         LightshipUnityContext.OnDeinitialized += DestroyNativeInstance;
-                    }
 
-                    if (_unityContextHandleCache == IntPtr.Zero)
-                    {
-                        if (LightshipUnityContext.UnityContextHandle == IntPtr.Zero)
-                        {
-                            Log.Error("Unity context handle is not initialized yet. DeviceMapAccessController Instance cannot be created");
-                            _instance = null;
-                            return null;
-                        }
-
-                        _unityContextHandleCache = LightshipUnityContext.UnityContextHandle;
                         _instance.Init();
+                        return _instance;
                     }
-                    else if (_unityContextHandleCache != LightshipUnityContext.UnityContextHandle)
-                    {
-                        Log.Error
-                        (
-                            "Unity context handle has changed. Reinitializing DeviceMapAccessController Instance"
-                        );
 
-                        _instance.Destroy();
-                        _unityContextHandleCache = LightshipUnityContext.UnityContextHandle;
-                        _instance.Init();
+                    // If the Unity context handle hasn't changed, return the instance
+                    if (_instance._unityContextHandleCache == LightshipUnityContext.UnityContextHandle)
+                    {
+                        Debug.Log("Returning cached instance");
+                        return _instance;
                     }
+
+                    // If the Unity context handle has changed, destroy the native instance and create a new one
+                    _instance.Destroy();
+                    _instance.Init();
+
+                    return _instance;
                 }
-
-                return _instance;
             }
+        }
+
+        internal DeviceMapAccessController()
+        {
+            _api = new NativeMapStorageAccessApi();
         }
 
         /// <summary>
@@ -74,14 +85,10 @@ namespace Niantic.Lightship.AR.Mapping
             set
             {
                 _outputEdgeType = value;
-                // We can configure anytime so SetConfiguration whenever a value is changed
-                SetConfiguration();
             }
         }
 
         private IMapStorageAccessApi _api;
-
-        private bool _isRunning;
 
         internal void Init()
         {
@@ -92,9 +99,15 @@ namespace Niantic.Lightship.AR.Mapping
                 return;
             }
 
+            if (_unityContextHandleCache == LightshipUnityContext.UnityContextHandle)
+            {
+                Log.Warning("DeviceMapAccessController is already initialized.");
+                return;
+            }
+
             _api = new NativeMapStorageAccessApi();
-            _api.Create(LightshipUnityContext.UnityContextHandle);
-            _isRunning = false;
+            _unityContextHandleCache = LightshipUnityContext.UnityContextHandle;
+            _api.Create(_unityContextHandleCache);
         }
 
         internal void Destroy()
@@ -104,36 +117,9 @@ namespace Niantic.Lightship.AR.Mapping
                 return;
             }
 
-            if (_isRunning)
-            {
-                // stop before dispose if still running
-                _api.Stop();
-                _isRunning = false;
-            }
             _api.Dispose();
+            _unityContextHandleCache = IntPtr.Zero;
             _api = null;
-        }
-
-        internal void StartNativeModule()
-        {
-            if (_api == null)
-            {
-                return;
-            }
-
-            _api.Start();
-            _isRunning = true;
-        }
-
-        internal void StopNativeModule()
-        {
-            if (_api == null)
-            {
-                return;
-            }
-
-            _api.Stop();
-            _isRunning = false;
         }
 
         /// <summary>
@@ -143,6 +129,68 @@ namespace Niantic.Lightship.AR.Mapping
         [Experimental]
         public void ClearDeviceMap() {
             _api?.Clear();
+        }
+
+        /// <summary>
+        /// Starts uploading new maps generated from this call-on
+        /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
+        /// </summary>
+        [Experimental]
+        public void StartUploadingMaps() {
+            _api?.StartUploadingMaps();
+        }
+
+        /// <summary>
+        /// Stops uploading maps
+        /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
+        /// </summary>
+        [Experimental]
+        public void StopUploadingMaps() {
+            _api?.StopUploadingMaps();
+        }
+
+        /// <summary>
+        /// Starts downloading maps around to localize
+        /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
+        /// </summary>
+        [Experimental]
+        public void StartDownloadingMaps() {
+            _api?.StartDownloadingMaps();
+        }
+
+        /// <summary>
+        /// Stops downloading maps
+        /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
+        /// </summary>
+        [Experimental]
+        public void StopDownloadingMaps() {
+            _api?.StopDownloadingMaps();
+        }
+
+        /// <summary>
+        /// Marks map node for upload. Downloads are triggered by StartUploadingMaps. Returns false if op fails early.
+        /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
+        /// </summary>
+        [Experimental]
+        public bool MarkMapNodeForUpload(TrackableId mapId) {
+            if (_api == null)
+            {
+                return false;
+            }
+            return _api.MarkMapNodeForUpload(mapId);
+        }
+
+        /// <summary>
+        /// Checks if map node was uploaded
+        /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
+        /// </summary>
+        [Experimental]
+        public bool HasMapNodeBeenUploaded(TrackableId mapId) {
+            if (_api == null)
+            {
+                return false;
+            }
+            return _api.HasMapNodeBeenUploaded(mapId);
         }
 
         /// <summary>
@@ -180,13 +228,50 @@ namespace Niantic.Lightship.AR.Mapping
         }
 
         /// <summary>
+        /// Get a list of current map nodes in the native map storage
+        /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
+        /// </summary>
+        /// <param name="mapIds">an array of map ids</param>
+        /// <returns>True if any ids generated. False if no map has been generated so far</returns>
+        [Experimental]
+        public bool GetMapNodeIds(out TrackableId[] mapIds)
+        {
+            if (_api == null)
+            {
+                mapIds = Array.Empty<TrackableId>();
+                return false;
+            }
+
+            return _api.GetMapNodeIds(out mapIds);
+        }
+
+        /// <summary>
+        /// Get a list of current map nodes in the native map storage
+        /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
+        /// </summary>
+        /// <param name="subgraphIds">an array of map ids</param>
+        /// <param name="outputEdgeType">specify what type of edges will be output</param>
+        /// <returns>True if any ids generated. False if no map has been generated so far</returns>
+        [Experimental]
+        public bool GetSubGraphIds(out TrackableId[] subgraphIds, OutputEdgeType outputEdgeType = OutputEdgeType.All)
+        {
+            if (_api == null)
+            {
+                subgraphIds = Array.Empty<TrackableId>();
+                return false;
+            }
+
+            return _api.GetSubGraphIds(out subgraphIds, outputEdgeType);
+        }
+
+        /// <summary>
         /// Get the map data generated
         /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
         /// </summary>
         /// <param name="maps">an array of map data</param>
         /// <returns>True if any maps generated. False if no map has been generated so far</returns>
         [Experimental]
-        public bool GetMapNodes(out MapNode[] maps)
+        public bool GetMapNodes(TrackableId[] mapIds, out MapNode[] maps)
         {
             if (_api == null)
             {
@@ -194,7 +279,7 @@ namespace Niantic.Lightship.AR.Mapping
                 return false;
             }
 
-            return _api.GetMapNodes(out maps);
+            return _api.GetMapNodes(mapIds, out maps);
         }
 
         /// <summary>
@@ -204,7 +289,7 @@ namespace Niantic.Lightship.AR.Mapping
         /// <param name="blobs">an array of graphs</param>
         /// <returns>True if any graph generated. False if no graph has been generated so far</returns>
         [Experimental]
-        public bool GetSubGraphs(out MapSubGraph[] blobs)
+        public bool GetSubGraphs(TrackableId[] subgraphIds, out MapSubGraph[] blobs)
         {
             if (_api == null)
             {
@@ -212,7 +297,20 @@ namespace Niantic.Lightship.AR.Mapping
                 return false;
             }
 
-            return _api.GetSubGraphs(out blobs);
+            return _api.GetSubGraphs(subgraphIds, out blobs);
+        }
+
+        [Experimental]
+        public bool GetLatestUpdates(out MapNode[] mapNodes, out MapSubGraph[] subGraphs, OutputEdgeType outputEdgeType = OutputEdgeType.All)
+        {
+            if (_api == null)
+            {
+                mapNodes = Array.Empty<MapNode>();
+                subGraphs = Array.Empty<MapSubGraph>();
+                return false;
+            }
+
+            return _api.GetLatestUpdates(outputEdgeType, out mapNodes, out subGraphs);
         }
 
         /// <summary>
@@ -291,24 +389,13 @@ namespace Niantic.Lightship.AR.Mapping
             _api = mapStorageAccessApi;
         }
 
-
         private OutputEdgeType _outputEdgeType = OutputEdgeType.All;
-        private void SetConfiguration()
-        {
-            _api?.Configure(_outputEdgeType);
-        }
 
         private static void DestroyNativeInstance()
         {
             lock (_instanceLock)
             {
-                if (_instance != null &&
-                    _instance._api != null &&
-                    _unityContextHandleCache != IntPtr.Zero)
-                {
-                    _instance.Destroy();
-                    _unityContextHandleCache = IntPtr.Zero;
-                }
+                _instance?.Destroy();
             }
         }
     }

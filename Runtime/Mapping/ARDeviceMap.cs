@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
+using UnityEngine.XR.ARSubsystems;
 using Niantic.Lightship.AR.LocationAR;
 using Niantic.Lightship.AR.PersistentAnchors;
 using Niantic.Lightship.AR.Utilities;
@@ -87,6 +88,7 @@ namespace Niantic.Lightship.AR.Mapping
         protected List<SerializeableDeviceMapNode> _deviceMapNodes = new ();
         protected SerializeableDeviceMapGraph _deviceMapGraph = new();
         protected int _defaultAnchorIndex = 0;
+        protected HashSet<TrackableId> _addedMapIds = new HashSet<TrackableId>();
 
         /// <summary>
         /// Add a device map node. This method is meant to be called by ARDeviceMappingManager when a device map is generated.
@@ -114,6 +116,18 @@ namespace Niantic.Lightship.AR.Mapping
                 _mapType = mapType
             };
             _deviceMapNodes.Add(mapNode);
+            _addedMapIds.Add(new TrackableId(subId1, subId2));
+        }
+
+        /// <summary>
+        /// Checks if map has node by id
+        /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
+        /// </summary>
+        /// <param name="mapId"></param>
+        [Experimental]
+        public bool HasMapNode(TrackableId mapId)
+        {
+            return _addedMapIds.Contains(mapId);
         }
 
         /// <summary>

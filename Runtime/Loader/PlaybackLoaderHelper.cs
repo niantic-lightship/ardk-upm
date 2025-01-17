@@ -123,7 +123,7 @@ namespace Niantic.Lightship.AR
                 return true;
             }
 
-            _inputProvider?.Dispose();
+            _inputProvider.SetPlaybackDatasetReader(null);
             DatasetReader = null;
             ConfigureLocationAndCompass(false, null);
 

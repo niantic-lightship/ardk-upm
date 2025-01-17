@@ -9,7 +9,7 @@ namespace Niantic.Lightship.AR.Common
     /// <summary>
     /// Base class for components that modify the state of a material.
     /// </summary>
-    internal abstract class RenderComponent : IDisposable
+    public abstract class RenderComponent : IDisposable
     {
         /// <summary>
         /// Keyword to enable in the shader.
@@ -18,6 +18,9 @@ namespace Niantic.Lightship.AR.Common
 
         // The reference to the target material.
         private Material _target;
+
+        // Whether the target material has been set.
+        private bool _targetMaterialSet;
 
         /// <summary>
         /// Sets the material that this component is modifying.
@@ -29,20 +32,25 @@ namespace Niantic.Lightship.AR.Common
                 return;
             }
 
-            // Disable the keyword on the previous material
-            ToggleKeyword(false);
-
-            // Assign the new material
-            _target = mat;
-            if (_target == null)
+            if (_target != null)
             {
-                Log.Error(Keyword + ": Target material set to null.");
-                return;
+                // Revert the previous material
+                OnMaterialDetach(_target);
+                ToggleKeyword(false);
+                _target = null;
             }
 
-            // Enable the keyword on the new material
-            ToggleKeyword(true);
-            OnMaterialAttach(_target);
+            // Try assign the new material
+            _targetMaterialSet = false;
+            _target = mat;
+
+            if (_target != null)
+            {
+                // Prepare the new material
+                ToggleKeyword(true);
+                OnMaterialAttach(_target);
+                _targetMaterialSet = true;
+            }
         }
 
         /// <summary>
@@ -56,7 +64,15 @@ namespace Niantic.Lightship.AR.Common
 
             if (isRendering)
             {
-                OnMaterialUpdate(_target);
+                if (_targetMaterialSet)
+                {
+                    OnMaterialUpdate(_target);
+                }
+                else
+                {
+                    Log.Warning("RenderComponent with type " + GetType().Name +
+                        " tried to update but it is not attached to a material.");
+                }
             }
         }
 
@@ -65,7 +81,15 @@ namespace Niantic.Lightship.AR.Common
         /// </summary>
         protected Texture GetTexture(int propertyId)
         {
-            return _target == null ? null : _target.GetTexture(propertyId);
+            return _target == null || !_target.HasTexture(propertyId) ? null : _target.GetTexture(propertyId);
+        }
+
+        /// <summary>
+        /// Retrieves a matrix from the target material.
+        /// </summary>
+        protected Matrix4x4? GetMatrix(int propertyId)
+        {
+            return _target == null || !_target.HasMatrix(propertyId) ? null : _target.GetMatrix(propertyId);
         }
 
         /// <summary>
@@ -120,13 +144,7 @@ namespace Niantic.Lightship.AR.Common
 
         public void Dispose()
         {
-            if (_target != null)
-            {
-                ToggleKeyword(false);
-                OnMaterialDetach(_target);
-                _target = null;
-            }
-
+            SetTargetMaterial(null);
             OnReleaseResources();
             GC.SuppressFinalize(this);
         }

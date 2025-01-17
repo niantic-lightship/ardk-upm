@@ -71,59 +71,13 @@ namespace Niantic.Lightship.AR.Subsystems.Occlusion
 
         /// <summary>
         /// Returns the intrinsics matrix of the most recent depth prediction. Contains values
-        /// for the camera's focal length and principal point. Since the depth texture is guaranteed to be the same
-        /// aspect ratio as the camera image, these intrinsics will be the same as those from the <c>ARCameraManager</c>
-        /// but scaled by the factor between their resolutions. Converts from world coordinates relative to the
-        /// camera to image space, with the x- and y-coordinates expressed in pixels, scaled by the z-value.
-        /// </summary>
-        /// <remarks>This matrix assumes the image in its original (un-padded) aspect ratio.</remarks>
-        /// <exception cref="System.NotSupportedException">Thrown if getting intrinsics matrix is not supported.
-        /// </exception>
-        [Obsolete("Use OcclusionExtension.LatestIntrinsicsMatrix instead.")]
-        public Matrix4x4? LatestIntrinsicsMatrix
-        {
-            get
-            {
-                if (provider is LightshipOcclusionProvider lightshipProvider)
-                {
-                    // Get the aspect ratio of the camera image
-                    var isCameraAspectRatioValid = XRDisplayContext.TryGetCameraImageAspectRatio(out var aspectRatio);
-
-                    // Get the original resolution of the depth image
-                    var sourceResolution = lightshipProvider.LatestEnvironmentDepthResolution;
-
-                    // Get the original intrinsics matrix for the depth image
-                    var narrowIntrinsics = lightshipProvider.LatestIntrinsicsMatrix;
-
-                    if (narrowIntrinsics.HasValue && sourceResolution.HasValue && isCameraAspectRatioValid)
-                    {
-                        // Calculate the padded intrinsics matrix
-                        var targetWidth = sourceResolution.Value.x;
-                        var targetHeight = Mathf.FloorToInt(targetWidth / aspectRatio);
-                        var result = narrowIntrinsics.Value;
-
-                        // Transform principal point to the padded resolution
-                        result[0, 2] += (targetWidth - sourceResolution.Value.x) / 2.0f;
-                        result[1, 2] += (targetHeight - sourceResolution.Value.y) / 2.0f;
-                        return result;
-                    }
-
-                    return null;
-                }
-
-                throw new NotSupportedException();
-            }
-        }
-
-        /// <summary>
-        /// Returns the intrinsics matrix of the most recent depth prediction. Contains values
         /// for the camera's focal length and principal point. Converts between 2D image pixel
         /// coordinates and 3D world coordinates relative to the camera.
         /// </summary>
         /// <remarks>This matrix assumes the image in its original (un-padded) aspect ratio.</remarks>
         /// <exception cref="System.NotSupportedException">Thrown if getting intrinsics matrix is not supported.
         /// </exception>
-        internal Matrix4x4? _LatestIntrinsicsMatrix
+        public Matrix4x4? LatestIntrinsicsMatrix
         {
             get
             {
@@ -143,7 +97,7 @@ namespace Niantic.Lightship.AR.Subsystems.Occlusion
         /// </summary>
         /// <exception cref="System.NotSupportedException">Thrown if getting extrinsics matrix is not supported.
         /// </exception>
-        internal Matrix4x4? _LatestExtrinsicsMatrix
+        public Matrix4x4? LatestExtrinsicsMatrix
         {
             get
             {

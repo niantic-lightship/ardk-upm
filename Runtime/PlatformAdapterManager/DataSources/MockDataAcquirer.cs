@@ -26,7 +26,7 @@ namespace Niantic.Lightship.AR.PAM
 
         public override bool TryGetCpuImage(out LightshipCpuImage cpuImage)
         {
-            cpuImage = new LightshipCpuImage();
+            cpuImage = LightshipCpuImage.Create();
             return true;
         }
 

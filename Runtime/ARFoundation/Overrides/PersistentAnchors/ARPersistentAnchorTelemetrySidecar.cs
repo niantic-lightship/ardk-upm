@@ -39,6 +39,12 @@ namespace Niantic.Lightship.AR.PersistentAnchors
                     SessionEnded();
                 }
 
+                if (!_manager._cloudLocalizationEnabled)
+                {
+                    Log.Info("Cloud localization is disabled, not emitting telemetry events");
+                    return;
+                }
+
                 _lastKnownSessionId = _manager.VpsSessionId;
 
                 EmitSessionStartedEvent
@@ -50,6 +56,8 @@ namespace Niantic.Lightship.AR.PersistentAnchors
                     }
                 );
 
+                _timeSpentTrackingStopwatch.Reset();
+                _totalTimeInSessionStopwatch.Reset();
                 _totalTimeInSessionStopwatch.Start();
             }
 
@@ -58,6 +66,12 @@ namespace Niantic.Lightship.AR.PersistentAnchors
                 _timeSpentTrackingStopwatch.Start();
                 var timeToLocalizeMs = _totalTimeInSessionStopwatch.ElapsedMilliseconds;
                 var numServerRequests = _manager.subsystem.NumberServerRequests;
+
+                if (!_manager._cloudLocalizationEnabled)
+                {
+                    return;
+                }
+
                 EmitLocalizationSuccess
                 (
                     _manager.VpsSessionId,
@@ -80,6 +94,11 @@ namespace Niantic.Lightship.AR.PersistentAnchors
             internal void SessionEnded()
             {
                 if (string.IsNullOrEmpty(_lastKnownSessionId))
+                {
+                    return;
+                }
+
+                if (!_manager._cloudLocalizationEnabled)
                 {
                     return;
                 }

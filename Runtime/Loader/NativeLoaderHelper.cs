@@ -5,6 +5,7 @@ using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.Core;
 using Niantic.Lightship.AR.Subsystems.Meshing;
 using Niantic.Lightship.AR.Subsystems.ObjectDetection;
+using Niantic.Lightship.AR.Subsystems.Occlusion;
 using Niantic.Lightship.AR.Subsystems.Scanning;
 using Niantic.Lightship.AR.Subsystems.Semantics;
 using Niantic.Lightship.AR.Subsystems.PersistentAnchor;
@@ -41,6 +42,7 @@ namespace Niantic.Lightship.AR.Loader
                 // The native platform's loader will destroy our subsystem for us during Deinitialize.
                 loader.DestroySubsystem<XROcclusionSubsystem>();
 
+                Log.Info("Creating " + nameof(LightshipOcclusionSubsystem));
                 loader.CreateSubsystem<XROcclusionSubsystemDescriptor, XROcclusionSubsystem>
                 (
                     _occlusionSubsystemDescriptors,

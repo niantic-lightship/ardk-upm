@@ -7,6 +7,7 @@
 #define NIANTIC_LIGHTSHIP_ARCORE_LOADER_ENABLED
 #endif
 
+using System;
 using System.Collections.Generic;
 using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.PAM;
@@ -15,6 +16,7 @@ using Niantic.Lightship.AR.XRSubsystems;
 using Unity.Collections;
 using UnityEngine;
 using UnityEngine.XR.ARCore;
+using UnityEngine.XR.ARFoundation;
 using UnityEngine.XR.ARSubsystems;
 using UnityEngine.XR.Management;
 
@@ -84,34 +86,70 @@ namespace Niantic.Lightship.AR.Loader
             _externalLoaders.Add(loader);
         }
 
+
         // The default camera image resolution from ARCore is 640x480, which is not large enough for the image
         // input required by VPS. Thus we need to increase the resolution by changing the camera configuration.
         // We need to check on Update if configurations are available, because they aren't available until the
         // XRCameraSubsystem is running (and that's not controlled by Lightship). Fortunately, configurations
         // become available during the gap between when the subsystem starts running and the first frame is
         // surfaced, meaning there's no visible hitch when the configuration is changed.
-        private void SelectCameraConfiguration()
+        //
+        // Note #1:
+        //      Resetting the ARSession causes the camera configuration to be reset to the default. So this method
+        //      has to continuously check for that.
+        //
+        // Note #2:
+        //      If the camera configuration is changed while not all camera cpu images have been
+        //      released (as can happen when the ARSession is reset), setting the camera configuration
+        //      will fail with: CameraConfigurationResult.ErrorImagesNotDispose. ARDK only holds camera
+        //      images in the PAM, and releases those in the SubsystemsDataAcquirer.OnSessionStateChanged
+        //      method when it detects an ARSession reset. This method will then upgrade the camera configuration
+        //      while the ARSession is in its Initializing state, and PAM won't acquire images again until the
+        //      ARSession is in the Tracking state.
+        //
+        //      If the developer is holding any camera cpu images, we catch the exception thrown by the
+        //      ARCoreCameraSubsystem and surface it with more context in the log.
+        //
+        // Note #3:
+        //      The ARCore native call to set a new camera configuration is async -- it takes a frame to kick in.
+        //      To avoid making duplicate calls, we set a flag to wait for the next frame before checking the
+        //      current camera configuration again.
+        private bool _waitForCameraConfigChangeToApply = true;
+        private void UpgradeCameraConfigurationIfNeeded()
         {
-            var currentConfig = cameraSubsystem.currentConfiguration;
+            if (cameraSubsystem == null) { return; }
 
-            if (cameraSubsystem == null || !cameraSubsystem.running || currentConfig == null)
+            var currentConfig = cameraSubsystem.currentConfiguration;
+            if (!cameraSubsystem.running || currentConfig == null) { return; }
+
+            if (_waitForCameraConfigChangeToApply)
             {
+                _waitForCameraConfigChangeToApply = false;
                 return;
             }
 
             var currResolution = currentConfig.Value.resolution;
 
-            // First verify if the current camera configuration is viable
+            // First verify if the current camera configuration is viable, so we can exit early
+            // TODO [ARDK-4995]: Don't upgrade ARCore camera resolution unless needed by an enabled module
             if (MeetsResolutionMinimums(currResolution, CameraResolutionMinWidth, CameraResolutionMinHeight))
             {
                 return;
             }
 
-            Log.Info("Detected current XRCameraConfiguration to not meet resolution requirements");
+            Log.Info
+            (
+                "Detected that the current XRCameraConfiguration does not meet Lightship's resolution requirements " +
+                $"for an enabled feature (needs {CameraResolutionMinWidth}x{CameraResolutionMinHeight} has {currResolution.x}x{currResolution.y}). " +
+                "Make sure to disable unneeded features in LightshipSettings to avoid using a higher camera " +
+                "resolution than needed."
+            );
 
             // If current camera configuration is not viable, attempt to set it to a viable configuration
             var configurations = cameraSubsystem.GetConfigurations(Allocator.Temp);
 
+            // Pretty sure that GetConfigurations always returns a non-empty array if currentConfiguration is not null.
+            // But we'll do the check anyway.
             if (configurations.Length == 0)
             {
                 return;
@@ -126,20 +164,36 @@ namespace Niantic.Lightship.AR.Loader
                     if (bestConfigIndex == -1)
                     {
                         bestConfigIndex = i;
-                        Log.Info("Found first valid XRCameraConfiguration: " + configurations[i]);
+                        Log.Debug("Found first valid XRCameraConfiguration: " + configurations[i]);
                     }
                     else if (IsSecondConfigBetter(configurations[bestConfigIndex], configurations[i]))
                     {
                         bestConfigIndex = i;
-                        Log.Info("Found a better XRCameraConfiguration: " + configurations[i]);
+                        Log.Debug("Found a better XRCameraConfiguration: " + configurations[i]);
                     }
                 }
             }
 
             if (bestConfigIndex >= 0)
             {
-                cameraSubsystem.currentConfiguration = configurations[bestConfigIndex];
-                Log.Info("Using XRCameraConfiguration: " + configurations[bestConfigIndex]);
+                try
+                {
+                    cameraSubsystem.currentConfiguration = configurations[bestConfigIndex];
+                    _waitForCameraConfigChangeToApply = true;
+                    Log.Info("Upgraded to XRCameraConfiguration: " + configurations[bestConfigIndex]);
+                }
+                catch (InvalidOperationException e)
+                {
+                    Log.Error
+                    (
+                        "Failed to upgrade the camera configuration to the required minimum resolution. " +
+                        "We only expect this to happen when the ARSession was reset when not all camera images " +
+                        "were disposed. Check the exception from ARCoreCameraSubsystem to verify that is the case," +
+                        "and if so, make sure to dispose all camera XRCpuImages before resetting the ARSession."
+                    );
+
+                    throw e;
+                }
             }
             else
             {
@@ -151,6 +205,7 @@ namespace Niantic.Lightship.AR.Loader
         {
             return resolution.x >= minWidth && resolution.y >= minHeight;
         }
+
 
         // Returns true if the second argument is a "better" camera configuration than the first one.
         // Here, "better" means: lowest framerate within the range 25-59 Hz. In order to
@@ -253,13 +308,15 @@ namespace Niantic.Lightship.AR.Loader
 
         public bool InitializePlatform()
         {
-            MonoBehaviourEventDispatcher.Updating.AddListener(SelectCameraConfiguration);
+            // TODO: Check if this is needed when just using contextual awareness
+            MonoBehaviourEventDispatcher.Updating.AddListener(UpgradeCameraConfigurationIfNeeded);
             return base.Initialize();
         }
 
         public bool DeinitializePlatform()
         {
-            MonoBehaviourEventDispatcher.Updating.RemoveListener(SelectCameraConfiguration);
+            Debug.Log("Deinitialize Platform");
+            MonoBehaviourEventDispatcher.Updating.RemoveListener(UpgradeCameraConfigurationIfNeeded);
             return base.Deinitialize();
         }
     }

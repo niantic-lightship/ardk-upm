@@ -50,7 +50,9 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
                 else
                 {
                     var datasetOrientation = dataset.Frames[0].Orientation;
-                    var liveOrientation = GameViewUtils.GetEditorScreenOrientation();
+                    var liveOrientation =
+                        Application.isEditor ? GameViewUtils.GetEditorScreenOrientation() : Screen.orientation;
+                    
                     if (datasetOrientation != liveOrientation)
                     {
                         Log.Warning

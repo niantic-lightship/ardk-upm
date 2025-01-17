@@ -1,5 +1,6 @@
 // Copyright 2022-2024 Niantic.
 
+using System;
 using Niantic.Lightship.AR.Common;
 using Niantic.Lightship.AR.Subsystems.Occlusion;
 using Niantic.Lightship.AR.Subsystems.Playback;
@@ -16,6 +17,7 @@ namespace Niantic.Lightship.AR.Occlusion
     /// <summary>
     /// Creates a mesh from available depth data to occlude the view.
     /// </summary>
+    [Obsolete("Use LightshipOcclusionExtension instead.")]
     [RequireComponent(typeof(AROcclusionManager))]
     public class LightshipOcclusionEffect : LightshipPostBackgroundRenderer
     {
@@ -221,8 +223,8 @@ namespace Niantic.Lightship.AR.Occlusion
                     texture = didUpdateTexture ? _tempTexture : null;
 
                     // Get the matrices
-                    intrinsics = lsSubsystem._LatestIntrinsicsMatrix ?? Matrix4x4.identity;
-                    extrinsics = lsSubsystem._LatestExtrinsicsMatrix ?? Matrix4x4.identity;
+                    intrinsics = lsSubsystem.LatestIntrinsicsMatrix ?? Matrix4x4.identity;
+                    extrinsics = lsSubsystem.LatestExtrinsicsMatrix ?? Matrix4x4.identity;
 
                     // Apply the camera offset to the extrinsics
                     if (_cameraOffset != null)
@@ -246,8 +248,8 @@ namespace Niantic.Lightship.AR.Occlusion
             // In case of playback, get the intrinsics matrix from the subsystem
             if (_occlusionSubsystem is LightshipPlaybackOcclusionSubsystem lsPlaybackSubsystem)
             {
-                intrinsics = lsPlaybackSubsystem._LatestIntrinsicsMatrix ?? Matrix4x4.identity;
-                extrinsics = lsPlaybackSubsystem._LatestExtrinsicsMatrix ?? Matrix4x4.identity;
+                intrinsics = lsPlaybackSubsystem.LatestIntrinsicsMatrix ?? Matrix4x4.identity;
+                extrinsics = lsPlaybackSubsystem.LatestExtrinsicsMatrix ?? Matrix4x4.identity;
             }
             else
             {

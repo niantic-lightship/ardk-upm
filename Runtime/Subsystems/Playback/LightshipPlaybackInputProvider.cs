@@ -14,18 +14,13 @@ using Inputs = UnityEngine.InputSystem.InputSystem;
 namespace Niantic.Lightship.AR.Subsystems.Playback
 {
     [Preserve]
-    internal class LightshipPlaybackInputProvider : LightshipInputProvider, IPlaybackDatasetUser, IDisposable
+    internal class LightshipPlaybackInputProvider : LightshipInputProvider, IPlaybackDatasetUser
     {
         private PlaybackDatasetReader _datasetReader;
 
-        public LightshipPlaybackInputProvider()
+        private void OnFrameChanged()
         {
-            MonoBehaviourEventDispatcher.LateUpdating.AddListener(LateUpdate);
-        }
-
-        private void LateUpdate()
-        {
-            if (_datasetReader == null || _datasetReader.CurrentFrameIndex < 0)
+            if (_datasetReader.CurrentFrameIndex < 0)
             {
                 return;
             }
@@ -41,12 +36,17 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
 
         public void SetPlaybackDatasetReader(PlaybackDatasetReader reader)
         {
-            _datasetReader = reader;
-        }
+            if (_datasetReader != null)
+            {
+                _datasetReader.FrameChanged -= OnFrameChanged;
+            }
 
-        public void Dispose()
-        {
-            MonoBehaviourEventDispatcher.LateUpdating.RemoveListener(LateUpdate);
+            if (reader != null)
+            {
+                reader.FrameChanged += OnFrameChanged;
+            }
+
+            _datasetReader = reader;
         }
     }
 }

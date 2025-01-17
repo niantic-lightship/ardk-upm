@@ -1,4 +1,5 @@
 // Copyright 2022-2024 Niantic.
+
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
@@ -37,6 +38,14 @@ namespace Niantic.Lightship.AR.Subsystems.Common
             {
                 Handle = handle;
                 Format = format.ConvertToXRCpuImageFormat();
+                Dimensions = new Vector2Int(width, height);
+                TimestampS = timestampMs / 1000.0;
+            }
+
+            public NativeImage(int handle, XRCpuImage.Format format, int width, int height, ulong timestampMs)
+            {
+                Handle = handle;
+                Format = format;
                 Dimensions = new Vector2Int(width, height);
                 TimestampS = timestampMs / 1000.0;
             }
@@ -95,16 +104,17 @@ namespace Niantic.Lightship.AR.Subsystems.Common
             byte[] data,
             int width,
             int height,
-            TextureFormat format,
+            XRCpuImage.Format format,
             ulong timestampMs,
             out XRCpuImage.Cinfo cinfo
         )
         {
+            int planeCount = format == XRCpuImage.Format.AndroidYuv420_888 ? 3 : 1;
             if (_pool.TryCopyFrom(data, out var handle))
             {
                 var image = new NativeImage(handle, format, width, height, timestampMs);
                 _images.Add(handle, image);
-                cinfo = new XRCpuImage.Cinfo(handle, image.Dimensions, 1, image.TimestampS, image.Format);
+                cinfo = new XRCpuImage.Cinfo(handle, image.Dimensions, planeCount, image.TimestampS, image.Format);
 
                 return true;
             }
@@ -127,20 +137,42 @@ namespace Niantic.Lightship.AR.Subsystems.Common
         {
             planeCinfo = default;
 
-            if (planeIndex != 0 || !_images.TryGetValue(nativeHandle, out var image) || !_pool.TryGetData(nativeHandle, out var nativeArray))
+            // Our plane is valid only if:
+            // * We can get the image and data from the handle
+            // * The plane index is correct for the format (we only support single planar, and up to 3 for YUV420)
+            if (!(planeIndex < 3 &&
+                    _images.TryGetValue(nativeHandle, out var image) &&
+                    (image.Format == XRCpuImage.Format.AndroidYuv420_888 || planeIndex == 0) &&
+                    _pool.TryGetData(nativeHandle, out var nativeArray)))
             {
+                // Return if those conditions are not true.
                 return false;
             }
 
-            var dataLength = nativeArray.Length; // bytes
-            var pixelStride = image.Format.BytesPerPixel();
-            var rowStride = pixelStride * image.Dimensions.x;
+            int width = image.Dimensions.x;
+            int height = image.Dimensions.y;
+            int pixelStride = image.Format.BytesPerPixel();
+            int dataLength = width * height * pixelStride;
+            int rowStride = width * pixelStride;
 
+            IntPtr ptr;
             unsafe
             {
-                planeCinfo = new XRCpuImage.Plane.Cinfo((IntPtr)nativeArray.GetUnsafePtr(), dataLength, rowStride, pixelStride);
+                ptr = (IntPtr)nativeArray.GetUnsafePtr();
             }
 
+            if (planeIndex > 0 && image.Format == XRCpuImage.Format.AndroidYuv420_888)
+            {
+                ptr += dataLength;
+                dataLength = (width + 1) / 2 * ((height + 1) / 2); // Half of width / height, rounded up.
+                if (planeIndex == 1) // Special case for AndroidYuv420_888 - We actually want Y/V/U order!
+                {
+                    ptr += dataLength;
+                }
+                rowStride = (width + 1) / 2;
+            }
+
+            planeCinfo = new XRCpuImage.Plane.Cinfo(ptr, dataLength, rowStride, pixelStride);
             return true;
         }
 
@@ -242,7 +274,8 @@ namespace Niantic.Lightship.AR.Subsystems.Common
             }
 
             _pool.TryGetData(nativeHandle, out var sourceData);
-            var sourceTexture = new Texture2D(image.Dimensions.x, image.Dimensions.y, image.Format.AsTextureFormat(), false);
+            var sourceTexture = new Texture2D(image.Dimensions.x, image.Dimensions.y, image.Format.AsTextureFormat(),
+                false);
             sourceTexture.LoadRawTextureData(sourceData);
             sourceTexture.Apply();
 
@@ -251,7 +284,7 @@ namespace Niantic.Lightship.AR.Subsystems.Common
 #if UNITY_EDITOR
             if (!Application.isPlaying)
             {
-                UnityEngine.Object.DestroyImmediate(sourceTexture);  // Edit-mode tests need DestroyImmediate.
+                UnityEngine.Object.DestroyImmediate(sourceTexture); // Edit-mode tests need DestroyImmediate.
             }
             else
 #endif
@@ -270,7 +303,8 @@ namespace Niantic.Lightship.AR.Subsystems.Common
                 else
                 {
                     var convertedData = _convertedTexture.GetRawTextureData<byte>();
-                    UnsafeUtility.MemCpy(destinationBuffer.ToPointer(), convertedData.GetUnsafeReadOnlyPtr(), bufferLength);
+                    UnsafeUtility.MemCpy(destinationBuffer.ToPointer(), convertedData.GetUnsafeReadOnlyPtr(),
+                        bufferLength);
 
                     convertedData.Dispose();
                 }
@@ -289,7 +323,8 @@ namespace Niantic.Lightship.AR.Subsystems.Common
             int srcIndex = 0;
             int destIndex = 0;
 
-            while (srcIndex < sourceRgbaData.Length) {
+            while (srcIndex < sourceRgbaData.Length)
+            {
                 // Copy RGB, Skip A
                 destRgbData[destIndex++] = sourceRgbaData[srcIndex++];
                 destRgbData[destIndex++] = sourceRgbaData[srcIndex++];
@@ -385,10 +420,22 @@ namespace Niantic.Lightship.AR.Subsystems.Common
             new()
             {
                 { XRCpuImage.Format.DepthFloat32, new HashSet<TextureFormat> { TextureFormat.RFloat } },
-                { XRCpuImage.Format.OneComponent8, new HashSet<TextureFormat> { TextureFormat.R8, TextureFormat.Alpha8 } },
-                { XRCpuImage.Format.RGBA32, new HashSet<TextureFormat> { TextureFormat.RGBA32, TextureFormat.RGB24 } },
-                { XRCpuImage.Format.BGRA32, new HashSet<TextureFormat> { TextureFormat.RGBA32, TextureFormat.RGB24 } },
-                { XRCpuImage.Format.RGB24, new HashSet<TextureFormat> { TextureFormat.RGB24, TextureFormat.RGBA32 } }
+                {
+                    XRCpuImage.Format.OneComponent8,
+                    new HashSet<TextureFormat> { TextureFormat.R8, TextureFormat.Alpha8 }
+                },
+                {
+                    XRCpuImage.Format.RGBA32,
+                    new HashSet<TextureFormat> { TextureFormat.RGBA32, TextureFormat.RGB24 }
+                },
+                {
+                    XRCpuImage.Format.BGRA32,
+                    new HashSet<TextureFormat> { TextureFormat.RGBA32, TextureFormat.RGB24 }
+                },
+                {
+                    XRCpuImage.Format.RGB24,
+                    new HashSet<TextureFormat> { TextureFormat.RGB24, TextureFormat.RGBA32 }
+                }
             };
 
         /// <summary>

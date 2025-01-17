@@ -64,9 +64,11 @@ namespace Niantic.Lightship.AR.Utilities
                     return 4;
                 case XRCpuImage.Format.RGB24:
                     return 3;
+                case XRCpuImage.Format.AndroidYuv420_888:
+                    return 1;
+                default:
+                    throw new Exception($"Unsupported XRCpuImage.Format {@this}");
             }
-
-            return 0; //unimplemented conversion for this format
         }
 
         /// <summary>

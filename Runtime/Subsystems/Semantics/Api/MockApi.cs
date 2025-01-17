@@ -92,7 +92,7 @@ namespace Niantic.Lightship.AR.Subsystems.Semantics
             _frameNumber += 1;
         }
 
-        public void Configure(IntPtr nativeProviderHandle, UInt32 framesPerSecond, UInt32 numThresholds, IntPtr thresholds, List<string> suppressionMaskChannelNames) {
+        public void Configure(IntPtr nativeProviderHandle, UInt32 framesPerSecond, UInt32 numThresholds, IntPtr thresholds, HashSet<string> suppressionMaskChannelNames) {
             InitializeSuppressionMaskBuffer(GetFlags(suppressionMaskChannelNames));
 		}
 

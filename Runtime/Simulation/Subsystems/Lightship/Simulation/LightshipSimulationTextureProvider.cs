@@ -66,7 +66,7 @@ namespace Niantic.Lightship.AR.Simulation
             //m_CameraImagePlanes.Add(m_ProviderTexture);
             _cameraPlane = ProviderTexture;
 
-            var orientation = transform.localToWorldMatrix.GetScreenOrientation();
+            var screenOrientation = GameViewUtils.GetEditorScreenOrientation();
 
             var displayMatrix =
                 CameraMath.CalculateDisplayMatrix
@@ -75,7 +75,7 @@ namespace Niantic.Lightship.AR.Simulation
                     RenderTexture.height,
                     Screen.width,
                     Screen.height,
-                    orientation,
+                    screenOrientation,
                     true,
                     // Via ARF, external textures are formatted with their
                     // first pixel in the top left. Thus the displayMatrix needs
@@ -86,33 +86,37 @@ namespace Niantic.Lightship.AR.Simulation
                 );
 
             SimulationRenderCamera.ResetProjectionMatrix();
-            var projectionMatrix = SimulationRenderCamera.projectionMatrix;
 
             // projectionMatrix dictates the AR camera's vertical FOV.
             // we can calculate the corresponding matrix by temporarily setting the simulation camera's FOV
             float originalVerticalFOV = SimulationRenderCamera.fieldOfView;
+
+            // Always base desired FoV based on the horizontal (long side) FoV of the simulation camera,
+            // because cropping of FoV will happen vertically
             float originalHorizontalFOV = Camera.VerticalToHorizontalFieldOfView(originalVerticalFOV, SimulationRenderCamera.aspect);
             float desiredVerticalFOV;
-            if (orientation == ScreenOrientation.Portrait || orientation == ScreenOrientation.PortraitUpsideDown)
+
+            var rotated = (int)transform.localToWorldMatrix.rotation.eulerAngles.z % 180 != 0;
+            if (rotated)
             {
-                // with tall aspect ratios, the simulation camera is rotated 90 degrees, so
-                // the ar camera's vertical FOV should match the simulation camera's horizontal FOV
+                // If the simulation camera is rotated 90 degrees from the default Landscape orientation,
+                // the AR camera's vertical FOV should match the simulation camera's horizontal FOV
                 desiredVerticalFOV = originalHorizontalFOV;
             }
             else
             {
-                // with wide aspect ratios, the simulation camera is not rotated, but we need to limit the horizontal FOV
-                // we do this by calculating the vertical FOV that corresponds to the simulation camera's horizontal FOV
+                // The simulation camera is not rotated, but the AR camera's vertical FoV may be cropped
+                // if the aspect ratio is narrower
                 desiredVerticalFOV = Camera.HorizontalToVerticalFieldOfView(originalHorizontalFOV, LightshipSimulationEditorUtility.GetGameViewAspectRatio());
-
             }
+
             SimulationRenderCamera.fieldOfView = desiredVerticalFOV;
-            projectionMatrix = SimulationRenderCamera.projectionMatrix;
+            var projectionMatrix = SimulationRenderCamera.projectionMatrix;
             // restore the original FOV
             SimulationRenderCamera.fieldOfView = originalVerticalFOV;
 
             var frameEventArgs = new LightshipCameraTextureFrameEventArgs(
-                timestampNs: (long)(DateTimeOffset.UtcNow.ToUnixTimeSeconds() * 1e9), projectionMatrix: projectionMatrix,
+                timestampNs: (long)(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() * 1e6), projectionMatrix: projectionMatrix,
                 displayMatrix: displayMatrix, intrinsics: GetCameraIntrinsics(), texture: _cameraPlane);
 
             FrameReceived?.Invoke(frameEventArgs);

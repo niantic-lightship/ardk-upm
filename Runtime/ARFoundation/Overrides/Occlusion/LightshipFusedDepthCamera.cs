@@ -12,6 +12,7 @@ using UnityEngine.Rendering.Universal;
 
 namespace Niantic.Lightship.AR.Occlusion
 {
+    [Obsolete("This class is deprecated and will be removed in a future release.")]
     public class LightshipFusedDepthCamera : MonoBehaviour
     {
         /// <summary>

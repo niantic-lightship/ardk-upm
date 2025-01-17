@@ -74,21 +74,32 @@ namespace Niantic.Lightship.AR.PAM
             // Passing plane 1 and 2 represents U and V on Android to determine type
             IntPtr plane1Ptr = IntPtr.Zero;
             IntPtr plane2Ptr = IntPtr.Zero;
-            if (xrCpuImage.planeCount == 3) {
+            if (xrCpuImage.planeCount == 3)
+            {
                 plane1Ptr = planes[1].DataPtr;
                 plane2Ptr = planes[2].DataPtr;
             }
-            lightshipCpuImage = new LightshipCpuImage(xrCpuImage.format.FromUnityToArdk(plane1Ptr, plane2Ptr),
-                (uint)xrCpuImage.width, (uint)xrCpuImage.height);
+
+            lightshipCpuImage =
+                new LightshipCpuImage
+                (
+                    xrCpuImage.format.FromUnityToArdk(plane1Ptr, plane2Ptr),
+                    (uint)xrCpuImage.width,
+                    (uint)xrCpuImage.height
+                );
 
             // Convert the plane data to fit the format of what native expects
             // If NV12 or NV21, make sure that the UV/VU plane is in the second slot and remove the third slot
-            if (lightshipCpuImage.Format == ImageFormatCEnum.Yuv420_NV21) {
+            if (lightshipCpuImage.Format == ImageFormatCEnum.Yuv420_NV21)
+            {
                 planes[1] = planes[2];
                 planes[2] = new LightshipCpuImagePlane(IntPtr.Zero, 0, 0, 0);
-            } else if (lightshipCpuImage.Format == ImageFormatCEnum.Yuv420_NV12) {
+            }
+            else if (lightshipCpuImage.Format == ImageFormatCEnum.Yuv420_NV12)
+            {
                 planes[2] = new LightshipCpuImagePlane(IntPtr.Zero, 0, 0, 0);
             }
+
             lightshipCpuImage.Planes = planes;
             return true;
         }

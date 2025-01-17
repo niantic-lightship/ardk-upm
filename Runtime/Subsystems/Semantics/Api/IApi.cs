@@ -15,7 +15,7 @@ namespace Niantic.Lightship.AR.Subsystems.Semantics
 
         public void Stop(IntPtr nativeProviderHandle);
 
-        public void Configure(IntPtr nativeProviderHandle, UInt32 framesPerSecond, UInt32 numThresholds, IntPtr thresholds, List<string>suppressionMaskChannelNames);
+        public void Configure(IntPtr nativeProviderHandle, UInt32 framesPerSecond, UInt32 numThresholds, IntPtr thresholds, HashSet<string>suppressionMaskChannelNames);
 
         public void Destruct(IntPtr nativeProviderHandle);
 

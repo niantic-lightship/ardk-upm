@@ -1,11 +1,9 @@
-Shader "Lightship/OcclusionExtension"
+Shader "Lightship/ZBufferOcclusion"
 {
     Properties
     {
+        // Retrievable properties
         _Depth ("DepthTexture", 2D) = "black" {}
-        _FusedDepth("FusedDepthTexture", 2D) = "black" {}
-        _Suppression ("SuppressionTexture", 2D) = "black" {}
-        _StabilizationThreshold ("Stabilization Threshold", Range(0.0, 1.0)) = 0.5
     }
     SubShader
     {

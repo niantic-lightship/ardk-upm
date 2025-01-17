@@ -106,18 +106,16 @@ namespace Niantic.Lightship.AR.Utilities
       ScreenOrientation targetOrientation
     )
     {
-      if (sourceOrientation == ScreenOrientation.LandscapeLeft)
+      if (sourceOrientation is ScreenOrientation.LandscapeLeft or ScreenOrientation.LandscapeRight)
       {
         return
-          targetOrientation == ScreenOrientation.LandscapeLeft ||
-          targetOrientation == ScreenOrientation.LandscapeRight
+          targetOrientation is ScreenOrientation.LandscapeLeft or ScreenOrientation.LandscapeRight
             ? new Vector2(sourceWidth, sourceHeight)
             : new Vector2(sourceHeight, sourceWidth);
       }
 
       return
-        targetOrientation == ScreenOrientation.Portrait ||
-        targetOrientation == ScreenOrientation.PortraitUpsideDown
+        targetOrientation is ScreenOrientation.Portrait or ScreenOrientation.PortraitUpsideDown
           ? new Vector2(sourceWidth, sourceHeight)
           : new Vector2(sourceHeight, sourceWidth);
     }

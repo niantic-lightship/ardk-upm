@@ -7,7 +7,13 @@ using UnityEngine;
 
 namespace Niantic.Lightship.AR.Common
 {
-    internal abstract class CompositeRenderer : ConditionalRenderer
+    /// <summary>
+    /// The composite renderer is an abstraction for renderers that perform multiple,
+    /// but logically decoupled tasks on the same material. This class allows for
+    /// the addition and removal of render components, which usually enable a specific
+    /// branch of the material shader and supply it with the necessary data.
+    /// </summary>
+    public abstract class CompositeRenderer : ConditionalRenderer
     {
         // The list of active components on this renderer
         private readonly List<RenderComponent> _components = new();

@@ -1,6 +1,5 @@
 // Copyright 2022-2024 Niantic.
 using System;
-using Unity.Collections;
 
 namespace Niantic.Lightship.AR.PAM
 {
@@ -15,19 +14,7 @@ namespace Niantic.Lightship.AR.PAM
         public void ARDK_SAH_GetDataFormatsReadyForNewFrame
         (
             IntPtr handle,
-            NativeArray<DataFormat> dataFormatsReady,
-            out int readySize
-        );
-
-        public void ARDK_SAH_GetDataFormatUpdatesForNewFrame
-        (
-            IntPtr handle,
-            NativeArray<DataFormat> dataFormatsAdded,
-            out int addedSize,
-            NativeArray<DataFormat> dataFormatsReady,
-            out int readySize,
-            NativeArray<DataFormat> dataFormatsRemoved,
-            out int removedSize
+            out uint dataFormatsReady
         );
 
         public void ARDK_SAH_GetDispatchedFormatsToModules
@@ -35,7 +22,7 @@ namespace Niantic.Lightship.AR.PAM
             IntPtr handle,
             out uint dispatchedFrameId,
             out ulong dispatchedToModules,
-            out ulong dispatchedDataFormats
+            out uint dispatchedDataFormats
         );
     }
 }

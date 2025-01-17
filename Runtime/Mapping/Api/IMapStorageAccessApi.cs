@@ -2,6 +2,7 @@
 
 using System;
 using UnityEngine;
+using UnityEngine.XR.ARSubsystems;
 
 namespace Niantic.Lightship.AR.MapStorageAccess
 {
@@ -10,21 +11,33 @@ namespace Niantic.Lightship.AR.MapStorageAccess
     {
         IntPtr Create(IntPtr moduleManager);
 
-        void Start();
-
-        void Stop();
-
-        void Configure(OutputEdgeType edgeType);
-
         void AddMapNode(byte[] dataBytes);
 
         void AddSubGraph(byte[] dataBytes);
 
         void Clear();
 
-        bool GetMapNodes(out MapNode[] maps);
+        void StartUploadingMaps();
 
-        bool GetSubGraphs(out MapSubGraph[] blobs);
+        void StopUploadingMaps();
+
+        void StartDownloadingMaps();
+
+        void StopDownloadingMaps();
+
+        bool MarkMapNodeForUpload(TrackableId mapId);
+
+        bool HasMapNodeBeenUploaded(TrackableId mapId);
+
+        bool GetMapNodeIds(out TrackableId[] ids);
+
+        bool GetSubGraphIds(out TrackableId[] ids, OutputEdgeType outputEdgeType);
+
+        bool GetMapNodes(TrackableId[] mapIds, out MapNode[] maps);
+
+        bool GetSubGraphs(TrackableId[] subgraphIds, out MapSubGraph[] blobs);
+
+        bool GetLatestUpdates(OutputEdgeType outputEdgeType, out MapNode[] mapNodes, out MapSubGraph[] subGraphs);
 
         bool MergeSubGraphs(MapSubGraph[] subgraphs, bool onlyKeepLatestEdges, out MapSubGraph mergedSubgraph);
 

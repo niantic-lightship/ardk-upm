@@ -100,16 +100,27 @@ namespace Niantic.Lightship.AR.XRSubsystems
             => provider.TryGetSuppressionMaskTexture(out suppressionMaskDescriptor, out samplerMatrix, cameraParams);
 
         /// <summary>
-        ///  Tries to generate a suppression mask XRCpuImage from the latest semantics.
+        /// Tries to generate a suppression mask XRCpuImage from the latest semantics.
         /// </summary>
         /// <param name="cpuImage">If this method returns `true`, an acquired <see cref="XRCpuImage"/>. The XRCpuImage
         ///     must be disposed by the caller.</param>
         /// <param name="samplerMatrix">A matrix that converts from viewport to texture coordinates.</param>
         /// <param name="cameraParams">Describes the viewport.</param>
-        /// <returns></returns>
         public bool TryAcquireSuppressionMaskCpuImage(out XRCpuImage cpuImage,
             out Matrix4x4 samplerMatrix, XRCameraParams? cameraParams = null)
             => provider.TryAcquireSuppressionMaskCpuImage(out cpuImage, out samplerMatrix, cameraParams);
+
+        /// <summary>
+        /// Tries to generate a suppression mask XRCpuImage from the latest semantics.
+        /// </summary>
+        /// <param name="cpuImage">If this method returns `true`, an acquired <see cref="XRCpuImage"/>. The XRCpuImage
+        ///     must be disposed by the caller.</param>
+        /// <param name="samplerMatrix">A matrix that converts from viewport to texture coordinates.</param>
+        /// <param name="cameraParams">Describes the viewport.</param>
+        /// <param name="referencePose">The pose to calculate the <see cref="samplerMatrix"/> for.</param>
+        public bool TryAcquireSuppressionMaskCpuImage(out XRCpuImage cpuImage,
+            out Matrix4x4 samplerMatrix, XRCameraParams? cameraParams, Matrix4x4? referencePose)
+            => provider.TryAcquireSuppressionMaskCpuImage(out cpuImage, out samplerMatrix, cameraParams, referencePose);
 
         /// <summary>
         /// Register the descriptor for the semantics subsystem implementation.
@@ -140,7 +151,7 @@ namespace Niantic.Lightship.AR.XRSubsystems
             set => provider.TargetFrameRate = value;
         }
 
-        public List<string> SuppressionMaskChannels
+        public HashSet<string> SuppressionMaskChannels
         {
             get => provider.SuppressionMaskChannels;
             set => provider.SuppressionMaskChannels = value;
@@ -221,6 +232,21 @@ namespace Niantic.Lightship.AR.XRSubsystems
         /// <returns>True if the thresholds were reset. Otherwise, false.</returns>
         public bool TryResetChannelConfidenceThresholds()
             => provider.TryResetChannelConfidenceThresholds();
+
+
+        /// <summary>
+        /// Invoked when the subsystem is being stopped.
+        /// </summary>
+        protected override void OnStop()
+        {
+            // Reset the suppression mask channels
+            if (IsMetadataAvailable)
+            {
+                SuppressionMaskChannels = null;
+            }
+
+            base.OnStop();
+        }
 
         /// <summary>
         /// The provider which will service the <see cref="XRSemanticsSubsystem"/>.
@@ -316,7 +342,7 @@ namespace Niantic.Lightship.AR.XRSubsystems
                 => throw new NotSupportedException("Generating a suppression mask is not supported by this implementation");
 
             /// <summary>
-            ///  Tries to acquire the latest suppression mask XRCpuImage.
+            /// Tries to acquire the latest suppression mask XRCpuImage.
             /// </summary>
             /// <param name="cpuImage">If this method returns `true`, an acquired <see cref="XRCpuImage"/>. The XRCpuImage
             /// must be disposed by the caller.</param>
@@ -327,6 +353,22 @@ namespace Niantic.Lightship.AR.XRSubsystems
                 out XRCpuImage cpuImage,
                 out Matrix4x4 samplerMatrix,
                 XRCameraParams? cameraParams = null)
+                => throw new NotSupportedException("Generating a suppression mask is not supported by this implementation");
+
+            /// <summary>
+            ///  Tries to acquire the latest suppression mask XRCpuImage.
+            /// </summary>
+            /// <param name="cpuImage">If this method returns `true`, an acquired <see cref="XRCpuImage"/>. The XRCpuImage
+            /// must be disposed by the caller.</param>
+            /// <param name="samplerMatrix">A matrix that converts from viewport to texture coordinates.</param>
+            /// <param name="cameraParams">Describes the viewport.</param>
+            /// <param name="referencePose"></param>
+            /// <returns></returns>
+            internal virtual bool TryAcquireSuppressionMaskCpuImage(
+                out XRCpuImage cpuImage,
+                out Matrix4x4 samplerMatrix,
+                XRCameraParams? cameraParams,
+                Matrix4x4? referencePose)
                 => throw new NotSupportedException("Generating a suppression mask is not supported by this implementation");
 
             /// <summary>
@@ -356,9 +398,9 @@ namespace Niantic.Lightship.AR.XRSubsystems
             /// The requested list of suppression channels
             /// </value>
             /// <exception cref="System.NotSupportedException">Thrown if the list of channels is not supported by this implementation.</exception>
-            public virtual List<string> SuppressionMaskChannels
+            public virtual HashSet<string> SuppressionMaskChannels
             {
-                get => new List<string>();
+                get => new();
                 set
                 {
                     throw new NotSupportedException("Setting suppression mask channels is not "

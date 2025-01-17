@@ -31,5 +31,23 @@ namespace Niantic.Lightship.AR.Occlusion
             /// occlusions are not needed.
             Static,
         }
+
+        public enum OcclusionTechnique
+        {
+            /// <summary>
+            /// The best occlusion technique is determined automatically.
+            /// </summary>
+            Automatic,
+
+            /// <summary>
+            /// The depth texture is written to the z-buffer before opaque objects are rendered.
+            /// </summary>
+            ZBuffer,
+
+            /// <summary>
+            /// A transparent mesh is rendered in front of the camera to occlude virtual objects.
+            /// </summary>
+            OcclusionMesh
+        }
     }
 }

@@ -9,36 +9,19 @@ namespace Niantic.Lightship.AR.Utilities.DeterministicPlayback
 {
     internal sealed class ComputeMonitor : IDisposable
     {
-        public delegate void ComputeMonitorCallbackDelegate();
-
-        private ComputeMonitorCallbackDelegate _callback;
-
-        private IntPtr _componentManagerHandle;
         private IntPtr _nativeHandle;
 
         public ComputeMonitor(IntPtr unityContext)
         {
             var coreContext = LightshipUnityContext.GetCoreContext(unityContext);
-            _componentManagerHandle = PAM.NativeApi.ARDK_CoreContext_GetComponentManagerHandle(coreContext);
-            _nativeHandle = Native.ARDK_ComponentManager_ComputeMonitorHandle_Acquire(_componentManagerHandle);
+            var componentManagerHandle = PAM.NativeApi.ARDK_CoreContext_GetComponentManagerHandle(coreContext);
+            _nativeHandle = Native.ARDK_ComponentManager_ComputeMonitorHandle_Acquire(componentManagerHandle);
+            PrepareToCompute();
         }
 
         ~ComputeMonitor()
         {
             Dispose();
-        }
-
-        [MonoPInvokeCallback(typeof(ComputeMonitorCallbackDelegate))]
-        private void ComputeMonitorCallback()
-        {
-            // Check if the instance's callback is not null, then invoke it
-            if (_callback != null) _callback.Invoke();
-        }
-
-        public void SetCallback(ComputeMonitorCallbackDelegate callbackDelegate)
-        {
-            _callback = callbackDelegate;
-            Native.ARDK_ComputeMonitor_SetCallback(_componentManagerHandle, ComputeMonitorCallback);
         }
 
         public void Dispose()
@@ -47,6 +30,15 @@ namespace Niantic.Lightship.AR.Utilities.DeterministicPlayback
             Native.ARDK_ComponentManager_ComputeMonitorHandle_Release(_nativeHandle);
             _nativeHandle = IntPtr.Zero;
             GC.SuppressFinalize(this);
+        }
+
+        public void PrepareToCompute()
+        {
+            Native.ARDK_ComputeMonitor_PrepareToCompute(_nativeHandle);
+        }
+        public bool IsDoneComputing()
+        {
+            return Native.ARDK_ComputeMonitor_IsDoneComputing(_nativeHandle);
         }
 
         private static class Native
@@ -59,8 +51,12 @@ namespace Niantic.Lightship.AR.Utilities.DeterministicPlayback
             public static extern void ARDK_ComponentManager_ComputeMonitorHandle_Release(IntPtr computeMonitorHandle);
 
             [DllImport(LightshipPlugin.Name)]
-            public static extern bool ARDK_ComputeMonitor_SetCallback(IntPtr componentManagerHandle,
-                ComputeMonitorCallbackDelegate callbackDelegate);
+            public static extern bool ARDK_ComputeMonitor_PrepareToCompute(IntPtr computeMonitorHandle);
+
+            [DllImport(LightshipPlugin.Name)]
+            public static extern bool ARDK_ComputeMonitor_IsDoneComputing(IntPtr computeMonitorHandle);
+
+
         }
     }
 }

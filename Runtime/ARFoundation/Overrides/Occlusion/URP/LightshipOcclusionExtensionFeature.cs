@@ -16,16 +16,21 @@ namespace Niantic.Lightship.AR.Occlusion
 #if MODULE_URP_ENABLED
         // The render pass to perform the main occlusion rendering
         private ZBufferPass _zBufferPass;
+        private MeshRenderingPass _occlusionMeshPass;
 
         public override void Create()
         {
             // Allocate render passes
             _zBufferPass = new ZBufferPass();
+            _occlusionMeshPass = new MeshRenderingPass(
+                name: "Lightship Occlusion Extension (Occlusion Mesh)",
+                renderPassEvent: RenderPassEvent.BeforeRenderingOpaques);
         }
 
         // Invoked when it is time to schedule the render pass
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
         {
+            // Skip cameras that are not a game camera
             var currentCamera = renderingData.cameraData.camera;
             if (currentCamera == null || currentCamera.cameraType != CameraType.Game)
             {
@@ -33,48 +38,77 @@ namespace Niantic.Lightship.AR.Occlusion
             }
 
             // Evaluate whether we should enqueue the render passes for the current camera
-            var shouldEnqueueRenderPasses = false;
+            var isCameraRenderingActive = false;
             if (currentCamera.TryGetComponent<LightshipOcclusionExtension>(out var occlusionExtension))
             {
-                shouldEnqueueRenderPasses = occlusionExtension.enabled && occlusionExtension.IsRenderingActive;
+                isCameraRenderingActive = occlusionExtension.enabled && occlusionExtension.IsRenderingActive;
             }
 
             // Skip this camera
-            if (!shouldEnqueueRenderPasses)
+            if (!isCameraRenderingActive)
             {
                 return;
             }
 
-            if (currentCamera.TryGetComponent<ARCameraBackground>(out var cameraBackground))
+            // If the camera background is present, then it is a requirement
+            var isCameraBackgroundPresent = false;
+            if (currentCamera.gameObject.TryGetComponent<ARCameraBackground>(out var cameraBackground))
             {
-                // Skip the camera if the ARCameraBackground is disabled or background rendering is disabled
+                isCameraBackgroundPresent = true;
+
+                // If the background is not rendering
                 if (!cameraBackground.enabled || !cameraBackground.backgroundRenderingEnabled)
                 {
                     return;
                 }
+            }
 
-                // Check if rendering mode is supported
-                if (!_zBufferPass.TrySetRenderingMode(cameraBackground.currentRenderingMode))
+            // Set up the occlusion extension main pass
+            switch (occlusionExtension.CurrentOcclusionTechnique)
+            {
+                // Set up the z-buffer pass
+                case LightshipOcclusionExtension.OcclusionTechnique.ZBuffer:
                 {
-                    return;
+                    // Reset the z-buffer pass to its default state
+                    _zBufferPass.Reset();
+
+                    if (isCameraBackgroundPresent)
+                    {
+                        // If the rendering mode is not supported
+                        if (!_zBufferPass.TrySetRenderingMode(cameraBackground.currentRenderingMode))
+                        {
+                            break;
+                        }
+
+                        // Invert culling?
+                        if (cameraBackground.TryGetComponent<ARCameraManager>(out var cameraManager))
+                        {
+                            _zBufferPass.InvertCulling = cameraManager.subsystem?.invertCulling ?? false;
+                        }
+                    }
+
+                    if (occlusionExtension.Material != null)
+                    {
+                        _zBufferPass.SetMaterial(occlusionExtension.Material);
+                        renderer.EnqueuePass(_zBufferPass);
+                    }
+
+                    break;
                 }
 
-                // Invert culling if necessary
-                _zBufferPass.InvertCulling =
-                    cameraBackground.GetComponent<ARCameraManager>()?.subsystem?.invertCulling ?? false;
-            }
-            else
-            {
-                // Configure the z-buffer pass for the default rendering mode
-                _zBufferPass.TrySetRenderingMode(XRCameraBackgroundRenderingMode.BeforeOpaques);
-                _zBufferPass.InvertCulling = false;
-            }
+                // Set up the occlusion mesh pass
+                case LightshipOcclusionExtension.OcclusionTechnique.OcclusionMesh:
+                {
+                    if (occlusionExtension.Material != null &&
+                        occlusionExtension.OccluderMesh != null)
+                    {
+                        _occlusionMeshPass.SetMaterial(occlusionExtension.Material);
+                        _occlusionMeshPass.SetMesh(occlusionExtension.OccluderMesh);
+                        renderer.EnqueuePass(_occlusionMeshPass);
+                    }
 
-            // Enqueue the z-buffer pass
-            if (occlusionExtension.Material != null)
-            {
-                _zBufferPass.SetMaterial(occlusionExtension.Material);
-                renderer.EnqueuePass(_zBufferPass);
+                    break;
+                }
             }
         }
 
@@ -87,6 +121,15 @@ namespace Niantic.Lightship.AR.Occlusion
             public ZBufferPass()
                 : base("Lightship Occlusion Extension (ZBuffer)", RenderPassEvent.BeforeRenderingOpaques)
             {
+            }
+
+            /// <summary>
+            /// Reset the pass to its default state.
+            /// </summary>
+            public void Reset()
+            {
+                renderPassEvent = RenderPassEvent.BeforeRenderingOpaques;
+                InvertCulling = false;
             }
 
             public bool TrySetRenderingMode(XRCameraBackgroundRenderingMode renderingMode)
