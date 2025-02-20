@@ -6,7 +6,6 @@ namespace Niantic.Lightship.AR.PAM
     internal interface IApi
     {
         public IntPtr ARDK_SAH_Create(IntPtr unityContext, bool isLidarDepthEnabled);
-        public void ARDK_SAH_OnFrame_Deprecated(IntPtr handle, IntPtr frameData);
         public void ARDK_SAH_OnFrame(IntPtr handle, IntPtr frameData);
 
         public void ARDK_SAH_Release(IntPtr handle);

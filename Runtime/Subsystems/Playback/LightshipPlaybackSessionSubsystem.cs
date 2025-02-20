@@ -22,6 +22,7 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
         {
             Log.Info("LightshipPlaybackSessionSubsystem.Register");
             const string id = "Lightship-Playback-Session";
+
             var info = new XRSessionSubsystemDescriptor.Cinfo()
             {
                 id = id,
@@ -31,7 +32,14 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
                 supportsMatchFrameRate = true,
             };
 
+#if UNITY_6000_0_OR_NEWER
+            XRSessionSubsystemDescriptor.Register(info);
+#else
+
             XRSessionSubsystemDescriptor.RegisterDescriptor(info);
+#endif
+
+
         }
 
         void IPlaybackDatasetUser.SetPlaybackDatasetReader(PlaybackDatasetReader reader)

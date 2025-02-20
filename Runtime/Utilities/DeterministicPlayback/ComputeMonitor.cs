@@ -14,8 +14,7 @@ namespace Niantic.Lightship.AR.Utilities.DeterministicPlayback
         public ComputeMonitor(IntPtr unityContext)
         {
             var coreContext = LightshipUnityContext.GetCoreContext(unityContext);
-            var componentManagerHandle = PAM.NativeApi.ARDK_CoreContext_GetComponentManagerHandle(coreContext);
-            _nativeHandle = Native.ARDK_ComponentManager_ComputeMonitorHandle_Acquire(componentManagerHandle);
+            _nativeHandle = Native.ARDK_ComputeMonitorHandle_Acquire(coreContext);
             PrepareToCompute();
         }
 
@@ -27,7 +26,7 @@ namespace Niantic.Lightship.AR.Utilities.DeterministicPlayback
         public void Dispose()
         {
             if (!_nativeHandle.IsValidHandle()) return;
-            Native.ARDK_ComponentManager_ComputeMonitorHandle_Release(_nativeHandle);
+            Native.ARDK_ComputeMonitorHandle_Release(_nativeHandle);
             _nativeHandle = IntPtr.Zero;
             GC.SuppressFinalize(this);
         }
@@ -44,11 +43,11 @@ namespace Niantic.Lightship.AR.Utilities.DeterministicPlayback
         private static class Native
         {
             [DllImport(LightshipPlugin.Name)]
-            public static extern IntPtr ARDK_ComponentManager_ComputeMonitorHandle_Acquire(
-                IntPtr componentManagerHandle);
+            public static extern IntPtr ARDK_ComputeMonitorHandle_Acquire(
+                IntPtr coreContextHandle);
 
             [DllImport(LightshipPlugin.Name)]
-            public static extern void ARDK_ComponentManager_ComputeMonitorHandle_Release(IntPtr computeMonitorHandle);
+            public static extern void ARDK_ComputeMonitorHandle_Release(IntPtr computeMonitorHandle);
 
             [DllImport(LightshipPlugin.Name)]
             public static extern bool ARDK_ComputeMonitor_PrepareToCompute(IntPtr computeMonitorHandle);

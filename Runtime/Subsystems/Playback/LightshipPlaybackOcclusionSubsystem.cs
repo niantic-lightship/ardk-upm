@@ -26,6 +26,23 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
         {
             Log.Info("LightshipPlaybackOcclusionSubsystem.Register");
             const string id = "Lightship-Playback-Occlusion";
+
+#if UNITY_6000_0_OR_NEWER
+
+            var xrOcclusionSubsystemCinfo = new XROcclusionSubsystemDescriptor.Cinfo()
+            {
+                id = id,
+                providerType = typeof(LightshipPlaybackProvider),
+                subsystemTypeOverride = typeof(LightshipPlaybackOcclusionSubsystem),
+                humanSegmentationStencilImageSupportedDelegate = () => Supported.Unsupported,
+                humanSegmentationDepthImageSupportedDelegate = () => Supported.Unsupported,
+                environmentDepthImageSupportedDelegate = () => Supported.Supported,
+                environmentDepthConfidenceImageSupportedDelegate = () => Supported.Supported,
+                environmentDepthTemporalSmoothingSupportedDelegate = () => Supported.Unsupported
+            };
+
+            XROcclusionSubsystemDescriptor.Register(xrOcclusionSubsystemCinfo);
+#else
             var xrOcclusionSubsystemCinfo = new XROcclusionSubsystemCinfo()
             {
                 id = id,
@@ -39,6 +56,9 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
             };
 
             XROcclusionSubsystem.Register(xrOcclusionSubsystemCinfo);
+#endif
+
+
         }
 
         void IPlaybackDatasetUser.SetPlaybackDatasetReader(PlaybackDatasetReader reader)
@@ -180,8 +200,11 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
             private (int Id, Texture2D Frame) _currentDepthTexture;
             private (int Id, Texture2D Frame) _currentConfidenceTexture;
 
-            private TextureFormat _depthImageFormat => TextureFormat.RFloat;
-            private TextureFormat _depthConfidenceImageFormat => TextureFormat.R8;
+            // Image format descriptors
+            private const TextureFormat DepthImageFormat = TextureFormat.RFloat;
+            private const TextureFormat DepthConfidenceImageFormat = TextureFormat.R8;
+            private const bool DepthImageLinearColor = true;
+            private const bool DepthConfidenceImageLinearColor = true;
 
             private EnvironmentDepthMode _requestedEnvironmentDepthMode;
             private readonly int _dummyStartingValue = -99;
@@ -218,9 +241,9 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
                 _textureHeight = depthRes.y;
 
                 _currentDepthTexture = new ValueTuple<int, Texture2D>
-                    (_dummyStartingValue, new Texture2D(_textureWidth, _textureHeight, _depthImageFormat, false));
+                    (_dummyStartingValue, new Texture2D(_textureWidth, _textureHeight, DepthImageFormat, false, DepthImageLinearColor));
                 _currentConfidenceTexture = new ValueTuple<int, Texture2D>
-                    (_dummyStartingValue, new Texture2D(_textureWidth, _textureHeight, _depthConfidenceImageFormat, false));
+                    (_dummyStartingValue, new Texture2D(_textureWidth, _textureHeight, DepthConfidenceImageFormat, false, DepthConfidenceImageLinearColor));
             }
 
             /// <summary>
@@ -475,11 +498,12 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
                 {
                     Texture2D tex = _currentDepthTexture.Frame;
                     var wasReinitialisationSuccessful = tex.Reinitialize(_textureWidth, _textureHeight,
-                        _depthImageFormat, false);
+                        DepthImageFormat, false);
 
                     if (!wasReinitialisationSuccessful)
                     {
-                        tex = new Texture2D(_textureWidth, _textureHeight, _depthImageFormat, false);
+                        tex = new Texture2D(_textureWidth, _textureHeight, DepthImageFormat, false,
+                            DepthImageLinearColor);
                     }
 
                     var path = Path.Combine(_datasetReader.GetDatasetPath(), frame.DepthPath);
@@ -498,11 +522,12 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
                 {
                     Texture2D tex = _currentConfidenceTexture.Frame;
                     var reinitStatus = tex.Reinitialize(_textureWidth, _textureHeight,
-                        _depthConfidenceImageFormat, false);
+                        DepthConfidenceImageFormat, false);
 
                     if (!reinitStatus)
                     {
-                        tex = new Texture2D(_textureWidth, _textureHeight, _depthConfidenceImageFormat, false);
+                        tex = new Texture2D(_textureWidth, _textureHeight, DepthConfidenceImageFormat, false,
+                            DepthConfidenceImageLinearColor);
                     }
 
                     var path = Path.Combine(_datasetReader.GetDatasetPath(), frame.DepthConfidencePath);
@@ -557,6 +582,13 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
                     disabledKeywords = null;
                 }
             }
+
+#if UNITY_6000_0_OR_NEWER
+            public override ShaderKeywords GetShaderKeywords() =>
+                _occlusionPreferenceMode == OcclusionPreferenceMode.NoOcclusion
+                    ? new ShaderKeywords(disabledKeywords: s_environmentDepthEnabledMaterialKeywords.AsReadOnly())
+                    : new ShaderKeywords(enabledKeywords: s_environmentDepthEnabledMaterialKeywords.AsReadOnly());
+#endif
         }
     }
 }

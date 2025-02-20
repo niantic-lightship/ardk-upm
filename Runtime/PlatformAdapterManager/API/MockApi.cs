@@ -26,14 +26,6 @@ namespace Niantic.Lightship.AR.PAM
             return _handle;
         }
 
-        public virtual void ARDK_SAH_OnFrame_Deprecated(IntPtr handle, IntPtr frameData)
-        {
-            if (handle == _handle)
-            {
-                Log.Info("Forwarded frame data");
-            }
-        }
-
         public virtual void ARDK_SAH_OnFrame(IntPtr handle, IntPtr frameData)
         {
             if (handle == _handle)
@@ -87,11 +79,5 @@ namespace Niantic.Lightship.AR.PAM
         {
             return (ARDKFrameData)Marshal.PtrToStructure(ptr, typeof(ARDKFrameData));
         }
-
-        public static DeprecatedFrameCStruct IntPtrToDeprecatedFrameCStruct(IntPtr ptr)
-        {
-            return (DeprecatedFrameCStruct)Marshal.PtrToStructure(ptr, typeof(DeprecatedFrameCStruct));
-        }
-
     }
 }

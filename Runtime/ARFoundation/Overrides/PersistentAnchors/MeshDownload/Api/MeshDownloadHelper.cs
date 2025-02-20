@@ -24,6 +24,7 @@ namespace Niantic.Lightship.AR.Subsystems
         private static string configEndpointFormatter = "{0}/vps_frontend.protogen.Localizer/{1}";
         private static string meshingMethod = "GetMeshUrl";
         private static string graphMethod = "GetGraph";
+        private static string replacedNodeMethod = "GetReplacedNodes";
         private static string spaceDataMethod = "GetSpaceData";
         private const int KB = 1024;
 
@@ -228,7 +229,7 @@ namespace Niantic.Lightship.AR.Subsystems
         // 4. Add an entry for the each node and edge pair to the return list
         // 6. Add the last remaining node with no edge (origin of the space)
         // 7. Return the List<NodeToLoad> with node transforms and mesh urls
-        private static async Task<List<NodeToLoad>> GetNodesInSpace(string nodeId, Dictionary<string, string> headers)
+        private static async Task<List<NodeToLoad>> GetNodesInSpace(string nodeId, Dictionary<string, string> headers, bool searchForReplacedNode = true)
         {
             var nodesToLoad = new List<NodeToLoad>();
 
@@ -266,6 +267,16 @@ namespace Niantic.Lightship.AR.Subsystems
                     response.nodes == null ||
                     response.nodes.Length == 0)
                 {
+                    if ((response.nodes == null || response.nodes.Length == 0) && searchForReplacedNode)
+                    {
+                        // Check if the node has been replaced with a new active node
+                        var replacedNodeResponse = await TryGetNodesInSpaceForReplacedNode(nodeId, headers);
+                        if (replacedNodeResponse != null)
+                        {
+                            return replacedNodeResponse;
+                        }
+                    }
+
                     // This class uses Debug instead of ARLog to support editor logging without Lightship Native loaded
                     Debug.LogWarning("Failed to get nodes to load");
                     return null;
@@ -369,6 +380,62 @@ namespace Niantic.Lightship.AR.Subsystems
             }
 
             return nodesToLoad;
+        }
+
+        private static async Task<List<NodeToLoad>> TryGetNodesInSpaceForReplacedNode
+        (
+            string nodeId,
+            Dictionary<string, string> headers
+        )
+        {
+            var replacedNodeRequest = new MeshDownloadRequestResponse.GetReplacedNodesRequest
+            {
+                requestIdentifier = Guid.NewGuid().ToString("N").ToUpper(),
+                nodeIdentifiers = new []{nodeId}
+            };
+
+            var endpoint = GetUrlForMethod(replacedNodeMethod);
+            var replacedNodeResponse =
+                await HttpClient.SendPostAsync<
+                    MeshDownloadRequestResponse.GetReplacedNodesRequest,
+                    MeshDownloadRequestResponse.GetReplacedNodesResponse>
+                (
+                    endpoint,
+                    replacedNodeRequest,
+                    headers
+                );
+
+            if (replacedNodeResponse.Status == ResponseStatus.Success)
+            {
+                var response = replacedNodeResponse.Data;
+                if (response.transformToActiveNode != null && response.transformToActiveNode.Length > 0)
+                {
+                    var replacedNode = response.transformToActiveNode[0];
+                    var activeNode = replacedNode.activeNode;
+                    var transform = replacedNode.transformFromReplacedToActiveNode;
+
+                    var nodesInNewSpace = await GetNodesInSpace(activeNode, headers, false);
+                    if (nodesInNewSpace != null && nodesInNewSpace.Count > 0)
+                    {
+                        nodesInNewSpace.Add
+                        (
+                            new NodeToLoad
+                            (
+                                nodeId,
+                                nodesInNewSpace.First().spaceId,
+                                transform.translation,
+                                transform.rotation
+                            )
+                        );
+
+                        return nodesInNewSpace;
+                    }
+
+                    return null;
+                }
+            }
+
+            return null;
         }
 
         // Use a HEAD request to get the total download size of the meshes

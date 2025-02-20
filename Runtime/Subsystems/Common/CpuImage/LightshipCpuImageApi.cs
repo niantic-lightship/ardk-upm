@@ -258,6 +258,13 @@ namespace Niantic.Lightship.AR.Subsystems.Common
                 conversionParams.outputFormat = TextureFormat.RGBA32;
             }
 
+            // Assuming R8 and RFloat are data formats, meaning 127/255 is 0.5f (linear).
+            // While RFloat will almost always translate to a linear format, R8 will
+            // often default to sRGB. Assuming we use R8 for depth confidence, we need
+            // to explicitly specify the format as linear.
+            var isDataFormat = conversionParams.outputFormat == TextureFormat.R8 ||
+                conversionParams.outputFormat == TextureFormat.RFloat;
+
             if (_convertedTexture.width != conversionParams.outputDimensions.x
                 || _convertedTexture.height != conversionParams.outputDimensions.y
                 || _convertedTexture.format != conversionParams.outputFormat)
@@ -266,7 +273,11 @@ namespace Niantic.Lightship.AR.Subsystems.Common
                 (
                     conversionParams.outputDimensions.x,
                     conversionParams.outputDimensions.y,
+#if UNITY_6000_0_OR_NEWER
+                    GraphicsFormatUtility.GetGraphicsFormat(conversionParams.outputFormat, !isDataFormat),
+#else
                     conversionParams.outputFormat,
+#endif
                     false
                 );
 
@@ -274,8 +285,14 @@ namespace Niantic.Lightship.AR.Subsystems.Common
             }
 
             _pool.TryGetData(nativeHandle, out var sourceData);
+#if UNITY_6000_0_OR_NEWER
+            var sourceTexture = new Texture2D(image.Dimensions.x, image.Dimensions.y,
+                GraphicsFormatUtility.GetGraphicsFormat(image.Format.AsTextureFormat(), !isDataFormat),
+                TextureCreationFlags.DontInitializePixels);
+#else
             var sourceTexture = new Texture2D(image.Dimensions.x, image.Dimensions.y, image.Format.AsTextureFormat(),
                 false);
+#endif
             sourceTexture.LoadRawTextureData(sourceData);
             sourceTexture.Apply();
 
@@ -343,11 +360,20 @@ namespace Niantic.Lightship.AR.Subsystems.Common
             XRCpuImage.ConversionParams conversionParams
         )
         {
+
+#if UNITY_6000_0_OR_NEWER
+            if (!SystemInfo.IsFormatSupported(destinationTexture.graphicsFormat, GraphicsFormatUsage.Render))
+            {
+                Log.Error($"Texture format: {destinationTexture.graphicsFormat} not supported on this platform.");
+                return;
+            }
+#else
             if (!SystemInfo.IsFormatSupported(destinationTexture.graphicsFormat, FormatUsage.Render))
             {
                 Log.Error($"Texture format: {destinationTexture.graphicsFormat} not supported on this platform.");
                 return;
             }
+#endif
 
             var tmp =
                 RenderTexture.GetTemporary

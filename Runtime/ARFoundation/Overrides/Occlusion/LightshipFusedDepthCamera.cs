@@ -36,6 +36,11 @@ namespace Niantic.Lightship.AR.Occlusion
         /// </summary>
         internal RenderTexture GpuTexture { get; private set; }
 
+#if MODULE_URP_ENABLED
+        internal RTHandle GpuTextureHandle {get; private set;}
+        internal RTHandleSystem RtHandleSystem {get; private set;}
+#endif
+
         // Resources
         private Camera _camera;
         private Material _internalMaterial;
@@ -104,6 +109,12 @@ namespace Niantic.Lightship.AR.Occlusion
 
             GpuTexture.Create();
 
+#if MODULE_URP_ENABLED
+            RtHandleSystem = new RTHandleSystem();
+            RtHandleSystem.Initialize(1024, 1024);
+            GpuTextureHandle = RtHandleSystem.Alloc(GpuTexture);
+#endif
+
             // Allocate a camera
             _camera = gameObject.AddComponent<Camera>();
 
@@ -127,6 +138,13 @@ namespace Niantic.Lightship.AR.Occlusion
             {
                 Destroy(GpuTexture);
             }
+
+#if MODULE_URP_ENABLED
+            if( GpuTextureHandle != null)
+            {
+                GpuTextureHandle.Release();
+            }
+#endif
         }
 
 #if !MODULE_URP_ENABLED
@@ -160,7 +178,7 @@ namespace Niantic.Lightship.AR.Occlusion
             if (cam == _camera)
             {
                 // Configure the render pass
-                _renderPass.Setup(Material, GpuTexture);
+                _renderPass.Setup(Material, GpuTexture, GpuTextureHandle);
 
                 // Enqueue the render pass
                 cam.GetUniversalAdditionalCameraData().scriptableRenderer.EnqueuePass(_renderPass);

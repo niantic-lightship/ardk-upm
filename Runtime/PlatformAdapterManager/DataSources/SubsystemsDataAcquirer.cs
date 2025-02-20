@@ -260,7 +260,8 @@ namespace Niantic.Lightship.AR.PAM
         private int _noGpsWarningFramerate = 120;
         public override bool TryGetGpsLocation(out GpsLocationCStruct gps)
         {
-            if (Input.location.status == LocationServiceStatus.Stopped)
+            if (Input.location.status == LocationServiceStatus.Stopped ||
+                Input.location.status == LocationServiceStatus.Failed)
             {
                 if (_requestedLocationPermissions && Time.frameCount % _noGpsWarningFramerate == 0)
                 {
@@ -353,7 +354,8 @@ namespace Niantic.Lightship.AR.PAM
             }
 
             // We can only start the Location Service when it is not running
-            if (Input.location.status == LocationServiceStatus.Stopped)
+            if (Input.location.status == LocationServiceStatus.Stopped ||
+                Input.location.status == LocationServiceStatus.Failed)
             {
                 Log.Info("Location services are required by an enabled ARDK feature, so ARDK will attempt to enable them.");
                 _requestedLocationPermissions = true;

@@ -31,12 +31,6 @@ namespace Niantic.Lightship.AR.PAM
         private ulong? _prevSentTimestamp = null;
 
         private const string TraceCategory = "PlatformAdapterManager";
-        private const DataFormatFlags CameraImageFlagsMask =
-            DataFormatFlags.kCpuRgba_256_144_Uint8 |
-            DataFormatFlags.kCpuRgb_256_256_Uint8 |
-            DataFormatFlags.kCpuRgb_384x216_Uint8 |
-            DataFormatFlags.kJpeg_720_540_Uint8 |
-            DataFormatFlags.kJpeg_full_res_Uint8;
 
         public static PlatformAdapterManager Create<TApi, TXRDataAcquirer>
         (
@@ -188,7 +182,7 @@ namespace Niantic.Lightship.AR.PAM
                 frameData.TrackingState = _platformDataAcquirer.GetTrackingState().FromUnityToArdk();
 
                 // Check if we are requesting a camera image
-                var getCameraImage = (_readyDataFormats & CameraImageFlagsMask) != DataFormatFlags.kNone;
+                var getCameraImage = (_readyDataFormats & DataFormatFlags.kImage) != DataFormatFlags.kNone;
                 if (getCameraImage && _platformDataAcquirer.TryGetCpuImage(out var cpuCamera))
                 {
                     _platformDataAcquirer.TryGetCameraIntrinsicsCStruct(out frameData.CameraIntrinsics);

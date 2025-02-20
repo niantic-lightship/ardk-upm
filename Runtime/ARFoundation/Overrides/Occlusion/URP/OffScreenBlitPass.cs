@@ -15,6 +15,7 @@ namespace Niantic.Lightship.AR.Occlusion
     {
         // The target render texture
         private RenderTexture _target;
+        private RTHandle _targetHandle;
 
         public OffScreenBlitPass(string name, RenderPassEvent renderPassEvent)
             : base(name, renderPassEvent) { }
@@ -24,18 +25,19 @@ namespace Niantic.Lightship.AR.Occlusion
         /// </summary>
         /// <param name="material">The material used to render the image.</param>
         /// <param name="target">The target to render the image to.</param>
-        public void Setup(Material material, RenderTexture target)
+        public void Setup(Material material, RenderTexture target, RTHandle targetHandle)
         {
             SetMaterial(material);
             _target = target;
+            _targetHandle = targetHandle;
         }
 
         public override void Configure(CommandBuffer cmd, RenderTextureDescriptor cameraTextureDescriptor)
         {
             base.Configure(cmd, cameraTextureDescriptor);
-
+            
             // TODO(ahegedus): Make this use RTHandle instead of RenderTexture
-            ConfigureTarget(_target);
+            ConfigureTarget(_targetHandle);
         }
     }
 }

@@ -97,9 +97,6 @@ namespace Niantic.Lightship.AR.LocationAR
         private ARSessionState _lastARSessionState = ARSessionState.None;
         private ARLocationTrackedEventArgs? _lastLocationTrackedEventArgs;
 
-        // Workaround for frequent anchor pose updates
-        private Pose _lastAnchorPose;
-
         protected override void OnEnable()
         {
             // This will invoke OnBeforeStart and then start the subsystem. Put any initialization logic
@@ -330,7 +327,6 @@ namespace Niantic.Lightship.AR.LocationAR
 
                     var args = new ARLocationTrackedEventArgs(arLocation, tracking, reason, anchor.trackingConfidence);
                     InvokeTrackingStateChangedWithARSessionState(args, _lastARSessionState);
-                    _lastAnchorPose = anchor.PredictedPose;
                     _lastLocationTrackedEventArgs = args;
                 }
                 else
@@ -361,7 +357,6 @@ namespace Niantic.Lightship.AR.LocationAR
                     // Note: You could call arLocation.gameObject.SetActive(false) in locationTrackingStateChanged event if you wanted to de-activate gameObject when tracking is lost
                     var args = new ARLocationTrackedEventArgs(arLocation, false, reason, anchor.trackingConfidence);
                     InvokeTrackingStateChangedWithARSessionState(args, _lastARSessionState);
-                    _lastAnchorPose = anchor.PredictedPose;
                     _lastLocationTrackedEventArgs = args;
                 }
             }
@@ -374,25 +369,6 @@ namespace Niantic.Lightship.AR.LocationAR
             if (!args.HasValue)
             {
                 return;
-            }
-
-            // If we've previously localized, check that there is new info to report
-            // This is a temporary workaround for native firing multiple identical updates
-            if (_lastLocationTrackedEventArgs.HasValue)
-            {
-                var locationTransform = args.Value.ARLocation.transform;
-                var allInfoIdentical = _lastAnchorPose.position ==
-                    locationTransform.position &&
-                    _lastAnchorPose.rotation == locationTransform.rotation &&
-                    args.Value.Tracking == _lastLocationTrackedEventArgs.Value.Tracking &&
-                    args.Value.TrackingStateReason ==
-                    _lastLocationTrackedEventArgs.Value.TrackingStateReason &&
-                    sessionState == _lastARSessionState;
-
-                if (allInfoIdentical)
-                {
-                    return;
-                }
             }
 
             var newArgs = args.Value;

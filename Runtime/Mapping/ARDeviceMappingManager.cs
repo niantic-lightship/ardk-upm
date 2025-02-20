@@ -172,9 +172,15 @@ namespace Niantic.Lightship.AR.Mapping
 
         private ARDeviceMap _arDeviceMap = new ();
 
-        private bool _mapFinalizedEventInvoked = false;
-
         private const float TimeoutToForceInvokeMapFinalizedEvent = 2.0f;
+
+        private enum MappingState
+        {
+            Uninitialized,
+            Mapping,
+            Stopped,
+        }
+        private MappingState _state = MappingState.Uninitialized;
 
         // Monobehaviour methods
         private void Awake()
@@ -191,11 +197,13 @@ namespace Niantic.Lightship.AR.Mapping
 
         private void OnDisable()
         {
+            _state = MappingState.Uninitialized;
             DeviceMappingController.StopNativeModule();
         }
 
         private void Start()
         {
+            _state = MappingState.Uninitialized;
             DeviceMappingController.TargetFrameRate = _mappingTargetFrameRate;
             DeviceMappingController.SplitterMaxDistanceMeters = _mappingSplitterMaxDistanceMeters;
             DeviceMappingController.SplitterMaxDurationSeconds = _mappingSplitterMaxDurationSeconds;
@@ -247,6 +255,8 @@ namespace Niantic.Lightship.AR.Mapping
         [Experimental]
         public void StartMapping()
         {
+            _state = MappingState.Mapping;
+
             if (_mapUploadEnabled)
             {
                 DeviceMapAccessController.StartUploadingMaps();
@@ -254,7 +264,6 @@ namespace Niantic.Lightship.AR.Mapping
 
             // Run mapping
             DeviceMappingController.StartMapping();
-            _mapFinalizedEventInvoked = false;
         }
 
         /// <summary>
@@ -271,6 +280,8 @@ namespace Niantic.Lightship.AR.Mapping
             {
                 DeviceMapAccessController.StopUploadingMaps();
             }
+
+            _state = MappingState.Stopped;
         }
 
         /// <summary>
@@ -328,83 +339,87 @@ namespace Niantic.Lightship.AR.Mapping
         {
             var gotNewData = DeviceMapAccessController.GetLatestUpdates(out var maps, out var subGraphs);
 
-            if (!gotNewData || maps == null || maps.Length == 0)
+            if (!gotNewData)
             {
                 return;
             }
 
-            // Create a struct which is ready to serialize and invoke OnDeviceMapUpdated event
-            for (var i = 0; i < maps.Length; i++)
-            {
+            bool gotNewMap = (maps != null && maps.Length != 0);
+            bool gotNewSubGraph = (subGraphs != null && subGraphs.Length != 0);
 
-                if (_mapUploadEnabled)
+            if (gotNewMap)
+            {
+                // Create a struct which is ready to serialize and invoke OnDeviceMapUpdated event
+                for (var i = 0; i < maps.Length; i++)
                 {
-                    if (!DeviceMapAccessController.HasMapNodeBeenUploaded(maps[i].GetNodeId()))
+
+                    if (_mapUploadEnabled)
                     {
-                        if (!DeviceMapAccessController.MarkMapNodeForUpload(maps[i].GetNodeId()))
+                        if (!DeviceMapAccessController.HasMapNodeBeenUploaded(maps[i].GetNodeId()))
                         {
-                            Log.Debug($"UploadExistingMaps(): MarkMapNodeForUpload failed");
+                            if (!DeviceMapAccessController.MarkMapNodeForUpload(maps[i].GetNodeId()))
+                            {
+                                Log.Debug($"UploadExistingMaps(): MarkMapNodeForUpload failed");
+                            }
                         }
                     }
-                }
 
-                if (_arDeviceMap.HasMapNode(maps[i].GetNodeId()))
+                    if (_arDeviceMap.HasMapNode(maps[i].GetNodeId()))
+                    {
+                        continue;
+                    }
+
+                    // Create an anchor for the map node at the center of the map key points
+                    DeviceMapAccessController.ExtractMapMetaData(
+                        maps[i].GetData(),
+                        out var points, // unused here
+                        out var errors, // unused here
+                        out var center,
+                        out var mapType
+                    );
+                    DeviceMapAccessController.CreateAnchorFromMapNode(
+                        maps[i], Matrix4x4.Translate(center) , out var anchorPayload);
+
+                    // add the new map node to ARDeviceMap
+                    _arDeviceMap.AddDeviceMapNode(
+                        maps[i].GetNodeId().subId1,
+                        maps[i].GetNodeId().subId2,
+                        maps[i].GetData(),
+                        anchorPayload,
+                        mapType
+                    );
+                    Log.Debug($"map type = {mapType}");
+                }
+            }
+
+            if (gotNewSubGraph)
+            {
+                MapSubGraph[] graphs;
+                // If there is no graph data, just use the new graph array
+                if (_arDeviceMap.DeviceMapGraph._graphData == null)
                 {
-                    continue;
+                    graphs = subGraphs;
+                }
+                else
+                {
+                    // Otherwise, create a subgraph array with the existing graph data and the new graph data
+                    graphs = new MapSubGraph[subGraphs.Length + 1];
+                    Array.Copy(subGraphs, graphs, subGraphs.Length);
+                    graphs[^1] = new MapSubGraph(_arDeviceMap.DeviceMapGraph._graphData);
                 }
 
-                // Create an anchor for the map node at the center of the map key points
-                DeviceMapAccessController.ExtractMapMetaData(
-                    maps[i].GetData(),
-                    out var points, // unused here
-                    out var errors, // unused here
-                    out var center,
-                    out var mapType
+                // Merge the subgraphs into a single graph
+                var mergeSucceeded = DeviceMapAccessController.MergeSubGraphs(
+                    graphs,
+                    true,
+                    out var mergedGraph
                 );
-                DeviceMapAccessController.CreateAnchorFromMapNode(
-                    maps[i], Matrix4x4.Translate(center) , out var anchorPayload);
 
-                // add the new map node to ARDeviceMap
-                _arDeviceMap.AddDeviceMapNode(
-                    maps[i].GetNodeId().subId1,
-                    maps[i].GetNodeId().subId2,
-                    maps[i].GetData(),
-                    anchorPayload,
-                    mapType
-                );
-                Log.Debug($"map type = {mapType}");
-            }
-
-            if (subGraphs == null || subGraphs.Length == 0)
-            {
-                return;
-            }
-
-            MapSubGraph[] graphs;
-            // If there is no graph data, just use the new graph array
-            if (_arDeviceMap.DeviceMapGraph._graphData == null)
-            {
-                graphs = subGraphs;
-            }
-            else
-            {
-                // Otherwise, create a subgraph array with the existing graph data and the new graph data
-                graphs = new MapSubGraph[subGraphs.Length + 1];
-                Array.Copy(subGraphs, graphs, subGraphs.Length);
-                graphs[^1] = new MapSubGraph(_arDeviceMap.DeviceMapGraph._graphData);
-            }
-
-            // Merge the subgraphs into a single graph
-            var mergeSucceeded = DeviceMapAccessController.MergeSubGraphs(
-                graphs,
-                true,
-                out var mergedGraph
-            );
-
-            // Copy the merged graph data to the ARDeviceMap
-            if (mergeSucceeded)
-            {
-                _arDeviceMap.SetDeviceMapGraph(mergedGraph.GetData());
+                // Copy the merged graph data to the ARDeviceMap
+                if (mergeSucceeded)
+                {
+                    _arDeviceMap.SetDeviceMapGraph(mergedGraph.GetData());
+                }
             }
 
             // Invoke events
@@ -412,12 +427,12 @@ namespace Niantic.Lightship.AR.Mapping
             // invoke "update" event always
             DeviceMapUpdated?.Invoke(_arDeviceMap);
 
-            // invoke "finalized" event if not mapping
-            if (!DeviceMappingController.IsMapping)
+            // invoke "finalized" event if stopped and received (last) map
+            if (_state == MappingState.Stopped && gotNewMap)
             {
                 // TODO: what if second time? prevent envent?
                 DeviceMapFinalized?.Invoke(_arDeviceMap);
-                _mapFinalizedEventInvoked = true;
+                _state = MappingState.Uninitialized;
             }
         }
 
@@ -426,9 +441,10 @@ namespace Niantic.Lightship.AR.Mapping
             // TODO: modify native side to tell final map update or not, instead of this way
             yield return new WaitForSeconds(TimeoutToForceInvokeMapFinalizedEvent);
 
-            if (!_mapFinalizedEventInvoked)
+            if (_state == MappingState.Stopped)
             {
                 DeviceMapFinalized?.Invoke(_arDeviceMap);
+                _state = MappingState.Uninitialized;
             }
         }
     }

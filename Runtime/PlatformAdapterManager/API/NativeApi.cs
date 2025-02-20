@@ -9,18 +9,12 @@ namespace Niantic.Lightship.AR.PAM
     {
         public IntPtr ARDK_SAH_Create(IntPtr unityContext, bool isLidarDepthEnabled)
         {
-            IntPtr coreContext = LightshipUnityContext.GetCoreContext(unityContext);
-            return Native.ARDK_SAH_Create(coreContext, isLidarDepthEnabled);
-        }
-
-        public void ARDK_SAH_OnFrame_Deprecated(IntPtr handle, IntPtr frameData)
-        {
-            Native.ARDK_SAH_OnFrame_Deprecated(handle, frameData);
+            return Native.Lightship_ARDK_Unity_SAH_Create(unityContext, isLidarDepthEnabled);
         }
 
         public void ARDK_SAH_OnFrame(IntPtr handle, IntPtr frameData)
         {
-            Native.ARDK_SAH_OnFrame(handle, frameData);
+            Native.Lightship_ARDK_Unity_SAH_OnFrame(handle, frameData);
         }
 
         public void ARDK_SAH_GetDataFormatsReadyForNewFrame(
@@ -30,7 +24,7 @@ namespace Niantic.Lightship.AR.PAM
         {
             unsafe
             {
-                Native.ARDK_SAH_GetDataFormatsReadyForNewFrame(handle,
+                Native.Lightship_ARDK_Unity_SAH_GetDataFormatUpdatesForNewFrame(handle,
                     out dataFormatsReady);
             }
         }
@@ -45,7 +39,7 @@ namespace Niantic.Lightship.AR.PAM
         {
             unsafe
             {
-                Native.ARDK_SAH_GetDispatchedFormatsToModules
+                Native.Lightship_ARDK_Unity_SAH_GetDispatchedFormatsToModules
                 (
                     handle,
                     out uint outDispatchedFrameId,
@@ -61,38 +55,32 @@ namespace Niantic.Lightship.AR.PAM
 
         public void ARDK_SAH_Release(IntPtr handle)
         {
-            Native.ARDK_SAH_Release(handle);
+            Native.Lightship_ARDK_Unity_SAH_Release(handle);
         }
 
         private static class Native
         {
             [DllImport(LightshipPlugin.Name)]
-            public static extern IntPtr ARDK_SAH_Create(IntPtr coreContext, bool isLidarDepthEnabled);
+            public static extern IntPtr Lightship_ARDK_Unity_SAH_Create(IntPtr unityContext, bool isLidarDepthEnabled);
 
             [DllImport(LightshipPlugin.Name)]
-            public static extern void ARDK_SAH_OnFrame_Deprecated(IntPtr handle, IntPtr frameData);
+            public static extern void Lightship_ARDK_Unity_SAH_OnFrame(IntPtr handle, IntPtr frameData);
 
             [DllImport(LightshipPlugin.Name)]
-            public static extern void ARDK_SAH_OnFrame(IntPtr handle, IntPtr frameData);
-
-            [DllImport(LightshipPlugin.Name)]
-            public static extern void ARDK_SAH_GetDataFormatsReadyForNewFrame
+            public static extern void Lightship_ARDK_Unity_SAH_GetDataFormatUpdatesForNewFrame
             (
                 IntPtr handle,
                 out UInt32 readyDataFormats
             );
 
             [DllImport(LightshipPlugin.Name)]
-            public static extern void ARDK_SAH_GetDispatchedFormatsToModules(IntPtr handle,
+            public static extern void Lightship_ARDK_Unity_SAH_GetDispatchedFormatsToModules(IntPtr handle,
                 out uint dispatchedFrameId,
                 out ulong dispatchedToModules,
                 out uint dispatchedDataFormats);
 
             [DllImport(LightshipPlugin.Name)]
-            public static extern void ARDK_SAH_Release(IntPtr handle);
+            public static extern void Lightship_ARDK_Unity_SAH_Release(IntPtr handle);
         }
-
-        [DllImport(LightshipPlugin.Name)]
-        public static extern IntPtr ARDK_CoreContext_GetComponentManagerHandle(IntPtr coreContext);
     }
 }

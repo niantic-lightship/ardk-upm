@@ -154,8 +154,8 @@ namespace Niantic.Lightship.AR.Mapping
         [Experimental]
         public void StartMapping()
         {
-            _mapper.StartMapping();
             _isMapping = true;
+            _mapper.StartMapping();
         }
 
         /// <summary>

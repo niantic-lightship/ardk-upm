@@ -50,12 +50,16 @@ namespace Niantic.Lightship.AR.Occlusion.Features
         private CommandBuffer _meshObserverCommandBuffer;
 
         // Additional resources
-        private Texture2D _defaultNonLinearDepthTexture;
+        private Texture2D _defaultMeshDepthTexture;
         public RenderTexture MeshDepthTexture { get; private set; }
 
         // URP render pass
 #if MODULE_URP_ENABLED
         private OffScreenBlitPass _renderPass;
+
+        private RTHandle _meshDepthTextureHandle;
+
+        private RTHandleSystem _rtHandleSystem;
 #endif
 
         /// <summary>
@@ -143,6 +147,10 @@ namespace Niantic.Lightship.AR.Occlusion.Features
             _renderPass = new OffScreenBlitPass(
                 name: "Lightship Occlusion Extension (Stabilization)",
                 renderPassEvent: RenderPassEvent.AfterRendering);
+
+            _rtHandleSystem = new RTHandleSystem();
+            _rtHandleSystem.Initialize(KFusedDepthWidth, KFusedDepthHeight);
+            _meshDepthTextureHandle = _rtHandleSystem.Alloc(MeshDepthTexture);
 #endif
             return true;
         }
@@ -156,16 +164,20 @@ namespace Niantic.Lightship.AR.Occlusion.Features
 
             // The default texture bound to the fused depth property on the material.
             // It lets every pixel pass through until the real depth texture is ready to use.
-            if (_defaultNonLinearDepthTexture == null)
+            if (_defaultMeshDepthTexture == null)
             {
-                var val = OcclusionExtensionUtils.IsDepthReversed() ? 0.0f : 1.0f;
-                _defaultNonLinearDepthTexture = new Texture2D(2, 2, TextureFormat.RFloat, mipChain: false);
-                _defaultNonLinearDepthTexture.SetPixelData(new[] {val, val, val, val}, 0);
-                _defaultNonLinearDepthTexture.Apply(false);
+                // The mesh depth texture contains linear eye depth
+                // Here we default to 1000 meters, because we don't
+                // have access to the camera's far clip plane.
+                const float val = 1000.0f;
+
+                _defaultMeshDepthTexture = new Texture2D(2, 2, TextureFormat.RFloat, mipChain: false);
+                _defaultMeshDepthTexture.SetPixelData(new[] {val, val, val, val}, 0);
+                _defaultMeshDepthTexture.Apply(false);
             }
 
             // Bind pass-through texture by default
-            mat.SetTexture(ShaderProperties.FusedDepthTextureId, _defaultNonLinearDepthTexture);
+            mat.SetTexture(ShaderProperties.FusedDepthTextureId, _defaultMeshDepthTexture);
         }
 
         protected override void OnMaterialDetach(Material mat)
@@ -252,15 +264,22 @@ namespace Niantic.Lightship.AR.Occlusion.Features
                 Object.Destroy(_meshObserverMaterialInternal);
             }
 
-            if (_defaultNonLinearDepthTexture != null)
+            if (_defaultMeshDepthTexture != null)
             {
-                Object.Destroy(_defaultNonLinearDepthTexture);
+                Object.Destroy(_defaultMeshDepthTexture);
             }
 
             if (MeshDepthTexture != null)
             {
                 Object.Destroy(MeshDepthTexture);
             }
+
+#if MODULE_URP_ENABLED
+            if( _meshDepthTextureHandle != null )
+            {
+                _meshDepthTextureHandle.Release();
+            }
+#endif
 
             _meshObserverCommandBuffer?.Dispose();
         }
@@ -315,7 +334,7 @@ namespace Niantic.Lightship.AR.Occlusion.Features
             if (cam == _meshObserverCamera)
             {
                 // Configure the render pass
-                _renderPass.Setup(Material, MeshDepthTexture);
+                _renderPass.Setup(Material, MeshDepthTexture, _meshDepthTextureHandle);
 
                 // Enqueue the render pass
                 cam.GetUniversalAdditionalCameraData().scriptableRenderer.EnqueuePass(_renderPass);

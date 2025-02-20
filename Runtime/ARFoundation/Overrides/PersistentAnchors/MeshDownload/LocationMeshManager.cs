@@ -375,7 +375,7 @@ namespace Niantic.Lightship.AR.Subsystems
 
                 foreach (var nodeToLoad in nodesToLoad)
                 {
-                    // Use the provided node as the origin of the downloaded mesh
+                    // Use the query node as the origin of the downloaded mesh
                     if (nodeToLoad.nodeId == nodeId)
                     {
                         localizedNodeMatrix4x4 = FromServiceToUnity
@@ -398,7 +398,7 @@ namespace Niantic.Lightship.AR.Subsystems
                     Vector3 drawPosition = toUnitySpace.GetPosition();
                     Quaternion drawRotation = MatrixUtils.RotationFromMatrix(toUnitySpace);
 
-                    // If the node is not the origin node, calculate the draw position and rotation
+                    // If the node is not the query node, calculate the draw position and rotation
                     if (nodeToLoad.nodeId != nodeId)
                     {
                         var nodeToLoadMatrix4X4 = FromServiceToUnity

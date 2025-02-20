@@ -7,6 +7,7 @@ using Niantic.Lightship.AR.Subsystems.Semantics;
 using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.XRSubsystems;
 using UnityEngine;
+using UnityEngine.Rendering;
 using UnityEngine.Serialization;
 using UnityEngine.XR.ARFoundation;
 using UnityEngine.XR.ARSubsystems;
@@ -160,11 +161,15 @@ namespace Niantic.Lightship.AR.Occlusion
                 // The occlusion stabilization feature requires the mesh manager
                 case Stabilization occlusionStabilization:
                 {
-#if NIANTIC_LIGHTSHIP_ML2_ENABLED
-                    // TODO(ahegedus): Unlock this feature for ML2
-                    Log.Error("Occlusion stabilization is not yet supported on ML2.");
-                    return false;
-#endif
+                    // https://docs.unity3d.com/2022.3/Documentation/Manual/SL-CameraDepthTexture.html
+                    // Direct3D 11+ (Windows), OpenGL 3+ (Mac/Linux), OpenGL ES 3.0+ (iOS), Metal (iOS)
+                    // and popular consoles support depth textures.
+                    if (SystemInfo.graphicsDeviceType == GraphicsDeviceType.Vulkan)
+                    {
+                        Log.Error("Occlusion stabilization is not yet supported on Vulkan devices.");
+                        return false;
+                    }
+
                     if (_meshManager == null)
                     {
                         // Attempt to find the mesh manager

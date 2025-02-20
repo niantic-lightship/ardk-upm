@@ -18,6 +18,22 @@ namespace Niantic.Lightship.AR.Simulation
         private static void Register()
         {
             const string id = "Lightship-Simulation-Occlusion";
+
+#if UNITY_6000_0_OR_NEWER
+            var xrOcclusionSubsystemCinfo = new XROcclusionSubsystemDescriptor.Cinfo()
+            {
+                id = id,
+                providerType = typeof(LightshipSimulationProvider),
+                subsystemTypeOverride = typeof(LightshipSimulationOcclusionSubsystem),
+                humanSegmentationStencilImageSupportedDelegate = () => Supported.Unsupported,
+                humanSegmentationDepthImageSupportedDelegate = () => Supported.Unsupported,
+                environmentDepthImageSupportedDelegate = () => Supported.Supported,
+                environmentDepthConfidenceImageSupportedDelegate = () => Supported.Supported,
+                environmentDepthTemporalSmoothingSupportedDelegate = () => Supported.Unsupported
+            };
+
+            XROcclusionSubsystemDescriptor.Register(xrOcclusionSubsystemCinfo);
+#else
             var xrOcclusionSubsystemCinfo = new XROcclusionSubsystemCinfo()
             {
                 id = id,
@@ -31,6 +47,9 @@ namespace Niantic.Lightship.AR.Simulation
             };
 
             XROcclusionSubsystem.Register(xrOcclusionSubsystemCinfo);
+#endif
+
+
         }
 
         private class LightshipSimulationProvider : Provider
@@ -176,6 +195,11 @@ namespace Niantic.Lightship.AR.Simulation
                 enabledKeywords = s_environmentDepthEnabledMaterialKeywords;
                 disabledKeywords = null;
             }
+
+#if UNITY_6000_0_OR_NEWER
+            public override ShaderKeywords GetShaderKeywords() =>
+                new(enabledKeywords: s_environmentDepthEnabledMaterialKeywords.AsReadOnly());
+#endif
         }
     }
 }

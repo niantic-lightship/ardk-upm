@@ -46,6 +46,70 @@ namespace Niantic.Lightship.AR.Utilities
             return string.Join("", halves);
         }
 
+        public static bool LightshipHexStringToUlongs(string hexString, out ulong upper, out ulong lower)
+        {
+            // Check if the string is a valid UUID
+            if (!ValidateStringIsUuid(hexString))
+            {
+                upper = 0;
+                lower = 0;
+                return false;
+            }
+
+            // Split the string on the dash, and do a string reverse, then pairwise reverse.
+            // @note This is a relatively expensive operation, only use it when necessary to line up managed
+            //  and unmanaged representations.
+            string[] halves;
+            if (hexString.Contains('-'))
+            {
+                if (hexString.Length != 33)
+                {
+                    throw new System.ArgumentException("Invalid input, expected 33 characters");
+                }
+
+                halves = hexString.Split('-');
+                if (halves.Length != 2)
+                {
+                    throw new System.ArgumentException("Invalid input, expected two halves");
+                }
+            }
+            else
+            {
+                if (hexString.Length != 32)
+                {
+                    throw new System.ArgumentException("Invalid input, expected 32 characters");
+                }
+
+                halves = new string[2];
+                halves[0] = hexString.Substring(0, 16);
+                halves[1] = hexString.Substring(16, 16);
+            }
+
+            for (var i = 0; i < halves.Length; i++)
+            {
+                // Split each half into pairs
+                var intermediate = halves[i].ToCharArray();
+                var count = intermediate.Length;
+
+                // Pairwise reverse along each half
+                for (int j = 0; j < count; j+=2)
+                {
+                    var (a, b) = (intermediate[j], intermediate[j + 1]);
+                    intermediate[j] = b;
+                    intermediate[j + 1] = a;
+                }
+
+                // Reverse each half
+                intermediate = intermediate.Reverse().ToArray();
+                halves[i] = string.Join("", intermediate);
+            }
+
+            upper = System.Convert.ToUInt64(halves[0], 16);
+            lower = System.Convert.ToUInt64(halves[1], 16);
+
+            return true;
+        }
+
         public static byte[] ToBytes(this TrackableId trackableId)
         {
             // Serialize lower and upper parts of the trackableId
@@ -80,6 +144,32 @@ namespace Niantic.Lightship.AR.Utilities
             }
 
             return new TrackableId(lower, upper);
+        }
+
+        private static bool ValidateStringIsUuid(string hexString)
+        {
+            // Check if the string is a valid UUID
+            if (hexString.Length == 32)
+            {
+                if (!System.Text.RegularExpressions.Regex.IsMatch(hexString, @"[0-9a-fA-F]+"))
+                {
+                    return false;
+                }
+
+                return true;
+            }
+
+            if (hexString.Length == 33)
+            {
+                if (!System.Text.RegularExpressions.Regex.IsMatch(hexString, @"[0-9a-fA-F]{16}-[0-9a-fA-F]{16}"))
+                {
+                    return false;
+                }
+
+                return true;
+            }
+
+            return false;
         }
     }
 }

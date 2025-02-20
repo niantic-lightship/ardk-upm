@@ -147,6 +147,22 @@ namespace Niantic.Lightship.AR.Subsystems.Occlusion
         {
             Log.Info("LightshipOcclusionSubsystem.Register");
             const string id = "Lightship-Occlusion";
+
+#if UNITY_6000_0_OR_NEWER
+            var xrOcclusionSubsystemCinfo = new XROcclusionSubsystemDescriptor.Cinfo()
+            {
+                id = id,
+                providerType = typeof(LightshipOcclusionProvider),
+                subsystemTypeOverride = typeof(LightshipOcclusionSubsystem),
+                humanSegmentationStencilImageSupportedDelegate = () => Supported.Unsupported,
+                humanSegmentationDepthImageSupportedDelegate = () => Supported.Unsupported,
+                environmentDepthImageSupportedDelegate = () => Supported.Supported,
+                environmentDepthConfidenceImageSupportedDelegate = () => Supported.Unsupported,
+                environmentDepthTemporalSmoothingSupportedDelegate = () => Supported.Unsupported
+            };
+
+            XROcclusionSubsystemDescriptor.Register(xrOcclusionSubsystemCinfo);
+#else
             var xrOcclusionSubsystemCinfo = new XROcclusionSubsystemCinfo()
             {
                 id = id,
@@ -160,6 +176,9 @@ namespace Niantic.Lightship.AR.Subsystems.Occlusion
             };
 
             XROcclusionSubsystem.Register(xrOcclusionSubsystemCinfo);
+#endif
+
+
         }
 
         /// <summary>
@@ -841,6 +860,13 @@ namespace Niantic.Lightship.AR.Subsystems.Occlusion
                     disabledKeywords = null;
                 }
             }
+
+#if UNITY_6000_0_OR_NEWER
+            public override ShaderKeywords GetShaderKeywords() =>
+                _occlusionPreferenceMode == OcclusionPreferenceMode.NoOcclusion ?
+                    new ShaderKeywords(disabledKeywords: _environmentDepthEnabledMaterialKeywords.AsReadOnly()) :
+                    new ShaderKeywords(enabledKeywords: _environmentDepthEnabledMaterialKeywords.AsReadOnly());
+#endif
         }
     }
 }

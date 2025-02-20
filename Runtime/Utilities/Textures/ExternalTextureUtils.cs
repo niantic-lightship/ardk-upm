@@ -7,6 +7,10 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.XR.ARSubsystems;
 
+#if UNITY_6000_0_OR_NEWER
+using UnityEngine.Experimental.Rendering;
+#endif
+
 namespace Niantic.Lightship.AR.Utilities.Textures
 {
     public static class ExternalTextureUtils
@@ -165,16 +169,29 @@ namespace Niantic.Lightship.AR.Utilities.Textures
             return true;
         }
 
-        public static Texture2D CreateFromExternalTexture(Texture2D externalTexture, TextureFormat outputFormat)
+        /// <summary>
+        /// Creates a new Texture2D object from the provided external texture.
+        /// </summary>
+        /// <remarks>Avoid using in production code, since this function involves a CPU readback and is slow.</remarks>
+        /// <param name="externalTexture">The source external/native texture to copy from.</param>
+        /// <param name="outputFormat">The format of the output Texture2D object. Should be aligning with the external texture format.</param>
+        /// <param name="useLinearColorSpace">Use linear (true) or gamma (false) color space. Requires Unity 6 or newer.</param>
+        /// <returns>The Texture2D object created from the external texture.</returns>
+        public static Texture2D CreateFromExternalTexture(Texture2D externalTexture, TextureFormat outputFormat, bool useLinearColorSpace = false)
         {
-            var destinationTexture =
-                new Texture2D
-                (
-                    externalTexture.width,
-                    externalTexture.height,
-                    outputFormat,
-                    externalTexture.mipmapCount > 1
-                );
+            var destinationTexture = new Texture2D
+            (
+                externalTexture.width,
+                externalTexture.height,
+#if UNITY_6000_0_OR_NEWER
+                GraphicsFormatUtility.GetGraphicsFormat(outputFormat, !useLinearColorSpace),
+                externalTexture.mipmapCount > 1
+                    ? TextureCreationFlags.MipChain
+                    : TextureCreationFlags.DontInitializePixels
+#else
+                    outputFormat, externalTexture.mipmapCount > 1
+#endif
+            );
 
             ReadFromExternalTexture(externalTexture, destinationTexture);
             return destinationTexture;

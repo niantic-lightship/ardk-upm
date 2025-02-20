@@ -12,9 +12,11 @@ using MathTypes;
 using Niantic.Lightship.AR.PersistentAnchors;
 using Niantic.Lightship.AR.Utilities;
 
+using UnityEngine;
 using UnityEngine.XR.ARSubsystems;
 
 using Quaternion = UnityEngine.Quaternion;
+using Transform = MathTypes.Transform;
 using Vector3 = UnityEngine.Vector3;
 
 namespace Niantic.Lightship.AR.Subsystems
@@ -117,6 +119,66 @@ namespace Niantic.Lightship.AR.Subsystems
         public static Quaternion GetRotation(this MathTypes.Quaternion quat)
         {
             return new Quaternion(quat.X, quat.Y, quat.Z, quat.W);
+        }
+
+        public static string CreateAnchorPayloadFromNodeId(string nodeId)
+        {
+            if (!TrackableIdExtension.LightshipHexStringToUlongs
+                (
+                    nodeId,
+                    out var upper,
+                    out var lower
+                ))
+            {
+                return null;
+            }
+
+            var uuid = new UUID
+            {
+                Upper = upper,
+                Lower = lower
+            };
+
+            var nodeAssociation = new NodeAssociation
+            {
+                Identifier = uuid,
+                ManagedPoseToNode = new Transform()
+                {
+                    Translation = new MathTypes.Vector3(),
+                    Rotation = new MathTypes.Quaternion
+                    {
+                        W = 1
+                    },
+                },
+                Weight = 1
+            };
+
+            var anchorGuid = Guid.NewGuid().ToString("N");
+            if (!TrackableIdExtension.LightshipHexStringToUlongs
+                (
+                    anchorGuid,
+                    out var anchorUpper,
+                    out var anchorLower
+                ))
+            {
+                return null;
+            }
+
+            var anchorUuid = new UUID
+            {
+                Upper = anchorUpper,
+                Lower = anchorLower
+            };
+
+            var managedPoseData = new ManagedPoseData
+            {
+                Identifier = anchorUuid,
+                NodeAssociations = { nodeAssociation },
+                CreationTimeMs = (ulong)DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+            };
+
+            // Serialize proto to byte
+            return Convert.ToBase64String(managedPoseData.ToByteArray());
         }
 
         private static bool IsNodeAssociationApproxOrigin(NodeAssociation nodeAssociation)

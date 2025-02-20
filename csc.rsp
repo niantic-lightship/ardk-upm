@@ -6,3 +6,4 @@
 -define:ARDK_3_9_0_OR_GREATER
 -define:ARDK_3_10_0_OR_GREATER
 -define:ARDK_3_11_0_OR_GREATER
+-define:ARDK_3_12_0_OR_GREATER

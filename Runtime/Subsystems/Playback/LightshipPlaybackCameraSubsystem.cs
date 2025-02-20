@@ -42,6 +42,33 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
         {
             Log.Info("LightshipPlaybackCameraSubsystem.Register");
             const string id = "Lightship-Playback-Camera";
+
+#if UNITY_6000_0_OR_NEWER
+            var info = new XRCameraSubsystemDescriptor.Cinfo
+            {
+                id = id,
+                providerType = typeof(LightshipPlaybackProvider),
+                subsystemTypeOverride = typeof(LightshipPlaybackCameraSubsystem),
+                supportsAverageBrightness = false,
+                supportsAverageColorTemperature = false,
+                supportsColorCorrection = false,
+                supportsDisplayMatrix = true,
+                supportsProjectionMatrix = true,
+                supportsTimestamp = true,
+                supportsCameraConfigurations = false,
+                supportsCameraImage = true,
+                supportsAverageIntensityInLumens = false,
+                supportsFocusModes = true,
+                supportsCameraGrain = false,
+                supportsFaceTrackingAmbientIntensityLightEstimation = false,
+                supportsFaceTrackingHDRLightEstimation = false,
+                supportsWorldTrackingAmbientIntensityLightEstimation = false,
+                supportsWorldTrackingHDRLightEstimation = false
+            };
+
+             XRCameraSubsystemDescriptor.Register(info);
+
+#else
             var info = new XRCameraSubsystemCinfo
             {
                 id = id,
@@ -64,7 +91,8 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
                 supportsWorldTrackingHDRLightEstimation = false
             };
 
-            Register(info);
+             XRCameraSubsystem.Register(info);
+#endif
         }
 
         void IPlaybackDatasetUser.SetPlaybackDatasetReader(PlaybackDatasetReader reader)
@@ -153,7 +181,7 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
 
             public LightshipPlaybackProvider()
             {
-#if UNITY_ANDROID
+#if UNITY_ANDROID && !UNITY_EDITOR
                 _legacyRPEnabledMaterialKeywords.Add(AndroidPlatformKeyword);
 #else
                 _legacyRPDisabledMaterialKeywords.Add(AndroidPlatformKeyword);
@@ -174,8 +202,12 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
                 _textureHeight = imageRes.y;
                 _textureFormat = TextureFormat.RGB24;
 
+                // If the resolution is 0 (not encoded in dataset), we need to create a texture with at least 1x1 size
+                //   to avoid a Unity error.
+                var tempWidth = _textureWidth == 0 ? 1 : _textureWidth;
+                var tempHeight = _textureHeight == 0 ? 1 : _textureHeight;
                 _currentFrame = new ValueTuple<int, Texture2D>
-                    (-99, new Texture2D(_textureWidth, _textureHeight, _textureFormat, false));
+                    (-99, new Texture2D(tempWidth, tempHeight, _textureFormat, false));
             }
 
             public override NativeArray<XRCameraConfiguration> GetConfigurations
@@ -227,7 +259,7 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
                         (int)cameraParams.screenWidth,
                         (int)cameraParams.screenHeight,
                         frame.Orientation,
-#if UNITY_ANDROID
+#if UNITY_ANDROID && !UNITY_EDITOR
                         invertVertically: false,
                         layout: CameraMath.MatrixLayout.ColumnMajor,
                         reverseRotation: true
@@ -382,6 +414,13 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
                 enabledKeywords = _legacyRPEnabledMaterialKeywords;
                 disabledKeywords = _legacyRPDisabledMaterialKeywords;
             }
+
+#if UNITY_6000_0_OR_NEWER
+            public override ShaderKeywords GetShaderKeywords() => new(
+                enabledKeywords: _legacyRPEnabledMaterialKeywords.AsReadOnly(),
+                disabledKeywords: _legacyRPDisabledMaterialKeywords.AsReadOnly()
+            );
+#endif
 
             private void UpdateCachedCurrentFrameInfo(PlaybackDataset.FrameMetadata frame)
             {

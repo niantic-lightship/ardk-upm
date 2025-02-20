@@ -58,7 +58,7 @@ namespace Niantic.Lightship.AR.Loader
         public bool IsPlatformDepthAvailable()
         {
             var subsystems = new List<XRMeshSubsystem>();
-            SubsystemManager.GetInstances(subsystems);
+            SubsystemManager.GetSubsystems(subsystems);
             return subsystems.Count > 0;
         }
 

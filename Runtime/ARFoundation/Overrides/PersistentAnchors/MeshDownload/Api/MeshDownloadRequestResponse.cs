@@ -1,8 +1,6 @@
 // Copyright 2022 - 2024 Niantic.
 
 using System;
-using System.Collections.Generic;
-
 using UnityEngine;
 
 namespace Niantic.Lightship.AR.Subsystems
@@ -62,13 +60,13 @@ namespace Niantic.Lightship.AR.Subsystems
         }
 
         [Serializable]
-        internal class VPSLocalToSpaceTransform
+        internal class VpsTransform
         {
             public Vector3 translation;
             public Vector4 rotation;
             public float scale;
 
-            public VPSLocalToSpaceTransform()
+            public VpsTransform()
             {
                 translation = new Vector3();
                 rotation = new Vector4();
@@ -95,8 +93,29 @@ namespace Niantic.Lightship.AR.Subsystems
             public string requestIdentifier;
             public Node[] nodes;
             public Edge[] edges;
-            public GraphStatusCode statusCode;
+            public VpsServiceStatusCode statusCode;
             public string targetNodeId;
+        }
+
+        [Serializable]
+        internal class GetReplacedNodesRequest
+        {
+            public string requestIdentifier;
+            public string[] nodeIdentifiers;
+        }
+
+        [Serializable]
+        internal class GetReplacedNodesResponse {
+            public string requestIdentifier;
+            public EdgeFromReplacedNode[] transformToActiveNode;
+            public VpsServiceStatusCode statusCode;
+        }
+
+        [Serializable]
+        internal class EdgeFromReplacedNode {
+            public string replacedNode;
+            public string activeNode;
+            public VpsTransform transformFromReplacedToActiveNode;
         }
 
         [Serializable]
@@ -108,7 +127,7 @@ namespace Niantic.Lightship.AR.Subsystems
         [Serializable]
         internal class GetSpaceDataResponse {
             public string requestIdentifier;
-            public GraphStatusCode statusCode;
+            public VpsServiceStatusCode statusCode;
             public SpaceData[] spaceDataList;
         }
 
@@ -143,10 +162,10 @@ namespace Niantic.Lightship.AR.Subsystems
         internal class Edge {
             public string source;
             public string destination;
-            public VPSLocalToSpaceTransform sourceToDestination;   // transforms point in a’s coordinates to point in b’s coordinates
+            public VpsTransform sourceToDestination;   // transforms point in a’s coordinates to point in b’s coordinates
         }
 
-        internal enum GraphStatusCode : int
+        internal enum VpsServiceStatusCode : int
         {
             STATUS_CODE_UNSPECIFIED = 0,
             STATUS_CODE_SUCCESS = 1,

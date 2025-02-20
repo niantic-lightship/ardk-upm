@@ -54,7 +54,7 @@ namespace Niantic.Lightship.AR.Subsystems.Scanning
     }
 
     /// <summary>
-    /// C struct for C# to send frame data to C++. Defined in ardk_scanning_configuration.h file.
+    /// C struct for C# to send frame data to C++. Defined in ardk_scanner_configuration.h file.
     /// Note: It is not that great as we have both XRScanningConfiguration and this ScannerConfigurationCStruct.
     /// The reason why we don't move ScannerConfigurationCStruct into XRScanningConfiguratiis for the benefits
     /// of decoupling internal and public code, and avoid easily breaking existing public contracts.

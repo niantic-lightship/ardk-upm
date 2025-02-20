@@ -282,7 +282,8 @@ namespace Niantic.Lightship.AR.Simulation
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void Register()
         {
-            var cInfo = new XRCameraSubsystemCinfo {
+#if UNITY_6000_0_OR_NEWER
+            var cInfo = new XRCameraSubsystemDescriptor.Cinfo {
                 id = SubsystemId,
                 providerType = typeof(LightshipSimulationProvider),
                 subsystemTypeOverride = typeof(LightshipSimulationCameraSubsystem),
@@ -290,10 +291,21 @@ namespace Niantic.Lightship.AR.Simulation
                 supportsCameraImage = true,
             };
 
-            if (!XRCameraSubsystem.Register(cInfo))
+            XRCameraSubsystemDescriptor.Register(cInfo);
+#else
+            var cInfo = new XRCameraSubsystemCinfo
             {
-                Log.Error("Cannot register the camera subsystem");
-            }
+                id = SubsystemId,
+                providerType = typeof(LightshipSimulationProvider),
+                subsystemTypeOverride = typeof(LightshipSimulationCameraSubsystem),
+                supportsCameraConfigurations = true,
+                supportsCameraImage = true,
+            };
+
+            XRCameraSubsystem.Register(cInfo);
+#endif
+
+
         }
     }
 }
