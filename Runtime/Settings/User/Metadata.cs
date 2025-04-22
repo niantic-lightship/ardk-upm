@@ -1,4 +1,4 @@
-// Copyright 2022-2024 Niantic.
+// Copyright 2022-2025 Niantic.
 
 using System;
 using System.Collections.Generic;
@@ -21,7 +21,7 @@ namespace Niantic.Lightship.AR.Settings
     [PublicAPI]
     public static class Metadata
     {
-        private const string ArdkVersion = "3.12.0-2502182052";
+        private const string ArdkVersion = "3.13.0-2504092018";
 
         private const string AuthorizationHeaderKey = "Authorization";
         private const string ApplicationIdHeaderKey = "x-ardk-application-id";
@@ -34,8 +34,7 @@ namespace Niantic.Lightship.AR.Settings
         private static bool s_isUnityContextInitialized;
         static Metadata()
         {
-            ClientId = GetOrGenerateClientId();
-
+            ClientId = "";
             ApplicationId = Application.identifier;
             Platform = GetPlatform();
             Manufacturer = GetManufacturer();
@@ -49,7 +48,23 @@ namespace Niantic.Lightship.AR.Settings
             LightshipUnityContext.OnUnityContextHandleInitialized += () =>
             {
                 s_isUnityContextInitialized = true;
+                StringBuilder clientIdBuffer = new StringBuilder(32);
+                try
+                {
+                    Lightship_ARDK_Unity_CoreContext_GetOrGenerateClientId(LightshipUnityContext.UnityContextHandle, clientIdBuffer, clientIdBuffer.Capacity);
+                }
+                catch (Exception e)
+                {
+                    Debug.Log("Error trying to get ClientId");
+                }
+                ClientId = clientIdBuffer.ToString();
             };
+            LightshipUnityContext.OnDeinitialized += () =>
+            {
+                ClientId = "";
+            };
+
+
         }
 
         /// <summary>
@@ -61,7 +76,7 @@ namespace Niantic.Lightship.AR.Settings
         internal static string ApplicationId { get; }
         internal static string Platform { get; }
         internal static string Manufacturer { get; }
-        internal static string ClientId { get; }
+        internal static string ClientId { get; private set; }
         internal static string DeviceModel { get; }
         internal static string AppInstanceId { get; }
         internal static string UserId { get; private set; }
@@ -329,5 +344,8 @@ namespace Niantic.Lightship.AR.Settings
 
         [DllImport(LightshipPlugin.Name)]
         private static extern void Lightship_ARDK_Unity_CoreContext_SetUserId(IntPtr unityContext, string userId);
+
+        [DllImport(LightshipPlugin.Name)]
+        internal static extern void Lightship_ARDK_Unity_CoreContext_GetOrGenerateClientId(IntPtr unityContext, StringBuilder clientIdOut, int clientIdOutSize);
     }
 }

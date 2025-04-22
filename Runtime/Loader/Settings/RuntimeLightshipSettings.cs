@@ -1,4 +1,4 @@
-// Copyright 2022-2024 Niantic.
+// Copyright 2022-2025 Niantic.
 
 using System;
 using System.IO;
@@ -219,6 +219,18 @@ namespace Niantic.Lightship.AR.Loader
             set => _playbackSettings.LoopInfinitely = value;
         }
 
+        public int StartFrame
+        {
+            get => _playbackSettings.StartFrame;
+            set => _playbackSettings.StartFrame = value;
+        }
+
+        public int EndFrame
+        {
+            get => _playbackSettings.EndFrame;
+            set => _playbackSettings.EndFrame = value;
+        }
+
         internal EndpointSettings EndpointSettings
         {
             get => _endpointSettings;
@@ -227,6 +239,11 @@ namespace Niantic.Lightship.AR.Loader
         internal TestSettings TestSettings
         {
             get => _testSettings;
+        }
+
+        internal ILightshipPlaybackSettings PlaybackSettings
+        {
+            get => _playbackSettings;
         }
 
         internal RuntimeLightshipSettings()
@@ -299,7 +316,9 @@ namespace Niantic.Lightship.AR.Loader
             LogLevel fileLogLevel = LogLevel.Off,
             bool disableTelemetry = true,
             bool tickPamOnUpdate = true,
-            LightshipSimulationParams simulationParams = null
+            LightshipSimulationParams simulationParams = null,
+            int startFrame = 0,
+            int endFrame = -1
         )
         {
             var settings =
@@ -327,7 +346,9 @@ namespace Niantic.Lightship.AR.Loader
                             UsePlayback = usePlayback,
                             PlaybackDatasetPath = playbackDataset,
                             RunManually = runPlaybackManually,
-                            LoopInfinitely = loopPlaybackInfinitely
+                            LoopInfinitely = loopPlaybackInfinitely,
+                            StartFrame = startFrame,
+                            EndFrame = endFrame
                         },
                     _endpointSettings = endpointSettings ?? EndpointSettings.GetDefaultEnvironmentConfig(),
                     _testSettings =

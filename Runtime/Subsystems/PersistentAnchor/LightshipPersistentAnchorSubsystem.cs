@@ -1,4 +1,4 @@
-// Copyright 2022-2024 Niantic.
+// Copyright 2022-2025 Niantic.
 using System;
 using System.Collections.Generic;
 using Niantic.Lightship.AR.Utilities.Logging;
@@ -630,7 +630,8 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
                         _currentConfiguration.DeviceMappingLocalizationTemporalFusionWindowSize,
                         _currentConfiguration.DiagnosticsEnabled,
                         _currentConfiguration.LimitedLocalizationsOnly,
-                        _currentConfiguration.JpegCompressionQuality
+                        _currentConfiguration.JpegCompressionQuality,
+                        _currentConfiguration.DisableTransitiveCloudLocalizations
                     );
                 }
             }

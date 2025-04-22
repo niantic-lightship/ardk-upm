@@ -1,4 +1,4 @@
-// Copyright 2022-2024 Niantic.
+// Copyright 2022-2025 Niantic.
 
 using System;
 using UnityEngine;
@@ -61,12 +61,34 @@ namespace Niantic.Lightship.AR.Loader
             set { _numberOfIterations = value; }
         }
 
+        [SerializeField]
+        [Tooltip("The frame to start playback from.")]
+        private int _startFrame = 0;
+
+        public int StartFrame
+        {
+            get { return _startFrame; }
+            set { _startFrame = value; }
+        }
+
+        [SerializeField]
+        [Tooltip("The frame to end playback at.")]
+        private int _endFrame = -1;
+
+        public int EndFrame
+        {
+            get { return _endFrame; }
+            set { _endFrame = value; }
+        }
+
         internal DevicePlaybackSettings(ILightshipPlaybackSettings source)
         {
             UsePlayback = source.UsePlayback;
             PlaybackDatasetPath = source.PlaybackDatasetPath;
             RunManually = source.RunManually;
             LoopInfinitely = source.LoopInfinitely;
+            StartFrame = source.StartFrame;
+            EndFrame = source.EndFrame;
         }
 
         public DevicePlaybackSettings()

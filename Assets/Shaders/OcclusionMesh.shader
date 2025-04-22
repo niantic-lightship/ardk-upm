@@ -106,7 +106,7 @@ Shader "Lightship/OcclusionMesh"
                 float4 fusedDepthUV = mul(_FusedDepthTransform, float4(uv.x, 1.0f - uv.y, 1.0f, 1.0f));
 
                 // Sample fused depth
-                const float eps = 0.1f;
+                const float eps = 0.01f;
                 float fused_depth_linear_eye =
                   tex2Dlod(_FusedDepth, float4(fusedDepthUV.x / fusedDepthUV.z, fusedDepthUV.y / fusedDepthUV.z, 0, 0)) + eps;
 

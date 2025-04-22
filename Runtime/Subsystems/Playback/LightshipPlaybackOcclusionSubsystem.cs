@@ -1,4 +1,4 @@
-// Copyright 2022-2024 Niantic.
+// Copyright 2022-2025 Niantic.
 
 using System;
 using System.Collections.Generic;
@@ -6,6 +6,7 @@ using System.IO;
 using Niantic.Lightship.AR.Subsystems.Common;
 using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.Utilities;
+using Niantic.Lightship.Utilities.UnityAssets;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
@@ -430,7 +431,7 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
 
                 UpdateCacheWithCurrentConfidenceImage(frame);
 
-                var cpuImageApi = (LightshipCpuImageApi)environmentDepthCpuImageApi;
+                var cpuImageApi = (LightshipCpuImageApi)environmentDepthConfidenceCpuImageApi;
 
                 var currentFrame = _currentConfidenceTexture.Frame;
                 IntPtr dataPtr;
@@ -507,7 +508,7 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
                     }
 
                     var path = Path.Combine(_datasetReader.GetDatasetPath(), frame.DepthPath);
-                    byte[] buffer = File.ReadAllBytes(path);
+                    byte[] buffer = FileUtilities.GetAllBytes(path);
                     tex.LoadRawTextureData(buffer);
                     tex.Apply();
 
@@ -531,7 +532,7 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
                     }
 
                     var path = Path.Combine(_datasetReader.GetDatasetPath(), frame.DepthConfidencePath);
-                    byte[] buffer = File.ReadAllBytes(path);
+                    byte[] buffer = FileUtilities.GetAllBytes(path);
                     tex.LoadRawTextureData(buffer);
                     tex.Apply();
 

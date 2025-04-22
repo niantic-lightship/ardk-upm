@@ -1,4 +1,4 @@
-// Copyright 2022-2024 Niantic.
+// Copyright 2022-2025 Niantic.
 
 using System;
 using Niantic.Lightship.AR.Subsystems.Occlusion;
@@ -93,7 +93,7 @@ namespace Niantic.Lightship.AR.Occlusion.Features
             {
                 if (!_silenceDepthTextureWarning)
                 {
-                    Log.Warning("OcclusionMesh: No depth texture available.");
+                    Log.Info("OcclusionMesh: No depth texture available.");
                     _silenceDepthTextureWarning = true;
                 }
                 return;

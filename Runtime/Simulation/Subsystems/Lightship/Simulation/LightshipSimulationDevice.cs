@@ -1,4 +1,4 @@
-// Copyright 2022-2024 Niantic.
+// Copyright 2022-2025 Niantic.
 using Niantic.Lightship.AR.Subsystems.Playback;
 using Niantic.Lightship.AR.Utilities;
 using Unity.XR.CoreUtils;
@@ -21,12 +21,9 @@ namespace Niantic.Lightship.AR.Simulation
         {
             get
             {
-                if (LightshipSimulationEditorUtility.GetGameViewAspectRatio() >= 1.0)
-                {
-                    return Quaternion.Euler(0, 0, 0);
-                }
-
-                return Quaternion.Euler(0, 0, -90);
+                return LightshipSimulationEditorUtility.GetGameViewAspectRatio() >= 1.0
+                    ? Quaternion.Euler(0, 0, 0)
+                    : Quaternion.Euler(0, 0, -90);
             }
         }
 

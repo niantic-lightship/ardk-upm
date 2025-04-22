@@ -1,4 +1,4 @@
-// Copyright 2022-2024 Niantic.
+// Copyright 2022-2025 Niantic.
 using System;
 
 using Niantic.Lightship.AR.Subsystems;
@@ -31,7 +31,8 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
             UInt32 slickTemporalFusionWindowSize,
             bool diagnosticsEnabled,
             bool limitedLocalizationsOnly,
-            int jpegCompressionQuality);
+            int jpegCompressionQuality,
+            bool disableTransitiveCloudLocalizations);
 
         public void Destruct(IntPtr anchorProviderHandle);
 

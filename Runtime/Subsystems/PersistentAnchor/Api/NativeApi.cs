@@ -1,4 +1,4 @@
-// Copyright 2022-2024 Niantic.
+// Copyright 2022-2025 Niantic.
 using System;
 using System.Text;
 using System.Runtime.InteropServices;
@@ -75,6 +75,9 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
             public bool limitedLocalizationsOnly;
 
             public Int32 jpegCompressionQuality;
+
+            [MarshalAs(UnmanagedType.U1)]
+            public bool disableTransitiveCloudLocalizations;
         }
 
         public void Configure(IntPtr anchorProviderHandle,
@@ -92,7 +95,8 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
             UInt32 slickTemporalFusionWindowSize,
             bool enableDiagnostics,
             bool limitedLocalizationsOnly,
-            int jpegCompressionQuality)
+            int jpegCompressionQuality,
+            bool disableTransitiveCloudLocalizations)
         {
             var configurationCStruct = new AnchorConfigurationCStruct();
             configurationCStruct.enableContinuousLocalization = enableContinuousLocalization;
@@ -119,6 +123,7 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
             configurationCStruct.enableDiagnostics = enableDiagnostics;
             configurationCStruct.limitedLocalizationsOnly = limitedLocalizationsOnly;
             configurationCStruct.jpegCompressionQuality = jpegCompressionQuality;
+            configurationCStruct.disableTransitiveCloudLocalizations = disableTransitiveCloudLocalizations;
             Native.Configure(anchorProviderHandle, configurationCStruct);
         }
 

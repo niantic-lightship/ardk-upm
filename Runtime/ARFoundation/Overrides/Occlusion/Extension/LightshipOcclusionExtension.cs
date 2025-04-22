@@ -1,4 +1,4 @@
-// Copyright 2022-2024 Niantic.
+// Copyright 2022-2025 Niantic.
 using System;
 using System.Collections.Generic;
 using Niantic.Lightship.AR.Common;
@@ -417,7 +417,7 @@ namespace Niantic.Lightship.AR.Occlusion
             var cpuDepth = _occlusionComponent?.CPUDepth;
             if (cpuDepth is not {valid: true})
             {
-                Log.Warning(k_MissingCpuImageMessage);
+                Log.Info(k_MissingCpuImageMessage);
                 depth = float.NaN;
                 return false;
             }
@@ -462,10 +462,7 @@ namespace Niantic.Lightship.AR.Occlusion
             _occlusionManager = GetComponent<AROcclusionManager>();
 
             // Initialization should succeed in awake in most cases
-            if ((_isInitialized = TryInitialize()) == true)
-            {
-                ValidateRenderComponents();
-            }
+            _isInitialized = TryInitialize();
         }
 
         protected override void Update()
@@ -568,7 +565,7 @@ namespace Niantic.Lightship.AR.Occlusion
             {
                 if (!_silenceMissingCPUImageMessage)
                 {
-                    Log.Warning(k_MissingCpuImageMessage);
+                    Log.Info(k_MissingCpuImageMessage);
                     _silenceMissingCPUImageMessage = true;
                 }
                 return;

@@ -1,4 +1,4 @@
-// Copyright 2022-2024 Niantic.
+// Copyright 2022-2025 Niantic.
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -181,11 +181,6 @@ namespace Niantic.Lightship.AR.Editor
             _playbackSettingsEditors =
                 new IPlaybackSettingsEditor[] { new EditorPlaybackSettingsEditor(), new DevicePlaybackSettingsEditor() };
 
-            foreach (var editor in _playbackSettingsEditors)
-            {
-                editor.InitializeSerializedProperties(_lightshipSettings);
-            }
-
             _enabledIcon = EditorGUIUtility.IconContent("TestPassed").image;
             _disabledIcon = EditorGUIUtility.IconContent("Warning").image;
         }
@@ -364,7 +359,7 @@ namespace Niantic.Lightship.AR.Editor
             EditorGUILayout.LabelField("Playback", Contents.boldFont18Style, GUILayout.Width(80));
             if (EditorGUILayout.LinkButton(Contents.playbackLabel))
             {
-                Application.OpenURL("https://lightship.dev/docs/ardk/how-to/unity/setting_up_playback/");
+                Application.OpenURL("https://nianticspatial.com/docs/ardk/how-to/unity/setting_up_playback/");
             }
             GUILayout.EndHorizontal();
 
@@ -390,7 +385,7 @@ namespace Niantic.Lightship.AR.Editor
             EditorGUILayout.LabelField("Simulation", Contents.boldFont18Style, GUILayout.Width(95));
             if (EditorGUILayout.LinkButton(Contents.simulationLabel))
             {
-                Application.OpenURL("https://lightship.dev/docs/ardk/how-to/unity/simulation_mocking/");
+                Application.OpenURL("https://nianticspatial.com/docs/ardk/how-to/unity/simulation_mocking/");
             }
             GUILayout.EndHorizontal();
 

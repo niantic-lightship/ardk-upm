@@ -1,4 +1,4 @@
-// Copyright 2022-2024 Niantic.
+// Copyright 2022-2025 Niantic.
 
 using System.IO;
 using Newtonsoft.Json;
@@ -30,21 +30,21 @@ namespace Niantic.Lightship.AR.Loader
                 // Do NOT add api key for default values. But leave it as string.Empty. Not null. Else Unity will crash
                 ApiKey = string.Empty,
 
-                ScanningEndpoint = "https://wayfarer-ugc-api.nianticlabs.com/api/proto/v1/",
-                ScanningSqcEndpoint = "https://armodels.eng.nianticlabs.com/sqc/sqc3_enc.tar.gz",
+                ScanningEndpoint = "https://wayfarer-ugc-api.nianticspatial.com/api/proto/v1/",
+                ScanningSqcEndpoint = "https://armodels.eng.nianticspatial.com/sqc/sqc3_enc.tar.gz",
 
-                SharedArEndpoint = "marsh-prod.nianticlabs.com",
+                SharedArEndpoint = "marsh-prod.nianticspatial.com",
 
-                VpsEndpoint = "https://vps-frontend.nianticlabs.com/web",
-                VpsCoverageEndpoint = "https://vps-coverage-api.nianticlabs.com/",
+                VpsEndpoint = "https://vps-frontend.nianticspatial.com/web",
+                VpsCoverageEndpoint = "https://vps-coverage-api.nianticspatial.com/",
 
-                DefaultDepthSemanticsEndpoint = "https://armodels.eng.nianticlabs.com/niantic_ca_v1.2.bin",
-                FastDepthSemanticsEndpoint = "https://armodels.eng.nianticlabs.com/niantic_ca_v1.2_fast.bin",
-                SmoothDepthSemanticsEndpoint = "https://armodels.eng.nianticlabs.com/niantic_ca_v1.2_antiflicker.bin",
+                DefaultDepthSemanticsEndpoint = "https://armodels.eng.nianticspatial.com/niantic_ca_v1.2.bin",
+                FastDepthSemanticsEndpoint = "https://armodels.eng.nianticspatial.com/niantic_ca_v1.2_fast.bin",
+                SmoothDepthSemanticsEndpoint = "https://armodels.eng.nianticspatial.com/niantic_ca_v1.2_antiflicker.bin",
 
-                ObjectDetectionEndpoint = "https://armodels.eng.nianticlabs.com/niantic_ob_v0.4_full.bin",
+                ObjectDetectionEndpoint = "https://armodels.eng.nianticspatial.com/niantic_ob_v0.4_full.bin",
 
-                TelemetryEndpoint = "https://analytics.nianticlabs.com",
+                TelemetryEndpoint = "https://analytics.nianticspatial.com",
                 TelemetryApiKey = "b7d03117-f80f-4039-8488-3466633f8639",
             };
 

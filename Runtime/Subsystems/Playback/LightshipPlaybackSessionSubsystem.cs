@@ -1,4 +1,4 @@
-// Copyright 2022-2024 Niantic.
+// Copyright 2022-2025 Niantic.
 using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.Loader;
 using Niantic.Lightship.AR.Utilities;
@@ -103,11 +103,11 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
                 datasetReader.Reset();
                 if (!LightshipSettingsHelper.ActiveSettings.RunPlaybackManually)
                 {
-                    MonoBehaviourEventDispatcher.Updating.AddListener(MoveToNextFrame);
+                    MonoBehaviourEventDispatcher.Updating.AddListener(MoveToNextFrame, 0);
                 }
                 else
                 {
-                    MonoBehaviourEventDispatcher.Updating.AddListener(MoveToNextFrameIfKeyDown);
+                    MonoBehaviourEventDispatcher.Updating.AddListener(MoveToNextFrameIfKeyDown, 0);
                 }
             }
 

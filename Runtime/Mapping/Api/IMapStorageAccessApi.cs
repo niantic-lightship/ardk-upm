@@ -1,4 +1,4 @@
-// Copyright 2022-2024 Niantic.
+// Copyright 2022-2025 Niantic.
 
 using System;
 using UnityEngine;
@@ -24,6 +24,10 @@ namespace Niantic.Lightship.AR.MapStorageAccess
         void StartDownloadingMaps();
 
         void StopDownloadingMaps();
+
+        void StartGettingGraphData();
+
+        void StopGettingGraphData();
 
         bool MarkMapNodeForUpload(TrackableId mapId);
 

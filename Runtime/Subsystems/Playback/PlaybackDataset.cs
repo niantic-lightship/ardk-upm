@@ -1,10 +1,11 @@
-// Copyright 2022-2024 Niantic.
+// Copyright 2022-2025 Niantic.
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using Niantic.Lightship.AR.PAM;
 using Niantic.Lightship.AR.Subsystems.Playback;
 using Niantic.Lightship.AR.Utilities;
+using Niantic.Lightship.AR.Utilities.Logging;
 using UnityEngine;
 using UnityEngine.Serialization;
 using UnityEngine.XR.ARSubsystems;
@@ -44,6 +45,17 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
                        break;
                     }
                 }
+            }
+
+            if (frameCount != Frames.Count)
+            {
+                Log.Info
+                (
+                    $"Loaded dataset has {Frames.Count} frames when {frameCount} were expected based on the " +
+                    "metadata. Maybe the dataset was manipulated? Continuing with the loaded frames count."
+                );
+
+                frameCount = Frames.Count;
             }
 
             LidarEnabled = !string.IsNullOrEmpty(depthSource) && depthSource.Equals("lidar") ||

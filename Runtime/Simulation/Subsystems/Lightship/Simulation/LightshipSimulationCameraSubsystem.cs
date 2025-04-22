@@ -1,4 +1,4 @@
-// Copyright 2022-2024 Niantic.
+// Copyright 2022-2025 Niantic.
 using System;
 using System.IO;
 using Niantic.Lightship.AR.Subsystems.Common;
@@ -129,10 +129,9 @@ namespace Niantic.Lightship.AR.Simulation
 
                 _camera = LightshipSimulationDevice.GetOrCreateSimulationCamera().RgbCamera;
 
-                _simulationRgbCameraTextureProvider = LightshipSimulationRgbCameraTextureProvider.AddTextureProviderToCamera(_camera, xrCamera);
+                _simulationRgbCameraTextureProvider =
+                    LightshipSimulationTextureProvider.AddToCamera<LightshipSimulationRgbCameraTextureProvider>(_camera, xrCamera);
                 _simulationRgbCameraTextureProvider.FrameReceived += FrameReceived;
-                if (_simulationRgbCameraTextureProvider != null && _simulationRgbCameraTextureProvider.CameraFrameEventArgs != null)
-                    _cameraTextureFrameEventArgs = (LightshipCameraTextureFrameEventArgs)_simulationRgbCameraTextureProvider.CameraFrameEventArgs;
 
                 _xrCameraConfiguration = new XRCameraConfiguration(IntPtr.Zero, new Vector2Int(_camera.pixelWidth, _camera.pixelHeight));
             }
@@ -171,29 +170,41 @@ namespace Niantic.Lightship.AR.Simulation
 
             public override bool TryAcquireLatestCpuImage(out XRCpuImage.Cinfo cameraImageCinfo)
             {
-                if (_cameraTextureFrameEventArgs.Texture == null)
+                if (_simulationRgbCameraTextureProvider == null)
                 {
                     cameraImageCinfo = default;
                     return false;
                 }
 
-                Texture2D temp = new Texture2D(_cameraTextureFrameEventArgs.Texture.width, _cameraTextureFrameEventArgs.Texture.height, _cameraTextureFrameEventArgs.Texture.format, mipChain: false);
-                ExternalTextureUtils.ReadFromExternalTexture(_cameraTextureFrameEventArgs.Texture, temp);
+                var gotCpuData =
+                    _simulationRgbCameraTextureProvider.TryGetCpuData
+                    (
+                        out var data,
+                        out var dimensions,
+                        out var format
+                    );
+
+                if (!gotCpuData)
+                {
+                    cameraImageCinfo = default;
+                    return false;
+                }
+
+                // Get ptr to the data on cpu memory
                 IntPtr dataPtr;
                 unsafe
                 {
-                    dataPtr = (IntPtr) temp.GetRawTextureData<byte>().GetUnsafeReadOnlyPtr();
+                    var ptr = NativeArrayUnsafeUtility.GetUnsafeReadOnlyPtr(data);
+                    dataPtr = (IntPtr)ptr;
                 }
 
-                var lightshipCpuImageApi = (LightshipCpuImageApi)cpuImageApi;
-
-                var gotCpuImage = lightshipCpuImageApi.TryAddManagedXRCpuImage
+                var gotCpuImage = ((LightshipCpuImageApi)cpuImageApi).TryAddManagedXRCpuImage
                 (
                     dataPtr,
-                    temp.width * temp.height * temp.format.BytesPerPixel(),
-                    temp.width,
-                    temp.height,
-                    temp.format,
+                    dimensions.x * dimensions.y * format.BytesPerPixel(),
+                    dimensions.x,
+                    dimensions.y,
+                    format,
                     timestampMs: (ulong)_cameraTextureFrameEventArgs.TimestampNs,
                     out cameraImageCinfo
                 );

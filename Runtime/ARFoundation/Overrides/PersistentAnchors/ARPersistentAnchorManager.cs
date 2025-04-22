@@ -1,4 +1,4 @@
-// Copyright 2022-2024 Niantic.
+// Copyright 2022-2025 Niantic.
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -345,6 +345,9 @@ namespace Niantic.Lightship.AR.PersistentAnchors
             set => _deviceMapDownloadEnabled = value;
         }
 
+        // The following configurations are internal, in-development
+        internal bool DisableTransitiveCloudLocalizations { get; set; }
+
         /// <summary>
         /// Asynchronously restarts the subsystem with the current configuration.
         /// This will remove all anchors and stop the subsystem before restarting it.
@@ -453,6 +456,7 @@ namespace Niantic.Lightship.AR.PersistentAnchors
             cfg.LimitedLocalizationsOnly = LimitedLocalizationsOnly;
             cfg.DeviceMappingLocalizationTemporalFusionWindowSize = DeviceMappingLocalizationTemporalFusionWindowSize;
 #endif
+            cfg.DisableTransitiveCloudLocalizations = DisableTransitiveCloudLocalizations;
 
             subsystem.CurrentConfiguration = cfg;
         }

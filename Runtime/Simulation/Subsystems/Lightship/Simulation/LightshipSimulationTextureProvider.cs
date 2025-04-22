@@ -1,13 +1,11 @@
-// Copyright 2022-2024 Niantic.
+// Copyright 2022-2025 Niantic.
 
 using System;
-using System.Collections.Generic;
-using Niantic.Lightship.AR.Subsystems.Playback;
 using Niantic.Lightship.AR.Utilities;
 using Unity.Collections;
 using Unity.XR.CoreUtils;
-using UnityEditor;
 using UnityEngine;
+using UnityEngine.Rendering;
 using UnityEngine.XR.ARSubsystems;
 using UnityEngine.XR.Simulation;
 
@@ -15,183 +13,258 @@ namespace Niantic.Lightship.AR.Simulation
 {
     /// <summary>
     /// Based on Unity Simulation's CameraTextureProvider.
-    /// Input handler for movement in the device view and game view when using <c>CameraPoseProvider</c>.
     /// </summary>
     internal abstract class LightshipSimulationTextureProvider : MonoBehaviour
     {
-        internal static event Action<Camera> PreRenderCamera;
-        internal static event Action<Camera> PostRenderCamera;
+        /// <summary>
+        /// Event that is invoked when a new frame is received.
+        /// </summary>
         internal event Action<LightshipCameraTextureFrameEventArgs> FrameReceived;
 
-        protected Camera XrCamera;
-        protected Camera SimulationRenderCamera;
-        protected RenderTexture RenderTexture;
-        protected Texture2D ProviderTexture;
-        protected IntPtr TexturePtr;
+        /// <summary>
+        /// The target texture to render the simulated image into.
+        /// </summary>
+        private RenderTexture _targetTexture;
 
-        private Texture2D _cameraPlane = default;
+        /// <summary>
+        /// The copy of the simulated image to be consumed by listeners.
+        /// </summary>
+        private Texture2D _outputTexture;
 
-        internal LightshipCameraTextureFrameEventArgs? CameraFrameEventArgs;
+        /// <summary>
+        /// Setting for where should the provider allocate data for the output texture.
+        /// </summary>
+        protected enum TextureAllocationMode
+        {
+            /// <summary>
+            /// The resulting texture will only contain meaningful data on the GPU.
+            /// </summary>
+            GPU,
 
-        protected bool Initialized;
+            /// <summary>
+            /// The resulting texture will contain meaningful data on the CPU.
+            /// </summary>
+            CPU,
 
-        private const int SensorWidth = 720;
-        private const int SensorHeight = 540;
-        private const float SensorFocalLength = 623.5382f;
+            /// <summary>
+            /// The resulting texture will contain meaningful data on both the CPU and GPU.
+            /// </summary>
+            CPUAndGPU
+        }
+
+        /// <summary>
+        /// Configures where should the provider allocate data for the output texture.
+        /// </summary>
+        protected virtual TextureAllocationMode TextureAllocation => TextureAllocationMode.CPUAndGPU;
+
+        /// <summary>
+        /// Shader property id for the output texture.
+        /// </summary>
+        protected abstract int PropertyNameId { get; }
+
+        protected abstract void OnConfigureCamera(Camera renderCamera);
+        protected abstract bool OnAllocateResources(out RenderTexture target, out Texture2D output);
+
+        /// <summary>
+        /// Whether the provider has been initialized.
+        /// </summary>
+        private bool Initialized { get; set; }
+
+        // Components and helpers
+        private Camera _simulatedCamera;
+        private IntPtr _outputTexturePtr = IntPtr.Zero;
+
+        // Configuration for the simulated camera sensor
+        protected const int ImageWidth = 720;
+        protected const int ImageHeight = 540;
+        private const float SensorFocalLength = 26.0f;
+
+        internal static TProvider AddToCamera<TProvider>(Camera simulationCamera, Camera xrCamera)
+            where TProvider : LightshipSimulationTextureProvider
+        {
+            var cameraTextureProvider = simulationCamera.gameObject.AddComponent<TProvider>();
+            cameraTextureProvider.InitializeProvider(xrCamera, simulationCamera);
+            return cameraTextureProvider;
+        }
+
+        private void InitializeProvider(Camera xrCamera, Camera simulationCamera)
+        {
+            // Allocate resources
+            if (!OnAllocateResources(out _targetTexture, out _outputTexture))
+            {
+                Debug.LogError("Failed to allocate resources for the simulation camera.");
+                return;
+            }
+
+            // Cache components
+            _simulatedCamera = simulationCamera;
+
+            // Configure the simulated (physical) camera
+            var simulationEnvironmentLayer = 1 << XRSimulationRuntimeSettings.Instance.environmentLayer;
+            _simulatedCamera.cullingMask = simulationEnvironmentLayer;
+            _simulatedCamera.depth = xrCamera.depth - 1;
+            _simulatedCamera.usePhysicalProperties = true;
+            _simulatedCamera.focalLength = SensorFocalLength;
+            _simulatedCamera.nearClipPlane = xrCamera.nearClipPlane;
+            _simulatedCamera.farClipPlane = xrCamera.farClipPlane;
+            OnConfigureCamera(_simulatedCamera);
+
+            // Flipping the projection matrix simulates the upside-down nature of native images
+            // TODO(ahegedus): Is this really necessary?
+            _simulatedCamera.projectionMatrix *= Matrix4x4.Scale(new Vector3(1, -1, 1));
+
+            // Configure the XR camera
+            // Our ar camera will be stripped from seeing the simulation layer
+            xrCamera.cullingMask -= simulationEnvironmentLayer;
+            xrCamera.clearFlags = CameraClearFlags.Color;
+            xrCamera.backgroundColor = Color.black;
+
+            Initialized = true;
+        }
 
         private void Update()
         {
             if (!Initialized)
-                return;
-
-            // Currently assuming the main camera is being set to the correct settings for rendering to the target device
-            XrCamera.ResetProjectionMatrix();
-            DoCameraRender(SimulationRenderCamera);
-
-            if (!RenderTexture.IsCreated() && !RenderTexture.Create())
-                return;
-
-            if (ProviderTexture.width != RenderTexture.width
-                || ProviderTexture.height != RenderTexture.height)
             {
-                if (!ProviderTexture.Reinitialize(RenderTexture.width, RenderTexture.height))
-                    return;
-
-                TexturePtr = ProviderTexture.GetNativeTexturePtr();
+                return;
             }
 
-            Graphics.CopyTexture(RenderTexture, ProviderTexture);
+            // Render the camera into texture
+            // We invert culling because the projection matrix is flipped
+            GL.invertCulling = true;
+            _simulatedCamera.Render();
+            GL.invertCulling = false;
 
-            //m_CameraImagePlanes.Clear();
-            //m_CameraImagePlanes.Add(m_ProviderTexture);
-            _cameraPlane = ProviderTexture;
+            // Invoke the post render callback
+            OnPostRenderCamera(_simulatedCamera, _targetTexture);
 
-            var screenOrientation = GameViewUtils.GetEditorScreenOrientation();
-
-            var displayMatrix =
-                CameraMath.CalculateDisplayMatrix
-                (
-                    RenderTexture.width,
-                    RenderTexture.height,
-                    Screen.width,
-                    Screen.height,
-                    screenOrientation,
-                    true,
-                    // Via ARF, external textures are formatted with their
-                    // first pixel in the top left. Thus the displayMatrix needs
-                    // to include a flip because Unity displays textures with
-                    // their first pixel in the bottom left.
-                    // For this we invert the projection matrix in OnPreCull
-                    layout: CameraMath.MatrixLayout.RowMajor
-                );
-
-            SimulationRenderCamera.ResetProjectionMatrix();
-
-            // projectionMatrix dictates the AR camera's vertical FOV.
-            // we can calculate the corresponding matrix by temporarily setting the simulation camera's FOV
-            float originalVerticalFOV = SimulationRenderCamera.fieldOfView;
-
-            // Always base desired FoV based on the horizontal (long side) FoV of the simulation camera,
-            // because cropping of FoV will happen vertically
-            float originalHorizontalFOV = Camera.VerticalToHorizontalFieldOfView(originalVerticalFOV, SimulationRenderCamera.aspect);
-            float desiredVerticalFOV;
-
-            var rotated = (int)transform.localToWorldMatrix.rotation.eulerAngles.z % 180 != 0;
-            if (rotated)
+            // Process the resulting texture
+            if (TryUpdateTexture())
             {
-                // If the simulation camera is rotated 90 degrees from the default Landscape orientation,
-                // the AR camera's vertical FOV should match the simulation camera's horizontal FOV
-                desiredVerticalFOV = originalHorizontalFOV;
+                PublishFrame();
+            }
+        }
+
+        protected virtual void OnDestroy()
+        {
+            if (_simulatedCamera != null)
+            {
+                _simulatedCamera.targetTexture = null;
+            }
+
+            if (_targetTexture != null)
+            {
+                _targetTexture.Release();
+            }
+
+            if (_outputTexture != null)
+            {
+                UnityObjectUtils.Destroy(_outputTexture);
+            }
+        }
+
+        protected virtual void OnPostRenderCamera(Camera renderCamera, RenderTexture targetTexture) { }
+
+        /// <summary>
+        /// Invoked when it is time to copy the simulation camera's target texture to the provider texture.
+        /// </summary>
+        /// <returns>True if the texture was successfully updated, false otherwise.</returns>
+        private bool TryUpdateTexture()
+        {
+            if (!_targetTexture.IsCreated())
+            {
+                if (!_targetTexture.Create())
+                {
+                    return false;
+                }
+            }
+
+            // Reinitialize the provider texture if the dimensions of the render texture have changed
+            if (_outputTexture.width != _targetTexture.width || _outputTexture.height != _targetTexture.height)
+            {
+                if (!_outputTexture.Reinitialize(_targetTexture.width, _targetTexture.height))
+                {
+                    return false;
+                }
+            }
+
+            if (TextureAllocation == TextureAllocationMode.GPU)
+            {
+                // Make a GPU copy
+                Graphics.CopyTexture(_targetTexture, _outputTexture);
             }
             else
             {
-                // The simulation camera is not rotated, but the AR camera's vertical FoV may be cropped
-                // if the aspect ratio is narrower
-                desiredVerticalFOV = Camera.HorizontalToVerticalFieldOfView(originalHorizontalFOV, LightshipSimulationEditorUtility.GetGameViewAspectRatio());
+                // Push context
+                var previousActive = RenderTexture.active;
+                RenderTexture.active = _targetTexture;
+
+                // Make a CPU copy
+                _outputTexture.ReadPixels(new Rect(0, 0, _targetTexture.width, _targetTexture.height), 0, 0);
+
+                if (TextureAllocation == TextureAllocationMode.CPUAndGPU)
+                {
+                    // Make a GPU copy
+                    _outputTexture.Apply(false);
+                }
+
+                // Pop context
+                RenderTexture.active = previousActive;
             }
 
-            SimulationRenderCamera.fieldOfView = desiredVerticalFOV;
-            var projectionMatrix = SimulationRenderCamera.projectionMatrix;
-            // restore the original FOV
-            SimulationRenderCamera.fieldOfView = originalVerticalFOV;
-
-            var frameEventArgs = new LightshipCameraTextureFrameEventArgs(
-                timestampNs: (long)(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() * 1e6), projectionMatrix: projectionMatrix,
-                displayMatrix: displayMatrix, intrinsics: GetCameraIntrinsics(), texture: _cameraPlane);
-
-            FrameReceived?.Invoke(frameEventArgs);
+            _outputTexturePtr = _outputTexture.GetNativeTexturePtr();
+            return true;
         }
 
-        protected virtual void OnEnable()
+        private void PublishFrame()
         {
-            PreRenderCamera += OnPreRenderCamera;
-            PostRenderCamera += OnPostRenderCamera;
+            var cameraParams = new XRCameraParams
+            {
+                zFar = _simulatedCamera.farClipPlane,
+                zNear = _simulatedCamera.nearClipPlane,
+                screenWidth = Screen.width,
+                screenHeight = Screen.height,
+                screenOrientation = GameViewUtils.GetEditorScreenOrientation()
+            };
+
+            // Calculate the XRCameraIntrinsics
+            var intrinsics = CameraMath.CalculateIntrinsics(_simulatedCamera);
+
+            // Calculate the projection matrix
+            var projectionMatrix = CameraMath.CalculateProjectionMatrix(intrinsics, cameraParams);
+
+            // Calculate the display matrix
+            var displayMatrix = CameraMath.CalculateDisplayMatrix
+            (
+                _targetTexture.width,
+                _targetTexture.height,
+                (int)cameraParams.screenWidth,
+                (int)cameraParams.screenHeight,
+                cameraParams.screenOrientation,
+
+                true,
+                // Via ARF, external textures are formatted with their
+                // first pixel in the top left. Thus, the displayMatrix needs
+                // to include a flip because Unity displays textures with
+                // their first pixel in the bottom left.
+                // For this we invert the projection matrix in OnPreCull
+                layout: CameraMath.MatrixLayout.RowMajor
+            );
+
+            // Acquire the timestamp
+            var timestampNs = (long)(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() * 1e6);
+
+            // Propagate frame to listeners
+            FrameReceived?.Invoke(
+                new LightshipCameraTextureFrameEventArgs(timestampNs, projectionMatrix, displayMatrix, intrinsics,
+                    _outputTexture));
         }
-
-        protected virtual void OnDisable()
-        {
-            PreRenderCamera -= OnPreRenderCamera;
-            PostRenderCamera -= OnPostRenderCamera;
-        }
-
-        internal virtual void OnDestroy()
-        {
-            if (SimulationRenderCamera != null)
-                SimulationRenderCamera.targetTexture = null;
-
-            if (RenderTexture != null)
-                RenderTexture.Release();
-
-            if (ProviderTexture != null)
-                UnityObjectUtils.Destroy(ProviderTexture);
-        }
-
-        private XRCameraIntrinsics GetCameraIntrinsics()
-        {
-            return new XRCameraIntrinsics
-                (
-                    new Vector2(SensorFocalLength, SensorFocalLength),
-                    new Vector2(SensorWidth/2f, SensorHeight/2f),
-                    new Vector2Int(SimulationRenderCamera.scaledPixelWidth, SimulationRenderCamera.scaledPixelHeight)
-                );
-        }
-
-        protected virtual void InitializeProvider(Camera xrCamera, Camera simulationCamera)
-        {
-            var simulationEnvironmentLayer = 1 << XRSimulationRuntimeSettings.Instance.environmentLayer;
-
-            simulationCamera.cullingMask = simulationEnvironmentLayer;
-            simulationCamera.depth = xrCamera.depth - 1;
-
-            xrCamera.clearFlags = CameraClearFlags.Color;
-            xrCamera.backgroundColor = Color.black;
-            // our ar camera will be stripped from seeing the simulation layer
-            xrCamera.cullingMask -= simulationEnvironmentLayer;
-
-            simulationCamera.usePhysicalProperties = true;
-            // sensor size is in mm, pixel size comes from sensor size divided by target texture resolution
-            // we make pixels on the sensor 1mm by later setting the target textures to the same values as sensor size
-            simulationCamera.sensorSize = new Vector2(SensorHeight, SensorWidth);
-            var calculatedFov = Camera.FocalLengthToFieldOfView(SensorFocalLength, simulationCamera.sensorSize.y);
-            simulationCamera.fieldOfView = calculatedFov;
-        }
-
-        private void DoCameraRender(Camera renderCamera)
-        {
-            PreRenderCamera?.Invoke(renderCamera);
-            renderCamera.Render();
-            PostRenderCamera?.Invoke(renderCamera);
-        }
-
-        internal abstract bool TryGetTextureDescriptors(out NativeArray<XRTextureDescriptor> planeDescriptors,
-            Allocator allocator);
 
         internal bool TryGetLatestImagePtr(out IntPtr nativePtr)
         {
-            if (_cameraPlane != null && ProviderTexture != null
-                && ProviderTexture.isReadable)
+            if (_outputTexture != null && _outputTexturePtr != IntPtr.Zero)
             {
-                nativePtr =  TexturePtr;
+                nativePtr = _outputTexturePtr;
                 return true;
             }
 
@@ -199,18 +272,84 @@ namespace Niantic.Lightship.AR.Simulation
             return false;
         }
 
-        // since we are inverting the projection matrix, we need to invert culling so normals are considered inverted.
-        // this would normally be done to achieve reflection and mirroring effects
-        private void OnPreRenderCamera(Camera renderCamera)
+        /// <summary>
+        /// Tries to acquire the image on GPU memory via a XRTextureDescriptor.
+        /// </summary>
+        /// <param name="planeDescriptor">The XRTextureDescriptor for the image.</param>
+        /// <returns>True if the image is successfully acquired, false otherwise.</returns>
+        internal bool TryGetTextureDescriptor(out XRTextureDescriptor planeDescriptor)
         {
-            renderCamera.ResetProjectionMatrix();
-            renderCamera.projectionMatrix *= Matrix4x4.Scale(new Vector3(1, -1, 1));
-            GL.invertCulling = true;
+            // Don't provide a descriptor if the texture is cpu only
+            if (TextureAllocation == TextureAllocationMode.CPU)
+            {
+                planeDescriptor = default;
+                return false;
+            }
+
+            if (!TryGetLatestImagePtr(out var nativePtr))
+            {
+                planeDescriptor = default;
+                return false;
+            }
+
+            planeDescriptor = new XRTextureDescriptor
+            (
+                nativePtr,
+                _outputTexture.width,
+                _outputTexture.height,
+                _outputTexture.mipmapCount,
+                _outputTexture.format,
+                PropertyNameId,
+                0,
+                TextureDimension.Tex2D
+            );
+
+            return true;
         }
 
-        private void OnPostRenderCamera(Camera renderCamera) {
-            GL.invertCulling = false;
-            renderCamera.ResetProjectionMatrix();
+        /// <summary>
+        /// Tries to acquire the image on GPU memory via a XRTextureDescriptor.
+        /// </summary>
+        /// <param name="planeDescriptors">The XRTextureDescriptor for the image.</param>
+        /// <param name="allocator"></param>
+        /// <returns>True if the image is successfully acquired, false otherwise.</returns>
+        internal bool TryGetTextureDescriptors(out NativeArray<XRTextureDescriptor> planeDescriptors,
+            Allocator allocator)
+        {
+            if (TryGetTextureDescriptor(out var descriptor))
+            {
+                planeDescriptors = new NativeArray<XRTextureDescriptor>(new []{descriptor}, allocator);
+                return true;
+            }
+
+            planeDescriptors = default;
+            return false;
+        }
+
+        /// <summary>
+        /// Tries to acquire the image data on CPU memory.
+        /// </summary>
+        /// <param name="data">The image data on cpu memory.</param>
+        /// <param name="dimensions">The dimensions of the image.</param>
+        /// <param name="format">The format of the image.</param>
+        /// <returns>True if the image data is successfully acquired, false otherwise.</returns>
+        internal bool TryGetCpuData(out NativeArray<byte> data, out Vector2Int dimensions, out TextureFormat format)
+        {
+            var allocatesOnCPU = TextureAllocation is TextureAllocationMode.CPU or TextureAllocationMode.CPUAndGPU;
+            var isTextureReadable = _outputTexture != null && _outputTexture.isReadable;
+
+            if (!allocatesOnCPU || !isTextureReadable)
+            {
+                data = default;
+                dimensions = default;
+                format = default;
+                return false;
+            }
+
+            data = _outputTexture.GetPixelData<byte>(0);
+            dimensions = new Vector2Int(_outputTexture.width, _outputTexture.height);
+            format = _outputTexture.format;
+            return data.IsCreated;
         }
     }
 }

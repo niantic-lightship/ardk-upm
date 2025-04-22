@@ -1,3 +1,4 @@
+// Copyright 2022-2025 Niantic.
 using System;
 using System.Runtime.InteropServices;
 using Niantic.Lightship.AR.Core;

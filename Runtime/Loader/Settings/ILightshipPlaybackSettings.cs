@@ -1,4 +1,4 @@
-// Copyright 2022-2024 Niantic.
+// Copyright 2022-2025 Niantic.
 
 namespace Niantic.Lightship.AR.Loader
 {
@@ -11,5 +11,9 @@ namespace Niantic.Lightship.AR.Loader
         bool RunManually { get; set; }
 
         bool LoopInfinitely { get; set; }
+
+        int StartFrame { get; set; }
+
+        int EndFrame { get; set; }
     }
 }

@@ -1,4 +1,4 @@
-// Copyright 2022-2024 Niantic.
+// Copyright 2022-2025 Niantic.
 
 using System;
 using System.Collections.Generic;
@@ -29,12 +29,37 @@ namespace Niantic.Lightship.AR.VpsCoverage
             }
 
             string jsonRequest = JsonUtility.ToJson(request);
+            byte[] data = Encoding.UTF8.GetBytes(jsonRequest);
 
-            using (UnityWebRequest webRequest = new UnityWebRequest(uri, "POST"))
+            return await SendRequestAsync<TResponse>(uri, data, "POST", "application/json", headers);
+        }
+
+        // This method only works with [Serializable] TResponse
+        internal static async Task<HttpResponse<TResponse>> SendPutAsync<TResponse>
+        (
+            string uri,
+            byte[] body,
+            Dictionary<string, string> headers = null
+        )
+        where TResponse : class
+        {
+            return await SendRequestAsync<TResponse>(uri, body, "PUT", "", headers);
+        }
+
+        private static async Task<HttpResponse<TResponse>> SendRequestAsync<TResponse>
+        (
+            string uri,
+            byte[] requestBody,
+            string method,
+            string contentType = "application/json",
+            Dictionary<string, string> headers = null
+        )
+        where TResponse : class
+        {
+            using (UnityWebRequest webRequest = new UnityWebRequest(uri, method))
             {
-                byte[] data = Encoding.UTF8.GetBytes(jsonRequest);
-                webRequest.uploadHandler = new UploadHandlerRaw(data);
-                webRequest.uploadHandler.contentType = "application/json";
+                webRequest.uploadHandler = new UploadHandlerRaw(requestBody);
+                webRequest.uploadHandler.contentType = contentType;
                 webRequest.downloadHandler = new DownloadHandlerBuffer();
                 if (headers != null)
                     foreach (var header in headers)

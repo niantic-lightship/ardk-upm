@@ -1,4 +1,4 @@
-// Copyright 2022-2024 Niantic.
+// Copyright 2022-2025 Niantic.
 
 using System;
 using System.ComponentModel;
@@ -13,7 +13,7 @@ namespace Niantic.Lightship.AR.Utilities.Preloading
         [Description("None")] Unspecified = 0,
         [Description("Lightship Depth")] Depth,
         [Description("Lightship Semantic Segmentation")] Semantics,
-        [Description("Lightship Scanning Framework")] Scanning,
+        [Description("Lightship Scanning SQC")] ScanningSQC,
         [Description("Lightship Object Detection")] ObjectDetection
     }
 
@@ -50,6 +50,11 @@ namespace Niantic.Lightship.AR.Utilities.Preloading
             return DownloadModel(Feature.Semantics, (byte) semanticsMode);
         }
 
+        public override PreloaderStatusCode DownloadModel(ScanningSQCMode scanningSQCMode)
+        {
+            return DownloadModel(Feature.ScanningSQC, (byte)scanningSQCMode);
+        }
+
         public override PreloaderStatusCode DownloadModel(ObjectDetectionMode objectDetectionMode)
         {
             return DownloadModel(Feature.ObjectDetection, (byte)objectDetectionMode);
@@ -75,6 +80,11 @@ namespace Niantic.Lightship.AR.Utilities.Preloading
             return RegisterModel(Feature.Semantics, (byte) semanticsMode, filepath);
         }
 
+        public override PreloaderStatusCode RegisterModel(ScanningSQCMode scanningSQCMode, string filepath)
+        {
+            return RegisterModel(Feature.ScanningSQC, (byte)scanningSQCMode, filepath);
+        }
+
         public override PreloaderStatusCode RegisterModel(ObjectDetectionMode objectDetectionMode, string filepath)
         {
             return RegisterModel(Feature.ObjectDetection, (byte)objectDetectionMode, filepath);
@@ -98,6 +108,11 @@ namespace Niantic.Lightship.AR.Utilities.Preloading
         public override PreloaderStatusCode CurrentProgress(SemanticsMode semanticsMode, out float progress)
         {
             return CurrentProgress(Feature.Semantics, (byte) semanticsMode, out progress);
+        }
+
+        public override PreloaderStatusCode CurrentProgress(ScanningSQCMode scanningSQCMode, out float progress)
+        {
+            return CurrentProgress(Feature.ScanningSQC, (byte)scanningSQCMode, out progress);
         }
 
         public override PreloaderStatusCode CurrentProgress(ObjectDetectionMode objectDetectionMode, out float progress)
@@ -126,6 +141,11 @@ namespace Niantic.Lightship.AR.Utilities.Preloading
             return ExistsInCache(Feature.Semantics, (byte) semanticsMode);
         }
 
+        public override bool ExistsInCache(ScanningSQCMode scanningSQCMode)
+        {
+            return ExistsInCache(Feature.ScanningSQC, (byte)scanningSQCMode);
+        }
+
         public override bool ExistsInCache(ObjectDetectionMode objectDetectionMode)
         {
             return ExistsInCache(Feature.ObjectDetection, (byte)objectDetectionMode);
@@ -149,6 +169,11 @@ namespace Niantic.Lightship.AR.Utilities.Preloading
         public override bool ClearFromCache(SemanticsMode semanticsMode)
         {
             return ClearFromCache(Feature.Semantics, (byte) semanticsMode);
+        }
+
+        public override bool ClearFromCache(ScanningSQCMode scanningSQCMode)
+        {
+            return ClearFromCache(Feature.ScanningSQC, (byte)scanningSQCMode);
         }
 
         public override bool ClearFromCache(ObjectDetectionMode objectDetectionMode)

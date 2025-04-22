@@ -1,4 +1,4 @@
-// Copyright 2022-2024 Niantic.
+// Copyright 2022-2025 Niantic.
 
 using Niantic.Lightship.AR.Utilities.Logging;
 using UnityEngine;
@@ -63,7 +63,7 @@ namespace Niantic.Lightship.AR.Occlusion.Features
             {
                 if (!_silenceDepthTextureWarning)
                 {
-                    Log.Warning("ZBufferOcclusion: No depth texture available.");
+                    Log.Info("ZBufferOcclusion: No depth texture available.");
                     _silenceDepthTextureWarning = true;
                 }
                 return;

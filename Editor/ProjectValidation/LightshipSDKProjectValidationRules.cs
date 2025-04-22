@@ -1,4 +1,4 @@
-// Copyright 2022-2024 Niantic.
+// Copyright 2022-2025 Niantic.
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -27,8 +27,8 @@ namespace Niantic.Lightship.AR.Editor
         private const string Category = "Niantic Lightship SDK";
         private const string PlaybackDatasetMetaFilename = "capture.json";
         private const string UnityDownloadsPage = "https://unity.com/download";
-        private const string CreateAPIKeyHelpLink = "https://lightship.dev/docs/beta/ardk/install/#adding-your-api-key-to-your-unity-project";
-        private const string UpdateGradleVersionHelpLink = "https://lightship.dev/docs/beta/ardk/install/#installing-gradle-for-android";
+        private const string CreateAPIKeyHelpLink = "https://nianticspatial.com/docs/beta/ardk/install/#adding-your-api-key-to-your-unity-project";
+        private const string UpdateGradleVersionHelpLink = "https://nianticspatial.com/docs/beta/ardk/install/#installing-gradle-for-android";
 
         private static Dictionary<BuildTargetGroup, List<BuildValidationRule>> s_platformRules;
 

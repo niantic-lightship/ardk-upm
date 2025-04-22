@@ -1,4 +1,4 @@
-// Copyright 2022-2024 Niantic.
+// Copyright 2022-2025 Niantic.
 
 using System;
 using Niantic.Lightship.AR.Utilities.Logging;
@@ -265,7 +265,7 @@ namespace Niantic.Lightship.AR.PAM
             {
                 if (_requestedLocationPermissions && Time.frameCount % _noGpsWarningFramerate == 0)
                 {
-                    MissingLocationPermissionLog();
+                    MissingLocationPermissionLog();    
                 }
                 else
                 {
@@ -404,14 +404,18 @@ namespace Niantic.Lightship.AR.PAM
 
         private void AndroidPermissionRequestGrantedCheck()
         {
-            if (Input.location.status == LocationServiceStatus.Stopped &&
+            // As mentioned in TryStartLocation above, because this is requesting multiple permissions at once
+            // Input.location.status will return Failed initially. So we need to check for both Stopped and Failed 
+            // here once we've confirmed that permission has been granted.
+            if ( (Input.location.status == LocationServiceStatus.Stopped || 
+                Input.location.status == LocationServiceStatus.Failed) && 
                 Permission.HasUserAuthorizedPermission(Permission.FineLocation))
             {
                 Log.Info("Location permissions granted. Starting location services...");
                 StartLocation();
 
                 MonoBehaviourEventDispatcher.Updating.RemoveListener(AndroidPermissionRequestGrantedCheck);
-            }
+            }            
         }
 #endif
         private void IOSPermissionRequestCheck()

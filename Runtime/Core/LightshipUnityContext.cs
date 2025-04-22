@@ -1,4 +1,4 @@
-// Copyright 2022-2024 Niantic.
+// Copyright 2022-2025 Niantic.
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -31,6 +31,7 @@ namespace Niantic.Lightship.AR.Core
         private static UserConfig s_userConfig;
         private static TelemetryService s_telemetryService;
         internal static bool s_isDeviceLidarSupported = false;
+        internal const string featureFlagFileName = "featureFlag.json";
 
         // Event triggered right before the context is destroyed. Used by internal code its lifecycle is not managed
         // by native UnityContext
@@ -210,7 +211,6 @@ namespace Niantic.Lightship.AR.Core
 
         private static string GetFeatureFlagPath()
         {
-            const string featureFlagFileName = "featureFlag.json";
             var pathInPersistentData = Path.Combine(Application.persistentDataPath, featureFlagFileName);
             var pathInStreamingAsset = Path.Combine(Application.streamingAssetsPath, featureFlagFileName);
             var pathInTempCache = Path.Combine(Application.temporaryCachePath, featureFlagFileName);

@@ -1,6 +1,6 @@
+// Copyright 2022-2025 Niantic.
 #if MODULE_URP_ENABLED
 
-// Copyright 2022-2024 Niantic.
 
 using UnityEngine;
 using UnityEngine.Rendering;

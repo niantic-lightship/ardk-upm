@@ -1,4 +1,4 @@
-// Copyright 2022-2024 Niantic.
+// Copyright 2022-2025 Niantic.
 
 using System;
 #if UNITY_EDITOR
@@ -14,6 +14,8 @@ namespace Niantic.Lightship.AR.Loader
         private const string k_RunManually = "Niantic.Lightship.AR.Settings.RunManually";
         private const string k_LoopInfinitely = "Niantic.Lightship.AR.Settings.LoopInfinitely";
         private const string k_NumIterations = "Niantic.Lightship.AR.Settings.NumIterations";
+        private const string k_StartFrame = "Niantic.Lightship.AR.Settings.StartFrame";
+        private const string k_EndFrame = "Niantic.Lightship.AR.Settings.EndFrame";
 
 #if !UNITY_EDITOR
         public bool UsePlayback { get; set; }
@@ -21,6 +23,8 @@ namespace Niantic.Lightship.AR.Loader
         public bool RunManually { get; set; }
         public bool LoopInfinitely { get; set; }
         public uint NumberOfIterations { get; set; }
+        public int StartFrame { get; set; }
+        public int EndFrame { get; set; }
 #else
         public bool UsePlayback
         {
@@ -83,6 +87,30 @@ namespace Niantic.Lightship.AR.Loader
                 }
 
                 EditorPrefs.SetInt(k_NumIterations, (int)value);
+            }
+        }
+
+        public int StartFrame
+        {
+            get
+            {
+                return EditorPrefs.GetInt(k_StartFrame, 0);
+            }
+            set
+            {
+                EditorPrefs.SetInt(k_StartFrame, value);
+            }
+        }
+
+        public int EndFrame
+        {
+            get
+            {
+                return EditorPrefs.GetInt(k_EndFrame, -1);
+            }
+            set
+            {
+                EditorPrefs.SetInt(k_EndFrame, value);
             }
         }
 #endif

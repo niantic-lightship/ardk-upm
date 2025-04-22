@@ -1,4 +1,4 @@
-// Copyright 2022-2024 Niantic.
+// Copyright 2022-2025 Niantic.
 using System.Collections.Generic;
 using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.Loader;
@@ -31,6 +31,9 @@ namespace Niantic.Lightship.AR
             Log.Info("Initialize Playback subsystems");
 
             var settings = LightshipSettingsHelper.ActiveSettings;
+
+            Log.Debug($"Using settings: {settings} with playback dataset path: {settings.PlaybackDatasetPath}");
+
             var dataset = PlaybackDatasetLoader.Load(settings.PlaybackDatasetPath);
 
             if (dataset == null)
@@ -39,7 +42,11 @@ namespace Niantic.Lightship.AR
                 return false;
             }
 
-            DatasetReader = new PlaybackDatasetReader(dataset, settings.LoopPlaybackInfinitely);
+            DatasetReader = new PlaybackDatasetReader(
+                dataset,
+                settings.LoopPlaybackInfinitely,
+                settings.PlaybackSettings.StartFrame,
+                settings.PlaybackSettings.EndFrame);
 
             loader.CreateSubsystem<XRSessionSubsystemDescriptor, XRSessionSubsystem>
             (

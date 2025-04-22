@@ -1,4 +1,4 @@
-// Copyright 2022-2024 Niantic.
+// Copyright 2022-2025 Niantic.
 
 using System;
 using System.Runtime.InteropServices;
@@ -123,6 +123,26 @@ namespace Niantic.Lightship.AR.MapStorageAccess
             }
 
             Lightship_ARDK_Unity_MapStorageAccess_StopDownloadingMaps(_nativeHandle);
+        }
+
+        public void StartGettingGraphData()
+        {
+            if (!CheckNativeHandle())
+            {
+                return;
+            }
+
+            Lightship_ARDK_Unity_MapStorageAccess_StartGettingGraphData(_nativeHandle);
+        }
+
+        public void StopGettingGraphData()
+        {
+            if (!CheckNativeHandle())
+            {
+                return;
+            }
+
+            Lightship_ARDK_Unity_MapStorageAccess_StopGettingGraphData(_nativeHandle);
         }
 
         public bool MarkMapNodeForUpload(TrackableId mapId)
@@ -657,6 +677,12 @@ namespace Niantic.Lightship.AR.MapStorageAccess
 
         [DllImport(LightshipPlugin.Name)]
         private static extern void Lightship_ARDK_Unity_MapStorageAccess_StopDownloadingMaps(IntPtr feature_handle);
+
+        [DllImport(LightshipPlugin.Name)]
+        private static extern void Lightship_ARDK_Unity_MapStorageAccess_StartGettingGraphData(IntPtr feature_handle);
+
+        [DllImport(LightshipPlugin.Name)]
+        private static extern void Lightship_ARDK_Unity_MapStorageAccess_StopGettingGraphData(IntPtr feature_handle);
 
         [DllImport(LightshipPlugin.Name)]
         [return: MarshalAs(UnmanagedType.I1)]

@@ -1,4 +1,4 @@
-// Copyright 2022-2024 Niantic.
+// Copyright 2022-2025 Niantic.
 
 using System.Runtime.CompilerServices;
 using UnityEngine.Scripting;
@@ -22,3 +22,7 @@ using UnityEngine.Scripting;
 [assembly: InternalsVisibleTo("Niantic.Lightship.MagicLeap.Editor")]
 [assembly: InternalsVisibleTo("Niantic.Lightship.MagicLeap.InternalSamples")]
 [assembly: InternalsVisibleTo("Niantic.Lightship.ScanReconstruction")]
+[assembly: InternalsVisibleTo("Niantic.Lightship.GeoUploader")]
+[assembly: InternalsVisibleTo("Niantic.Lightship.AR.PersistentAR.PreProd")]
+[assembly: InternalsVisibleTo("Niantic.Lightship.GeoUploader.Tests")]
+

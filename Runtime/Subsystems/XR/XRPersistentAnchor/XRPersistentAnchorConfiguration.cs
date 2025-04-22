@@ -1,4 +1,4 @@
-// Copyright 2022-2024 Niantic.
+// Copyright 2022-2025 Niantic.
 
 using System;
 using System.Runtime.InteropServices;
@@ -30,6 +30,7 @@ namespace Niantic.Lightship.AR.XRSubsystems
         internal const bool DefaultDiagnosticsEnabled = false;
         internal const bool DefaultLimitedLocalizationsOnly = false;
         internal const int DefaultJpegCompressionQuality = 50;
+        internal const bool DefaultDisableTransitiveCloudLocalizations = false;
 
         private bool _continuousLocalizationEnabled;
         private bool _temporalFusionEnabled;
@@ -45,6 +46,7 @@ namespace Niantic.Lightship.AR.XRSubsystems
         private bool _diagnosticsEnabled;
         private bool _limitedLocalizationsOnly;
         private int _jpegCompressionQuality;
+        private bool _disableTransitiveCloudLocalizations;
 
         public bool ContinuousLocalizationEnabled
         {
@@ -181,6 +183,12 @@ namespace Niantic.Lightship.AR.XRSubsystems
             }
         }
 
+        public bool DisableTransitiveCloudLocalizations
+        {
+            get => _disableTransitiveCloudLocalizations;
+            set => _disableTransitiveCloudLocalizations = value;
+        }
+
         /// <summary>
         /// Default constructor for the XRPersistentAnchorConfiguration.
         /// </summary>
@@ -200,6 +208,7 @@ namespace Niantic.Lightship.AR.XRSubsystems
             _diagnosticsEnabled = DefaultDiagnosticsEnabled;
             _limitedLocalizationsOnly = DefaultLimitedLocalizationsOnly;
             _jpegCompressionQuality = DefaultJpegCompressionQuality;
+            _disableTransitiveCloudLocalizations = DisableTransitiveCloudLocalizations;
         }
 
         public XRPersistentAnchorConfiguration
@@ -217,7 +226,8 @@ namespace Niantic.Lightship.AR.XRSubsystems
             uint deviceMappingLocalizationTemporalFusionWindowSize = DefaultDeviceMappingLocalizationTemporalFusionWindowSize,
             bool diagnosticsEnabled = DefaultDiagnosticsEnabled,
             bool limitedLocalizationsOnly = DefaultLimitedLocalizationsOnly,
-            int jpegCompressionQuality = DefaultJpegCompressionQuality
+            int jpegCompressionQuality = DefaultJpegCompressionQuality,
+            bool disableTransitiveCloudLocalizations = DefaultDisableTransitiveCloudLocalizations
         )
         {
             _continuousLocalizationEnabled = continuousLocalizationEnabled;
@@ -234,6 +244,7 @@ namespace Niantic.Lightship.AR.XRSubsystems
             _diagnosticsEnabled = diagnosticsEnabled;
             _limitedLocalizationsOnly = limitedLocalizationsOnly;
             _jpegCompressionQuality = jpegCompressionQuality;
+            _disableTransitiveCloudLocalizations = disableTransitiveCloudLocalizations;
         }
 
         public XRPersistentAnchorConfiguration(XRPersistentAnchorConfiguration other) : this()
@@ -257,6 +268,7 @@ namespace Niantic.Lightship.AR.XRSubsystems
             _diagnosticsEnabled = other._diagnosticsEnabled;
             _limitedLocalizationsOnly = other._limitedLocalizationsOnly;
             _jpegCompressionQuality = other._jpegCompressionQuality;
+            _disableTransitiveCloudLocalizations = other._disableTransitiveCloudLocalizations;
         }
 
         /// <summary>
@@ -284,7 +296,8 @@ namespace Niantic.Lightship.AR.XRSubsystems
                     _deviceMappingLocalizationTemporalFusionWindowSize == other._deviceMappingLocalizationTemporalFusionWindowSize &&
                     _diagnosticsEnabled == other._diagnosticsEnabled &&
                     _limitedLocalizationsOnly == other._limitedLocalizationsOnly &&
-                    _jpegCompressionQuality == other._jpegCompressionQuality;
+                    _jpegCompressionQuality == other._jpegCompressionQuality &&
+                    _disableTransitiveCloudLocalizations == other._disableTransitiveCloudLocalizations;
         }
 
         public new bool Equals(object obj)

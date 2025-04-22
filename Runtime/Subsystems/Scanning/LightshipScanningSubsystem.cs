@@ -1,4 +1,4 @@
-// Copyright 2022-2024 Niantic.
+// Copyright 2022-2025 Niantic.
 
 using System;
 using Niantic.Lightship.AR.Utilities.Logging;
@@ -222,7 +222,7 @@ namespace Niantic.Lightship.AR.Subsystems.Scanning
                             bool lidarEnabled = LightshipSettingsHelper.ActiveSettings.PreferLidarIfAvailable;
                             if (!lidarEnabled)
                             {
-                                Log.Error("Depth data is required for scanning visualization, but Lightship's " +
+                                Log.Warning("Depth data is required for scanning visualization, but Lightship's " +
                                     "Prefer LiDAR if Available option is disabled, " +
                                     "hence Niantic depth is being enabled for this session.");
                                 value.UseEstimatedDepth = true;

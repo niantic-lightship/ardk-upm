@@ -1,4 +1,4 @@
-// Copyright 2022-2024 Niantic.
+// Copyright 2022-2025 Niantic.
 using System;
 using UnityEngine;
 using UnityEngine.XR.ARSubsystems;
@@ -232,5 +232,39 @@ namespace Niantic.Lightship.AR.Utilities
             var fn = far / near;
             return new Vector4(1.0f - fn, fn, (1.0f - fn) / far, fn / far);
         }
+
+        /// Calculates the intrinsic parameters of a Unity camera.
+        internal static XRCameraIntrinsics CalculateIntrinsics(Camera camera)
+        {
+            var f = (camera.focalLength * camera.pixelWidth) / camera.sensorSize.x;
+            var p = new Vector2(camera.pixelWidth / 2f, camera.pixelHeight / 2f);
+            return new XRCameraIntrinsics(
+                focalLength: new Vector2(f, f),
+                principalPoint: p,
+                resolution: new Vector2Int(camera.pixelWidth, camera.pixelHeight));
+        }
+
+
+        /// Calculates camera intrinsics from the specified properties.
+        /// <param name="imageWidth">Width of the camera image.</param>
+        /// <param name="imageHeight">Height of the camera image.</param>
+        /// <param name="focalLength">The focal length of the camera.</param>
+        /// <param name="sensorWidth">Width of the camera sensor.</param>
+        internal static XRCameraIntrinsics CalculateIntrinsics
+        (
+            int imageWidth,
+            int imageHeight,
+            float focalLength,
+            float sensorWidth
+        )
+        {
+            var f = (focalLength * imageWidth) / sensorWidth;
+            var p = new Vector2(imageWidth / 2f, imageHeight / 2f);
+            return new XRCameraIntrinsics(
+                focalLength: new Vector2(f, f),
+                principalPoint: p,
+                resolution: new Vector2Int(imageWidth, imageHeight));
+        }
+
     }
 }

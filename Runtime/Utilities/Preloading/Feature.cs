@@ -1,4 +1,4 @@
-// Copyright 2022-2024 Niantic.
+// Copyright 2022-2025 Niantic.
 
 using System;
 using System.ComponentModel;
@@ -78,6 +78,19 @@ namespace Niantic.Lightship.AR.Utilities.Preloading
     }
 
     /// <summary>
+    /// The Lightship Scanning SQC model to use.
+    /// </summary>
+    [PublicAPI]
+    public enum ScanningSQCMode : byte
+    {
+        /// <summary>
+        /// The default model will be used.
+        /// </summary>
+        [Description("Default model")]
+        Default = 0,
+    }
+
+    /// <summary>
     /// The Lightship object detection model to use.
     /// </summary>
     [PublicAPI]
@@ -89,5 +102,4 @@ namespace Niantic.Lightship.AR.Utilities.Preloading
         [Description("Default model")]
         Default = 0,
     }
-
 }

@@ -1,4 +1,4 @@
-// Copyright 2022-2024 Niantic.
+// Copyright 2022-2025 Niantic.
 using UnityEngine;
 using UnityEngine.XR.ARFoundation;
 using UnityEngine.XR.ARSubsystems;
@@ -59,7 +59,11 @@ namespace Niantic.Lightship.AR.Occlusion
                 // If the background is not rendering
                 if (!cameraBackground.enabled || !cameraBackground.backgroundRenderingEnabled)
                 {
+                    // Even if it is present, the camera background is not a requirement
+                    // on Magic Leap 2, because it doesn't render anything
+#if UNITY_EDITOR || !NIANTIC_LIGHTSHIP_ML2_ENABLED
                     return;
+#endif
                 }
             }
 

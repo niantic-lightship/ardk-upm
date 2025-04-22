@@ -1,4 +1,4 @@
-// Copyright 2022-2024 Niantic.
+// Copyright 2022-2025 Niantic.
 
 using System;
 using System.Linq;
@@ -11,167 +11,161 @@ namespace Niantic.Lightship.AR.Simulation
 {
     internal class LightshipSimulationDepthTextureProvider : LightshipSimulationTextureProvider
     {
-        private const string TextureEnvironmentDepthPropertyName = "_EnvironmentDepth";
-        private static readonly int s_textureEnvironmentDepthPropertyId =
-            Shader.PropertyToID(TextureEnvironmentDepthPropertyName);
-
-        // Resources
-        private RenderTexture _depthRT;
-        private Material _material;
+        // Shader properties
+        private static readonly int s_environmentDepthTextureId = Shader.PropertyToID("_EnvironmentDepth");
         private static readonly int s_zBufferParamsZ = Shader.PropertyToID("_ZBufferParams_Z");
         private static readonly int s_zBufferParamsW = Shader.PropertyToID("_ZBufferParams_W");
 
+        // Resources
+        private RenderTexture _intermediateRenderTarget;
+        private Material _material;
         private Texture2D _confidenceTexture;
         private IntPtr _confidencePointer;
 
-        protected override void OnEnable()
+        protected override int PropertyNameId => s_environmentDepthTextureId;
+
+        protected override void OnConfigureCamera(Camera renderCamera)
         {
-            PostRenderCamera += OnPostRenderCamera;
-            base.OnEnable();
+            renderCamera.depthTextureMode = DepthTextureMode.Depth;
+            renderCamera.clearFlags = CameraClearFlags.Depth;
+
+            // The simulated camera will render to this intermediate render target
+            renderCamera.targetTexture = _intermediateRenderTarget;
         }
 
-        protected override void OnDisable()
+        protected override bool OnAllocateResources(out RenderTexture targetTexture, out Texture2D outputTexture)
         {
-            PostRenderCamera -= OnPostRenderCamera;
-            base.OnDisable();
-        }
-
-        internal override void OnDestroy()
-        {
-            if (_depthRT != null)
-                _depthRT.Release();
-
-            base.OnDestroy();
-        }
-
-        internal static LightshipSimulationDepthTextureProvider AddTextureProviderToCamera(Camera simulationCamera, Camera xrCamera)
-        {
-            var cameraTextureProvider = simulationCamera.gameObject.AddComponent<LightshipSimulationDepthTextureProvider>();
-            cameraTextureProvider.InitializeProvider(xrCamera, simulationCamera);
-
-            return cameraTextureProvider;
-        }
-
-        protected override void InitializeProvider(Camera xrCamera, Camera simulationCamera)
-        {
-            base.InitializeProvider(xrCamera, simulationCamera);
-
-            // The background camera
-            XrCamera = xrCamera;
-            // The helper depth camera
-            SimulationRenderCamera = simulationCamera;
-
-            // The shader that converts depth to metric depth (RFloat32)
-            var shader = Shader.Find("Custom/LightshipSimulationDepthShader");
-            _material = new Material(shader);
-
-            // Depth texture
-            // we invert x and y because the camera is always physically installed at landscape left and we rotate the camera -90 for portrait
-            _depthRT = new RenderTexture
+            // The intermediate render target is used to capture non-linear depth from the Unity camera
+            // After rendering, we will blit this texture to the actual target texture, converting it to linear depth
+            _intermediateRenderTarget = new RenderTexture
             (
-                (int) SimulationRenderCamera.sensorSize.y,
-                (int) SimulationRenderCamera.sensorSize.x,
+                ImageWidth,
+                ImageHeight,
                 16,
                 RenderTextureFormat.Depth
-            );
-            _depthRT.name = "Depth camera sensor";
-            _depthRT.Create();
+            ) {name = "Depth camera sensor"};
 
-            // RFloat32 depth texture
-            RenderTexture = new RenderTexture
+            if (!_intermediateRenderTarget.Create())
+            {
+                targetTexture = null;
+                outputTexture = null;
+                return false;
+            }
+
+            // The shader that converts non-linear depth to linear metric depth (RFloat32)
+            var shader = Shader.Find("Custom/LightshipSimulationDepthShader");
+            if (shader == null)
+            {
+                targetTexture = null;
+                outputTexture = null;
+                return false;
+            }
+            _material = new Material(shader);
+
+            targetTexture = new RenderTexture
             (
-                _depthRT.width,
-                _depthRT.height,
+                _intermediateRenderTarget.width,
+                _intermediateRenderTarget.height,
                 0,
                 RenderTextureFormat.RFloat
             );
-            RenderTexture.Create();
+
+            if (!targetTexture.Create())
+            {
+                outputTexture = null;
+                return false;
+            }
+
+            outputTexture = new Texture2D(_intermediateRenderTarget.width, _intermediateRenderTarget.height, TextureFormat.RFloat, false)
+            {
+                name = "Simulated Depth Texture", hideFlags = HideFlags.HideAndDontSave
+            };
 
             // Confidence Texture is all white (all ones, perfect confidence)
-            _confidenceTexture = new Texture2D(_depthRT.width, _depthRT.height, TextureFormat.RFloat, false);
-            Color[] pixels = Enumerable.Repeat(Color.white, _confidenceTexture.width * _confidenceTexture.height).ToArray();
+            _confidenceTexture = new Texture2D(_intermediateRenderTarget.width, _intermediateRenderTarget.height, TextureFormat.RFloat, false);
+            var pixels = Enumerable.Repeat(Color.white, _confidenceTexture.width * _confidenceTexture.height).ToArray();
             _confidenceTexture.SetPixels(pixels);
             _confidenceTexture.Apply();
             _confidencePointer = _confidenceTexture.GetNativeTexturePtr();
 
-            SimulationRenderCamera.depthTextureMode = DepthTextureMode.Depth;
-            SimulationRenderCamera.clearFlags = CameraClearFlags.Depth;
-            SimulationRenderCamera.nearClipPlane = 0.1f;
-            SimulationRenderCamera.targetTexture = _depthRT;
+            return true;
+        }
 
+        protected override void OnDestroy()
+        {
+            base.OnDestroy();
+
+            if (_intermediateRenderTarget != null)
+            {
+                _intermediateRenderTarget.Release();
+            }
+
+            if (_confidenceTexture != null)
+            {
+                Destroy(_confidenceTexture);
+            }
+
+            if (_material != null)
+            {
+                Destroy(_material);
+            }
+        }
+
+        protected override void OnPostRenderCamera(Camera renderCamera, RenderTexture targetTexture)
+        {
             // We set ZBufferParams from the depth camera
-            var farDividedByNear = SimulationRenderCamera.farClipPlane / SimulationRenderCamera.nearClipPlane;
-            _material.SetFloat(s_zBufferParamsZ, (-1 + farDividedByNear) / SimulationRenderCamera.farClipPlane);
-            _material.SetFloat(s_zBufferParamsW, 1 / SimulationRenderCamera.farClipPlane);
+            var farDividedByNear = renderCamera.farClipPlane / renderCamera.nearClipPlane;
+            _material.SetFloat(s_zBufferParamsZ, (-1 + farDividedByNear) / renderCamera.farClipPlane);
+            _material.SetFloat(s_zBufferParamsW, 1 / renderCamera.farClipPlane);
 
-            if (ProviderTexture == null)
-            {
-                ProviderTexture = new Texture2D(_depthRT.width, _depthRT.height, TextureFormat.RFloat, false)
-                {
-                    name = "Simulated Native Camera Texture",
-                    hideFlags = HideFlags.HideAndDontSave
-                };
-                TexturePtr = ProviderTexture.GetNativeTexturePtr();
-            }
-
-            Initialized = true;
+            // Here we convert the non-linear depth texture to linear eye depth
+            Graphics.Blit(_intermediateRenderTarget, targetTexture, _material);
+            base.OnPostRenderCamera(renderCamera, targetTexture);
         }
 
-        internal override bool TryGetTextureDescriptors(out NativeArray<XRTextureDescriptor> planeDescriptors,
-            Allocator allocator)
+        /// <summary>
+        /// Tries to acquire the depth confidence image on GPU memory via a XRTextureDescriptor.
+        /// </summary>
+        /// <param name="depthConfidenceDescriptor">The XRTextureDescriptor for the depth confidence image.</param>
+        /// <returns>True if the depth confidence image is successfully acquired, false otherwise.</returns>
+        internal bool TryGetConfidenceTextureDescriptor(out XRTextureDescriptor depthConfidenceDescriptor)
         {
-            var isValid = TryGetLatestImagePtr(out var nativePtr);
-
-            var descriptors = new XRTextureDescriptor[1];
-            if (isValid && TryGetTextureDescriptor(out var planeDescriptor))
+            if (_confidencePointer == IntPtr.Zero)
             {
-                descriptors[0] = planeDescriptor;
-            }
-            else
-            {
-                descriptors[0] = default;
-                isValid = false;
-            }
-
-            planeDescriptors = new NativeArray<XRTextureDescriptor>(descriptors, allocator);
-            return isValid;
-        }
-
-        internal bool TryGetTextureDescriptor(out XRTextureDescriptor planeDescriptor)
-        {
-            if (!TryGetLatestImagePtr(out var nativePtr))
-            {
-                planeDescriptor = default;
+                depthConfidenceDescriptor = default;
                 return false;
             }
 
-            planeDescriptor = new XRTextureDescriptor
-            (
-                nativePtr,
-                ProviderTexture.width,
-                ProviderTexture.height,
-                ProviderTexture.mipmapCount,
-                ProviderTexture.format,
-                s_textureEnvironmentDepthPropertyId,
-                0,
-                TextureDimension.Tex2D
-            );
+            depthConfidenceDescriptor = new XRTextureDescriptor(_confidencePointer, _confidenceTexture.width,
+                _confidenceTexture.height,
+                _confidenceTexture.mipmapCount, _confidenceTexture.format, s_environmentDepthTextureId, 0,
+                TextureDimension.Tex2D);
 
             return true;
         }
 
-        internal void TryGetConfidenceTextureDescriptor(out XRTextureDescriptor depthConfidenceDescriptor)
+        /// <summary>
+        /// Tries to acquire the depth confidence image data on CPU memory.
+        /// </summary>
+        /// <param name="data">The depth confidence image data on cpu memory.</param>
+        /// <param name="dimensions">The dimensions of the depth confidence image.</param>
+        /// <param name="format">The format of the depth confidence image.</param>
+        /// <returns>True if the depth confidence image data is successfully acquired, false otherwise.</returns>
+        internal bool TryGetConfidenceCpuData(out NativeArray<byte> data, out Vector2Int dimensions,
+            out TextureFormat format)
         {
-            depthConfidenceDescriptor = new XRTextureDescriptor(_confidencePointer, _confidenceTexture.width, _confidenceTexture.height,
-                _confidenceTexture.mipmapCount, _confidenceTexture.format, s_textureEnvironmentDepthPropertyId, 0,
-                TextureDimension.Tex2D);
-        }
+            if (_confidencePointer == IntPtr.Zero)
+            {
+                data = default;
+                dimensions = default;
+                format = default;
+                return false;
+            }
 
-        // Postprocess the image
-        private void OnPostRenderCamera(Camera _)
-        {
-            // Here we convert the depth texture to RFloat32
-            Graphics.Blit(_depthRT, RenderTexture, _material);
+            data = _confidenceTexture.GetPixelData<byte>(0);
+            dimensions = new Vector2Int(_confidenceTexture.width, _confidenceTexture.height);
+            format = _confidenceTexture.format;
+            return data.IsCreated;
         }
     }
 }

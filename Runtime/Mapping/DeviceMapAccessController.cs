@@ -1,4 +1,4 @@
-// Copyright 2022-2024 Niantic.
+// Copyright 2022-2025 Niantic.
 
 using System;
 
@@ -165,6 +165,24 @@ namespace Niantic.Lightship.AR.Mapping
         [Experimental]
         public void StopDownloadingMaps() {
             _api?.StopDownloadingMaps();
+        }
+
+        /// <summary>
+        /// Starts getting cloud graph
+        /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
+        /// </summary>
+        [Experimental]
+        public void StartGettingGraphData() {
+            _api?.StartGettingGraphData();
+        }
+
+        /// <summary>
+        /// Stops getting cloud graph
+        /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
+        /// </summary>
+        [Experimental]
+        public void StopGettingGraphData() {
+            _api?.StopGettingGraphData();
         }
 
         /// <summary>

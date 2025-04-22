@@ -168,7 +168,7 @@ Shader "Lightship/ZBufferOcclusion"
               float frameDepth = ConvertDistanceToDepth(frameDepthLinearEye);
 
               // Sample non-linear fused depth
-              const float eps = 0.1f;
+              const float eps = 0.01f;
               float fusedDepthLinearEye = tex2D(_FusedDepth, i.vertex_uv) + eps;
               float fusedDepth = EyeDepthToNonLinear(fusedDepthLinearEye, _ZBufferParams);
 

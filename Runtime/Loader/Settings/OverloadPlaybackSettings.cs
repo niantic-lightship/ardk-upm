@@ -1,4 +1,4 @@
-// Copyright 2022-2024 Niantic.
+// Copyright 2022-2025 Niantic.
 
 using System;
 
@@ -47,6 +47,20 @@ namespace Niantic.Lightship.AR.Loader
             set { _numberOfIterations = value; }
         }
 
+        private int _startFrame = 0;
+        public int StartFrame
+        {
+            get { return _startFrame; }
+            set { _startFrame = value; }
+        }
+
+        private int _endFrame = -1;
+        public int EndFrame
+        {
+            get { return _endFrame; }
+            set { _endFrame = value; }
+        }
+
         internal OverloadPlaybackSettings()
         {
         }
@@ -57,6 +71,8 @@ namespace Niantic.Lightship.AR.Loader
             PlaybackDatasetPath = source.PlaybackDatasetPath;
             RunManually = source.RunManually;
             LoopInfinitely = source.LoopInfinitely;
+            StartFrame = source.StartFrame;
+            EndFrame = source.EndFrame;
         }
     }
 }

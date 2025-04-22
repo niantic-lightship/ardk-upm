@@ -1,4 +1,4 @@
-// Copyright 2022-2024 Niantic.
+// Copyright 2022-2025 Niantic.
 
 using System;
 using System.Collections.Generic;
@@ -20,7 +20,7 @@ namespace Niantic.Lightship.AR.Subsystems
     internal static class MeshDownloadHelper
     {
         // Hardcode default if LightshipUnityContext is not available
-        private static string prodVpsEndpoint = "https://vps-frontend.nianticlabs.com/web";
+        private static string prodVpsEndpoint = "https://vps-frontend.nianticspatial.com/web";
         private static string configEndpointFormatter = "{0}/vps_frontend.protogen.Localizer/{1}";
         private static string meshingMethod = "GetMeshUrl";
         private static string graphMethod = "GetGraph";

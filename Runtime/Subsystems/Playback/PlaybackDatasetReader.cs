@@ -1,4 +1,4 @@
-// Copyright 2022-2024 Niantic.
+// Copyright 2022-2025 Niantic.
 
 using System;
 using System.IO;
@@ -14,7 +14,9 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
     internal class PlaybackDatasetReader
     {
         private readonly PlaybackDataset _dataset;
-        private int _currentFrameIndex = -1;
+        private int _currentFrameIndex;
+        private readonly int _startFrame;
+        private readonly int _endFrame;
         private int _lastLoadedImageFrameNumber = -1;
         private byte[] _imageBytes;
 
@@ -28,10 +30,26 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
 
         internal Action FrameChanged;
 
-        public PlaybackDatasetReader(PlaybackDataset dataset, bool loopInfinitely = false)
+        public PlaybackDatasetReader(PlaybackDataset dataset, bool loopInfinitely = false, int? startFrame = null, int? endFrame = null)
         {
             _dataset = dataset ?? throw new ArgumentNullException(nameof(dataset));
             _loopInfinitely = loopInfinitely;
+
+            if (startFrame < 0 || startFrame >= _dataset.FrameCount)
+            {
+                Log.Warning($"Invalid start frame {startFrame} for dataset {_dataset.DatasetPath}. Defaulting to 0.");
+                startFrame = 0;
+            }
+
+            if (endFrame < 0 || endFrame <= startFrame || endFrame >= _dataset.FrameCount)
+            {
+                Log.Warning($"Invalid end frame {endFrame} for dataset {_dataset.DatasetPath}. Defaulting to {_dataset.FrameCount - 1}.");
+                endFrame = _dataset.FrameCount - 1;
+            }
+
+            _startFrame = startFrame ?? 0;
+            _currentFrameIndex = startFrame != null ? startFrame.Value - 1 : -1;
+            _endFrame = endFrame ?? _dataset.FrameCount - 1;
         }
 
         // This function will try to go to the next frame depending on the current auto moving direction (_goingForward)
@@ -78,14 +96,14 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
         public bool TryMoveForward()
         {
             // we have reached the end of the dataset
-            if (_currentFrameIndex == _dataset.FrameCount - 1)
+            if (_currentFrameIndex == _dataset.FrameCount - 1 || _currentFrameIndex >= _endFrame)
             {
                 return false;
             }
 
             _currentFrameIndex++;
 
-            Log.Debug("Playback moved to frame " + _currentFrameIndex);
+            Log.Debug("Playback moved forward to frame " + _dataset.Frames[_currentFrameIndex].Sequence);;
             FrameChanged?.Invoke();
 
             return true;
@@ -95,7 +113,7 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
         public bool TryMoveBackward()
         {
             // we have reached the start of the dataset, <= is used for if we are at the initializeld _currentFrameIndex of -1
-            if (_currentFrameIndex <= 0)
+            if (_currentFrameIndex <= 0 || _currentFrameIndex <= _startFrame)
             {
                 return false;
             }
@@ -109,7 +127,7 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
             // and then another time to actually move forward in time.
             _timestampLoopOffset += 2 * deltaTimeBetweenFrames;
 
-            Log.Debug("Playback moved to frame " + _currentFrameIndex);
+            Log.Debug("Playback moved back to frame " + _dataset.Frames[_currentFrameIndex].Sequence);
             FrameChanged?.Invoke();
 
             return true;
@@ -159,9 +177,34 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
 
         public int CurrentFrameIndex => _currentFrameIndex;
 
+        public int StartFrame => _startFrame;
+
+        public int EndFrame => _endFrame;
+
+
+        public PlaybackDataset.FrameMetadata GetFrame(int index)
+        {
+            if (index < 0 || index >= _dataset.FrameCount)
+            {
+                throw new ArgumentOutOfRangeException($"Index {index} is out of range for dataset with {_dataset.FrameCount} frames");
+            }
+
+            return _dataset.Frames[index];
+        }
+
+        public int GetNextFrameIndex()
+        {
+            if (_currentFrameIndex + 1 == _dataset.FrameCount)
+            {
+                return _loopInfinitely ? _currentFrameIndex - 1 : _currentFrameIndex;
+            }
+
+            return _currentFrameIndex + 1;
+        }
+
         public void Reset()
         {
-            _currentFrameIndex = -1;
+            _currentFrameIndex = _startFrame - 1;
             _timestampLoopOffset = 0;
             _goingForward = true;
             _finished = false;

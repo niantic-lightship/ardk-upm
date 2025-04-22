@@ -1,4 +1,4 @@
-// Copyright 2022-2024 Niantic.
+// Copyright 2022-2025 Niantic.
 
 using System;
 using System.IO;
@@ -247,7 +247,7 @@ namespace Niantic.Lightship.AR.Loader
         /// <summary>
         /// All Settings for Playback on the active platform
         /// </summary>
-        private ILightshipPlaybackSettings PlaybackSettings
+        internal ILightshipPlaybackSettings PlaybackSettings
         {
             get => Application.isEditor ? EditorPlaybackSettings : DevicePlaybackSettings;
         }
@@ -451,6 +451,7 @@ namespace Niantic.Lightship.AR.Loader
                     RunManually = runPlaybackManually,
                     LoopInfinitely = loopPlaybackInfinitely,
                     NumberOfIterations = numberOfPlaybackLoops
+
                 };
 
             if (endpointSettings == null)

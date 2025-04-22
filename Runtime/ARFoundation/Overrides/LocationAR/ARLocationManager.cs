@@ -1,4 +1,4 @@
-// Copyright 2022-2024 Niantic.
+// Copyright 2022-2025 Niantic.
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -374,7 +374,12 @@ namespace Niantic.Lightship.AR.LocationAR
             var newArgs = args.Value;
 
             // If ARSessionState is not SessionTracking, fire the event as not tracking
+#if UNITY_ANDROID && NIANTIC_LIGHTSHIP_ML2_ENABLED
+            // ML2 sessions may remain in the SessionInitializing state
+            if (sessionState != ARSessionState.SessionTracking && sessionState != ARSessionState.SessionInitializing)
+#else
             if (sessionState != ARSessionState.SessionTracking)
+#endif
             {
                 newArgs = new ARLocationTrackedEventArgs
                     (args.Value.ARLocation, false, ARLocationTrackingStateReason.None, 0.0f);

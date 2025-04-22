@@ -1,15 +1,8 @@
-// Copyright 2022-2024 Niantic.
+// Copyright 2022-2025 Niantic.
 
-using System;
-using System.Runtime.InteropServices;
 using Niantic.Lightship.AR.Utilities;
-using Niantic.Lightship.AR.Subsystems.Playback;
 using UnityEngine;
-using UnityEngine.InputSystem.Layouts;
-using UnityEngine.InputSystem.XR;
 using UnityEngine.Scripting;
-
-using Inputs = UnityEngine.InputSystem.InputSystem;
 
 namespace Niantic.Lightship.AR.Subsystems.Playback
 {
@@ -18,35 +11,60 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
     {
         private PlaybackDatasetReader _datasetReader;
 
-        private void OnFrameChanged()
+        private void OnFrameUpdate()
         {
-            if (_datasetReader.CurrentFrameIndex < 0)
-            {
-                return;
-            }
-
-            var pose = _datasetReader.GetCurrentPose();
-            Vector3 position = pose.ToPosition();
-            Quaternion cameraToLocal = pose.ToRotation();
-
-            var displayToLocal = cameraToLocal * CameraMath.DisplayToCameraRotation(_datasetReader.CurrFrame.Orientation);
-
-            SetPose(position, displayToLocal, (uint)_datasetReader.CurrFrame.Orientation);
+            var frame = _datasetReader.GetFrame(_datasetReader.GetNextFrameIndex());
+            SendPose(frame.Pose, frame.Orientation);
         }
 
         public void SetPlaybackDatasetReader(PlaybackDatasetReader reader)
         {
             if (_datasetReader != null)
             {
-                _datasetReader.FrameChanged -= OnFrameChanged;
+                // When running the app normally (i.e. with rendering), we want new data to be sent to the
+                // native input provider in OnBeforeRender, so that the integrated input subsystem picks it up
+                // in the next frame right before the Update tick. This means the input subsystem has the same
+                // pose throughout the entire frame.
+
+                // When code is run in batch mode however, like in our CI tests, there is no OnBeforeRender call,
+                // so we have to use LateUpdate. That's fine though, because there's no rendering so effectively
+                // the input subsystem will still have the same pose throughout the entire frame.
+                if (Application.isBatchMode)
+                {
+                    MonoBehaviourEventDispatcher.LateUpdating.RemoveListener(OnFrameUpdate);
+                }
+                else
+                {
+                    Application.onBeforeRender -= OnFrameUpdate;
+                }
             }
 
             if (reader != null)
             {
-                reader.FrameChanged += OnFrameChanged;
+                if (Application.isBatchMode)
+                {
+                    MonoBehaviourEventDispatcher.LateUpdating.AddListener(OnFrameUpdate);
+                }
+                else
+                {
+                    Application.onBeforeRender += OnFrameUpdate;
+                }
             }
 
             _datasetReader = reader;
+            if (_datasetReader != null)
+            {
+                var frame = _datasetReader.GetFrame(0);
+                SendPose(frame.Pose, frame.Orientation);
+            }
+        }
+
+        private void SendPose(Matrix4x4 pose, ScreenOrientation orientation)
+        {
+            Vector3 position = pose.ToPosition();
+            Quaternion cameraToLocal = pose.ToRotation();
+            var displayToLocal = cameraToLocal * CameraMath.DisplayToCameraRotation(orientation);
+            SetPose(position, displayToLocal, (uint)orientation);
         }
     }
 }

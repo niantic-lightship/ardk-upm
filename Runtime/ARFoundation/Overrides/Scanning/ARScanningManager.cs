@@ -1,4 +1,4 @@
-// Copyright 2022-2024 Niantic.
+// Copyright 2022-2025 Niantic.
 
 using System;
 using System.IO;
@@ -508,7 +508,7 @@ namespace Niantic.Lightship.AR.Scanning
 
             if (!subsystem.TryGetVoxelBuffer(out var voxelData))
             {
-                Log.Error("Failed to get new voxel buffer");
+                Log.Warning("Failed to get new voxel buffer");
                 return false;
             }
 

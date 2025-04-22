@@ -1,4 +1,4 @@
-// Copyright 2022-2024 Niantic.
+// Copyright 2022-2025 Niantic.
 
 using System;
 
@@ -9,7 +9,7 @@ namespace Niantic.Lightship.AR.Utilities
     public class PublicAPIAttribute : UnityEngine.HelpURLAttribute
     {
         public PublicAPIAttribute(string helpUrl = "")
-            : base($"https://lightship.dev/docs/ardk/{helpUrl}")
+            : base($"https://nianticspatial.com/docs/ardk/{helpUrl}")
         { }
     }
 }

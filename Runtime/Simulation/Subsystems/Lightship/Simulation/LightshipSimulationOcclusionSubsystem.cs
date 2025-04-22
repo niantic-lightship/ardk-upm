@@ -1,7 +1,10 @@
-// Copyright 2022-2024 Niantic.
+// Copyright 2022-2025 Niantic.
 using System;
 using System.Collections.Generic;
+using Niantic.Lightship.AR.Subsystems.Common;
+using Niantic.Lightship.AR.Utilities;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.XR.CoreUtils;
 using UnityEngine;
 using UnityEngine.XR.ARSubsystems;
@@ -48,8 +51,6 @@ namespace Niantic.Lightship.AR.Simulation
 
             XROcclusionSubsystem.Register(xrOcclusionSubsystemCinfo);
 #endif
-
-
         }
 
         private class LightshipSimulationProvider : Provider
@@ -93,8 +94,41 @@ namespace Niantic.Lightship.AR.Simulation
                     EnvironmentDepthEnabledLightshipMaterialKeyword
                 };
 
+            /// <summary>
+            /// The occlusion preference mode for when rendering the background.
+            /// </summary>
+            private OcclusionPreferenceMode _occlusionPreferenceMode;
+
+            /// <summary>
+            /// Specifies the requested occlusion preference mode.
+            /// </summary>
+            /// <value>
+            /// The requested occlusion preference mode.
+            /// </value>
+            public override OcclusionPreferenceMode requestedOcclusionPreferenceMode
+            {
+                get => _occlusionPreferenceMode;
+                set => _occlusionPreferenceMode = value;
+            }
+
+            /// <summary>
+            /// Get the occlusion preference mode currently in use by the provider.
+            /// </summary>
+            public override OcclusionPreferenceMode currentOcclusionPreferenceMode => _occlusionPreferenceMode;
+
+            /// <summary>
+            /// The CPU image API for interacting with the environment depth image.
+            /// </summary>
+            public override XRCpuImage.Api environmentDepthCpuImageApi => LightshipCpuImageApi.Instance;
+
+            /// <summary>
+            /// The CPU image API for interacting with the environment depth confidence image.
+            /// </summary>
+            public override XRCpuImage.Api environmentDepthConfidenceCpuImageApi => LightshipCpuImageApi.Instance;
+
             private Camera _camera;
             private LightshipSimulationDepthTextureProvider _simulationDepthTextureProvider;
+            private long _lastFrameTimestamp;
 
             /// <summary>
             /// Construct the implementation provider.
@@ -122,7 +156,7 @@ namespace Niantic.Lightship.AR.Simulation
                 _camera.enabled = false;
 
                 _simulationDepthTextureProvider =
-                    LightshipSimulationDepthTextureProvider.AddTextureProviderToCamera(_camera, xrCamera);
+                    LightshipSimulationTextureProvider.AddToCamera<LightshipSimulationDepthTextureProvider>(_camera, xrCamera);
                 _simulationDepthTextureProvider.FrameReceived += CameraFrameReceived;
             }
 
@@ -136,7 +170,9 @@ namespace Niantic.Lightship.AR.Simulation
             { }
 
             private void CameraFrameReceived(LightshipCameraTextureFrameEventArgs args)
-            { }
+            {
+                _lastFrameTimestamp = args.TimestampNs;
+            }
 
             public override NativeArray<XRTextureDescriptor> GetTextureDescriptors(
                 XRTextureDescriptor defaultDescriptor,
@@ -170,6 +206,53 @@ namespace Niantic.Lightship.AR.Simulation
                 return true;
             }
 
+            public override bool TryAcquireRawEnvironmentDepthCpuImage(out XRCpuImage.Cinfo cinfo)
+            {
+                return TryAcquireEnvironmentDepthCpuImage(out cinfo);
+            }
+
+            public override bool TryAcquireEnvironmentDepthCpuImage(out XRCpuImage.Cinfo cinfo)
+            {
+                if (_simulationDepthTextureProvider == null)
+                {
+                    cinfo = default;
+                    return false;
+                }
+
+                var gotCpuData =
+                    _simulationDepthTextureProvider.TryGetCpuData
+                    (
+                        out var data,
+                        out var dimensions,
+                        out var format
+                    );
+
+                if (!gotCpuData)
+                {
+                    cinfo = default;
+                    return false;
+                }
+
+                // Get ptr to the data on cpu memory
+                IntPtr dataPtr;
+                unsafe
+                {
+                    var ptr = NativeArrayUnsafeUtility.GetUnsafeReadOnlyPtr(data);
+                    dataPtr = (IntPtr)ptr;
+                }
+
+                return ((LightshipCpuImageApi)environmentDepthCpuImageApi).TryAddManagedXRCpuImage
+                (
+                    dataPtr,
+                    dimensions.x * dimensions.y * format.BytesPerPixel(),
+                    width: dimensions.x,
+                    height: dimensions.y,
+                    format,
+                    (ulong)_lastFrameTimestamp,
+                    out cinfo
+                );
+            }
+
             public override bool TryGetEnvironmentDepthConfidence(
                 out XRTextureDescriptor environmentDepthConfidenceDescriptor)
             {
@@ -184,6 +267,48 @@ namespace Niantic.Lightship.AR.Simulation
                 return true;
             }
 
+            public override bool TryAcquireEnvironmentDepthConfidenceCpuImage(out XRCpuImage.Cinfo cinfo)
+            {
+                if (_simulationDepthTextureProvider == null)
+                {
+                    cinfo = default;
+                    return false;
+                }
+
+                var gotCpuData =
+                    _simulationDepthTextureProvider.TryGetConfidenceCpuData
+                    (
+                        out var data,
+                        out var dimensions,
+                        out var format
+                    );
+
+                if (!gotCpuData)
+                {
+                    cinfo = default;
+                    return false;
+                }
+
+                // Get ptr to the data on cpu memory
+                IntPtr dataPtr;
+                unsafe
+                {
+                    var ptr = NativeArrayUnsafeUtility.GetUnsafeReadOnlyPtr(data);
+                    dataPtr = (IntPtr)ptr;
+                }
+
+                return ((LightshipCpuImageApi)environmentDepthConfidenceCpuImageApi).TryAddManagedXRCpuImage
+                (
+                    dataPtr,
+                    dimensions.x * dimensions.y * format.BytesPerPixel(),
+                    width: dimensions.x,
+                    height: dimensions.y,
+                    format,
+                    (ulong)_lastFrameTimestamp,
+                    out cinfo
+                );
+            }
+
             /// <summary>
             /// Get the enabled and disabled shader keywords for the material.
             /// </summary>
@@ -192,13 +317,23 @@ namespace Niantic.Lightship.AR.Simulation
             public override void GetMaterialKeywords(out List<string> enabledKeywords,
                 out List<string> disabledKeywords)
             {
-                enabledKeywords = s_environmentDepthEnabledMaterialKeywords;
-                disabledKeywords = null;
+                if ((_occlusionPreferenceMode == OcclusionPreferenceMode.NoOcclusion))
+                {
+                    enabledKeywords = null;
+                    disabledKeywords = s_environmentDepthEnabledMaterialKeywords;
+                }
+                else
+                {
+                    enabledKeywords = s_environmentDepthEnabledMaterialKeywords;
+                    disabledKeywords = null;
+                }
             }
 
 #if UNITY_6000_0_OR_NEWER
             public override ShaderKeywords GetShaderKeywords() =>
-                new(enabledKeywords: s_environmentDepthEnabledMaterialKeywords.AsReadOnly());
+                _occlusionPreferenceMode == OcclusionPreferenceMode.NoOcclusion
+                    ? new ShaderKeywords(disabledKeywords: s_environmentDepthEnabledMaterialKeywords.AsReadOnly())
+                    : new ShaderKeywords(enabledKeywords: s_environmentDepthEnabledMaterialKeywords.AsReadOnly());
 #endif
         }
     }

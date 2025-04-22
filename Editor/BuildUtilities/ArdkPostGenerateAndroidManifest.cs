@@ -1,4 +1,4 @@
-// Copyright 2022-2024 Niantic.
+// Copyright 2022-2025 Niantic.
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -204,6 +204,16 @@ namespace Niantic.ARDK.Editor
       internal bool AddQuery(string packageName)
       {
         bool changed = false;
+
+        // Ignore adding the ARCore package on MagicLeap
+#if MAGICLEAP
+        if (packageName == ArdkPostGenerateAndroidManifest.ARCoreNameString)
+        {
+          Log.Info("ArdkPostGenerateAndroidManifest.AddQuery skipped adding ARCore on MagicLeap");
+          return changed;
+        }
+#endif
+
         var queryNodes = SelectNodes
           ($"/manifest/queries/package[@android:name='{packageName}']", nsMgr);
 
@@ -285,6 +295,13 @@ namespace Niantic.ARDK.Editor
       internal bool AddARCoreInstallActivity()
       {
         bool changed = false;
+
+        // Ignore the ARCore checks for MagicLeap, since that uses OpenXR
+#if MAGICLEAP
+            Log.Info("ArdkPostGenerateAndroidManifest.AddARCoreInstallActivity skipped on MagicLeap");
+            return changed;
+#endif
+
         var installActivityBlock = SelectNodes
         (
           $"/manifest/application/activity[@android:name='{ArdkPostGenerateAndroidManifest.ARCoreInstallActivityString}']",

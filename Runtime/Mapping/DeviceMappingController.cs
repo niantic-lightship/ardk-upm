@@ -1,4 +1,4 @@
-// Copyright 2022-2024 Niantic.
+// Copyright 2022-2025 Niantic.
 
 using Niantic.Lightship.AR.Core;
 using Niantic.Lightship.AR.Utilities;
@@ -73,13 +73,32 @@ namespace Niantic.Lightship.AR.Mapping
         internal void Init()
         {
             _mapper = new NativeMappingApi();
+            LightshipUnityContext.OnDeinitialized -= Destroy;
+            LightshipUnityContext.OnDeinitialized += Destroy;
             _mapper.Create(LightshipUnityContext.UnityContextHandle);
             _isRunning = false;
             _isMapping = false;
         }
 
+        private bool CheckMappingApi()
+        {
+            if (_mapper == null)
+            {
+                Debug.LogWarning("DeviceMappingController was already destroyed!");
+                return false;
+            }
+            return true;
+        }
+
         internal void Destroy()
         {
+            LightshipUnityContext.OnDeinitialized -= Destroy;
+
+            if (!CheckMappingApi())
+            {
+                return;
+            }
+
             if (_isRunning)
             {
                 // stop before dispose if still running
@@ -88,6 +107,7 @@ namespace Niantic.Lightship.AR.Mapping
             }
             _isMapping = false;
             _mapper.Dispose();
+            _mapper = null;
         }
 
         /// <summary>
@@ -95,6 +115,11 @@ namespace Niantic.Lightship.AR.Mapping
         /// </summary>
         internal void StartNativeModule()
         {
+            if (!CheckMappingApi())
+            {
+                return;
+            }
+
             var enableLearnedFeatures =
                 DeviceMappingType == DeviceMappingType.CpuLearnedFeatures ||
                 DeviceMappingType == DeviceMappingType.GpuLearnedFeatures;
@@ -120,6 +145,11 @@ namespace Niantic.Lightship.AR.Mapping
         /// </summary>
         internal void StopNativeModule()
         {
+            if (!CheckMappingApi())
+            {
+                return;
+            }
+
             _mapper.Stop();
             _isRunning = false;
             _isMapping = false;
@@ -130,6 +160,11 @@ namespace Niantic.Lightship.AR.Mapping
         /// </summary>
         internal void UpdateConfiguration()
         {
+            if (!CheckMappingApi())
+            {
+                return;
+            }
+
             var enableLearnedFeatures =
                 DeviceMappingType == DeviceMappingType.CpuLearnedFeatures ||
                 DeviceMappingType == DeviceMappingType.GpuLearnedFeatures;
@@ -154,6 +189,11 @@ namespace Niantic.Lightship.AR.Mapping
         [Experimental]
         public void StartMapping()
         {
+            if (!CheckMappingApi())
+            {
+                return;
+            }
+
             _isMapping = true;
             _mapper.StartMapping();
         }
@@ -165,6 +205,11 @@ namespace Niantic.Lightship.AR.Mapping
         [Experimental]
         public void StopMapping()
         {
+            if (!CheckMappingApi())
+            {
+                return;
+            }
+            
             _mapper.StopMapping();
             _isMapping = false;
         }

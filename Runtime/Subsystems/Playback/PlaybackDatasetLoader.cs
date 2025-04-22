@@ -1,4 +1,4 @@
-// Copyright 2022-2024 Niantic.
+// Copyright 2022-2025 Niantic.
 using System.IO;
 using System.Linq;
 using Niantic.Lightship.AR.Utilities.Logging;
@@ -15,6 +15,8 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
 
         public static PlaybackDataset Load(string datasetPath)
         {
+            Log.Debug($"Attempting to load dataset from {datasetPath}");
+
             if (string.IsNullOrEmpty(datasetPath))
             {
                 Log.Error($"Parameter '{nameof(datasetPath)}' is empty.");
@@ -37,7 +39,25 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
             }
 #endif
 
+            // File.Exists(filePath); and Directory.Exists(filePath) returns false for android even when the file or directory exists.
+#if !UNITY_ANDROID
+            if (!Directory.Exists(datasetPath))
+            {
+                Log.Error($"The dataset directory does not exist at {datasetPath}.");
+                return null;
+            }
+#endif
+
             var filePath = Path.Combine(datasetPath, CaptureFileName);
+
+#if !UNITY_ANDROID
+            if (!File.Exists(filePath))
+            {
+                Log.Error($"No dataset found at {filePath}");
+                return null;
+            }
+#endif
+
             var content = FileUtilities.GetAllText(filePath);
 
             if (!string.IsNullOrEmpty(content))
@@ -52,7 +72,7 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
                     var datasetOrientation = dataset.Frames[0].Orientation;
                     var liveOrientation =
                         Application.isEditor ? GameViewUtils.GetEditorScreenOrientation() : Screen.orientation;
-                    
+
                     if (datasetOrientation != liveOrientation)
                     {
                         Log.Warning
@@ -62,11 +82,12 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
                         );
                     }
 
-                    Log.Info($"Successfully dataset with {dataset.FrameCount} frames from {datasetPath}");
+                    Log.Info($"Successfully loaded dataset with {dataset.FrameCount} frames from {datasetPath}");
                     return dataset;
                 }
             }
 
+            Log.Error($"Failed to load dataset from {filePath} because the content was empty.");
             return null;
         }
 
