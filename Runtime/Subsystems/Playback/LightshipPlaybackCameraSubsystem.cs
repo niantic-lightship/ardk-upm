@@ -13,6 +13,7 @@ using Niantic.Lightship.Utilities.UnityAssets;
 using Niantic.Platform.Analytics.Telemetry;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
+using Unity.XR.CoreUtils.Collections;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Scripting;
@@ -312,47 +313,59 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
                 }
 
                 UpdateCachedCurrentFrameInfo(frame);
-
-                IntPtr dataPtr;
-                int dataSize = 0;
-                unsafe
-                {
-                    var rawTextureData = _currentFrame.Frame.GetRawTextureData<byte>();
-                    dataPtr = (IntPtr)rawTextureData.GetUnsafeReadOnlyPtr();
-                    dataSize = rawTextureData.Length;
-                }
-
+                var rgbData = _currentFrame.Frame.GetRawTextureData<byte>();
                 var lightshipCpuImageApi = (LightshipCpuImageApi)cpuImageApi;
+
 #if NIANTIC_LIGHTSHIP_YUV_PLAYBACK
-                int res = LightshipImageApi.Convert(
-                    ImageFormatCEnum.RGB24,
-                    dataPtr,
-                    dataSize,
-                    _currentFrame.Frame.width,
-                    _currentFrame.Frame.height,
-                    ImageFormatCEnum.Yuv420_888,
-                    out var destData,
-                    out int destSize
-                );
-                if (res != 0)
+                // Convert RGB to YUV
+                if (!ImageConversionUtils.Convert(rgbData, _currentFrame.Frame.width, _currentFrame.Frame.height,
+                        ImageFormatCEnum.RGB24, ImageFormatCEnum.Yuv420_888, out var yuvData))
                 {
                     cinfo = default;
                     return false;
                 }
 
-                return lightshipCpuImageApi.TryAddManagedXRCpuImage(
-                    destData,
-                    _currentFrame.Frame.width,
-                    _currentFrame.Frame.height,
-                    XRCpuImage.Format.AndroidYuv420_888,
-                    (ulong)(frame.TimestampInSeconds * 1000.0),
-                    out cinfo
-                );
+                // Calculate the sizes of the YUV planes
+                int width = _currentFrame.Frame.width;
+                int height = _currentFrame.Frame.height;
+                int ySize = width * height;
+                int uvWidth = (width + 1) / 2;
+                int uvHeight = (height + 1) / 2;
+                int uvSize = uvWidth * uvHeight;
+                var sizes = new[] {ySize, uvSize, uvSize};
+
+                // Get the pointers to the image planes
+                IntPtr[] planes;
+                unsafe
+                {
+                    // Get the pointer to the flat YUV image buffer
+                    var yuvDataPtr = (IntPtr)NativeArrayUnsafeUtility.GetUnsafeReadOnlyPtr(yuvData);
+                    planes = new[] {yuvDataPtr, yuvDataPtr + ySize, yuvDataPtr + ySize + uvSize};
+                }
+
+                try
+                {
+                    // Copy the YUV data to the LightshipCpuImageApi repository
+                    return lightshipCpuImageApi.TryAddManagedXRCpuImage(planes, sizes, _currentFrame.Frame.width,
+                        _currentFrame.Frame.height, XRCpuImage.Format.AndroidYuv420_888,
+                        (ulong)(frame.TimestampInSeconds * 1000.0), out cinfo);
+                }
+                finally
+                {
+                    // Dispose of the source data
+                    yuvData.Dispose();
+                }
+
 #endif
+                IntPtr rgbDataPtr;
+                unsafe
+                {
+                    rgbDataPtr = (IntPtr)NativeArrayUnsafeUtility.GetUnsafeReadOnlyPtr(rgbData);
+                }
 
                 return lightshipCpuImageApi.TryAddManagedXRCpuImage
                 (
-                    dataPtr,
+                    rgbDataPtr,
                     _currentFrame.Frame.width * _currentFrame.Frame.height * _currentFrame.Frame.format.BytesPerPixel(),
                     _currentFrame.Frame.width,
                     _currentFrame.Frame.height,

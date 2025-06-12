@@ -2,9 +2,8 @@
 
 using System;
 using System.Runtime.InteropServices;
-using Niantic.Lightship.AR.Utilities;
-using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
+using UnityEngine;
 using UnityEngine.XR.ARSubsystems;
 
 namespace Niantic.Lightship.AR.PAM
@@ -71,37 +70,101 @@ namespace Niantic.Lightship.AR.PAM
                 }
             }
 
-            // Passing plane 1 and 2 represents U and V on Android to determine type
-            IntPtr plane1Ptr = IntPtr.Zero;
-            IntPtr plane2Ptr = IntPtr.Zero;
-            if (xrCpuImage.planeCount == 3)
+            // Convert Unity format to ARDK format
+            var format = GetFormatCEnum(xrCpuImage);
+            if (format == ImageFormatCEnum.Unknown)
             {
-                plane1Ptr = planes[1].DataPtr;
-                plane2Ptr = planes[2].DataPtr;
+                Debug.LogError($"LightshipCpuImage: Unsupported XRCpuImage format: {xrCpuImage.format}");
+                lightshipCpuImage = default;
+                return false;
             }
-
-            lightshipCpuImage =
-                new LightshipCpuImage
-                (
-                    xrCpuImage.format.FromUnityToArdk(plane1Ptr, plane2Ptr),
-                    (uint)xrCpuImage.width,
-                    (uint)xrCpuImage.height
-                );
 
             // Convert the plane data to fit the format of what native expects
             // If NV12 or NV21, make sure that the UV/VU plane is in the second slot and remove the third slot
-            if (lightshipCpuImage.Format == ImageFormatCEnum.Yuv420_NV21)
+            if (format == ImageFormatCEnum.Yuv420_NV21 && xrCpuImage.planeCount == 3)
             {
                 planes[1] = planes[2];
                 planes[2] = new LightshipCpuImagePlane(IntPtr.Zero, 0, 0, 0);
             }
-            else if (lightshipCpuImage.Format == ImageFormatCEnum.Yuv420_NV12)
+            else if (format == ImageFormatCEnum.Yuv420_NV12 && xrCpuImage.planeCount == 3)
             {
                 planes[2] = new LightshipCpuImagePlane(IntPtr.Zero, 0, 0, 0);
             }
 
-            lightshipCpuImage.Planes = planes;
+            lightshipCpuImage = new LightshipCpuImage
+            (
+                format,
+                (uint)xrCpuImage.width,
+                (uint)xrCpuImage.height
+            ) {Planes = planes};
+
             return true;
+        }
+
+        // Unity to ARDK Cpu Image Format
+        private static ImageFormatCEnum GetFormatCEnum(XRCpuImage image)
+        {
+            switch (image.format)
+            {
+                case XRCpuImage.Format.AndroidYuv420_888:
+                {
+                    switch (image.planeCount)
+                    {
+                        case 2:
+                            // TODO(ahegedus): Make a case for interleaved NV12
+                            return ImageFormatCEnum.Yuv420_NV21;
+
+                        case 3:
+                        {
+                            // Make a case for non-interleaved NV12 and NV21 formats
+                            long distance;
+                            unsafe
+                            {
+                                var plane1Ptr = (IntPtr)image.GetPlane(1).data.GetUnsafeReadOnlyPtr();
+                                var plane2Ptr = (IntPtr)image.GetPlane(2).data.GetUnsafeReadOnlyPtr();
+                                distance = (long) plane1Ptr - (long) plane2Ptr;
+                            }
+                            return distance switch
+                            {
+                                // VU, U plane is larger than V by 1 byte
+                                1 => ImageFormatCEnum.Yuv420_NV21,
+                                // UV, V plane is larger than U by 1 byte
+                                -1 => ImageFormatCEnum.Yuv420_NV12,
+                                // I420
+                                _ => ImageFormatCEnum.Yuv420_888
+                            };
+                        }
+
+                        default:
+                            return ImageFormatCEnum.Unknown;
+                    }
+                }
+
+                // Simple format conversions
+                case XRCpuImage.Format.IosYpCbCr420_8BiPlanarFullRange:
+                    return ImageFormatCEnum.Yuv420_NV12;
+                case XRCpuImage.Format.OneComponent8:
+                    return ImageFormatCEnum.OneComponent8;
+                case XRCpuImage.Format.DepthFloat32:
+                    return ImageFormatCEnum.DepthFloat32;
+                case XRCpuImage.Format.DepthUint16:
+                    return ImageFormatCEnum.DepthUint16;
+                case XRCpuImage.Format.OneComponent32:
+                    return ImageFormatCEnum.OneComponent32;
+                case XRCpuImage.Format.ARGB32:
+                    return ImageFormatCEnum.ARGB32;
+                case XRCpuImage.Format.RGBA32:
+                    return ImageFormatCEnum.RGBA32;
+                case XRCpuImage.Format.BGRA32:
+                    return ImageFormatCEnum.BGRA32;
+                case XRCpuImage.Format.RGB24:
+                    return ImageFormatCEnum.RGB24;
+                case XRCpuImage.Format.Unknown:
+                    return ImageFormatCEnum.Unknown;
+                default:
+                    Debug.Assert(false, "Did XRCpuImage got updated? Unhandled value: " + image.format);
+                    return ImageFormatCEnum.Unknown;
+            }
         }
 
         public static LightshipCpuImage Create()

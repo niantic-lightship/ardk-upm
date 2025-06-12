@@ -11,7 +11,6 @@ using Niantic.Lightship.AR.Subsystems.Semantics;
 using Niantic.Lightship.AR.Subsystems.PersistentAnchor;
 using Niantic.Lightship.AR.Subsystems.WorldPositioning;
 using Niantic.Lightship.AR.XRSubsystems;
-using UnityEngine;
 using UnityEngine.XR;
 using UnityEngine.XR.ARSubsystems;
 
@@ -19,15 +18,15 @@ namespace Niantic.Lightship.AR.Loader
 {
     public class NativeLoaderHelper
     {
-        private readonly List<XROcclusionSubsystemDescriptor> _occlusionSubsystemDescriptors = new();
-        private readonly List<XRPersistentAnchorSubsystemDescriptor> _persistentAnchorSubsystemDescriptors = new();
-        private readonly List<XRSemanticsSubsystemDescriptor> _semanticsSubsystemDescriptors = new();
-        private readonly List<XRScanningSubsystemDescriptor> _scanningSubsystemDescriptors = new();
-        private readonly List<XRMeshSubsystemDescriptor> _meshingSubsystemDescriptors = new();
-        private readonly List<XRObjectDetectionSubsystemDescriptor> _objectDetectionSubsystemDescriptors = new();
-        private readonly List<XRWorldPositioningSubsystemDescriptor> _worldPositioningSubsystemDescriptors = new ();
+        protected readonly List<XROcclusionSubsystemDescriptor> OcclusionSubsystemDescriptors = new();
+        protected readonly List<XRPersistentAnchorSubsystemDescriptor> PersistentAnchorSubsystemDescriptors = new();
+        protected readonly List<XRSemanticsSubsystemDescriptor> SemanticsSubsystemDescriptors = new();
+        protected readonly List<XRScanningSubsystemDescriptor> ScanningSubsystemDescriptors = new();
+        protected readonly List<XRMeshSubsystemDescriptor> MeshingSubsystemDescriptors = new();
+        protected readonly List<XRObjectDetectionSubsystemDescriptor> ObjectDetectionSubsystemDescriptors = new();
+        protected readonly List<XRWorldPositioningSubsystemDescriptor> WorldPositioningSubsystemDescriptors = new ();
 
-        internal bool Initialize(ILightshipInternalLoaderSupport loader, bool isLidarSupported)
+        internal virtual bool Initialize(ILightshipInternalLoaderSupport loader, bool isLidarSupported)
         {
             var settings = LightshipSettingsHelper.ActiveSettings;
 
@@ -45,7 +44,7 @@ namespace Niantic.Lightship.AR.Loader
                 Log.Info("Creating " + nameof(LightshipOcclusionSubsystem));
                 loader.CreateSubsystem<XROcclusionSubsystemDescriptor, XROcclusionSubsystem>
                 (
-                    _occlusionSubsystemDescriptors,
+                    OcclusionSubsystemDescriptors,
                     "Lightship-Occlusion"
                 );
             }
@@ -56,7 +55,7 @@ namespace Niantic.Lightship.AR.Loader
                 Log.Info("Creating " + nameof(LightshipPersistentAnchorSubsystem));
                 loader.CreateSubsystem<XRPersistentAnchorSubsystemDescriptor, XRPersistentAnchorSubsystem>
                 (
-                    _persistentAnchorSubsystemDescriptors,
+                    PersistentAnchorSubsystemDescriptors,
                     "Lightship-PersistentAnchor"
                 );
             }
@@ -67,7 +66,7 @@ namespace Niantic.Lightship.AR.Loader
                 Log.Info("Creating " + nameof(LightshipSemanticsSubsystem));
                 loader.CreateSubsystem<XRSemanticsSubsystemDescriptor, XRSemanticsSubsystem>
                 (
-                    _semanticsSubsystemDescriptors,
+                    SemanticsSubsystemDescriptors,
                     "Lightship-Semantics"
                 );
             }
@@ -78,7 +77,7 @@ namespace Niantic.Lightship.AR.Loader
                 Log.Info("Creating " + nameof(LightshipScanningSubsystem));
                 loader.CreateSubsystem<XRScanningSubsystemDescriptor, XRScanningSubsystem>
                 (
-                    _scanningSubsystemDescriptors,
+                    ScanningSubsystemDescriptors,
                     "Lightship-Scanning"
                 );
             }
@@ -92,7 +91,7 @@ namespace Niantic.Lightship.AR.Loader
                 // Create Unity integrated subsystem
                 loader.CreateSubsystem<XRMeshSubsystemDescriptor, XRMeshSubsystem>
                 (
-                    _meshingSubsystemDescriptors,
+                    MeshingSubsystemDescriptors,
                     "LightshipMeshing"
                 );
             }
@@ -102,7 +101,7 @@ namespace Niantic.Lightship.AR.Loader
                 Log.Info("Creating " + nameof(LightshipObjectDetectionSubsystem));
                 loader.CreateSubsystem<XRObjectDetectionSubsystemDescriptor, XRObjectDetectionSubsystem>
                 (
-                    _objectDetectionSubsystemDescriptors,
+                    ObjectDetectionSubsystemDescriptors,
                     "Lightship-ObjectDetection"
                 );
             }
@@ -112,7 +111,7 @@ namespace Niantic.Lightship.AR.Loader
                 Log.Info("Creating " + nameof(LightshipWorldPositioningSubsystem));
                 loader.CreateSubsystem<XRWorldPositioningSubsystemDescriptor, XRWorldPositioningSubsystem>
                     (
-                        _worldPositioningSubsystemDescriptors,
+                        WorldPositioningSubsystemDescriptors,
                         "Lightship-WorldPositioning"
                     );
             }
@@ -124,7 +123,7 @@ namespace Niantic.Lightship.AR.Loader
         /// Destroys each initialized subsystem.
         /// </summary>
         /// <returns>Always returns `true`.</returns>
-        internal bool Deinitialize(ILightshipInternalLoaderSupport loader)
+        internal virtual bool Deinitialize(ILightshipInternalLoaderSupport loader)
         {
             Log.Info("Destroying lightship subsystems");
             if (loader == null)

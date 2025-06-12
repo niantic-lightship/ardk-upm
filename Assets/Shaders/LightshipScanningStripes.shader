@@ -1,6 +1,6 @@
 Shader "Unlit/LightshipScanningStripes"
 {
-     Properties
+    Properties
     {
         _MainTex ("ImageFromUnityCamera", 2D) = "white" {}
         _ColorTex ("RaycastColors", 2D) = "white" {}
@@ -48,8 +48,7 @@ Shader "Unlit/LightshipScanningStripes"
                 return o;
             }
 
-            // Returns raycast buffer coordinates to sample for the given output coordinates.
-            inline float2 GetRaycastSampleUV(float2 uv)
+            inline float2 GetSampleUV(float2 uv)
             {
                 // Rotate to account for screen orientation. The raycast buffers are always in landscape left
                 // orientation regardless of screen orientation, and are flipped on the Y axis.
@@ -64,38 +63,24 @@ Shader "Unlit/LightshipScanningStripes"
                 // raycast data to cover the output buffer (aspect fill).
                 float2 outSize = _ScreenOrientation <= 2 ? _MainTex_TexelSize.wz : _MainTex_TexelSize.zw;
                 float outAspect = outSize.x / outSize.y;
-                float inAspect = _ColorTex_TexelSize.z / _ColorTex_TexelSize.w;
+                float inAspect = _ArCameraTex_TexelSize.z / _ArCameraTex_TexelSize.w;
                 float2 scale = min(1.0f, float2(outAspect / inAspect, inAspect / outAspect));
                 return uv * scale + 0.5f;
             }
 
-            // Returns cropped camera buffer coordinates to match the raycast buffer.
-            inline float2 CropCameraImage(float2 uv)
-            {
-                uv -= 0.5f;
-                float outAspect = _ColorTex_TexelSize.z / _ColorTex_TexelSize.w;
-                // Inverted aspect to account for raycast rotated to landscape left
-                float inAspect = _ArCameraTex_TexelSize.w / _ArCameraTex_TexelSize.z;
-
-                // If the camera image is wider than the raycast, crop the width.
-                float uScaled = inAspect > outAspect ? uv.x * outAspect / inAspect : uv.x;
-                // If the camera image is taller than the raycast, crop the height.
-                float vScaled = inAspect < outAspect ? uv.y * inAspect / outAspect : uv.y;
-                return float2(uScaled, vScaled) + 0.5f;
-            }
-
             fixed4 frag (v2f i, UNITY_VPOS_TYPE screenPos : VPOS) : SV_Target
             {
-                // Sample the raycast color from _ColorTex.
-                fixed4 color = tex2D(_ColorTex, GetRaycastSampleUV(i.uv));
-                fixed4 cameraColor = tex2D(_ArCameraTex, CropCameraImage(i.uv));
+                // Sample camera and confidence textures.
+                float2 uv = GetSampleUV(i.uv);
+                const half4 cameraColor = tex2D(_ArCameraTex, uv);
+                const half conf = tex2D(_ColorTex, uv).w;
 
                 // Compute the color of the diagonal stripes.
                 unsigned int stripeCoord = ((int) (screenPos.x + _ScreenParams.y - screenPos.y)) & 15;
                 fixed4 stripeColor = (stripeCoord < 10) ? _StripeColor : 1;
 
-                // Blend raycast color, AR camera view and the stripe color.
-                return cameraColor * color.a / 2 + color * color.a / 2 + stripeColor * (1 - color.a);
+                // Blend stripe and camera image based on confidence.
+                return stripeColor * (1-conf) + cameraColor * conf;
             }
             ENDCG
         }

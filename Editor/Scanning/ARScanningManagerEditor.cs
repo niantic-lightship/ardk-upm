@@ -42,8 +42,8 @@ namespace Niantic.Lightship.AR.Editor
             public const string MultipleVisualizationsWarning =
                 "Displaying both visualization methods may lead to unexpected results.";
             public const string MissingOcclusionManagerError =
-                "No AROcclusionManager was found in the scene. An AROcclusionManager is required to visualize with " +
-                "lidar data.";
+                "No AROcclusionManager was found in the scene. An enabled AROcclusionManager is required to record or " +
+                "visualize with lidar data.";
 
             public static readonly GUIContent ScanPathLabel = new GUIContent("Scan Path");
             public static readonly GUIContent ScanTargetLabel = new GUIContent("POI Target ID");
@@ -57,6 +57,8 @@ namespace Niantic.Lightship.AR.Editor
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
+            var lidarEnabled = LightshipSettings.Instance.PreferLidarIfAvailable;
+            var estimatedDepthRecordingEnabled = _useEstimatedDepth.boolValue;
 
             var scanningManager = (ARScanningManager)target;
             if (scanningManager.enabled && !Application.isPlaying)
@@ -89,8 +91,6 @@ namespace Niantic.Lightship.AR.Editor
                 if (_enableVoxelVisualization.boolValue || _enableRaycastVisualization.boolValue)
                 {
                     var depthEnabled = LightshipSettings.Instance.UseLightshipDepth;
-                    var lidarEnabled = LightshipSettings.Instance.PreferLidarIfAvailable;
-                    var estimatedDepthRecordingEnabled = _useEstimatedDepth.boolValue;
 
                     // Error if there is no depth source.  Warn if lidar is the only source.
                     if (!depthEnabled)
@@ -104,17 +104,6 @@ namespace Niantic.Lightship.AR.Editor
                     else if (lidarEnabled && !estimatedDepthRecordingEnabled)
                     {
                         EditorGUILayout.HelpBox(Contents.VisualizationLidarWarning, MessageType.Warning);
-
-                        // Check for an occlusion manager. Lidar will not work without it.
-                        if (!_triedLookingForOcclusionManager)
-                        {
-                            _triedLookingForOcclusionManager = true;
-                            _occlusionManagerRef = FindObjectOfType<AROcclusionManager>();
-                        }
-                        if (_occlusionManagerRef == null)
-                        {
-                            EditorGUILayout.HelpBox(Contents.MissingOcclusionManagerError, MessageType.Error);
-                        }
                     }
 
                     // Discourage from enabling both visualizations
@@ -122,6 +111,21 @@ namespace Niantic.Lightship.AR.Editor
                     {
                         EditorGUILayout.HelpBox(Contents.MultipleVisualizationsWarning, MessageType.Warning);
                     }
+                }
+            }
+
+            // Warn if Prefer Lidar is enabled but the required Occlusion Manager is missing
+            if (lidarEnabled && !estimatedDepthRecordingEnabled)
+            {
+                if (!_triedLookingForOcclusionManager)
+                {
+                    _triedLookingForOcclusionManager = true;
+                    _occlusionManagerRef = FindObjectOfType<AROcclusionManager>();
+                }
+
+                if (_occlusionManagerRef == null || !_occlusionManagerRef.enabled)
+                {
+                    EditorGUILayout.HelpBox(Contents.MissingOcclusionManagerError, MessageType.Warning);
                 }
             }
 

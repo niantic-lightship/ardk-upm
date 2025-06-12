@@ -19,9 +19,25 @@ namespace Niantic.Lightship.AR.PAM
     // This implementation connects to data sources on an actual device running an ARSession.
     internal class SubsystemsDataAcquirer : PlatformDataAcquirer
     {
+        // Subsystem references
         private XRSessionSubsystem _sessionSubsystem;
         private XRCameraSubsystem _cameraSubsystem;
         private XROcclusionSubsystem _occlusionSubsystem;
+
+        /// <summary>
+        /// Gets the currently loaded XRSessionSubsystem.
+        /// </summary>
+        protected XRSessionSubsystem SessionSubsystem => _sessionSubsystem;
+
+        /// <summary>
+        /// Gets the currently loaded XRSessionSubsystem.
+        /// </summary>
+        protected XRCameraSubsystem CameraSubsystem => _cameraSubsystem;
+
+        /// <summary>
+        /// Gets the currently loaded XROcclusionSubsystem.
+        /// </summary>
+        protected XROcclusionSubsystem OcclusionSubsystem => _occlusionSubsystem;
 
         // Textures
         private Texture2D _gpuImageTex;

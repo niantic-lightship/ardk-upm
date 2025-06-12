@@ -63,31 +63,6 @@ namespace Niantic.Lightship.AR.Subsystems.Occlusion
                 );
         }
 
-        public IntPtr Warp
-        (
-            IntPtr nativeProviderHandle,
-            IntPtr depthResourceHandle,
-            float[] poseMatrix,
-            int targetWidth,
-            int targetHeight,
-            float backProjectionPlane,
-            out IntPtr memoryBuffer,
-            out int size
-        )
-        {
-            return Native.Warp
-            (
-                nativeProviderHandle,
-                depthResourceHandle,
-                poseMatrix,
-                targetWidth,
-                targetHeight,
-                backProjectionPlane,
-                out memoryBuffer,
-                out size
-            );
-        }
-
         public IntPtr Blit
         (
             IntPtr nativeProviderHandle,
@@ -310,19 +285,6 @@ namespace Niantic.Lightship.AR.Subsystems.Occlusion
                 out TextureFormat format,
                 out uint frameId,
                 out ulong frameTimestamp
-            );
-
-            [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_OcclusionProvider_Warp")]
-            public static extern IntPtr Warp
-            (
-                IntPtr depthApiHandle,
-                IntPtr depthResourceHandle,
-                float[] poseMatrix,
-                int targetWidth,
-                int targetHeight,
-                float backProjectionPlane,
-                out IntPtr memoryBuffer,
-                out int size
             );
 
             [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_OcclusionProvider_Blit")]

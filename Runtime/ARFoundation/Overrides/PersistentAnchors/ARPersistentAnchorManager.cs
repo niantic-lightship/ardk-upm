@@ -335,7 +335,7 @@ namespace Niantic.Lightship.AR.PersistentAnchors
 
         /// <summary>
         /// Whether to enable or disable map download for device localization
-        /// The maps will be downloaded from Niantic Cloud and download will be based on GPS location
+        /// The maps will be downloaded from our Cloud and will be based on GPS location
         /// @note This is an experimental feature, and is subject to breaking changes or deprecation without notice
         /// </summary>
         [Experimental]

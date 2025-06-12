@@ -75,12 +75,14 @@ Shader "Unlit/LightshipPlaybackBackground"
                 return o;
             }
 
-            // Plane samplers
-            sampler2D _CameraTex;
+            // Camera image
+            Texture2D _CameraTex;
+            SamplerState sampler_linear_clamp;
 
 #if LIGHTSHIP_ENVIRONMENT_DEPTH_ENABLED
+            // Depth image
             sampler2D_float _EnvironmentDepth;
-#endif // LIGHTSHIP_ENVIRONMENT_DEPTH_ENABLED
+#endif
 
             inline float ConvertDistanceToDepth(float d)
             {
@@ -101,7 +103,7 @@ Shader "Unlit/LightshipPlaybackBackground"
 #endif
 
                 // Sample color
-                float4 color = tex2D(_CameraTex, i.texcoord);
+                float4 color = _CameraTex.Sample(sampler_linear_clamp, i.texcoord);
                 float depth = maxDepth;
 
 #if LIGHTSHIP_ENVIRONMENT_DEPTH_ENABLED

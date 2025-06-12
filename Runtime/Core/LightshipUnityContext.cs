@@ -41,7 +41,7 @@ namespace Niantic.Lightship.AR.Core
         // Function that an external plugin can use to register its own PlatformDataAcquirer with PAM
         internal static Func<IntPtr, bool, bool, PlatformAdapterManager> CreatePamWithPlugin;
 
-        internal static void Initialize(bool isDeviceLidarSupported, bool disableTelemetry = false)
+        internal static void Initialize(bool isDeviceLidarSupported, bool disableTelemetry = false, string featureFlagFilePath = "")
         {
 #if NIANTIC_LIGHTSHIP_AR_LOADER_ENABLED
             s_isDeviceLidarSupported = isDeviceLidarSupported;
@@ -76,7 +76,7 @@ namespace Niantic.Lightship.AR.Core
             s_userConfig = new UserConfig
             {
                 ApiKey = settings.ApiKey,
-                FeatureFlagFilePath = GetFeatureFlagPath()
+                FeatureFlagFilePath = string.IsNullOrEmpty(featureFlagFilePath) ? GetFeatureFlagPath() : featureFlagFilePath,
             };
 
             var deviceInfo = new DeviceInfo

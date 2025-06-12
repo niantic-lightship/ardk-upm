@@ -46,6 +46,23 @@ namespace Niantic.Lightship.AR.Utilities
             return string.Join("", halves);
         }
 
+        /// <summary>
+        /// Converts a native ARDK UUID string to a TrackableId.
+        /// This can then be passed back into native to get the original UUID.
+        /// This is the inverse of ToLightshipHexString.
+        /// Takes either a 32 character string or a 33 character string with a dash.
+        /// </summary>
+        public static TrackableId FromNativeUuid(string uuid)
+        {
+            var gotTrackableIdComponents = LightshipHexStringToUlongs(uuid, out var upper, out var lower);
+            if (!gotTrackableIdComponents)
+            {
+                throw new System.ArgumentException("Invalid input, expected a valid UUID");
+            }
+
+            return new TrackableId(upper, lower);
+        }
+
         public static bool LightshipHexStringToUlongs(string hexString, out ulong upper, out ulong lower)
         {
             // Check if the string is a valid UUID

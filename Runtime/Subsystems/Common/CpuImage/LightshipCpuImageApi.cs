@@ -32,22 +32,41 @@ namespace Niantic.Lightship.AR.Subsystems.Common
             public readonly int Handle;
             public readonly XRCpuImage.Format Format;
             public readonly Vector2Int Dimensions;
-            public double TimestampS;
+            public readonly int PlaneCount;
+            public readonly double TimestampS;
 
-            public NativeImage(int handle, TextureFormat format, int width, int height, ulong timestampMs)
+            public int GetWidth(int planeIndex) => Mathf.Clamp(planeIndex, 0, 3) == 0
+                ? Dimensions.x
+                : (Dimensions.x + 1) / 2;
+
+            public int GetHeight(int planeIndex) => Mathf.Clamp(planeIndex, 0, 3) == 0
+                ? Dimensions.y
+                : (Dimensions.y + 1) / 2;
+
+            public int GetPixelStride(int planeIndex) => Mathf.Clamp(planeIndex, 0, 3) == 0
+                ? Format.BytesPerPixel()
+                : PlaneCount == 2 ? 2 : 1;
+
+            public int GetRowStride(int planeIndex) => GetWidth(planeIndex) * GetPixelStride(planeIndex);
+
+            public NativeImage(int handle, TextureFormat format, int width, int height, ulong timestampMs,
+                int planeCount = 1)
             {
                 Handle = handle;
                 Format = format.ConvertToXRCpuImageFormat();
                 Dimensions = new Vector2Int(width, height);
                 TimestampS = timestampMs / 1000.0;
+                PlaneCount = planeCount;
             }
 
-            public NativeImage(int handle, XRCpuImage.Format format, int width, int height, ulong timestampMs)
+            public NativeImage(int handle, XRCpuImage.Format format, int width, int height, ulong timestampMs,
+                int planeCount = 1)
             {
                 Handle = handle;
                 Format = format;
                 Dimensions = new Vector2Int(width, height);
                 TimestampS = timestampMs / 1000.0;
+                PlaneCount = planeCount;
             }
         }
 
@@ -90,7 +109,8 @@ namespace Niantic.Lightship.AR.Subsystems.Common
             {
                 var image = new NativeImage(handle, format, width, height, timestampMs);
                 _images.Add(handle, image);
-                cinfo = new XRCpuImage.Cinfo(handle, image.Dimensions, 1, image.TimestampS, image.Format);
+                cinfo = new XRCpuImage.Cinfo(handle, image.Dimensions, image.PlaneCount, image.TimestampS,
+                    image.Format);
 
                 return true;
             }
@@ -101,6 +121,42 @@ namespace Niantic.Lightship.AR.Subsystems.Common
 
         public bool TryAddManagedXRCpuImage
         (
+            IntPtr[] dataPtrs,
+            int[] dataSizes,
+            int width,
+            int height,
+            XRCpuImage.Format format,
+            ulong timestampMs,
+            out XRCpuImage.Cinfo cinfo
+        )
+        {
+            if (_pool.TryCopyFrom(dataPtrs, dataSizes, out var handle))
+            {
+                var image = new NativeImage(handle, format, width, height, timestampMs, planeCount: dataPtrs.Length);
+                _images.Add(handle, image);
+                cinfo = new XRCpuImage.Cinfo(handle, image.Dimensions, image.PlaneCount, image.TimestampS,
+                    image.Format);
+
+                return true;
+            }
+
+            cinfo = default;
+            return false;
+        }
+
+        /// <summary>
+        /// Copies the specified data to the cpu image data store and creates a new <see cref="XRCpuImage.Cinfo"/>.
+        /// </summary>
+        /// <remarks>The resulting image will contain a single plane.</remarks>>
+        /// <param name="data">The data to copy into the cpu image data store.</param>
+        /// <param name="width">The width of the image.</param>
+        /// <param name="height">The height of the image.</param>
+        /// <param name="format">The format of the image.</param>
+        /// <param name="timestampMs">The timestamp of the image in milliseconds.</param>
+        /// <param name="cinfo">The resulting <see cref="XRCpuImage.Cinfo"/>.</param>
+        /// <returns>Whether the data was successfully copied.</returns>
+        public bool TryAddManagedXRCpuImage
+        (
             byte[] data,
             int width,
             int height,
@@ -109,12 +165,44 @@ namespace Niantic.Lightship.AR.Subsystems.Common
             out XRCpuImage.Cinfo cinfo
         )
         {
-            int planeCount = format == XRCpuImage.Format.AndroidYuv420_888 ? 3 : 1;
             if (_pool.TryCopyFrom(data, out var handle))
             {
-                var image = new NativeImage(handle, format, width, height, timestampMs);
+                var image = new NativeImage(handle, format, width, height, timestampMs, planeCount: 1);
                 _images.Add(handle, image);
-                cinfo = new XRCpuImage.Cinfo(handle, image.Dimensions, planeCount, image.TimestampS, image.Format);
+                cinfo = new XRCpuImage.Cinfo(handle, image.Dimensions, image.PlaneCount, image.TimestampS,
+                    image.Format);
+
+                return true;
+            }
+
+            cinfo = default;
+            return false;
+        }
+
+        /// <summary>
+        /// Copies the specified data to the cpu image data store and creates a new <see cref="XRCpuImage.Cinfo"/>.
+        /// </summary>
+        /// <remarks>The resulting image will contain a single plane, using RGBA32 color format.</remarks>>
+        /// <param name="data">The data to copy into the cpu image data store.</param>
+        /// <param name="width">The width of the image.</param>
+        /// <param name="height">The height of the image.</param>
+        /// <param name="timestampMs">The timestamp of the image in milliseconds.</param>
+        /// <param name="cinfo">The resulting <see cref="XRCpuImage.Cinfo"/>.</param>
+        /// <returns>Whether the data was successfully copied.</returns>
+        public bool TryAddManagedXRCpuImage
+        (
+            Color32[] data,
+            int width,
+            int height,
+            ulong timestampMs,
+            out XRCpuImage.Cinfo cinfo
+        )
+        {
+            if (_pool.TryCopyFrom(data, out var handle))
+            {
+                var image = new NativeImage(handle, XRCpuImage.Format.RGBA32, width, height, timestampMs);
+                _images.Add(handle, image);
+                cinfo = new XRCpuImage.Cinfo(handle, image.Dimensions, image.PlaneCount, image.TimestampS, image.Format);
 
                 return true;
             }
@@ -135,42 +223,44 @@ namespace Niantic.Lightship.AR.Subsystems.Common
 
         public override bool TryGetPlane(int nativeHandle, int planeIndex, out XRCpuImage.Plane.Cinfo planeCinfo)
         {
-            planeCinfo = default;
-
-            // Our plane is valid only if:
-            // * We can get the image and data from the handle
-            // * The plane index is correct for the format (we only support single planar, and up to 3 for YUV420)
-            if (!(planeIndex < 3 &&
-                    _images.TryGetValue(nativeHandle, out var image) &&
-                    (image.Format == XRCpuImage.Format.AndroidYuv420_888 || planeIndex == 0) &&
-                    _pool.TryGetData(nativeHandle, out var nativeArray)))
+            // Does the image exist?
+            var imageAvailable = _images.TryGetValue(nativeHandle, out var image);
+            if (!imageAvailable)
             {
-                // Return if those conditions are not true.
+                planeCinfo = default;
                 return false;
             }
 
-            int width = image.Dimensions.x;
-            int height = image.Dimensions.y;
-            int pixelStride = image.Format.BytesPerPixel();
-            int dataLength = width * height * pixelStride;
-            int rowStride = width * pixelStride;
+            // Is the plane index valid?
+            if (planeIndex < 0 || planeIndex >= image.PlaneCount)
+            {
+                planeCinfo = default;
+                return false;
+            }
 
+            // Can access the image data from the handle?
+            var dataAvailable = _pool.TryGetData(nativeHandle, out var nativeArray);
+            if (!dataAvailable)
+            {
+                planeCinfo = default;
+                return false;
+            }
+
+            // Get strides
+            int pixelStride = image.GetPixelStride(planeIndex);
+            int rowStride = image.GetRowStride(planeIndex);
+            int dataLength = rowStride * image.GetHeight(planeIndex);;
+
+            // Get the offset to the start of the plane
+            var bytesOffset = 0;
+            for (var i = 0; i < planeIndex; i++)
+            {
+                bytesOffset += image.GetRowStride(i) * image.GetHeight(i);
+            }
+
+            // Get the pointer to the data
             IntPtr ptr;
-            unsafe
-            {
-                ptr = (IntPtr)nativeArray.GetUnsafePtr();
-            }
-
-            if (planeIndex > 0 && image.Format == XRCpuImage.Format.AndroidYuv420_888)
-            {
-                ptr += dataLength;
-                dataLength = (width + 1) / 2 * ((height + 1) / 2); // Half of width / height, rounded up.
-                if (planeIndex == 1) // Special case for AndroidYuv420_888 - We actually want Y/V/U order!
-                {
-                    ptr += dataLength;
-                }
-                rowStride = (width + 1) / 2;
-            }
+            unsafe { ptr = (IntPtr)nativeArray.GetUnsafePtr() + bytesOffset; }
 
             planeCinfo = new XRCpuImage.Plane.Cinfo(ptr, dataLength, rowStride, pixelStride);
             return true;

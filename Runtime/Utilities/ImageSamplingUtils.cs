@@ -163,7 +163,7 @@ namespace Niantic.Lightship.AR.Utilities
         /// <param name="sourcePlane">The index of the image plane to copy.</param>
         /// <param name="destination">The target texture to copy to.</param>
         /// <param name="destinationFilter">The sampling method of the target texture.</param>
-        /// <param name="linearColorSpace">Whether to sample the target texture in linear color space.</param>
+        /// <param name="linearColorSpace">Whether to sample the target texture is in linear color space.</param>
         /// <param name="pushToGpu">Whether to upload the texture to gpu when done.</param>
         /// <returns>Whether the target texture was successfully updated.</returns>
         internal static bool CreateOrUpdateTexture(
@@ -177,6 +177,7 @@ namespace Niantic.Lightship.AR.Utilities
         {
             if (!source.valid)
             {
+                Error("XRCpuImage is not valid.");
                 return false;
             }
 
@@ -186,9 +187,9 @@ namespace Niantic.Lightship.AR.Utilities
             {
                 imagePlane = source.GetPlane(sourcePlane);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                Error($"Could not retrieve image plane: {source}.");
+                Error($"Failed to get plane {sourcePlane}: {ex.Message}");
                 return false;
             }
 
@@ -228,6 +229,154 @@ namespace Niantic.Lightship.AR.Utilities
 
             // Success
             return true;
+        }
+
+        /// <summary>
+        /// Copies the contents of all planes of an XRCpuImage into a corresponding array of textures.
+        /// If any destination texture is missing or mismatched, it will be created.
+        /// Releasing the textures is the responsibility of the caller.
+        /// </summary>
+        /// <param name="source">The source XRCpuImage.</param>
+        /// <param name="destTextures">The target textures array, one per image plane. Will be updated or resized as needed.</param>
+        /// <param name="destinationFilter">Filter mode for the created textures.</param>
+        /// <param name="linearColorSpace">Whether the textures are in linear color space.</param>
+        /// <param name="pushToGpu">Whether to upload the textures to GPU after writing.</param>
+        /// <returns>True if textures were successfully updated, false otherwise.</returns>
+        internal static bool CreateOrUpdateTextures(
+            this XRCpuImage source,
+            ref Texture2D[] destTextures,
+            FilterMode destinationFilter = FilterMode.Bilinear,
+            bool linearColorSpace = false,
+            bool pushToGpu = true)
+        {
+            // Check if the source image is valid
+            if (!source.valid)
+            {
+                Error("XRCpuImage is not valid.");
+                return false;
+            }
+
+            // Get the number of planes
+            var planeCount = source.planeCount;
+
+            // Check if the format is supported
+            if (planeCount > 1 && source.format != XRCpuImage.Format.AndroidYuv420_888 &&
+                source.format != XRCpuImage.Format.IosYpCbCr420_8BiPlanarFullRange)
+            {
+                Error($"XRCpuImage format {source.format} is not supported for this method.");
+                return false;
+            }
+
+            // Resize or allocate the texture array if needed
+            if (destTextures == null || destTextures.Length != planeCount)
+            {
+                if (destTextures != null)
+                {
+                    for (int i = 0; i < destTextures.Length; i++)
+                    {
+                        if (destTextures[i] != null)
+                        {
+                            UnityEngine.Object.Destroy(destTextures[i]);
+                            destTextures[i] = null;
+                        }
+                    }
+                }
+
+                destTextures = new Texture2D[planeCount];
+            }
+
+            for (int planeIdx = 0; planeIdx < planeCount; planeIdx++)
+            {
+                XRCpuImage.Plane plane;
+                try
+                {
+                    plane = source.GetPlane(planeIdx);
+                }
+                catch (Exception ex)
+                {
+                    Error($"Failed to get plane {planeIdx}: {ex.Message}");
+                    return false;
+                }
+
+                // Infer the texture format per plane
+                var textureFormat = source.GetTextureFormatForPlane(planeIdx);
+                if (!textureFormat.HasValue)
+                {
+                    Error($"Failed to get texture format for plane {planeIdx}.");
+                    return false;
+                }
+
+                // Infer plane dimensions
+                int width = source.width >> (planeIdx > 0 ? 1 : 0);
+                int height = source.height >> (planeIdx > 0 ? 1 : 0);
+
+                // Create or recreate texture if needed
+                if (destTextures[planeIdx] == null ||
+                    destTextures[planeIdx].width != width ||
+                    destTextures[planeIdx].height != height ||
+                    destTextures[planeIdx].format != textureFormat)
+                {
+                    if (destTextures[planeIdx] != null)
+                    {
+                        UnityEngine.Object.Destroy(destTextures[planeIdx]);
+                    }
+
+                    destTextures[planeIdx] = new Texture2D(width, height, textureFormat.Value, false, linearColorSpace)
+                    {
+                        wrapMode = TextureWrapMode.Clamp, anisoLevel = 0
+                    };
+                }
+
+                // Update filter mode if changed
+                if (destTextures[planeIdx].filterMode != destinationFilter)
+                {
+                    destTextures[planeIdx].filterMode = destinationFilter;
+                }
+
+                // Copy data from plane
+                destTextures[planeIdx].GetPixelData<byte>(0).CopyFrom(plane.data);
+
+                if (pushToGpu)
+                {
+                    destTextures[planeIdx].Apply(false, false);
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Infers the texture format for a given image plane based on the XRCpuImage format.
+        /// </summary>
+        /// <param name="source">The source XRCpuImage.</param>
+        /// <param name="planeIndex">The index of the image plane.</param>
+        /// <returns>The inferred texture format, or null if the format cannot be determined.</returns>
+        private static TextureFormat? GetTextureFormatForPlane(this XRCpuImage source, int planeIndex)
+        {
+            if (!source.valid || planeIndex >= source.planeCount)
+            {
+                return null;
+            }
+
+            // Android YUV_420_888 has 3 planes: Y (R8), U/V (RG16 or R8)
+            // iOS BiPlanar: Y (R8), CbCr (RG16)
+            var format = source.format;
+            switch (format)
+            {
+                case XRCpuImage.Format.IosYpCbCr420_8BiPlanarFullRange:
+                    return planeIndex == 0
+                        ? TextureFormat.R8 // Luma
+                        : TextureFormat.RG16; // Chroma (interleaved)
+
+                case XRCpuImage.Format.AndroidYuv420_888:
+                    return planeIndex == 0
+                        ? TextureFormat.R8 // Luma
+                        : source.planeCount == 2
+                            ? TextureFormat.RG16 // Chroma (interleaved)
+                            : TextureFormat.R8;  // Chroma (separate planes)
+                default:
+                    return format.AsTextureFormat();
+            }
         }
     }
 }

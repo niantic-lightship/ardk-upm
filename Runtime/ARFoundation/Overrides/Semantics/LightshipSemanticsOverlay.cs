@@ -126,7 +126,7 @@ namespace Niantic.Lightship.AR.Semantics
 
         protected override string[] OnRequestExternalPassDependencies(CameraEvent evt)
         {
-#if !UNITY_EDITOR && NIANTIC_LIGHTSHIP_ML2_ENABLED
+#if !UNITY_EDITOR && (NIANTIC_LIGHTSHIP_ML2_ENABLED || NIANTIC_LIGHTSHIP_META_ENABLED)
             // We don't expect built-in command buffers (e.g. background rendering) on ML2
             return null;
 #endif
@@ -301,7 +301,7 @@ namespace Niantic.Lightship.AR.Semantics
             {
                 Debug.LogError
                 (
-                    "Destroying XRSemanticsDisplay component because " +
+                    "Destroying XRSemanticsOverlay component because " +
                     $"no active {typeof(XRSemanticsSubsystem).FullName} is available. " +
                     "Please ensure that a valid loader configuration exists in the XR project settings."
                 );

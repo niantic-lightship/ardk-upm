@@ -12,7 +12,7 @@ namespace Niantic.Lightship.Utilities.UnityAssets
     {
         // Reads from streaming assets return near-immediately and should never timeout.
         // But we still need to provide some timeout?
-        private const int LocalWebRequestMaxWait = 100;
+        private const int LocalWebRequestMaxWaitMs = 100;
 
         public static bool TryReadAllText(string filePath, out string result)
         {
@@ -75,13 +75,15 @@ namespace Niantic.Lightship.Utilities.UnityAssets
         private static byte[] SendWebRequestAndWait(UnityWebRequest request)
         {
             var requestOp = request.SendWebRequest();
+            var stopWatch = System.Diagnostics.Stopwatch.StartNew();
 
-            var timeEnd = DateTime.Now + TimeSpan.FromMilliseconds(LocalWebRequestMaxWait);
-            while (requestOp.progress < 1f && DateTime.Now < timeEnd)
+            while (requestOp.progress < 1f && stopWatch.ElapsedMilliseconds < LocalWebRequestMaxWaitMs)
             {
-               // do nothing
+                // Yield control to avoid blocking the main thread
+                System.Threading.Thread.Sleep(1);
             }
 
+            stopWatch.Stop();
             // Reads from StreamingAssets return near-immediately and should never timeout. But just in case...
             if (requestOp.progress < 1f)
             {

@@ -8,3 +8,4 @@
 -define:ARDK_3_11_0_OR_GREATER
 -define:ARDK_3_12_0_OR_GREATER
 -define:ARDK_3_13_0_OR_GREATER
+-define:ARDK_3_14_0_OR_GREATER

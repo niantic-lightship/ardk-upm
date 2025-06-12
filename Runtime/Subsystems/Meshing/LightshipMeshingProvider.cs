@@ -7,9 +7,21 @@ namespace Niantic.Lightship.AR.Subsystems.Meshing
 {
     internal class LightshipMeshingProvider
     {
+        private static bool s_isConstructed;
+
+        [Obsolete("Use Construct(IntPtr unityContext) instead.")]
         public LightshipMeshingProvider(IntPtr unityContext)
         {
             Lightship_ARDK_Unity_Meshing_Provider_Construct(unityContext);
+        }
+
+        public static void Construct(IntPtr unityContext)
+        {
+            if (!s_isConstructed)
+            {
+                Lightship_ARDK_Unity_Meshing_Provider_Construct(unityContext);
+                s_isConstructed = true;
+            }
         }
 
         public static bool Configure

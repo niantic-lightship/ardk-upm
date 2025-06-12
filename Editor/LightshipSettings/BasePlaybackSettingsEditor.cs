@@ -11,7 +11,7 @@ using UnityEngine;
 
 namespace Niantic.Lightship.AR.Editor
 {
-    public abstract class BasePlaybackSettingsEditor: IPlaybackSettingsEditor
+    public abstract class BasePlaybackSettingsEditor : IPlaybackSettingsEditor
     {
         private static class Contents
         {
@@ -55,10 +55,28 @@ namespace Niantic.Lightship.AR.Editor
 
         private bool _drawPreviewStartFrame = false;
         private bool _drawPreviewEndFrame = false;
+        private bool _onlyLoadPreviews = false;
+
+        private const int PreviewLengthThreshold = 1800;
+        private const int PreviewFrameCount = 24;
+        private int FrameCount
+        {
+            get
+            {
+                if (_frameTextures != null)
+                    return _frameTextures.Length;
+                else
+                    return PreviewFrameCount;
+            }
+        }
 
         private float _loadProgress = 0.0f;
 
         private EditorCoroutine _loadFrameTexturesCoroutine;
+
+        private Texture2D _backgroundTexture;
+
+        private Texture2D _overlayTexture;
 
         public void DrawGUI()
         {
@@ -76,12 +94,17 @@ namespace Niantic.Lightship.AR.Editor
                 if (string.IsNullOrEmpty(PlaybackSettings.PlaybackDatasetPath))
                 {
                     _dataset = null;
+                    _previewTexturesLoaded = false;
+                    _allTexturesLoaded = false;
+                    _onlyLoadPreviews = false;
+                    _frameTextures = null;
                 }
                 else if(_dataset == null || wasPathUpdated)
                 {
                     _dataset = PlaybackDatasetLoader.Load(PlaybackSettings.PlaybackDatasetPath);
                     _previewTexturesLoaded = false;
                     _allTexturesLoaded = false;
+                    _onlyLoadPreviews = false;
                     _frameTextures = null;
                     if(_loadFrameTexturesCoroutine != null)
                     {
@@ -195,13 +218,19 @@ namespace Niantic.Lightship.AR.Editor
             startFrame = Mathf.RoundToInt(Mathf.Clamp(startFrame, 0, endFrame - 1));
             endFrame = Mathf.RoundToInt(Mathf.Clamp(endFrame, startFrame + 1, maxFrame));
 
+            if (_backgroundTexture == null)
+                _backgroundTexture = MakeTex(2, 2, new Color(0.2f, 0.2f, 0.2f, 1.0f));
+
+            if (_overlayTexture == null)
+                _overlayTexture = MakeTex(84, 84, new Color(Color.gray.r, Color.gray.g, Color.gray.b, 0.6f));
+
             EditorGUILayout.BeginVertical(GUILayout.ExpandWidth(true));
             {
                 var darkGrayBackground = new GUIStyle(GUI.skin.box)
                 {
                     normal =
                     {
-                        background = MakeTex(2, 2, new Color(0.2f, 0.2f, 0.2f, 1.0f))
+                        background = _backgroundTexture
                     }
                 };
 
@@ -210,22 +239,20 @@ namespace Niantic.Lightship.AR.Editor
                     EditorGUILayout.Space(8, false);
                     EditorGUILayout.BeginVertical();
                     {
-                        var imageHeight = 100;
+                        var imageHeight = 64;
                         var imageWidth = Mathf.RoundToInt(imageHeight * aspectRatio);
 
-                        var maxImagesInPreview = 24;
-                        var framesToSkip = _dataset.FrameCount <= maxImagesInPreview ?
+                        var framesToSkip = _dataset.FrameCount <= PreviewFrameCount ?
                             1 :
-                            _dataset.FrameCount / maxImagesInPreview;
+                            _dataset.FrameCount / PreviewFrameCount;
 
-                        var newImageCount = Mathf.Max(_dataset.FrameCount, maxImagesInPreview);
+                        var newImageCount = Mathf.Max(_dataset.FrameCount, PreviewFrameCount);
 
                         float spacing = ((window.width - 16) - (newImageCount * imageWidth)) / (newImageCount - 1);
-                        var transparentGray = new Color(Color.gray.r, Color.gray.g, Color.gray.b, 0.6f);
 
                         var overlayStyle = new GUIStyle() { stretchHeight = true, stretchWidth = true, normal =
                         {
-                            background = MakeTex(120, 120, transparentGray)
+                            background = _overlayTexture
                         }};
 
                         // Timeline
@@ -271,8 +298,8 @@ namespace Niantic.Lightship.AR.Editor
             GUIStyle overlayStyle,
             float endOverlayWidth)
         {
-            GUI.Box(new Rect(timeline.position, new Vector2(startOverlayWidth, 120)), GUIContent.none, overlayStyle);
-            GUI.Box(new Rect(timeline.position + new Vector2(timeline.width - endOverlayWidth, 0), new Vector2(endOverlayWidth, 120)), GUIContent.none, overlayStyle);
+            GUI.Box(new Rect(timeline.position, new Vector2(startOverlayWidth, 84)), GUIContent.none, overlayStyle);
+            GUI.Box(new Rect(timeline.position + new Vector2(timeline.width - endOverlayWidth, 0), new Vector2(endOverlayWidth, 84)), GUIContent.none, overlayStyle);
         }
 
         private void DrawTimestamps(float startFrame, float endFrame)
@@ -347,7 +374,7 @@ namespace Niantic.Lightship.AR.Editor
                         var imageX = timeline.width * startFrame / maxFrame;
                         var rect = new Rect(timeline.position + new Vector2(imageX, -150f), new Vector2(imageWidth * 2.5f, (imageWidth / aspectRatio) * 2.5f));
 
-                        GUI.DrawTexture(rect, _frameTextures[Mathf.RoundToInt(startFrame)], ScaleMode.ScaleToFit);
+                        GUI.DrawTexture(rect, _frameTextures[GetTextureFrame(Mathf.RoundToInt(startFrame))], ScaleMode.ScaleToFit);
                     }
 
                     if(!Mathf.Approximately(endFrame, prevEndFrame) && !_drawPreviewEndFrame)
@@ -360,7 +387,7 @@ namespace Niantic.Lightship.AR.Editor
                         var imageX = timeline.width * endFrame / maxFrame;
                         var rect = new Rect(timeline.position + new Vector2(imageX, -150f), new Vector2(imageWidth * 2.5f, (imageWidth / aspectRatio) * 2.5f));
 
-                        GUI.DrawTexture(rect, _frameTextures[Mathf.RoundToInt(endFrame)], ScaleMode.ScaleToFit);
+                        GUI.DrawTexture(rect, _frameTextures[GetTextureFrame(Mathf.RoundToInt(endFrame))], ScaleMode.ScaleToFit);
                     }
                 }                
             }
@@ -377,7 +404,7 @@ namespace Niantic.Lightship.AR.Editor
             float spacing,
             float aspectRatio)
         {
-            var timeline = EditorGUILayout.BeginHorizontal(darkGrayBackground, GUILayout.Height(120), GUILayout.ExpandWidth(true));
+            var timeline = EditorGUILayout.BeginHorizontal(darkGrayBackground, GUILayout.Height(84), GUILayout.ExpandWidth(true));
             {
                 EditorGUILayout.Space(0.01f, true);
 
@@ -385,7 +412,7 @@ namespace Niantic.Lightship.AR.Editor
                 {
                     for (int i = 0; i < _dataset.FrameCount; i += framesToSkip)
                     {
-                        var frameTexture = _frameTextures[i];
+                        var frameTexture = _frameTextures[GetTextureFrame(i)];
 
                         if (frameTexture != null)
                         {
@@ -399,19 +426,19 @@ namespace Niantic.Lightship.AR.Editor
             return timeline;
         }
 
-        private void LoadFrameImage(int frameIndex)
+        private void LoadFrameImage(int datasetIndex)
         {
-            var frame = _dataset.Frames[frameIndex];
+            var frame = _dataset.Frames[datasetIndex];
             byte[] fileData = File.ReadAllBytes(
                 Path.Combine(
                     PlaybackSettings.PlaybackDatasetPath,
                     frame.ImagePath));
 
-            ProcessFrameTexture(fileData, frame, frameIndex);
+            ProcessFrameTexture(fileData, frame, datasetIndex);
         }
 
 
-        private void ProcessFrameTexture(byte[] fileData, PlaybackDataset.FrameMetadata frame, int frameIndex)
+        private void ProcessFrameTexture(byte[] fileData, PlaybackDataset.FrameMetadata frame, int datasetIndex)
         {
             Texture2D texture = new Texture2D(2, 2);
             texture.LoadImage(fileData);
@@ -444,6 +471,10 @@ namespace Niantic.Lightship.AR.Editor
                     break;
             }
 
+            float aspectRatio = (float)width / height;
+            height = 64;
+            width = Mathf.RoundToInt(height * aspectRatio);
+
             RenderTexture rt = new RenderTexture(width, height, 0);
             Material mat = new Material(Shader.Find("Lightship/Editor/Custom/RotateTextureShader"));
             mat.SetFloat("_Rotation", rotationAngle);
@@ -455,7 +486,7 @@ namespace Niantic.Lightship.AR.Editor
             rotatedTexture.Apply();
             RenderTexture.active = null;
 
-            _frameTextures[frameIndex] = rotatedTexture;
+            _frameTextures[GetTextureFrame(datasetIndex)] = rotatedTexture;
         }
 
         private Texture2D MakeTex(int width, int height, Color col)
@@ -494,10 +525,9 @@ namespace Niantic.Lightship.AR.Editor
 
         private void LoadPreviewFrames()
         {
-            var maxImagesInPreview = 24;
-            var framesToSkip = _dataset.FrameCount <= maxImagesInPreview ?
+            var framesToSkip = _dataset.FrameCount <= PreviewFrameCount ?
                 1 :
-                _dataset.FrameCount / maxImagesInPreview;
+                _dataset.FrameCount / PreviewFrameCount;
 
             // Load preview textures
             for (int i = 0; i < _dataset.FrameCount; i += framesToSkip)
@@ -518,15 +548,37 @@ namespace Niantic.Lightship.AR.Editor
                 yield break;
             }
 
-            _frameTextures = new Texture2D[_dataset.FrameCount];
+            // If the dataset is too long, only load the previews
+            int frameCount = _dataset.FrameCount;
+            if (_dataset.FrameCount > PreviewLengthThreshold)
+            {
+                _onlyLoadPreviews = true;
+                frameCount = PreviewFrameCount;
+            }
+
+            _frameTextures = new Texture2D[frameCount];
 
             LoadPreviewFrames();
 
             _previewTexturesLoaded = true;
 
-            yield return LoadAllFrames();
+            if (!_onlyLoadPreviews)
+                yield return LoadAllFrames();
 
             _allTexturesLoaded = true;
+        }
+
+        private int GetTextureFrame(int datasetFrame)
+        {
+            if (!_onlyLoadPreviews)
+                return datasetFrame;
+
+            var framesToSkip = _dataset.FrameCount <= PreviewFrameCount ?
+                1 :
+                _dataset.FrameCount / PreviewFrameCount;
+
+            // If dataset.FrameCount doesn't evenly divide by PreviewFrameCount, ensure the remainder corresponds to the final preview frame
+            return Math.Clamp((datasetFrame / framesToSkip), 0, PreviewFrameCount - 1);
         }
     }
 }

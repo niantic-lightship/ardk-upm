@@ -22,6 +22,8 @@ using UnityEngine.Scripting;
 [assembly: InternalsVisibleTo("Niantic.Lightship.MagicLeap.Editor")]
 [assembly: InternalsVisibleTo("Niantic.Lightship.MagicLeap.InternalSamples")]
 [assembly: InternalsVisibleTo("Niantic.Lightship.ScanReconstruction")]
+[assembly: InternalsVisibleTo("Niantic.Lightship.MetaQuest")]
+[assembly: InternalsVisibleTo("Niantic.Lightship.MetaQuest.InternalSamples")]
 [assembly: InternalsVisibleTo("Niantic.Lightship.GeoUploader")]
 [assembly: InternalsVisibleTo("Niantic.Lightship.AR.PersistentAR.PreProd")]
 [assembly: InternalsVisibleTo("Niantic.Lightship.GeoUploader.Tests")]

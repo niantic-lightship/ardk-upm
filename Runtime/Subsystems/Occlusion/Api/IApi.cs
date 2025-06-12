@@ -36,18 +36,6 @@ namespace Niantic.Lightship.AR.Subsystems.Occlusion
             int imageHeight
         );
 
-        public IntPtr Warp
-        (
-            IntPtr nativeProviderHandle,
-            IntPtr depthResourceHandle,
-            float[] poseMatrix,
-            int targetWidth,
-            int targetHeight,
-            float backProjectionPlane,
-            out IntPtr memoryBuffer,
-            out int size
-        );
-
         public IntPtr Blit
         (
             IntPtr nativeProviderHandle,

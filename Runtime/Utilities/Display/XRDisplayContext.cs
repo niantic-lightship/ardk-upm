@@ -64,7 +64,7 @@ namespace Niantic.Lightship.AR.Utilities
         /// return the UnityEngine.Screen.orientation value.</returns>
         public static ScreenOrientation GetScreenOrientation()
         {
-#if !UNITY_EDITOR && UNITY_ANDROID && (NIANTIC_LIGHTSHIP_SPACES_ENABLED || NIANTIC_LIGHTSHIP_ML2_ENABLED)
+#if !UNITY_EDITOR && UNITY_ANDROID && (NIANTIC_LIGHTSHIP_SPACES_ENABLED || NIANTIC_LIGHTSHIP_ML2_ENABLED || NIANTIC_LIGHTSHIP_META_ENABLED)
             //TODO [ARDK-2593]: Fix this properly to account for head tilt
             return ScreenOrientation.LandscapeLeft;
 #endif
