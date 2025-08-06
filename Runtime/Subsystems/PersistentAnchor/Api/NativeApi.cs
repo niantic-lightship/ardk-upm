@@ -78,6 +78,12 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
 
             [MarshalAs(UnmanagedType.U1)]
             public bool disableTransitiveCloudLocalizations;
+
+            [MarshalAs(UnmanagedType.U1)]
+            public bool enableVpsDebugger;
+
+            [MarshalAs(UnmanagedType.U1)]
+            public bool gpsCorrectionForContinuousLocalization;
         }
 
         public void Configure(IntPtr anchorProviderHandle,
@@ -96,7 +102,9 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
             bool enableDiagnostics,
             bool limitedLocalizationsOnly,
             int jpegCompressionQuality,
-            bool disableTransitiveCloudLocalizations)
+            bool disableTransitiveCloudLocalizations,
+            bool enableVpsDebugger,
+            bool gpsCorrectionForContinuousLocalization)
         {
             var configurationCStruct = new AnchorConfigurationCStruct();
             configurationCStruct.enableContinuousLocalization = enableContinuousLocalization;
@@ -124,6 +132,8 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
             configurationCStruct.limitedLocalizationsOnly = limitedLocalizationsOnly;
             configurationCStruct.jpegCompressionQuality = jpegCompressionQuality;
             configurationCStruct.disableTransitiveCloudLocalizations = disableTransitiveCloudLocalizations;
+            configurationCStruct.enableVpsDebugger = enableVpsDebugger;
+            configurationCStruct.gpsCorrectionForContinuousLocalization = gpsCorrectionForContinuousLocalization;
             Native.Configure(anchorProviderHandle, configurationCStruct);
         }
 
@@ -347,6 +357,18 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
             return true;
         }
 
+        public bool GetVpsDebuggerLog(IntPtr anchorProviderHandle, out string vpsDebuggerLog)
+        {
+            var bufHandle = Native.GetVpsDebuggerLog(anchorProviderHandle, out var bufPtr, out var len);
+            if (bufHandle.IsValidHandle() && len > 0 && bufPtr.IsValidHandle())
+            {
+                vpsDebuggerLog = Marshal.PtrToStringAnsi(bufPtr, (Int32)len);
+                LightshipUnityContext.ReleaseNativeResource(bufHandle);
+                return true;
+            }
+            vpsDebuggerLog = null;
+            return false;
+        }
 
         private static class Native
         {
@@ -361,7 +383,7 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
 
             [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_AnchorProvider_Configure")]
             public static extern void Configure
-            (   IntPtr anchorProviderHandle,
+            (IntPtr anchorProviderHandle,
                 AnchorConfigurationCStruct config
             );
 
@@ -517,6 +539,18 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
             (
                 IntPtr anchorChangeIntPtr,
                 StringBuilder vpsSessionIdOut
+            );
+
+            [DllImport
+            (
+                LightshipPlugin.Name,
+                EntryPoint = "Lightship_ARDK_Unity_AnchorProvider_GetVpsDebuggerLog"
+            )]
+            public static extern IntPtr GetVpsDebuggerLog
+            (
+                IntPtr anchorApiHandle,
+                out IntPtr log_buffer,
+                out UInt32 log_buffer_size
             );
         }
     }

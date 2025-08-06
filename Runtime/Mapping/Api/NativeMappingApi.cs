@@ -59,7 +59,7 @@ namespace Niantic.Lightship.AR.Mapping
         private struct MappingConfigurationCStruct
         {
             [MarshalAs(UnmanagedType.U1)]
-            public bool trackingEdgesEnabled;
+            public bool trackingEdgesDisabled;
 
             [MarshalAs(UnmanagedType.U1)]
             public bool slickLearnedFeaturesEnabled;
@@ -90,7 +90,7 @@ namespace Niantic.Lightship.AR.Mapping
             }
 
             var configurationCStruct = new MappingConfigurationCStruct();
-            configurationCStruct.trackingEdgesEnabled = trackingEdgesEnabled;
+            configurationCStruct.trackingEdgesDisabled = !trackingEdgesEnabled;
             configurationCStruct.slickLearnedFeaturesEnabled = slickLearnedFeaturesEnabled;
 #if NIANTIC_LIGHTSHIP_ML2_ENABLED
             configurationCStruct.forceCPULearnedFeatures = true;

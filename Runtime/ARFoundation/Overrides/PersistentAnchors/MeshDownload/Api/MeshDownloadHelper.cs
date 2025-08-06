@@ -3,11 +3,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Niantic.Lightship.AR.Core;
 using Niantic.Lightship.AR.Loader;
 using Niantic.Lightship.AR.PersistentAnchors.Spaces;
+using Niantic.Lightship.AR.Utilities;
 using Niantic.Lightship.AR.VpsCoverage;
 
 using UnityEngine;
@@ -26,6 +27,8 @@ namespace Niantic.Lightship.AR.Subsystems
         private static string graphMethod = "GetGraph";
         private static string replacedNodeMethod = "GetReplacedNodes";
         private static string spaceDataMethod = "GetSpaceData";
+        private const string DataLayerMethod = "GetDataLayer";
+        private const string DataLayerName = "global_pose";
         private const int KB = 1024;
 
         // Downloads a mesh from a signed url
@@ -72,17 +75,11 @@ namespace Niantic.Lightship.AR.Subsystems
             CancellationToken cancellationToken = default
         )
         {
-            var apiKey = LightshipSettingsHelper.ActiveSettings.ApiKey;
-
-            if (string.IsNullOrWhiteSpace(apiKey))
+            var authHeaderDict = SetupAuthHeaderDict();
+            if (authHeaderDict == null)
             {
-                // This class uses Debug instead of ARLog to support editor logging without Lightship Native loaded
-                Debug.LogError("No API key set");
                 return null;
             }
-
-            var authHeaderDict = new Dictionary<string, string>();
-            authHeaderDict["Authorization"] = apiKey;
 
             // Get all of the nodes in the space of the target node
             // This will populate all of the nodes' transforms relative to the space
@@ -149,6 +146,61 @@ namespace Niantic.Lightship.AR.Subsystems
             }
 
             return listOfNodesWithMeshes;
+        }
+
+        // Given a node, Request the global pose data (gps location, heading, rotation and accuracy)
+        // Depending on how the node was created, not all this data is guaranteed to be returned,
+        // so checks should be made.
+        [Experimental]
+        public static async Task<GlobalPoseData> RequestGlobalPoseForNode(string nodeId)
+        {
+            var request = new MeshDownloadRequestResponse.GetDataLayerRequest()
+            {
+                requestIdentifier = GenerateRequestIdentifier(),
+                nodeIdentifier = nodeId,
+                dataLayerName = DataLayerName
+            };
+
+            var authHeaderDict = SetupAuthHeaderDict();
+            if (authHeaderDict == null)
+            {
+                return null;
+            }
+
+            var endpoint = GetUrlForMethod(DataLayerMethod);
+            var nodesToLoadResponse =
+                await HttpClient.SendPostAsync<
+                    MeshDownloadRequestResponse.GetDataLayerRequest,
+                    MeshDownloadRequestResponse.GetDataLayerResponse>
+                (
+                    endpoint,
+                    request,
+                    authHeaderDict
+                );
+
+            if (nodesToLoadResponse.Status == ResponseStatus.Success)
+            {
+                var data = nodesToLoadResponse.Data;
+                if (data.StatusCodeEnum == MeshDownloadRequestResponse.VpsServiceStatusCode.STATUS_CODE_SUCCESS)
+                {
+                    var blob = data.dataLayerItems[0].dataBlob;
+                    byte[] decodedBytes = Convert.FromBase64String(blob);
+
+                    // Convert the byte array to a UTF-8 string.
+                    string decodedString = Encoding.UTF8.GetString(decodedBytes);
+                    return JsonUtility.FromJson<GlobalPoseData>(decodedString);
+                }
+                else
+                {
+                    Debug.LogError($"Failed to get pose for node. Status = {data.statusCode}");
+                }
+            }
+            else
+            {
+                Debug.LogError("Failed to get pose for node.");
+            }
+
+            return null;
         }
 
         // Returns a dictionary of nodeIds to mesh urls
@@ -243,7 +295,7 @@ namespace Niantic.Lightship.AR.Subsystems
             MeshDownloadRequestResponse.GetGraphRequest graphRequest =
                 new MeshDownloadRequestResponse.GetGraphRequest
                 {
-                    requestIdentifier = Guid.NewGuid().ToString("N").ToUpper(),
+                    requestIdentifier = GenerateRequestIdentifier(),
                     targetGraphNode = targetGraphNode
                 };
 
@@ -390,7 +442,7 @@ namespace Niantic.Lightship.AR.Subsystems
         {
             var replacedNodeRequest = new MeshDownloadRequestResponse.GetReplacedNodesRequest
             {
-                requestIdentifier = Guid.NewGuid().ToString("N").ToUpper(),
+                requestIdentifier = GenerateRequestIdentifier(),
                 nodeIdentifiers = new []{nodeId}
             };
 
@@ -474,16 +526,7 @@ namespace Niantic.Lightship.AR.Subsystems
 
         internal static async Task<LightshipVpsSpaceResponse> GetSpaceDataForNode(string nodeId)
         {
-            var apiKey = LightshipSettingsHelper.ActiveSettings.ApiKey;
-
-            if (string.IsNullOrWhiteSpace(apiKey))
-            {
-                // This class uses Debug instead of ARLog to support editor logging without Lightship Native loaded
-                Debug.LogError("No API key set");
-            }
-
-            var authHeaderDict = new Dictionary<string, string>();
-            authHeaderDict["Authorization"] = apiKey;
+            var authHeaderDict = SetupAuthHeaderDict();
 
             var nodeRepresentation = await GetNodesInSpace(nodeId, authHeaderDict);
             if (nodeRepresentation == null || nodeRepresentation.Count == 0)
@@ -496,7 +539,7 @@ namespace Niantic.Lightship.AR.Subsystems
             var request = new MeshDownloadRequestResponse.GetSpaceDataRequest()
             {
                 spaceIdentifiers = new []{spaceId},
-                requestIdentifier = Guid.NewGuid().ToString("N").ToUpper()
+                requestIdentifier = GenerateRequestIdentifier()
             };
 
             var endpoint = GetUrlForMethod(spaceDataMethod);
@@ -562,6 +605,27 @@ namespace Niantic.Lightship.AR.Subsystems
             }
 
             return string.Format(configEndpointFormatter, configEndpoint, method);
+        }
+
+        private static string GenerateRequestIdentifier()
+        {
+            return Guid.NewGuid().ToString("N").ToUpper();
+        }
+
+        private static Dictionary<string, string> SetupAuthHeaderDict()
+        {
+            var apiKey = LightshipSettingsHelper.ActiveSettings.ApiKey;
+            var authHeaderDict = new Dictionary<string, string>();
+
+            if (string.IsNullOrWhiteSpace(apiKey))
+            {
+                // This class uses Debug instead of ARLog to support editor logging without Lightship Native loaded
+                Debug.LogError("No API key set");
+                return null;
+            }
+
+            authHeaderDict["Authorization"] = apiKey;
+            return authHeaderDict;
         }
     }
 }

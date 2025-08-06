@@ -1,7 +1,6 @@
 // Copyright 2022-2025 Niantic.
 using System;
 using System.Collections.Generic;
-using Niantic.Lightship.AR.Subsystems.Common;
 using UnityEngine;
 using UnityEngine.XR.ARSubsystems;
 
@@ -24,7 +23,7 @@ namespace Niantic.Lightship.AR.Subsystems.Semantics
             IntPtr nativeProviderHandle,
             string channelName,
             XRCameraParams? cameraParams,
-            Matrix4x4? currentPose,
+            Matrix4x4? targetPose,
             out XRTextureDescriptor semanticsChannelDescriptor,
             out Matrix4x4 samplerMatrix
         );
@@ -34,7 +33,7 @@ namespace Niantic.Lightship.AR.Subsystems.Semantics
             IntPtr nativeProviderHandle,
             string channelName,
             XRCameraParams? cameraParams,
-            Matrix4x4? currentPose,
+            Matrix4x4? targetPose,
             out XRCpuImage cpuImage,
             out Matrix4x4 samplerMatrix
         );
@@ -43,7 +42,7 @@ namespace Niantic.Lightship.AR.Subsystems.Semantics
         (
             IntPtr nativeProviderHandle,
             XRCameraParams? cameraParams,
-            Matrix4x4? currentPose,
+            Matrix4x4? targetPose,
             out XRTextureDescriptor packedSemanticsDescriptor,
             out Matrix4x4 samplerMatrix
         );
@@ -52,7 +51,7 @@ namespace Niantic.Lightship.AR.Subsystems.Semantics
         (
             IntPtr nativeProviderHandle,
             XRCameraParams? cameraParams,
-            Matrix4x4? currentPose,
+            Matrix4x4? targetPose,
             out XRCpuImage cpuImage,
             out Matrix4x4 samplerMatrix
         );
@@ -61,7 +60,7 @@ namespace Niantic.Lightship.AR.Subsystems.Semantics
 		(
 			IntPtr nativeProviderHandle,
 			XRCameraParams? cameraParams,
-            Matrix4x4? currentPose,
+            Matrix4x4? targetPose,
 			out XRTextureDescriptor suppressionMaskDescriptor,
 			out Matrix4x4 samplerMatrix
 		);
@@ -70,7 +69,7 @@ namespace Niantic.Lightship.AR.Subsystems.Semantics
 		(
 			IntPtr nativeProviderHandle,
 			XRCameraParams? cameraParams,
-            Matrix4x4? currentPose,
+            Matrix4x4? targetPose,
 			out XRCpuImage cpuImage,
 			out Matrix4x4 samplerMatrix
 		);

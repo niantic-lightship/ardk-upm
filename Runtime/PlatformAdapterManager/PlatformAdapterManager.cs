@@ -210,6 +210,15 @@ namespace Niantic.Lightship.AR.PAM
 
                     // TODO [ARDK-3966]: Move scaling calculation to C++
                     _platformDataAcquirer.TryGetDepthCameraIntrinsicsCStruct(out frameData.DepthCameraIntrinsics);
+                    
+                    if (_platformDataAcquirer.TryGetDepthPose(out var depthPose))
+                    {
+                        frameData.DepthCameraPose.SetTransform(depthPose.FromUnityToArdk());
+                    }
+                    else
+                    {
+                        frameData.DepthCameraPose.SetTransform(Matrix4x4.identity.FromUnityToArdk());
+                    }
                 }
             }
 

@@ -27,6 +27,9 @@ namespace Niantic.Lightship.AR.Occlusion
     [PublicAPI("apiref/Niantic/Lightship/AR/Occlusion/LightshipOcclusionExtension/")]
     [RequireComponent(typeof(AROcclusionManager))]
     [DefaultExecutionOrder(ARUpdateOrder.k_OcclusionManager - 1)]
+#if ARF_6_0_OR_NEWER
+    [Obsolete("This component is not yet supported in combination with AR Foundation version 6.0 or later.")]
+#endif
     public partial class LightshipOcclusionExtension : CompositeRenderer
     {
         [SerializeField]

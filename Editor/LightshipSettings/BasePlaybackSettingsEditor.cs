@@ -389,7 +389,7 @@ namespace Niantic.Lightship.AR.Editor
 
                         GUI.DrawTexture(rect, _frameTextures[GetTextureFrame(Mathf.RoundToInt(endFrame))], ScaleMode.ScaleToFit);
                     }
-                }                
+                }
             }
             EditorGUILayout.EndHorizontal();
             return startFrame;
@@ -420,7 +420,7 @@ namespace Niantic.Lightship.AR.Editor
                             GUI.DrawTexture(new Rect(window.x + 20 + xPos, window.y + 36, imageWidth, imageHeight), frameTexture, ScaleMode.ScaleToFit);
                         }
                     }
-                } 
+                }
             }
             EditorGUILayout.EndHorizontal();
             return timeline;

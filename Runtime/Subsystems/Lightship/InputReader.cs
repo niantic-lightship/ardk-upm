@@ -1,10 +1,6 @@
 // Copyright 2022-2025 Niantic.
 
-using System.Collections.Generic;
-using Niantic.Lightship.AR.Utilities;
 using UnityEngine;
-using Niantic.Lightship.AR.Utilities.Logging;
-using UnityEngine.XR;
 
 namespace Niantic.Lightship.AR
 {
@@ -13,120 +9,141 @@ namespace Niantic.Lightship.AR
     /// </summary>
     internal static class InputReader
     {
-        // Reference to the active tracking device
-        public static InputDevice? ActiveDevice { get; private set; }
+        /// <summary>
+        /// Some platform use the new Input System, while others use the legacy xr input system.
+        /// </summary>
+        private static IInputReaderImpl s_readerImpl;
+
+        /// <summary>
+        /// Initializes the input reader.
+        /// </summary>
+        public static void Initialize()
+        {
+            // Already initialized?
+            if (s_readerImpl != null)
+            {
+                Debug.LogWarning("Tried to initialize input reader multiple times.");
+                return;
+            }
+
+#if ENABLE_INPUT_SYSTEM && !ENABLE_LEGACY_INPUT_MANAGER
+            s_readerImpl = new InputReaderImpl();
+#else
+            s_readerImpl = new LegacyInputReaderImpl();
+#endif
+            s_readerImpl.OnCreate();
+        }
+
+        /// <summary>
+        /// Shuts down the input reader.
+        /// </summary>
+        public static void Shutdown()
+        {
+            s_readerImpl?.OnDestroy();
+            s_readerImpl = null;
+        }
 
         /// <summary>
         /// Returns whether the component has successfully initialized with an appropriate tracking device.
         /// </summary>
-        public static bool HasValidTrackingDevice
-        {
-            get => ActiveDevice.HasValue;
-        }
+        public static bool HasValidTrackingDevice => s_readerImpl.IsValid;
 
-        public static void Initialize()
-        {
-            CheckDevicesWithValidCharacteristics();
-            InputDevices.deviceConnected += OnInputDeviceConnected;
-        }
+        /// <summary>
+        /// The latest pose from the tracked device.
+        /// </summary>
+        public static Matrix4x4? CurrentPose => TryGetPose(out var pose) ? pose : null;
 
-        public static void Shutdown()
-        {
-            InputDevices.deviceConnected -= OnInputDeviceConnected;
-        }
+        /// <summary>
+        /// Get the current pose of the camera capturing the background images.
+        /// </summary>
+        public static Matrix4x4? CurrentEyePose => TryGetEyePose(out var pose) ? pose : null;
 
-        public static Matrix4x4? CurrentPose
-        {
-            get
-            {
-                if (TryGetPose(out var pose))
-                {
-                    return pose;
-                }
+        /// <summary>
+        /// Returns the distance between the left and right cameras.
+        /// </summary>
+        public static float? InterpupillaryDistance => TryGetInterpupillaryDistance(out var ipd) ? ipd : null;
 
-                return null;
-            }
-        }
-
-        /// <remarks>
-        /// ARKit returns (presumably) best guess poses even when tracking state is Limited (i.e. sliding the
-        /// phone with the camera face down will change the translation value). However, ARCore "freezes"
-        /// the device pose while the tracking state is Limited.
-        /// </remarks>
+        /// <summary>
+        /// Get the current pose of the tracked device.
+        /// </summary>
+        /// <param name="result">The transformation matrix for the most recent pose.</param>
+        /// <param name="excludeDisplayRotation">Whether to exclude the rotation that compensates for UI rotation.</param>
+        /// <returns>True, if the pose was successfully retrieved.</returns>
         public static bool TryGetPose(out Matrix4x4 result, bool excludeDisplayRotation = true)
         {
-            if (ActiveDevice.HasValue &&
-                TryGetPositionAndRotation(ActiveDevice.Value, out Vector3 position, out Quaternion rotation))
+            if (s_readerImpl == null)
             {
-                result = Matrix4x4.TRS(position, rotation, Vector3.one);
-                if (!excludeDisplayRotation)
-                {
-                    return true;
-                }
-
-                var screenOrientation = XRDisplayContext.GetScreenOrientation();
-                var cameraToDisplay = Matrix4x4.Rotate(CameraMath.CameraToDisplayRotation(screenOrientation));
-                result *= cameraToDisplay;
-                return true;
+                result = Matrix4x4.identity;
+                return false;
             }
 
-            result = Matrix4x4.identity;
-            return false;
+            return s_readerImpl.TryGetPose(out result, excludeDisplayRotation);
         }
 
-        public static DeviceOrientation GetDeviceOrientation()
+        /// <summary>
+        /// Get the current pose of the camera capturing the background images.
+        /// </summary>
+        /// <remarks>
+        /// On handheld, this is the same as the pose of the tracked device.
+        /// On devices with multiple cameras (XR HMD), this includes the
+        /// displacement from the head to the recording camera.
+        /// </remarks>
+        /// <param name="result">The transformation matrix for the most recent pose.</param>
+        /// <param name="excludeDisplayRotation">Whether to exclude the rotation that compensates for UI rotation.</param>
+        /// <returns>True, if the pose was successfully retrieved.</returns>
+        public static bool TryGetEyePose(out Matrix4x4 result, bool excludeDisplayRotation = true)
         {
-            if (ActiveDevice.HasValue &&
-                ActiveDevice.Value.TryGetFeatureValue(new InputFeatureUsage<uint>("DeviceOrientation"), out var val))
+            if (s_readerImpl == null)
             {
-                return (DeviceOrientation)val;
+                result = Matrix4x4.identity;
+                return false;
             }
 
-            return DeviceOrientation.Unknown;
+            return s_readerImpl.TryGetEyePose(out result, excludeDisplayRotation);
         }
 
-        private static void OnInputDeviceConnected(InputDevice device)
+        /// <summary>
+        /// Get the interpupillary distance.
+        /// </summary>
+        /// <param name="ipd">Distance between left and right cameras</param>
+        /// <returns>True, if the device ipd was successfully retrieved.</returns>
+        public static bool TryGetInterpupillaryDistance(out float ipd)
         {
-            Log.Info($"Input device detected with name {device.name}");
-            CheckConnectedDevice(device);
-        }
-
-        private static void CheckDevicesWithValidCharacteristics()
-        {
-            var devices = new List<InputDevice>();
-            InputDevices.GetDevicesWithCharacteristics(InputDeviceCharacteristics.TrackedDevice, devices);
-            foreach (var device in devices)
+            if (s_readerImpl == null)
             {
-                if (device.characteristics.HasFlag(InputDeviceCharacteristics.TrackedDevice))
-                {
-                    CheckConnectedDevice(device);
-                }
-            }
-        }
-
-        private static void CheckConnectedDevice(InputDevice device)
-        {
-            if (TryGetPositionAndRotation(device, out Vector3 p, out Quaternion r))
-            {
-                ActiveDevice ??= device;
-                Log.Debug("Configured to read input from: " + device.name);
-            }
-        }
-
-        private static bool TryGetPositionAndRotation(InputDevice device, out Vector3 position, out Quaternion rotation)
-        {
-            var positionSuccess = false;
-            var rotationSuccess = false;
-
-            if (!(positionSuccess = device.TryGetFeatureValue(CommonUsages.centerEyePosition, out position)))
-            {
-                positionSuccess = device.TryGetFeatureValue(CommonUsages.colorCameraPosition, out position);
+                ipd = 0f;
+                return false;
             }
 
-            if (!(rotationSuccess = device.TryGetFeatureValue(CommonUsages.centerEyeRotation, out rotation)))
-                rotationSuccess = device.TryGetFeatureValue(CommonUsages.colorCameraRotation, out rotation);
+            return s_readerImpl.TryGetInterpupillaryDistance(out ipd);
+        }
 
-            return positionSuccess && rotationSuccess;
+        /// <summary>
+        /// Get the current orientation for the tracked device.
+        /// </summary>
+        /// <returns>The current UI orientation.</returns>
+        public static DeviceOrientation GetDeviceOrientation() =>
+            s_readerImpl == null ? DeviceOrientation.Unknown :
+            s_readerImpl.TryGetOrientation(out var orientation) ? orientation : DeviceOrientation.Unknown;
+
+        /// <summary>
+        /// Force use the old system for testing purposes.
+        /// </summary>
+        internal static void ForceUseLegacyInputSystem()
+        {
+            s_readerImpl?.OnDestroy();
+            s_readerImpl = new LegacyInputReaderImpl();
+            s_readerImpl.OnCreate();
+        }
+
+        /// <summary>
+        /// Force use the new input system for testing purposes.
+        /// </summary>
+        internal static void ForceUseNewInputSystem()
+        {
+            s_readerImpl?.OnDestroy();
+            s_readerImpl = new InputReaderImpl();
+            s_readerImpl.OnCreate();
         }
     }
 }

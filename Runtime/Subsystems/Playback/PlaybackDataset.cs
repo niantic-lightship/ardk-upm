@@ -1,6 +1,7 @@
 // Copyright 2022-2025 Niantic.
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Niantic.Lightship.AR.PAM;
 using Niantic.Lightship.AR.Subsystems.Playback;
@@ -25,7 +26,7 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
         /// </summary>
         /// <param name="content"></param>
         /// <param name="datasetPath"></param>
-        public PlaybackDataset(string content, string datasetPath)
+        public PlaybackDataset(string content, string datasetPath, bool sourceCompressed)
         {
             DatasetPath = datasetPath;
             JsonUtility.FromJsonOverwrite(content, this);
@@ -64,6 +65,20 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
             if (resolution == null || resolution.Length == 0)
             {
                 resolution = new int[] { 0, 0 };
+            }
+
+            isSourceCompressed = sourceCompressed;
+        }
+
+        public void Unload()
+        {
+            if (isSourceCompressed)
+            {
+                if (Directory.Exists(DatasetPath))
+                {
+                    Log.Info($"Deleting unzipped data set at path {DatasetPath}");
+                    Directory.Delete(DatasetPath, true);
+                }
             }
         }
 
@@ -112,6 +127,8 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
         private FrameMetadata[] frames;
 
         private IReadOnlyList<FrameMetadata> framesList;
+
+        private bool isSourceCompressed;
 
         public IReadOnlyList<FrameMetadata> Frames
         {

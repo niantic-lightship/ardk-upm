@@ -12,8 +12,7 @@
         "Unity.RenderPipelines.Universal.Runtime",
         "Unity.RenderPipelines.Core.Runtime",
         "Unity.XR.OpenXR",
-        "Unity.XR.Simulation",
-        "Draco"
+        "Unity.XR.Simulation"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
@@ -31,6 +30,16 @@
             "name": "com.unity.render-pipelines.universal",
             "expression": "7.0.0",
             "define": "MODULE_URP_ENABLED"
+        },
+        {
+            "name": "com.unity.xr.arfoundation",
+            "expression": "6.0.0",
+            "define": "ARF_6_0_OR_NEWER"
+        },
+        {
+            "name": "com.unity.xr.arfoundation",
+            "expression": "6.1.0",
+            "define": "ARF_6_1_OR_NEWER"
         }
     ],
     "noEngineReferences": false

@@ -3,6 +3,9 @@
 using System;
 using UnityEngine;
 
+// Disable warnings about naming rules as all the serialized fields in this file are named to match proto definitions
+// ReSharper disable InconsistentNaming
+
 namespace Niantic.Lightship.AR.Subsystems
 {
     // Defines serializable objects to use as request/response json formats for VPS requests
@@ -45,6 +48,7 @@ namespace Niantic.Lightship.AR.Subsystems
             public NodeMeshData[] nodeMeshData;
             public string requestIdentifier;
             public string statusCode;
+            public VpsServiceStatusCode StatusCodeEnum => GetStatusCodeEnum(statusCode);
         }
 
         // GetGraph and GetNodeSpace request responses
@@ -80,6 +84,14 @@ namespace Niantic.Lightship.AR.Subsystems
         }
 
         [Serializable]
+        internal class DataLayerItem
+        {
+            public string key;
+            public string dataBlob;
+            public string dataUrl;
+        }
+
+        [Serializable]
         internal class GetGraphRequest {
             public string requestIdentifier;
             public TargetGraphNode targetGraphNode;
@@ -93,8 +105,9 @@ namespace Niantic.Lightship.AR.Subsystems
             public string requestIdentifier;
             public Node[] nodes;
             public Edge[] edges;
-            public VpsServiceStatusCode statusCode;
+            public string statusCode;
             public string targetNodeId;
+            public VpsServiceStatusCode StatusCodeEnum => GetStatusCodeEnum(statusCode);
         }
 
         [Serializable]
@@ -108,7 +121,8 @@ namespace Niantic.Lightship.AR.Subsystems
         internal class GetReplacedNodesResponse {
             public string requestIdentifier;
             public EdgeFromReplacedNode[] transformToActiveNode;
-            public VpsServiceStatusCode statusCode;
+            public string statusCode;
+            public VpsServiceStatusCode StatusCodeEnum => GetStatusCodeEnum(statusCode);
         }
 
         [Serializable]
@@ -127,8 +141,30 @@ namespace Niantic.Lightship.AR.Subsystems
         [Serializable]
         internal class GetSpaceDataResponse {
             public string requestIdentifier;
-            public VpsServiceStatusCode statusCode;
+            public string statusCode;
             public SpaceData[] spaceDataList;
+            public VpsServiceStatusCode StatusCodeEnum => GetStatusCodeEnum(statusCode);
+        }
+
+        [Serializable]
+        internal class GetDataLayerRequest
+        {
+            public string requestIdentifier;
+            public string nodeIdentifier;
+            public string dataLayerName;
+        }
+
+        [Serializable]
+        internal class GetDataLayerResponse
+        {
+            public string requestIdentifier;
+            public string dataLayerName;
+            public float dataLayerVersion;
+            public string algorithm;
+            public float algorithmVersion;
+            public DataLayerItem[] dataLayerItems;
+            public string statusCode;
+            public VpsServiceStatusCode StatusCodeEnum => GetStatusCodeEnum(statusCode);
         }
 
         [Serializable]
@@ -175,6 +211,13 @@ namespace Niantic.Lightship.AR.Subsystems
             STATUS_CODE_PERMISSION_DENIED = 5,
             STATUS_CODE_INVALID_ARGUMENT = 6,
             STATUS_CODE_INTERNAL = 7,
+        }
+
+        // The server returns status codes that look like VpsServiceStatusCode strings, but JsonUtility will only
+        // deserialise enums that are stored as ints. So here's a helper function:
+        private static VpsServiceStatusCode GetStatusCodeEnum(string statusCode)
+        {
+            return (VpsServiceStatusCode)Enum.Parse(typeof(VpsServiceStatusCode), statusCode);
         }
     }
 }

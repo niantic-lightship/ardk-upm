@@ -20,6 +20,8 @@ namespace Niantic.Lightship.AR.Editor.PersistentAR
         private static bool _driftMitigationFoldout = true;
         private static bool _performanceFoldout = true;
         private static bool _diagnosticsFoldout = true;
+        private static bool _vpsDebuggerFoldout = true;
+        private static bool _gpsCorrectionFoldout = true;
 
         private LightshipVpsUsageUtility.LightshipVpsUsageMode _previousVpsUsageMode;
 
@@ -36,6 +38,8 @@ namespace Niantic.Lightship.AR.Editor.PersistentAR
         private SerializedProperty _SyncFusionWindow;
         private SerializedProperty _CloudLocalizationTemporalFusionWindowSize;
         private SerializedProperty _DiagnosticsEnabled;
+        private SerializedProperty _VpsDebuggerEnabled;
+        private SerializedProperty _GpsCorrectionForContinuousLocalization;
 
         private GUIContent temporalFusionWindowSizeLabel = new GUIContent("Cloud Localization Temporal Fusion Window Size");
 
@@ -154,6 +158,22 @@ namespace Niantic.Lightship.AR.Editor.PersistentAR
             }
             EditorGUILayout.EndFoldoutHeaderGroup();
 
+            EditorGUILayout.Space();
+            _vpsDebuggerFoldout = EditorGUILayout.Foldout(_vpsDebuggerFoldout, new GUIContent("VPS Debugger"), true);
+            if (_vpsDebuggerFoldout)
+            {
+                EditorGUILayout.PropertyField(_VpsDebuggerEnabled);
+            }
+            EditorGUILayout.EndFoldoutHeaderGroup();
+
+            EditorGUILayout.Space();
+            _gpsCorrectionFoldout = EditorGUILayout.Foldout(_vpsDebuggerFoldout, new GUIContent("Gps correction for continuous localization"), true);
+            if (_gpsCorrectionFoldout)
+            {
+                EditorGUILayout.PropertyField(_GpsCorrectionForContinuousLocalization);
+            }
+            EditorGUILayout.EndFoldoutHeaderGroup();
+
 #if NIANTIC_ARDK_EXPERIMENTAL_FEATURES
             EditorGUILayout.Space();
             _experimentalFoldout = EditorGUILayout.Foldout(_experimentalFoldout, new GUIContent("Experimental"), true);
@@ -214,6 +234,8 @@ namespace Niantic.Lightship.AR.Editor.PersistentAR
             _CloudLocalizationTemporalFusionWindowSize = serializedObject.FindProperty("_CloudLocalizationTemporalFusionWindowSize");
             _SyncFusionWindow = serializedObject.FindProperty("_SyncFusionWindow");
             _DiagnosticsEnabled = serializedObject.FindProperty("_DiagnosticsEnabled");
+            _VpsDebuggerEnabled = serializedObject.FindProperty("_VpsDebuggerEnabled");
+            _GpsCorrectionForContinuousLocalization = serializedObject.FindProperty("_GpsCorrectionForContinuousLocalization");
 
 #if NIANTIC_ARDK_EXPERIMENTAL_FEATURES
             _LimitedLocalizationsOnly = serializedObject.FindProperty("_LimitedLocalizationsOnly");

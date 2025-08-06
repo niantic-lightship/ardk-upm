@@ -2,9 +2,13 @@
 #if MODULE_URP_ENABLED
 
 
+using System;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
+#if UNITY_6000_0_OR_NEWER
+using UnityEngine.Rendering.RenderGraphModule;
+#endif
 
 namespace Niantic.Lightship.AR.Occlusion
 {
@@ -48,6 +52,46 @@ namespace Niantic.Lightship.AR.Occlusion
             Material = material;
         }
 
+#if UNITY_6000_0_OR_NEWER
+        protected class PassData
+        {
+            public UniversalCameraData CameraData;
+            public UniversalResourceData ResourceData;
+        }
+
+        public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
+        {
+            using (var builder = renderGraph.AddRasterRenderPass<PassData>(_name, out var passData, profilingSampler))
+            {
+                // Populate pass data
+                passData.CameraData = frameData.Get<UniversalCameraData>();
+                passData.ResourceData = frameData.Get<UniversalResourceData>();
+
+                // Set render targets
+                builder.SetRenderAttachment(passData.ResourceData.activeColorTexture, 0);
+                builder.SetRenderAttachmentDepth(passData.ResourceData.activeDepthTexture, AccessFlags.Write);
+
+                // Assign the draw function
+                builder.SetRenderFunc((PassData data, RasterGraphContext context) =>
+                {
+                    // Set culling
+                    context.cmd.SetInvertCulling(InvertCulling);
+
+                    // Draw
+                    OnExecute(context, data);
+                });
+            }
+        }
+
+        /// <summary>
+        /// Invoked when the render pass is executed when using Render Graph.
+        /// </summary>
+        protected abstract void OnExecute(RasterGraphContext context, PassData renderingData);
+#endif
+
+#if UNITY_6000_0_OR_NEWER
+        [Obsolete("This rendering path is for compatibility mode only (when Render Graph is disabled). Use Render Graph API instead.", false)]
+#endif
         public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
         {
             // Acquire a command buffer

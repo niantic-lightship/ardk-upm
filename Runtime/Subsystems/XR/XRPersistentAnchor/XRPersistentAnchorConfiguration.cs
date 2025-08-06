@@ -31,6 +31,8 @@ namespace Niantic.Lightship.AR.XRSubsystems
         internal const bool DefaultLimitedLocalizationsOnly = false;
         internal const int DefaultJpegCompressionQuality = 50;
         internal const bool DefaultDisableTransitiveCloudLocalizations = false;
+        internal const bool DefaultVpsDebuggerEnabled = false;
+        internal const bool DefaultGpsCorrectionForContinuousLocalization = false;
 
         private bool _continuousLocalizationEnabled;
         private bool _temporalFusionEnabled;
@@ -47,6 +49,8 @@ namespace Niantic.Lightship.AR.XRSubsystems
         private bool _limitedLocalizationsOnly;
         private int _jpegCompressionQuality;
         private bool _disableTransitiveCloudLocalizations;
+        private bool _vpsDebuggerEnabled;
+        private bool _gpsCorrectionForContinuousLocalization;
 
         public bool ContinuousLocalizationEnabled
         {
@@ -189,6 +193,18 @@ namespace Niantic.Lightship.AR.XRSubsystems
             set => _disableTransitiveCloudLocalizations = value;
         }
 
+        public bool VpsDebuggerEnabled
+        {
+            get => _vpsDebuggerEnabled;
+            set => _vpsDebuggerEnabled = value;
+        }
+
+        public bool GpsCorrectionForContinuousLocalization
+        {
+            get => _gpsCorrectionForContinuousLocalization;
+            set => _gpsCorrectionForContinuousLocalization = value;
+        }
+
         /// <summary>
         /// Default constructor for the XRPersistentAnchorConfiguration.
         /// </summary>
@@ -209,6 +225,8 @@ namespace Niantic.Lightship.AR.XRSubsystems
             _limitedLocalizationsOnly = DefaultLimitedLocalizationsOnly;
             _jpegCompressionQuality = DefaultJpegCompressionQuality;
             _disableTransitiveCloudLocalizations = DisableTransitiveCloudLocalizations;
+            _vpsDebuggerEnabled = DefaultVpsDebuggerEnabled;
+            _gpsCorrectionForContinuousLocalization = DefaultGpsCorrectionForContinuousLocalization;
         }
 
         public XRPersistentAnchorConfiguration
@@ -227,7 +245,9 @@ namespace Niantic.Lightship.AR.XRSubsystems
             bool diagnosticsEnabled = DefaultDiagnosticsEnabled,
             bool limitedLocalizationsOnly = DefaultLimitedLocalizationsOnly,
             int jpegCompressionQuality = DefaultJpegCompressionQuality,
-            bool disableTransitiveCloudLocalizations = DefaultDisableTransitiveCloudLocalizations
+            bool disableTransitiveCloudLocalizations = DefaultDisableTransitiveCloudLocalizations,
+            bool vpsDebuggerEnabled = DefaultVpsDebuggerEnabled,
+            bool gpsCorrectionForContinuousLocalization = DefaultGpsCorrectionForContinuousLocalization
         )
         {
             _continuousLocalizationEnabled = continuousLocalizationEnabled;
@@ -245,6 +265,8 @@ namespace Niantic.Lightship.AR.XRSubsystems
             _limitedLocalizationsOnly = limitedLocalizationsOnly;
             _jpegCompressionQuality = jpegCompressionQuality;
             _disableTransitiveCloudLocalizations = disableTransitiveCloudLocalizations;
+            _vpsDebuggerEnabled = vpsDebuggerEnabled;
+            _gpsCorrectionForContinuousLocalization = gpsCorrectionForContinuousLocalization;
         }
 
         public XRPersistentAnchorConfiguration(XRPersistentAnchorConfiguration other) : this()
@@ -269,6 +291,8 @@ namespace Niantic.Lightship.AR.XRSubsystems
             _limitedLocalizationsOnly = other._limitedLocalizationsOnly;
             _jpegCompressionQuality = other._jpegCompressionQuality;
             _disableTransitiveCloudLocalizations = other._disableTransitiveCloudLocalizations;
+            _vpsDebuggerEnabled = other._vpsDebuggerEnabled;
+            _gpsCorrectionForContinuousLocalization = other._gpsCorrectionForContinuousLocalization;
         }
 
         /// <summary>
@@ -297,7 +321,9 @@ namespace Niantic.Lightship.AR.XRSubsystems
                     _diagnosticsEnabled == other._diagnosticsEnabled &&
                     _limitedLocalizationsOnly == other._limitedLocalizationsOnly &&
                     _jpegCompressionQuality == other._jpegCompressionQuality &&
-                    _disableTransitiveCloudLocalizations == other._disableTransitiveCloudLocalizations;
+                    _disableTransitiveCloudLocalizations == other._disableTransitiveCloudLocalizations &&
+                    _vpsDebuggerEnabled == other._vpsDebuggerEnabled &&
+                    _gpsCorrectionForContinuousLocalization == other._gpsCorrectionForContinuousLocalization;
         }
 
         public new bool Equals(object obj)

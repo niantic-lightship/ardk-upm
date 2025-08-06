@@ -257,6 +257,17 @@ namespace Niantic.Lightship.AR.Core
             return NativeApi.Lightship_ARDK_Unity_Context_GetCommonContext(unityContext);
         }
 
+        public static IntPtr GetARDKHandle(IntPtr unityContext)
+        {
+            return NativeApi.Lightship_ARDK_Unity_Context_GetARDKHandle(unityContext);
+        }
+
+        // Release the resource allocated in native side
+        internal static void ReleaseNativeResource(IntPtr handle)
+        {
+            NativeApi.ARDK_Release_Resource(handle);
+        }
+
         /// <summary>
         /// Container to wrap the native Lightship C APIs
         /// </summary>
@@ -277,6 +288,12 @@ namespace Niantic.Lightship.AR.Core
 
             [DllImport(LightshipPlugin.Name)]
             public static extern IntPtr Lightship_ARDK_Unity_Context_GetCommonContext(IntPtr unityContext);
+
+            [DllImport(LightshipPlugin.Name)]
+            public static extern IntPtr Lightship_ARDK_Unity_Context_GetARDKHandle(IntPtr unityContext);
+
+            [DllImport(LightshipPlugin.Name)]
+            public static extern void ARDK_Release_Resource(IntPtr resource);
         }
 
 

@@ -177,7 +177,6 @@ namespace Niantic.Lightship.AR.Utilities
         {
             if (!source.valid)
             {
-                Error("XRCpuImage is not valid.");
                 return false;
             }
 

@@ -223,6 +223,10 @@ namespace Niantic.Lightship.AR.PAM
         // Camera pose of the current frame as a 4x4 float matrix.
         public TransformCStruct CameraPose;
 
+        // Depth sensor pose (platform depth camera pose). For platforms without a dedicated
+        // depth sensor this must be set to the same value as CameraPose.
+        public TransformCStruct DepthCameraPose;
+
         // Camera intrinsics
         public CameraIntrinsicsCStruct CameraIntrinsics;
 

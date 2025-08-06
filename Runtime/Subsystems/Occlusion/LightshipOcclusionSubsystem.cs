@@ -10,6 +10,7 @@ using Niantic.Lightship.AR.Utilities.Preloading;
 using Niantic.Lightship.AR.Utilities.Textures;
 using Unity.Collections;
 using Unity.XR.CoreUtils;
+using Unity.XR.CoreUtils.Collections;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Scripting;
@@ -492,6 +493,59 @@ namespace Niantic.Lightship.AR.Subsystems.Occlusion
                 }
             }
 
+#if ARF_6_1_OR_NEWER && UNITY_EDITOR
+            // TODO(ahegedus): This is only used in the editor for now, but will need to be supported when Lightship
+            // transitions to ARF 6.0+ in the future.
+            /// <inheritdoc />
+            public override XRResultStatus TryGetFrame(Allocator allocator, out XROcclusionFrame frame)
+            {
+                var latestIntrinsicsMatrix = LatestIntrinsicsMatrix;
+                var latestExtrinsicsMatrix = LatestExtrinsicsMatrix;
+                var latestEnvironmentDepthResolution = LatestEnvironmentDepthResolution;
+                var isCameraAspectRatioValid = XRDisplayContext.TryGetCameraImageAspectRatio(out var aspectRatio);
+
+                if (!latestIntrinsicsMatrix.HasValue ||
+                    !latestExtrinsicsMatrix.HasValue ||
+                    !latestEnvironmentDepthResolution.HasValue ||
+                    !isCameraAspectRatioValid)
+                {
+                    frame = default;
+                    return new XRResultStatus(false);
+                }
+
+                // Specify what sort of information do we provide
+                const XROcclusionFrameProperties properties =
+                    XROcclusionFrameProperties.Timestamp |
+                    XROcclusionFrameProperties.Fovs |
+                    XROcclusionFrameProperties.Poses;
+
+                // Extract the camera intrinsics
+                var intrinsics = latestIntrinsicsMatrix.Value;
+                var width = latestEnvironmentDepthResolution.Value.x;
+                var height = Mathf.FloorToInt(width / aspectRatio);
+
+                // Adjust the principal point to correct for image padding
+                var padY = (height - latestEnvironmentDepthResolution.Value.y) / 2.0f;
+                intrinsics[1,2] += padY;
+                var fieldOfViews = new[] { CalculateFov(intrinsics, width, height) };
+
+                // Extract the latest pose
+                var extrinsics = latestExtrinsicsMatrix.Value;
+                var position = extrinsics.ToPosition();
+                var rotation = extrinsics.ToRotation();
+                var poses = new Pose[] { new(position, rotation) };
+
+                frame = new XROcclusionFrame(
+                    properties: properties,
+                    timestamp: (long)_latestTimestampMs * 1_000_000, // Convert ms to ns
+                    nearFarPlanes: default, // The values in the texture are already linear eye depth
+                    poses: new NativeArray<Pose>(poses, Allocator.Temp),
+                    fovs: new NativeArray<XRFov>(fieldOfViews, Allocator.Temp));
+
+                return new XRResultStatus(true);
+            }
+#endif
+
             /// <summary>
             /// Get the environment texture descriptor.
             /// </summary>
@@ -838,11 +892,41 @@ namespace Niantic.Lightship.AR.Subsystems.Occlusion
                 return new NativeArray<XRTextureDescriptor>(0, allocator);
             }
 
+#if ARF_6_1_OR_NEWER
             /// <summary>
-            /// Get the enabled and disabled shader keywords for the material.
+            /// Calculates the field of view from the image intrinsics.
             /// </summary>
-            /// <param name="enabledKeywords">The keywords to enable for the material.</param>
-            /// <param name="disabledKeywords">The keywords to disable for the material.</param>
+            /// <param name="intrinsics">The image intrinsics.</param>
+            /// <param name="resolutionWidth">The width of the image resolution.</param>
+            /// <param name="resolutionHeight">The height of the image resolution.</param>
+            /// <returns>The field of view.</returns>
+            private static XRFov CalculateFov(Matrix4x4 intrinsics, int resolutionWidth, int resolutionHeight)
+            {
+                var focalLengthX = intrinsics[0, 0];
+                var focalLengthY = intrinsics[1, 1];
+                var principalX = intrinsics[0, 2];
+                var principalY = intrinsics[1, 2];
+
+                // Calculate the field of view from the intrinsics
+                float angleLeft = Mathf.Atan2(principalX, focalLengthX);
+                float angleRight = Mathf.Atan2(resolutionWidth - principalX, focalLengthX);
+                float angleUp = Mathf.Atan2(principalY, focalLengthY);
+                float angleDown = Mathf.Atan2(resolutionHeight - principalY, focalLengthY);
+
+                return new XRFov(angleLeft, angleRight, angleUp, angleDown);
+            }
+
+            public override XRShaderKeywords GetShaderKeywords2() =>
+                _occlusionPreferenceMode == OcclusionPreferenceMode.NoOcclusion
+                    ? new XRShaderKeywords( null, new ReadOnlyList<string>(_environmentDepthEnabledMaterialKeywords))
+                    : new XRShaderKeywords( new ReadOnlyList<string>(_environmentDepthEnabledMaterialKeywords), null);
+
+#elif ARF_6_0_OR_NEWER
+            public override ShaderKeywords GetShaderKeywords() =>
+                _occlusionPreferenceMode == OcclusionPreferenceMode.NoOcclusion ?
+                    new ShaderKeywords(disabledKeywords: _environmentDepthEnabledMaterialKeywords.AsReadOnly()) :
+                    new ShaderKeywords(enabledKeywords: _environmentDepthEnabledMaterialKeywords.AsReadOnly());
+#else
             public override void GetMaterialKeywords
             (
                 out List<string> enabledKeywords,
@@ -860,12 +944,6 @@ namespace Niantic.Lightship.AR.Subsystems.Occlusion
                     disabledKeywords = null;
                 }
             }
-
-#if UNITY_6000_0_OR_NEWER
-            public override ShaderKeywords GetShaderKeywords() =>
-                _occlusionPreferenceMode == OcclusionPreferenceMode.NoOcclusion ?
-                    new ShaderKeywords(disabledKeywords: _environmentDepthEnabledMaterialKeywords.AsReadOnly()) :
-                    new ShaderKeywords(enabledKeywords: _environmentDepthEnabledMaterialKeywords.AsReadOnly());
 #endif
         }
     }

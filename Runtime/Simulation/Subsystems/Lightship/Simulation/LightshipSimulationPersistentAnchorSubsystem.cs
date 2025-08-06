@@ -179,6 +179,12 @@ namespace Niantic.Lightship.AR.Simulation
                 return true;
             }
 
+            public override bool GetVpsDebuggerLog(out string vpsDebuggerLog)
+            {
+                vpsDebuggerLog = default;
+                return false;
+            }
+
             public override bool TryAddAnchor(Pose pose, out XRPersistentAnchor anchor)
             {
                 anchor = default;

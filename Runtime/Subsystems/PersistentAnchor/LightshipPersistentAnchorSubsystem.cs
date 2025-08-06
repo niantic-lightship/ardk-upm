@@ -1,6 +1,7 @@
 // Copyright 2022-2025 Niantic.
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.Core;
 using Niantic.Lightship.AR.Mapping;
@@ -352,6 +353,16 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
 
             }
 
+            public override bool GetVpsDebuggerLog(out string vpsDebuggerLog)
+            {
+                if (!_nativeProviderHandle.IsValidHandle())
+                {
+                    vpsDebuggerLog = null;
+                    return false;
+                }
+                return _api.GetVpsDebuggerLog(_nativeProviderHandle, out vpsDebuggerLog);
+            }
+
             public override bool TryAddAnchor(Pose pose, out XRPersistentAnchor anchor)
             {
                 if (!_nativeProviderHandle.IsValidHandle())
@@ -631,7 +642,9 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
                         _currentConfiguration.DiagnosticsEnabled,
                         _currentConfiguration.LimitedLocalizationsOnly,
                         _currentConfiguration.JpegCompressionQuality,
-                        _currentConfiguration.DisableTransitiveCloudLocalizations
+                        _currentConfiguration.DisableTransitiveCloudLocalizations,
+                        _currentConfiguration.VpsDebuggerEnabled,
+                        _currentConfiguration.GpsCorrectionForContinuousLocalization
                     );
                 }
             }

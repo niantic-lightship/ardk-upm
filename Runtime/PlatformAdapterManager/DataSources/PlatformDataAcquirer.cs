@@ -15,6 +15,9 @@ namespace Niantic.Lightship.AR.PAM
 
         public abstract bool TryGetCameraPose(out Matrix4x4 pose);
 
+
+        public abstract bool TryGetDepthPose(out Matrix4x4 pose);
+
         public abstract bool TryGetCpuImage(out LightshipCpuImage cpuImage);
 
         public abstract bool TryGetDepthCpuImage

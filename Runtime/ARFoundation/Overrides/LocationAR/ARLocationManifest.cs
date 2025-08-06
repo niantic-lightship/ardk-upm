@@ -184,12 +184,6 @@ namespace Niantic.Lightship.AR.LocationAR
                 {
                     var assetPath = AssetDatabase.GetAssetPath(this);
                     _mesh = AssetDatabase.LoadAssetAtPath<Mesh>(assetPath);
-
-                    if (_mesh == null)
-                    {
-                        Log.Error
-                            ($"No mesh found as sub-asset of {name} (ARLocationManifest)");
-                    }
                 }
 
                 return _mesh;
@@ -215,12 +209,6 @@ namespace Niantic.Lightship.AR.LocationAR
                     for (var i = 0; i < _materials.Length; i++)
                     {
                         _materials[i].mainTexture = textures[i];
-                    }
-
-                    if (_materials == null)
-                    {
-                        Log.Error
-                            ($"No material found as sub-asset of {name} (ARLocationManifest)");
                     }
                 }
 

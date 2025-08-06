@@ -24,6 +24,12 @@ namespace Niantic.Lightship.AR.PAM
             return true;
         }
 
+        public override bool TryGetDepthPose(out Matrix4x4 pose)
+        {
+            // For tests, use the same pose as the camera unless overridden externally
+            return TryGetCameraPose(out pose);
+        }
+
         public override bool TryGetCpuImage(out LightshipCpuImage cpuImage)
         {
             cpuImage = LightshipCpuImage.Create();

@@ -121,7 +121,7 @@ namespace Niantic.Lightship.AR.Semantics
 
         protected override CameraEvent[] CameraEvents
         {
-            get => new[] {CameraEvent.AfterEverything};
+            get => new[] {CameraEvent.BeforeForwardOpaque};
         }
 
         protected override string[] OnRequestExternalPassDependencies(CameraEvent evt)
@@ -144,7 +144,7 @@ namespace Niantic.Lightship.AR.Semantics
             // Allocate the render pass
             _renderPass = new MeshRenderingPass(
                 name: "Lightship Semantics Overlay",
-                renderPassEvent: RenderPassEvent.AfterRendering);
+                renderPassEvent: RenderPassEvent.BeforeRenderingOpaques);
 #endif
         }
 
@@ -222,17 +222,15 @@ namespace Niantic.Lightship.AR.Semantics
                 Material.SetVector(s_intrinsicsId,
                     new Vector4(intrinsics.m00, intrinsics.m11, intrinsics.m02, intrinsics.m12));
 
-                // Calculate extrinsics
-                var extrinsics =
-
-                    // The inverse view matrix transforms from camera space to world space
-                    Camera.cameraToWorldMatrix *
-
-                    // This will rotate the mesh (and the image with it) to match the display orientation
-                    Matrix4x4.Rotate(CameraMath.CameraToDisplayRotation(XRDisplayContext.GetScreenOrientation()));
+                // Calculate camera to world matrix (use HMD/head pose)
+                var cameraToWorld = InputReader.CurrentPose ?? Matrix4x4.identity;
+                cameraToWorld.m02 *= -1.0f;
+                cameraToWorld.m12 *= -1.0f;
+                cameraToWorld.m22 *= -1.0f;
+                cameraToWorld.m32 *= -1.0f;
 
                 // Bind camera extrinsics
-                Material.SetMatrix(s_extrinsics, extrinsics);
+                Material.SetMatrix(s_extrinsics, cameraToWorld);
                 Material.SetFloat(s_backProjectionDistanceId, BackProjectionDistance);
 
                 // The sampler matrix is assumed to be in image space here (no crop, no rotation, only mirror and warp)

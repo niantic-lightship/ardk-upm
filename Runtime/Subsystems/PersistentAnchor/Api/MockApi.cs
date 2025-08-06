@@ -40,7 +40,9 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
             bool diagnosticsEnabled,
             bool limitedLocalizationsOnly,
             int jpegCompressionQuality,
-            bool disableTransitiveCloudLocalizations)
+            bool disableTransitiveCloudLocalizations,
+            bool enableVpsDebugger,
+            bool gpsCorrectionForContinuousLocalization)
         {
             throw new NotImplementedException();
         }
@@ -166,6 +168,11 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
         }
 
         public bool GetVpsSessionId (IntPtr anchorProviderHandle, out string vpsSessionId)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool GetVpsDebuggerLog(IntPtr anchorProviderHandle, out string vpsDebuggerLog)
         {
             throw new NotImplementedException();
         }

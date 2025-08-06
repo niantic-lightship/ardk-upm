@@ -5,6 +5,9 @@
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
+#if UNITY_6000_0_OR_NEWER
+using UnityEngine.Rendering.RenderGraphModule;
+#endif
 
 namespace Niantic.Lightship.AR.Occlusion
 {
@@ -47,6 +50,33 @@ namespace Niantic.Lightship.AR.Occlusion
             cmd.SetViewProjectionMatrices(renderingData.cameraData.camera.worldToCameraMatrix,
                 renderingData.cameraData.camera.projectionMatrix);
         }
+
+#if UNITY_6000_0_OR_NEWER
+        /// <summary>
+        /// Invoked when the render pass is executed when using Render Graph.
+        /// </summary>
+        protected override void OnExecute(RasterGraphContext context, PassData renderingData)
+        {
+            var cmd = context.cmd;
+
+            // Push matrix
+            cmd.SetViewProjectionMatrices(Matrix4x4.identity,
+                renderPassEvent == RenderPassEvent.BeforeRenderingOpaques
+                    ? BeforeOpaquesProjection
+                    : AfterOpaquesProjection);
+
+            // Draw
+            cmd.DrawMesh(
+                renderPassEvent == RenderPassEvent.BeforeRenderingOpaques
+                    ? FullScreenNearClipMesh
+                    : FullScreenFarClipMesh,
+                Matrix4x4.identity, Material);
+
+            // Pop matrix
+            cmd.SetViewProjectionMatrices(renderingData.CameraData.camera.worldToCameraMatrix,
+                renderingData.CameraData.camera.projectionMatrix);
+        }
+#endif
 
         #region Utils
 

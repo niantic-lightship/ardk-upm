@@ -41,10 +41,10 @@ namespace Niantic.Lightship.AR.Protobuf {
             "KAsyHS5hcmRrLmRldmljZW1hcC5EZXZpY2VNYXBOb2RlUg5kZXZpY2VNYXBO",
             "b2RlcxIuCgZncmFwaHMYAiABKAsyFi5hcmRrLmRldmljZW1hcC5HcmFwaHNS",
             "BmdyYXBocxIkCg1hbmNob3JQYXlsb2FkGAMgASgMUg1hbmNob3JQYXlsb2Fk",
-            "KiMKFkRldmljZU1hcHBpbmdBbGdvcml0aG0SCQoFU2xpY2sQACovCg9NYXBO",
-            "b2RlRGF0YVR5cGUSBwoDT3JiEAASEwoPTGVhcm5lZEZlYXR1cmVzEAEqGQoN",
-            "R3JhcGhEYXRhVHlwZRIICgRBcmRrEABCIKoCHU5pYW50aWMuTGlnaHRzaGlw",
-            "LkFSLlByb3RvYnVmYgZwcm90bzM="));
+            "KiMKFkRldmljZU1hcHBpbmdBbGdvcml0aG0SCQoFU2xpY2sQACo8Cg9NYXBO",
+            "b2RlRGF0YVR5cGUSBwoDT3JiEAASEwoPTGVhcm5lZEZlYXR1cmVzEAESCwoH",
+            "VW5rbm93bhACKhkKDUdyYXBoRGF0YVR5cGUSCAoEQXJkaxAAQiCqAh1OaWFu",
+            "dGljLkxpZ2h0c2hpcC5BUi5Qcm90b2J1ZmIGcHJvdG8z"));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(new[] {typeof(global::Niantic.Lightship.AR.Protobuf.DeviceMappingAlgorithm), typeof(global::Niantic.Lightship.AR.Protobuf.MapNodeDataType), typeof(global::Niantic.Lightship.AR.Protobuf.GraphDataType), }, null, new pbr::GeneratedClrTypeInfo[] {
@@ -64,6 +64,7 @@ namespace Niantic.Lightship.AR.Protobuf {
   public enum MapNodeDataType {
     [pbr::OriginalName("Orb")] Orb = 0,
     [pbr::OriginalName("LearnedFeatures")] LearnedFeatures = 1,
+    [pbr::OriginalName("Unknown")] Unknown = 2,
   }
 
   public enum GraphDataType {

@@ -89,6 +89,12 @@ namespace  Niantic.Lightship.AR.Subsystems.Semantics
         /// <param name="nativeProviderHandle"> The handle to the semantics native API </param>
         /// <param name="channelName"> The name of the semantic channel whose texture we want to get </param>
         /// <param name="cameraParams">Describes the viewport. If this is null, the samplerMatrix will result in an identity matrix.</param>
+        /// <param name="targetPose">
+        /// Any image acquired has been captured in the past. The target pose argument defines the pose the image
+        /// needs to synchronize with. If the image can be synchronized, the <see cref="samplerMatrix"/> will be
+        /// calibrated to warp the image as if it was taken from the target pose. If this argument is null, the
+        /// image will not be warped.
+        /// </param>
         /// <param name="semanticsChannelDescriptor"> The semantic channel texture descriptor to be populated, if available. </param>
         /// <param name="samplerMatrix">The matrix that converts from normalized viewport coordinates to normalized image coordinates.</param>
         /// <returns>
@@ -100,7 +106,7 @@ namespace  Niantic.Lightship.AR.Subsystems.Semantics
             IntPtr nativeProviderHandle,
             string channelName,
             XRCameraParams? cameraParams,
-            Matrix4x4? currentPose,
+            Matrix4x4? targetPose,
             out XRTextureDescriptor semanticsChannelDescriptor,
             out Matrix4x4 samplerMatrix
         )
@@ -147,7 +153,7 @@ namespace  Niantic.Lightship.AR.Subsystems.Semantics
                     frameId
                 );
 
-            samplerMatrix = GetSamplerMatrix(nativeProviderHandle, resourceHandle, cameraParams, currentPose, width, height);
+            samplerMatrix = GetSamplerMatrix(nativeProviderHandle, resourceHandle, cameraParams, targetPose, width, height);
 
             Native.DisposeResource(nativeProviderHandle, resourceHandle);
 
@@ -168,21 +174,29 @@ namespace  Niantic.Lightship.AR.Subsystems.Semantics
         }
 
         /// <summary>
-        /// Get the XRCpuImage of the named semantic channel.
+        /// Get the XRCpuImage for the specified semantic channel.
         /// </summary>
         /// <param name="nativeProviderHandle"> The handle to the semantics native API </param>
         /// <param name="channelName"> The name of the semantic channel whose texture we want to get </param>
-        /// <param name="cameraParams">Describes the viewport.</param>
+        /// <param name="cameraParams">Describes the viewport the image is to be displayed on.</param>
+        /// <param name="targetPose">
+        /// Any image acquired has been captured in the past. The target pose argument defines the pose the image
+        /// needs to synchronize with. If the image can be synchronized, the <see cref="samplerMatrix"/> will be
+        /// calibrated to warp the image as if it was taken from the target pose. If this argument is null, the
+        /// image will not be warped.
+        /// </param>
         /// <param name="cpuImage">If this method returns `true`, an acquired <see cref="XRCpuImage"/>. The XRCpuImage
         /// must be disposed by the caller.</param>
-        /// <param name="samplerMatrix">A matrix that converts from viewport to texture coordinates.</param>
+        /// <param name="samplerMatrix">
+        /// A matrix that converts from normalized viewport coordinates to normalized texture coordinates.
+        /// </param>
         /// <returns>Whether acquiring the XRCpuImage was successful.</returns>
         public bool TryAcquireSemanticChannelCpuImage
         (
             IntPtr nativeProviderHandle,
             string channelName,
             XRCameraParams? cameraParams,
-            Matrix4x4? currentPose,
+            Matrix4x4? targetPose,
             out XRCpuImage cpuImage,
             out Matrix4x4 samplerMatrix
         )
@@ -230,7 +244,7 @@ namespace  Niantic.Lightship.AR.Subsystems.Semantics
                     out var cinfo
                 );
 
-            samplerMatrix = GetSamplerMatrix(nativeProviderHandle, resourceHandle, cameraParams, currentPose, width, height);
+            samplerMatrix = GetSamplerMatrix(nativeProviderHandle, resourceHandle, cameraParams, targetPose, width, height);
 
             Native.DisposeResource(nativeProviderHandle, resourceHandle);
 
@@ -244,12 +258,20 @@ namespace  Niantic.Lightship.AR.Subsystems.Semantics
         }
 
         /// <summary>
-        /// Get the texture descriptor for the packed semantics
+        /// Get the texture descriptor for the packed semantics.
         /// </summary>
         /// <param name="nativeProviderHandle"> The handle to the semantics native API </param>
-        /// <param name="cameraParams">Describes the viewport.</param>
+        /// <param name="cameraParams">Describes the viewport the texture is to be displayed on.</param>
+        /// <param name="targetPose">
+        /// Any image acquired has been captured in the past. The target pose argument defines the pose the image
+        /// needs to synchronize with. If the image can be synchronized, the <see cref="samplerMatrix"/> will be
+        /// calibrated to warp the image as if it was taken from the target pose. If this argument is null, the
+        /// image will not be warped.
+        /// </param>
         /// <param name="packedSemanticsDescriptor"> The packed semantics texture descriptor to be populated, if available. </param>
-        /// <param name="samplerMatrix">A matrix that converts from viewport to texture coordinates.</param>
+        /// <param name="samplerMatrix">
+        /// A matrix that converts from normalized viewport coordinates to normalized texture coordinates.
+        /// </param>
         /// <returns>
         /// <c>true</c> if the packed semantics texture descriptor is available and is returned. Otherwise,
         /// <c>false</c>.
@@ -258,7 +280,7 @@ namespace  Niantic.Lightship.AR.Subsystems.Semantics
         (
             IntPtr nativeProviderHandle,
             XRCameraParams? cameraParams,
-            Matrix4x4? currentPose,
+            Matrix4x4? targetPose,
             out XRTextureDescriptor packedSemanticsDescriptor,
             out Matrix4x4 samplerMatrix
         )
@@ -292,7 +314,7 @@ namespace  Niantic.Lightship.AR.Subsystems.Semantics
                 frameId
             );
 
-            samplerMatrix = GetSamplerMatrix(nativeProviderHandle, resourceHandle, cameraParams, currentPose, width, height);
+            samplerMatrix = GetSamplerMatrix(nativeProviderHandle, resourceHandle, cameraParams, targetPose, width, height);
 
             Native.DisposeResource(nativeProviderHandle, resourceHandle);
 
@@ -312,19 +334,26 @@ namespace  Niantic.Lightship.AR.Subsystems.Semantics
         }
 
         /// <summary>
-        /// Get the XRCpuImage for the packed semantic channels
+        /// Acquire the XRCpuImage for the packed semantic channels.
         /// </summary>
         /// <param name="nativeProviderHandle"> The handle to the semantics native API </param>
-        /// <param name="cameraParams">Describes the viewport.</param>
-        /// <param name="cpuImage">If this method returns `true`, an acquired <see cref="XRCpuImage"/>. The XRCpuImage
-        /// must be disposed by the caller.</param>
-        /// <param name="samplerMatrix">A matrix that converts from viewport to texture coordinates.</param>
+        /// <param name="cameraParams">Describes the viewport the image is to be displayed on.</param>
+        /// <param name="targetPose">
+        /// Any image acquired has been captured in the past. The target pose argument defines the pose the image
+        /// needs to synchronize with. If the image can be synchronized, the <see cref="samplerMatrix"/> will be
+        /// calibrated to warp the image as if it was taken from the target pose. If this argument is null, the
+        /// image will not be warped.
+        /// </param>
+        /// <param name="cpuImage">The resulting <see cref="XRCpuImage"/>. The XRCpuImage must be disposed by the caller.</param>
+        /// <param name="samplerMatrix">
+        /// A matrix that converts from normalized viewport coordinates to normalized texture coordinates.
+        /// </param>
         /// <returns>Whether the XRCpuImage was successfully acquired.</returns>
         public bool TryAcquirePackedSemanticChannelsCpuImage
         (
             IntPtr nativeProviderHandle,
             XRCameraParams? cameraParams,
-            Matrix4x4? currentPose,
+            Matrix4x4? targetPose,
             out XRCpuImage cpuImage,
             out Matrix4x4 samplerMatrix
         )
@@ -360,7 +389,7 @@ namespace  Niantic.Lightship.AR.Subsystems.Semantics
                     out var cinfo
                 );
 
-            samplerMatrix = GetSamplerMatrix(nativeProviderHandle, resourceHandle, cameraParams, currentPose, width, height);
+            samplerMatrix = GetSamplerMatrix(nativeProviderHandle, resourceHandle, cameraParams, targetPose, width, height);
 
             Native.DisposeResource(nativeProviderHandle, resourceHandle);
 
@@ -377,7 +406,7 @@ namespace  Niantic.Lightship.AR.Subsystems.Semantics
         (
 			IntPtr nativeProviderHandle,
 			XRCameraParams? cameraParams,
-            Matrix4x4? currentPose,
+            Matrix4x4? targetPose,
 			out XRTextureDescriptor suppressionMaskDescriptor,
             out Matrix4x4 samplerMatrix
         )
@@ -414,7 +443,7 @@ namespace  Niantic.Lightship.AR.Subsystems.Semantics
             );
 
             // Calculate the appropriate viewport mapping
-            samplerMatrix = GetSamplerMatrix(nativeProviderHandle, resourceHandle, cameraParams, currentPose, width, height);
+            samplerMatrix = GetSamplerMatrix(nativeProviderHandle, resourceHandle, cameraParams, targetPose, width, height);
 
             // Release the native data
             Native.DisposeResource(nativeProviderHandle, resourceHandle);
@@ -435,19 +464,27 @@ namespace  Niantic.Lightship.AR.Subsystems.Semantics
         }
 
         /// <summary>
-        /// Get the XRCpuImage for the masked semantic channels
+        /// Acquire the XRCpuImage for the semantic suppression mask.
         /// </summary>
         /// <param name="nativeProviderHandle"> The handle to the semantics native API </param>
-        /// <param name="cameraParams">Describes the viewport.</param>
+        /// <param name="cameraParams">Describes the viewport the image is to be displayed on.</param>
+        /// <param name="targetPose">
+        /// Any image acquired has been captured in the past. The target pose argument defines the pose the image
+        /// needs to synchronize with. If the image can be synchronized, the <see cref="samplerMatrix"/> will be
+        /// calibrated to warp the image as if it was taken from the target pose. If this argument is null, the
+        /// image will not be warped.
+        /// </param>
         /// <param name="cpuImage">If this method returns `true`, an acquired <see cref="XRCpuImage"/>. The XRCpuImage
         /// must be disposed by the caller.</param>
-        /// <param name="samplerMatrix">A matrix that converts from viewport to texture coordinates.</param>
+        /// <param name="samplerMatrix">
+        /// A matrix that transforms from normalized viewport coordinates to normalized texture coordinates.
+        /// </param>
         /// <returns>Whether the XRCpuImage was successfully acquired.</returns>
         public bool TryAcquireSuppressionMaskCpuImage
         (
 			IntPtr nativeProviderHandle,
 			XRCameraParams? cameraParams,
-            Matrix4x4? currentPose,
+            Matrix4x4? targetPose,
             out XRCpuImage cpuImage,
 			out Matrix4x4 samplerMatrix
         )
@@ -485,7 +522,7 @@ namespace  Niantic.Lightship.AR.Subsystems.Semantics
                     out var cinfo
                 );
 
-            samplerMatrix = GetSamplerMatrix(nativeProviderHandle, resourceHandle, cameraParams, currentPose, width, height);
+            samplerMatrix = GetSamplerMatrix(nativeProviderHandle, resourceHandle, cameraParams, targetPose, width, height);
 
             Native.DisposeResource(nativeProviderHandle, resourceHandle);
 
@@ -668,17 +705,31 @@ namespace  Niantic.Lightship.AR.Subsystems.Semantics
             _semanticsNameToShaderPropertyIdMap.Clear();
         }
 
-        private Matrix4x4 GetSamplerMatrix
+        /// <summary>
+        /// Calculates a matrix that transforms from normalized coordinates of the
+        /// specified viewport to normalized coordinates of the semantics image.
+        /// </summary>
+        /// <param name="nativeProviderHandle">The handle to the native semantics provider instance.</param>
+        /// <param name="resourceHandle">The handle to the native image resource.</param>
+        /// <param name="cameraParams">The viewport to calculate the mapping for.</param>
+        /// <param name="targetPose">
+        /// When provided, the resulting matrix will contain a warping transformation to make it seem like
+        /// the image was taken from this camera pose.
+        /// </param>
+        /// <param name="imageWidth">The width of the image.</param>
+        /// <param name="imageHeight">The height of the image.</param>
+        /// <returns>The matrix that can be used to fit the image to the viewport.</returns>
+        private static Matrix4x4 GetSamplerMatrix
         (
             IntPtr nativeProviderHandle,
             IntPtr resourceHandle,
             XRCameraParams? cameraParams,
-            Matrix4x4? currentPose,
+            Matrix4x4? targetPose,
             int imageWidth,
             int imageHeight
         )
         {
-            Matrix4x4 samplerMatrix;
+            Matrix4x4 result;
 
             // If the camera params are not provided, default to the image container
             var viewport = cameraParams ?? new XRCameraParams
@@ -688,21 +739,23 @@ namespace  Niantic.Lightship.AR.Subsystems.Semantics
                 screenOrientation = ScreenOrientation.LandscapeLeft
             };
 
-            if (currentPose.HasValue)
+            if (targetPose.HasValue)
             {
-                TryCalculateSamplerMatrixWithInterpolationMatrix
+                // Display + interpolation
+                TryCalculateSamplerMatrix
                 (
                     nativeProviderHandle,
                     resourceHandle,
                     viewport,
-                    currentPose.Value,
+                    targetPose.Value,
                     XRDisplayContext.OccludeeEyeDepth,
-                    out samplerMatrix
+                    out result
                 );
             }
             else
             {
-                samplerMatrix =
+                // Display
+                result =
                     CameraMath.CalculateDisplayMatrix
                     (
                         imageWidth,
@@ -714,7 +767,7 @@ namespace  Niantic.Lightship.AR.Subsystems.Semantics
                     );
             }
 
-            return samplerMatrix;
+            return result;
         }
 
         /// <summary>
@@ -729,7 +782,7 @@ namespace  Niantic.Lightship.AR.Subsystems.Semantics
         /// the image should be projected onto (in meters).</param>
         /// <param name="result"></param>
         /// <returns>True, if the matrix could be calculated, otherwise false (in case the </returns>
-        private bool TryCalculateSamplerMatrixWithInterpolationMatrix
+        private static bool TryCalculateSamplerMatrix
         (
             IntPtr nativeProviderHandle,
             IntPtr resourceHandle,

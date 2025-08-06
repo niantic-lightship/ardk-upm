@@ -2,6 +2,8 @@
 
 using Niantic.Lightship.AR.Utilities;
 using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Layouts;
 using UnityEngine.Scripting;
 
 namespace Niantic.Lightship.AR.Subsystems.Playback
@@ -10,6 +12,11 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
     internal class LightshipPlaybackInputProvider : LightshipInputProvider, IPlaybackDatasetUser
     {
         private PlaybackDatasetReader _datasetReader;
+
+        public LightshipPlaybackInputProvider() : base()
+        {
+            LightshipInputDevice.AddDevice<PlaybackInputDevice>(PlaybackInputDevice.ProductName);
+        }
 
         private void OnFrameUpdate()
         {
@@ -64,7 +71,22 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
             Vector3 position = pose.ToPosition();
             Quaternion cameraToLocal = pose.ToRotation();
             var displayToLocal = cameraToLocal * CameraMath.DisplayToCameraRotation(orientation);
+
+            // Update the old input system
             SetPose(position, displayToLocal, (uint)orientation);
+
+            // Update the new input system
+            var device = InputSystem.GetDevice<PlaybackInputDevice>();
+            device?.PushUpdate(position, displayToLocal, position, displayToLocal,
+                (DeviceOrientation)orientation, Time.unscaledTimeAsDouble * 1000.0);
         }
+    }
+
+    [InputControlLayout(
+        stateType = typeof(LightshipInputState),
+        displayName = ProductName)]
+    internal sealed class PlaybackInputDevice : LightshipInputDevice
+    {
+        public const string ProductName = "LightshipPlaybackCamera";
     }
 }

@@ -112,7 +112,7 @@ namespace Niantic.Lightship.AR.Subsystems.Semantics
             IntPtr nativeProviderHandle,
             string channelName,
             XRCameraParams? cameraParams,
-            Matrix4x4? currentPose,
+            Matrix4x4? targetPose,
             out XRTextureDescriptor semanticsChannelDescriptor,
             out Matrix4x4 samplerMatrix
         )
@@ -180,7 +180,7 @@ namespace Niantic.Lightship.AR.Subsystems.Semantics
             IntPtr nativeProviderHandle,
             string channelName,
             XRCameraParams? cameraParams,
-            Matrix4x4? currentPose,
+            Matrix4x4? targetPose,
             out XRCpuImage cpuImage,
             out Matrix4x4 samplerMatrix
         )
@@ -212,7 +212,7 @@ namespace Niantic.Lightship.AR.Subsystems.Semantics
         (
             IntPtr nativeProviderHandle,
             XRCameraParams? cameraParams,
-            Matrix4x4? currentPose,
+            Matrix4x4? targetPose,
             out XRTextureDescriptor packedSemanticsDescriptor,
             out Matrix4x4 samplerMatrix
         )
@@ -274,7 +274,7 @@ namespace Niantic.Lightship.AR.Subsystems.Semantics
         (
             IntPtr nativeProviderHandle,
             XRCameraParams? cameraParams,
-            Matrix4x4? currentPose,
+            Matrix4x4? targetPose,
             out XRCpuImage cpuImage,
             out Matrix4x4 samplerMatrix
         )
@@ -378,7 +378,7 @@ namespace Niantic.Lightship.AR.Subsystems.Semantics
 		(
 			IntPtr nativeProviderHandle,
 			XRCameraParams? cameraParams,
-            Matrix4x4? currentPose,
+            Matrix4x4? targetPose,
 			out XRTextureDescriptor suppressionMaskDescriptor,
             out Matrix4x4 samplerMatrix)
         {
@@ -432,7 +432,7 @@ namespace Niantic.Lightship.AR.Subsystems.Semantics
 		(
 			IntPtr nativeProviderHandle,
 			XRCameraParams? cameraParams,
-            Matrix4x4? currentPose,
+            Matrix4x4? targetPose,
             out XRCpuImage cpuImage,
 			out Matrix4x4 samplerMatrix
 		)

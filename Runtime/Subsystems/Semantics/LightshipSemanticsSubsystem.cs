@@ -50,7 +50,8 @@ namespace Niantic.Lightship.AR.Subsystems.Semantics
         /// <value>
         /// The intrinsics matrix.
         /// </value>
-        /// <exception cref="System.NotSupportedException">Thrown if getting intrinsics matrix is not supported.
+        /// <exception cref="System.NotSupportedException">
+        /// Thrown if getting intrinsics matrix is not supported.
         /// </exception>
         public Matrix4x4? LatestIntrinsicsMatrix
         {
@@ -162,8 +163,6 @@ namespace Niantic.Lightship.AR.Subsystems.Semantics
             /// <value>
             /// The intrinsics matrix.
             /// </value>
-            /// <exception cref="System.NotSupportedException">Thrown if getting intrinsics matrix is not supported.
-            /// </exception>
             public Matrix4x4? LatestIntrinsicsMatrix
             {
                 get
@@ -225,15 +224,18 @@ namespace Niantic.Lightship.AR.Subsystems.Semantics
             }
 
             /// <summary>
-            /// Gets a semantics channel texture descriptor and a matrix used to fit the texture to the viewport.
+            /// Get the XRTextureDescriptor for the specified semantic channel.
             /// </summary>
-            /// <param name="channelName">The string description of the semantics channel that is needed.</param>
-            /// <param name="semanticChannelDescriptor">The semantics channel texture descriptor to be populated, if
-            /// available from the provider.</param>
-            /// <param name="samplerMatrix">Converts from normalized viewport coordinates to normalized texture coordinates.</param>
-            /// <param name="cameraParams">Describes the viewport.</param>
+            /// <param name="channelName">The string description of the semantics channel to acquire.</param>
+            /// <param name="semanticChannelDescriptor">
+            /// The resulting semantic channel texture descriptor, if available.
+            /// </param>
+            /// <param name="samplerMatrix">
+            /// The matrix that transforms from normalized viewport coordinates to normalized texture coordinates.
+            /// </param>
+            /// <param name="cameraParams">Describes the viewport the texture is to be displayed on.</param>
             /// <returns>
-            /// <c>true</c> if the semantics channel texture descriptor is available and is returned. Otherwise,
+            /// <c>true</c> if the semantic channel texture descriptor is available and is returned. Otherwise,
             /// <c>false</c>.
             /// </returns>
             public override bool TryGetSemanticChannel
@@ -263,15 +265,19 @@ namespace Niantic.Lightship.AR.Subsystems.Semantics
             }
 
             /// <summary>
-            /// Tries to acquire the latest semantics channel XRCpuImage.
+            /// Acquire the latest semantic channel CPU image.
             /// </summary>
-            /// <param name="channelName">The string description of the semantics channel that is needed.</param>
-            /// <param name="cpuImage">If this method returns `true`, an acquired <see cref="XRCpuImage"/>. The XRCpuImage
-            /// must be disposed by the caller.</param>
-            /// <param name="samplerMatrix">A matrix that converts from viewport to texture coordinates.</param>
-            /// <param name="cameraParams">Describes the viewport.</param>
-            /// <returns>Returns `true` if an <see cref="XRCpuImage"/> was successfully acquired.
-            /// Returns `false` otherwise.</returns>
+            /// <param name="channelName">The string description of the semantics channel to acquire.</param>
+            /// <param name="cpuImage">
+            /// The resulting <see cref="XRCpuImage"/>. The XRCpuImage must be disposed by the caller.
+            /// </param>
+            /// <param name="samplerMatrix">
+            /// The matrix that transforms from normalized viewport coordinates to normalized image coordinates.
+            /// </param>
+            /// <param name="cameraParams">Describes the viewport the image is to be displayed on.</param>
+            /// <returns>
+            /// Returns `true` if an <see cref="XRCpuImage"/> was successfully acquired. Returns `false` otherwise.
+            /// </returns>
             public override bool TryAcquireSemanticChannelCpuImage
             (
                 string channelName,
@@ -293,22 +299,24 @@ namespace Niantic.Lightship.AR.Subsystems.Semantics
                         _nativeProviderHandle,
                         channelName,
                         cameraParams,
-                        InputReader.CurrentPose,
+                        InputReader.CurrentPose, 
                         out cpuImage,
                         out samplerMatrix
                     );
             }
 
             /// <summary>
-            /// Gets a packed semantics texture descriptor.
+            /// Get the packed semantics texture descriptor.
             /// </summary>
-            /// <param name="packedSemanticsDescriptor">The packed semantics texture descriptor to be populated, if
-            /// available from the provider.</param>
-            /// <param name="samplerMatrix">A matrix that converts from viewport to texture coordinates.</param>
-            /// <param name="cameraParams">Describes the viewport.</param>
+            /// <param name="packedSemanticsDescriptor">
+            /// The resulting semantic channel texture descriptor, if available.
+            /// </param>
+            /// <param name="samplerMatrix">
+            /// The matrix that transforms from normalized viewport coordinates to normalized texture coordinates.
+            /// </param>
+            /// <param name="cameraParams">Describes the viewport the texture is to be displayed on.</param>
             /// <returns>
-            /// <c>true</c> if the packed semantics texture descriptor is available and is returned. Otherwise,
-            /// <c>false</c>.
+            /// <c>true</c> if the packed semantics texture descriptor is available and is returned. Otherwise, <c>false</c>.
             /// </returns>
             public override bool TryGetPackedSemanticChannels
             (
@@ -336,13 +344,18 @@ namespace Niantic.Lightship.AR.Subsystems.Semantics
             }
 
             /// <summary>
-            ///  Tries to acquire the latest packed semantic channels XRCpuImage.
+            /// Acquire the latest packed semantic channels XRCpuImage.
             /// </summary>
-            /// <param name="cpuImage">If this method returns `true`, an acquired <see cref="XRCpuImage"/>. The XRCpuImage
-            /// must be disposed by the caller.</param>
-            /// <param name="samplerMatrix">A matrix that converts from viewport to texture coordinates.</param>
-            /// <param name="cameraParams">Describes the viewport.</param>
-            /// <returns>True if the XRCpuImage is acquired. Otherwise, false</returns>
+            /// <param name="cpuImage">
+            /// The resulting <see cref="XRCpuImage"/>. The XRCpuImage must be disposed by the caller.
+            /// </param>
+            /// <param name="samplerMatrix">
+            /// The matrix that transforms from normalized viewport coordinates to normalized image coordinates.
+            /// </param>
+            /// <param name="cameraParams">Describes the viewport the image is to be displayed on.</param>
+            /// <returns>
+            /// Returns `true` if an <see cref="XRCpuImage"/> was successfully acquired. Returns `false` otherwise.
+            /// </returns>
             public override bool TryAcquirePackedSemanticChannelsCpuImage
             (
                 out XRCpuImage cpuImage,
@@ -371,13 +384,18 @@ namespace Niantic.Lightship.AR.Subsystems.Semantics
 
 
             /// <summary>
-            /// Tries to get the suppression mask texture already computed from the latest semantics.
+            /// Get the semantic suppression mask texture descriptor.
             /// </summary>
-            /// <param name="suppressionMaskDescriptor">The suppression mask texture descriptor to be populated, if available from the provider.</param>
-            /// <param name="samplerMatrix">A matrix that converts from viewport to texture coordinates</param>
-            /// <param name="cameraParams">Describes the viewport</param>
+            /// <param name="suppressionMaskDescriptor">
+            /// The resulting semantic suppression mask texture descriptor, if available.
+            /// </param>
+            /// <param name="samplerMatrix">
+            /// The matrix that transforms from normalized viewport coordinates to normalized texture coordinates.
+            /// </param>
+            /// <param name="cameraParams">Describes the viewport the texture is to be displayed on.</param>
             /// <returns>
-            /// <c>true</c> if the suppression mask texture descriptor is available and is returned. Otherwise, <c>false</c>.
+            /// <c>true</c> if the suppression mask texture descriptor is available and is returned. Otherwise,
+            /// <c>false</c>.
             /// </returns>
             public override bool TryGetSuppressionMaskTexture
             (
@@ -404,12 +422,18 @@ namespace Niantic.Lightship.AR.Subsystems.Semantics
             }
 
             /// <summary>
-            /// Try to acquire the suppression mask XRCpuImage.
+            /// Acquire the latest suppression mask XRCpuImage.
             /// </summary>
-            /// <param name="cpuImage">If the method returns 'true', an acquired <see cref="XRCpuImage"/>. The XRCpuImage must be disposed by the caller.</param>
-            /// <param name="samplerMatrix">A matrix that converts from viewport to texture coordinates.</param>
-            /// <param name="cameraParams">Describes the viewport.</param>
-            /// <returns>True if the XRCpuImage is acquired. Otherwise, false</returns>
+            /// <param name="cpuImage">
+            /// The resulting <see cref="XRCpuImage"/>. The XRCpuImage must be disposed by the caller.
+            /// </param>
+            /// <param name="samplerMatrix">
+            /// The matrix that transforms from normalized viewport coordinates to normalized image coordinates.
+            /// </param>
+            /// <param name="cameraParams">Describes the viewport the image is to be displayed on.</param>
+            /// <returns>
+            /// Returns `true` if an <see cref="XRCpuImage"/> was successfully acquired. Returns `false` otherwise.
+            /// </returns>
             public override bool TryAcquireSuppressionMaskCpuImage
             (
                 out XRCpuImage cpuImage,
@@ -437,19 +461,30 @@ namespace Niantic.Lightship.AR.Subsystems.Semantics
             }
 
             /// <summary>
-            /// Try to acquire the suppression mask XRCpuImage.
+            /// Acquire the latest suppression mask XRCpuImage.
             /// </summary>
-            /// <param name="cpuImage">If the method returns 'true', an acquired <see cref="XRCpuImage"/>. The XRCpuImage must be disposed by the caller.</param>
-            /// <param name="samplerMatrix">A matrix that converts from viewport to texture coordinates.</param>
-            /// <param name="cameraParams">Describes the viewport.</param>
-            /// <param name="referencePose">The pose to calculate the <see cref="samplerMatrix"/> for.</param>
-            /// <returns>True if the XRCpuImage is acquired. Otherwise, false</returns>
+            /// <param name="cpuImage">
+            /// The resulting <see cref="XRCpuImage"/>. The XRCpuImage must be disposed by the caller.
+            /// </param>
+            /// <param name="samplerMatrix">
+            /// The matrix that transforms from normalized viewport coordinates to normalized image coordinates.
+            /// </param>
+            /// <param name="cameraParams">Describes the viewport the image is to be displayed on.</param>
+            /// <param name="targetPose">
+            /// Any image acquired has been captured in the past. The target pose argument defines the pose the image
+            /// needs to synchronize with. If the image can be synchronized, the <see cref="samplerMatrix"/> will be
+            /// calibrated to warp the image as if it was taken from the target pose. If this argument is null, the
+            /// image will not be warped.
+            /// </param>
+            /// <returns>
+            /// Returns `true` if an <see cref="XRCpuImage"/> was successfully acquired. Returns `false` otherwise.
+            /// </returns>
             internal override bool TryAcquireSuppressionMaskCpuImage
             (
                 out XRCpuImage cpuImage,
                 out Matrix4x4 samplerMatrix,
                 XRCameraParams? cameraParams,
-                Matrix4x4? referencePose)
+                Matrix4x4? targetPose)
             {
                 cpuImage = default;
                 samplerMatrix = default;
@@ -464,7 +499,7 @@ namespace Niantic.Lightship.AR.Subsystems.Semantics
                     (
                         _nativeProviderHandle,
                         cameraParams,
-                        referencePose,
+                        targetPose,
                         out cpuImage,
                         out samplerMatrix
                     );
@@ -566,8 +601,6 @@ namespace Niantic.Lightship.AR.Subsystems.Semantics
             /// channel in the packed semantics buffer. The key must be a semantic channel name present in the list
             /// returned by <c>TryGetChannelNames</c>.
             /// </param>
-            /// <exception cref="System.NotSupportedException">Thrown when setting confidence thresholds is not
-            /// supported by the implementation.</exception>
             /// <returns>True if the threshold was set. Otherwise, false.</returns>
             public override bool TrySetChannelConfidenceThresholds(Dictionary<string,float> channelConfidenceThresholds)
             {
@@ -630,8 +663,6 @@ namespace Niantic.Lightship.AR.Subsystems.Semantics
             /// <remarks>
             /// This reverts any changes made with <see cref="TrySetChannelConfidenceThresholds"/>.
             /// </remarks>
-            /// <exception cref="System.NotSupportedException">Thrown when resetting confidence thresholds is not
-            /// supported by the implementation.</exception>
             /// <returns>True if the thresholds were reset. Otherwise, false.</returns>
             public override bool TryResetChannelConfidenceThresholds()
             {

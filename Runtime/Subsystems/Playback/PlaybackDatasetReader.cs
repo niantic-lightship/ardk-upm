@@ -239,5 +239,10 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
 
             return _imageBytes;
         }
+
+        public void UnloadDataset()
+        {
+            _dataset.Unload();
+        }
     }
 }

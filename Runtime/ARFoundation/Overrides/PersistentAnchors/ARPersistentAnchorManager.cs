@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using Niantic.Lightship.AR.Common;
 using Niantic.Lightship.AR.Core;
 using Niantic.Lightship.AR.Mapping;
+using Niantic.Lightship.AR.Protobuf;
 using Niantic.Lightship.AR.Subsystems.PersistentAnchor;
 using Niantic.Lightship.AR.Utilities;
 using Niantic.Lightship.AR.XRSubsystems;
@@ -25,6 +26,7 @@ using UnityEngine.Android;
 #endif
 using UnityEngine.XR.ARFoundation;
 using UnityEngine.XR.ARSubsystems;
+using TrackingState = UnityEngine.XR.ARSubsystems.TrackingState;
 
 namespace Niantic.Lightship.AR.PersistentAnchors
 {
@@ -79,6 +81,18 @@ namespace Niantic.Lightship.AR.PersistentAnchors
         public event Action<XRPersistentAnchorDebugInfo> DebugInfoUpdated;
 
         /// <summary>
+        /// This event reveals internal information that might be useful to diagnose VPS related issues. This event is
+        /// invoked only if VpsDebuggerEnabled is true. Following information will be notified in this event;
+        /// - VPS session details when it's started
+        /// - Frame update
+        /// - VPS request status
+        /// - Anchor status updates
+        /// - VPS localization result
+        /// - VPS localization statistics
+        /// </summary>
+        public event Action<VpsDebuggerDataEvent> VpsDebuggerEvent;
+
+        /// <summary>
         /// The singleton instance reference of the ARPersistentAnchorManager.
         /// For internal use.
         /// </summary>
@@ -129,6 +143,14 @@ namespace Niantic.Lightship.AR.PersistentAnchors
         [Tooltip("Automatically tune VPS parameters based on preset configurations")]
         [SerializeField]
         private LightshipVpsUsageUtility.LightshipVpsUsageMode _VpsUsageMode = LightshipVpsUsageUtility.LightshipVpsUsageMode.Default;
+
+        [Tooltip("VPS Debugger will log VPS related internal events to diagnose VPS issues")]
+        [SerializeField]
+        private bool _VpsDebuggerEnabled = XRPersistentAnchorConfiguration.DefaultVpsDebuggerEnabled;
+
+        [Tooltip("Gps correction improves localization on large maps")]
+        [SerializeField]
+        private bool _GpsCorrectionForContinuousLocalization;
 
         /// <summary>
         /// Number of seconds over which anchor interpolation occurs.
@@ -223,7 +245,26 @@ namespace Niantic.Lightship.AR.PersistentAnchors
             set => _DiagnosticsEnabled = value;
         }
 
+        /// <summary>
+        /// Whether to enable or disable VPS Debugger. VPS Debugger will log VPS related internal events to diagnose VPS issues
+        /// </summary>
+        [Experimental]
+        public bool VpsDebuggerEnabled
+        {
+            get => _VpsDebuggerEnabled;
+            set => _VpsDebuggerEnabled = value;
+        }
 
+        /// <summary>
+        /// Whether to enable or disable Gps Correction during continuous localization. This setting improves localization
+        /// performance on large maps.
+        /// </summary>
+        [Experimental]
+        public bool GpsCorrectionForContinuousLocalization
+        {
+            get => _GpsCorrectionForContinuousLocalization;
+            set => _GpsCorrectionForContinuousLocalization = value;
+        }
 #if NIANTIC_ARDK_EXPERIMENTAL_FEATURES
         [Tooltip("Synchronize the fusion window size with the continuous service request interval")]
         [SerializeField]
@@ -457,6 +498,8 @@ namespace Niantic.Lightship.AR.PersistentAnchors
             cfg.DeviceMappingLocalizationTemporalFusionWindowSize = DeviceMappingLocalizationTemporalFusionWindowSize;
 #endif
             cfg.DisableTransitiveCloudLocalizations = DisableTransitiveCloudLocalizations;
+            cfg.VpsDebuggerEnabled = VpsDebuggerEnabled;
+            cfg.GpsCorrectionForContinuousLocalization = GpsCorrectionForContinuousLocalization;
 
             subsystem.CurrentConfiguration = cfg;
         }
@@ -468,6 +511,7 @@ namespace Niantic.Lightship.AR.PersistentAnchors
                 subsystem.OnSubsystemStop += OnSubsystemStop;
                 subsystem.OnBeforeSubsystemStart += OnBeforeSubsystemStart;
                 subsystem.debugInfoProvided += OnDebugInfoUpdated;
+                subsystem.VpsDebuggerEvent += OnVpsDebuggerEvent;
             }
 
             RequestLocationPermission();
@@ -483,6 +527,11 @@ namespace Niantic.Lightship.AR.PersistentAnchors
             {
                 Log.Error("Error invoking DebugInfoUpdated event: " + e);
             }
+        }
+
+        private void OnVpsDebuggerEvent(VpsDebuggerDataEvent args)
+        {
+            VpsDebuggerEvent?.Invoke(args);
         }
 
         private void OnBeforeSubsystemStart()
@@ -513,6 +562,7 @@ namespace Niantic.Lightship.AR.PersistentAnchors
                 subsystem.OnSubsystemStop -= OnSubsystemStop;
                 subsystem.OnBeforeSubsystemStart -= OnBeforeSubsystemStart;
                 subsystem.debugInfoProvided -= OnDebugInfoUpdated;
+                subsystem.VpsDebuggerEvent -= OnVpsDebuggerEvent;
 
                 // There is a weird behavior on Android that skips OnDisable
                 // We explicitly call subsystem.Stop() here to ensure the proper state of subsystem

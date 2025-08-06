@@ -2,12 +2,14 @@
 using System;
 using System.Collections.Generic;
 using Niantic.Lightship.AR.Core;
+using Niantic.Lightship.AR.Protobuf;
 using Niantic.Lightship.AR.Utilities;
 using Unity.Collections;
 using UnityEngine;
 using UnityEngine.SubsystemsImplementation;
 using Niantic.Lightship.AR.Utilities.Logging;
 using UnityEngine.XR.ARSubsystems;
+using Niantic.Protobuf;
 
 namespace Niantic.Lightship.AR.XRSubsystems
 {
@@ -108,6 +110,8 @@ namespace Niantic.Lightship.AR.XRSubsystems
         /// </summary>
         public event Action<XRPersistentAnchorConfiguration> OnConfigurationChanged;
 
+        public event Action<VpsDebuggerDataEvent> VpsDebuggerEvent;
+
         /// <summary>
         /// Get the changes to anchors (added, updated, and removed) since the last call
         /// to <see cref="GetChanges(Allocator)"/>.
@@ -164,6 +168,20 @@ namespace Niantic.Lightship.AR.XRSubsystems
             {
                 var debugInfo = new XRPersistentAnchorDebugInfo(networkStatuses, localizationStatuses, diagnosticsArray);
                 debugInfoProvided?.Invoke(debugInfo);
+            }
+
+            // Try to get vps debugger log and parse it
+            if (CurrentConfiguration.VpsDebuggerEnabled)
+            {
+                if (provider.GetVpsDebuggerLog(out var vpsDebuggerLogs))
+                {
+                    var lines = vpsDebuggerLogs.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+                    foreach (var line in lines)
+                    {
+                        var debuggerEvent = VpsDebuggerDataEvent.Parser.ParseJson(line);
+                        VpsDebuggerEvent?.Invoke(debuggerEvent);
+                    }
+                }
             }
 
 #if DEVELOPMENT_BUILD || UNITY_EDITOR
@@ -292,6 +310,8 @@ namespace Niantic.Lightship.AR.XRSubsystems
                 vpsSessionId = default;
                 return false;
             }
+
+            public abstract bool GetVpsDebuggerLog(out string vpsDebuggerLog);
 
             /// <summary>
             /// Should create a new anchor with the provided <paramref name="pose"/>.

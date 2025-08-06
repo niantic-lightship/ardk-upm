@@ -234,6 +234,12 @@ namespace Niantic.Lightship.AR.PAM
             return InputReader.TryGetPose(out pose);
         }
 
+        // Default depth extrinsics equals camera pose for platforms that do not provide separate depth sensor
+        public override bool TryGetDepthPose(out Matrix4x4 extrinsics)
+        {
+            return TryGetCameraPose(out extrinsics);
+        }
+
         public override bool TryGetCpuImage(out LightshipCpuImage cpuImage)
         {
             _cameraCpuImage.Dispose(); // TODO(bevangelista) Avoid silently releasing resources on TryGets

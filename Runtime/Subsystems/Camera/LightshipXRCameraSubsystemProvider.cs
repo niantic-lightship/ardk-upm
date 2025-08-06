@@ -66,6 +66,11 @@ namespace Niantic.Lightship.AR.Subsystems.Camera
         /// <summary>
         /// The timestamp of the last acquired camera image in milliseconds.
         /// </summary>
+        /// <remarks>
+        /// The source of this timestamp is the AImage_getTimestamp API. We can use this
+        /// with the OVRPlugin (to get camera poses) because both sides ultimately read
+        /// CLOCK_BOOTTIME / elapsedRealtime.
+        /// </remarks>
         protected double LastImageTimestampMs { get; private set; }
 
         /// <summary>
@@ -111,7 +116,19 @@ namespace Niantic.Lightship.AR.Subsystems.Camera
         }
 
         /// <inheritdoc />
-        protected override bool TryInitialize() => NativeApi.Initialize(_nativeHandle);
+        protected override bool TryInitialize()
+        {
+#if UNITY_ANDROID
+            if (!UnityEngine.Android.Permission.HasUserAuthorizedPermission(UnityEngine.Android.Permission.Camera))
+            {
+                Debug.LogError("Camera permission is not granted. " +
+                    "Please request camera permission before initializing the camera subsystem.");
+                return false;
+            }
+#endif
+
+            return NativeApi.Initialize(_nativeHandle);
+        }
 
         /// <inheritdoc />
         public override void Start() => NativeApi.Start(_nativeHandle);

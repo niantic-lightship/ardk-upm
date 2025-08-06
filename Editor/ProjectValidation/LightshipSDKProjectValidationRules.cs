@@ -311,6 +311,7 @@ namespace Niantic.Lightship.AR.Editor
         {
             var androidRules = new[]
             {
+#if !NIANTIC_LIGHTSHIP_META_ENABLED && !NIANTIC_LIGHTSHIP_ML2_ENABLED
                 new BuildValidationRule
                 {
                     Category = Category,
@@ -324,6 +325,7 @@ namespace Niantic.Lightship.AR.Editor
                     FixItAutomatic = false,
                     Error = false,
                 },
+#endif
                 new BuildValidationRule
                 {
                     Category = Category,

@@ -24,9 +24,10 @@ Shader "Lightship/SemanticsOverlay"
 
             struct v2f
             {
+                float4 vertex : SV_POSITION;
                 float3 uv : TEXCOORD0;
-                float4 pos : SV_POSITION;
 
+                UNITY_VERTEX_INPUT_INSTANCE_ID
                 UNITY_VERTEX_OUTPUT_STEREO
             };
 
@@ -63,7 +64,7 @@ Shader "Lightship/SemanticsOverlay"
             inline float4 WorldToClipPos(float3 posWorld)
             {
               float4 clipPos;
-              #if defined(STEREO_CUBEMAP_RENDER_ON)
+              #if defined(STEREO_CUBEMAP_RENDER_ON) || defined(UNITY_SINGLE_PASS_STEREO)
                 float3 offset = ODSOffset(posWorld, unity_HalfStereoSeparation.x);
                 clipPos = mul(UNITY_MATRIX_VP, float4(posWorld + offset, 1.0));
               #else
@@ -100,7 +101,7 @@ Shader "Lightship/SemanticsOverlay"
                 viewPosition = mul(_Extrinsics, viewPosition);
 
                 // Convert from world space to clip space
-                o.pos = WorldToClipPos(viewPosition.xyz);
+                o.vertex = WorldToClipPos(viewPosition.xyz);
 
                 // Apply the sampler matrix to the UV coordinates
                 o.uv = mul(_SamplerMatrix, float4(v.uv.x, v.uv.y, 1.0f, 1.0f)).xyz;
@@ -112,9 +113,16 @@ Shader "Lightship/SemanticsOverlay"
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(i);
 
-                // Sample semantics
+                // Transform projected UVs into 2D UV coordinates
                 float2 semantic_uv = float2(i.uv.x / i.uv.z, i.uv.y / i.uv.z);
-                float confidence = tex2D(_Semantics, semantic_uv);
+
+                // Calculate a mask such that, if UV is outside [0,1] region, return zero confidence
+                float2 inside = step(0.0, semantic_uv) * step(semantic_uv, 1.0);
+                float clampMask = inside.x * inside.y;
+
+                // Sample the semantics texture
+                float confidence = tex2D(_Semantics, semantic_uv) * clampMask;
+
                 return ConfidenceToColor(confidence, 0.5h);
             }
             ENDCG
