@@ -40,6 +40,11 @@
             "name": "com.unity.xr.arfoundation",
             "expression": "6.1.0",
             "define": "ARF_6_1_OR_NEWER"
+        },
+        {
+            "name": "com.unity.render-pipelines.universal",
+            "expression": "",
+            "define": "UNITY_RENDERPIPELINE_URP"
         }
     ],
     "noEngineReferences": false

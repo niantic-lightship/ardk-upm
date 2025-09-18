@@ -3,6 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
+using Niantic.Lightship.AR.API;
 using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.Loader;
 using System.Linq;
@@ -337,6 +338,45 @@ namespace Niantic.Lightship.AR.PersistentAnchors
         {
             get => _cloudLocalizationEnabled;
             set => _cloudLocalizationEnabled = value;
+        }
+
+        /// <summary>
+        /// Convert a Unity pose to GPS using the underlying persistent anchor subsystem.
+        /// This requires having VPS localized to a location with GPS reference data, otherwise it
+        ///   will return an appropriate error status.
+        /// </summary>
+        public VpsGraphStatus TryGetDevicePoseAsGps
+        (
+            Pose pose,
+            out double latitude,
+            out double longitude,
+            out double altitude,
+            out double verticalAccuracy,
+            out double horizontalAccuracy,
+            out double heading
+        )
+        {
+            if (subsystem == null)
+            {
+                latitude = default;
+                longitude = default;
+                altitude = default;
+                verticalAccuracy = default;
+                horizontalAccuracy = default;
+                heading = default;
+                Log.Error("TryGetDevicePoseAsGps failed: no XRPersistentAnchorSubsystem loaded.");
+                return VpsGraphStatus.FeatureUnavailable;
+            }
+
+            return subsystem.TryGetDevicePoseAsGps(
+                pose,
+                out latitude,
+                out longitude,
+                out altitude,
+                out verticalAccuracy,
+                out horizontalAccuracy,
+                out heading
+            );
         }
 
         private bool _deviceMappingLocalizationEnabled = XRPersistentAnchorConfiguration.DefaultDeviceMappingLocalizationEnabled;

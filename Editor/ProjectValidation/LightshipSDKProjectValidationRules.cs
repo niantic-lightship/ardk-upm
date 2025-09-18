@@ -12,6 +12,13 @@ using UnityEngine.XR.ARKit;
 using JetBrains.Annotations;
 using System.Text.RegularExpressions;
 using UnityEditor.XR.Management.Metadata;
+using System.Reflection;
+using System.Linq;
+using UnityEngine.XR.ARFoundation;
+
+#if UNITY_RENDERPIPELINE_URP
+using UnityEngine.Rendering.Universal;
+#endif
 
 namespace Niantic.Lightship.AR.Editor
 {
@@ -119,6 +126,67 @@ namespace Niantic.Lightship.AR.Editor
             [NotNull] Func<string> getUnityVersion
         )
         {
+
+            // URP validation. Only check if we're using URP
+#if UNITY_RENDERPIPELINE_URP
+            var nonBackgroundRendererDataList = new Dictionary<string, ScriptableRendererData>();
+
+            var globalRulesList = new List<BuildValidationRule>
+            {
+                new BuildValidationRule
+                {
+                    Category = Category,
+                    Message = "Ensure Universal Render Pipeline is present and all Render Pipeline Assets have the 'AR Background Renderer Feature'.",
+                    CheckPredicate = () =>
+                    {
+                        nonBackgroundRendererDataList.Clear();
+                        // Check if URP package is present
+                        var urpType = Type.GetType("UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset, Unity.RenderPipelines.Universal.Runtime");
+                        // filter out possible assets on Packages folder
+                        var guids = AssetDatabase.FindAssets("t:UniversalRenderPipelineAsset");
+                        var filteredGuids = guids
+                        .Select(guid => AssetDatabase.GUIDToAssetPath(guid))
+                        .Where(path => !path.StartsWith("Packages"))
+                        .Select(path => AssetDatabase.AssetPathToGUID(path))
+                        .ToArray();
+                        if (urpType == null || filteredGuids.Length == 0)
+                        {
+                            return false;
+                        }
+
+                        FindNonBackgroundRendererData(nonBackgroundRendererDataList, filteredGuids);
+
+                        // if all the URP assets have the ARBackgroundRendererFeature check passes.
+                        return nonBackgroundRendererDataList.Count == 0;
+                    },
+                    IsRuleEnabled = () => true,
+                    FixIt = () =>
+                    {
+                        var urpType = Type.GetType("UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset, Unity.RenderPipelines.Universal.Runtime");
+                        if (urpType == null)
+                        {
+                            return;
+                        }
+                        // If there are no urp assets create and set one as default
+                        if(nonBackgroundRendererDataList.Count <= 0)
+                        {
+                            var rendererData = CreateURPAssets();
+                            var guid = AssetDatabase.AssetPathToGUID("Assets/DefaultUniversalRenderer.asset");
+                            nonBackgroundRendererDataList[guid] = rendererData;
+                        }
+                        // Add the ARBackgroundRendererFeature to all URP assets that are missing it.
+                        nonBackgroundRendererDataList.Values.ToList().ForEach(ConfigureRendererFeatures);
+                        AssetDatabase.SaveAssets();
+                    },
+                    FixItMessage = "Ensure all URP assets have the 'AR Background Renderer Feature'. If none exist, a default asset will be created.",
+                    FixItAutomatic = true,
+                    Error = true
+                }
+            };
+#else
+            var globalRulesList = new List<BuildValidationRule>();
+#endif
+
             var globalRules = new[]
             {
                 new BuildValidationRule
@@ -202,7 +270,8 @@ namespace Niantic.Lightship.AR.Editor
                     Error = true
                 }
             };
-            return globalRules;
+            globalRulesList.AddRange(globalRules);
+            return globalRulesList.ToArray();
         }
 
         internal static BuildValidationRule[] CreateIOSRules(
@@ -524,5 +593,82 @@ namespace Niantic.Lightship.AR.Editor
         {
             return (int)PlayerSettings.Android.targetSdkVersion;
         }
+
+#if UNITY_RENDERPIPELINE_URP
+        private static void ConfigureRendererFeatures(ScriptableRendererData rendererData)
+        {
+            // Implementation for configuring renderer features
+            var arFeature = ScriptableObject.CreateInstance<ARBackgroundRendererFeature>();
+            arFeature.name = "ARBackgroundRendererFeature";
+            AssetDatabase.AddObjectToAsset(arFeature, rendererData);
+            rendererData.rendererFeatures.Add(arFeature);
+            EditorUtility.SetDirty(rendererData);
+        }
+        private static ScriptableRendererData CreateURPAssets()
+        {
+            // Create a default URP asset
+            var urpAsset = ScriptableObject.CreateInstance<UniversalRenderPipelineAsset>();
+            var urpPath = "Assets/DefaultUniversalRenderPipelineAsset.asset";
+            AssetDatabase.CreateAsset(urpAsset, urpPath);
+            // Create Universal Renderer asset
+            var rendererData = ScriptableObject.CreateInstance<UniversalRendererData>();
+            var rendererPath = "Assets/DefaultUniversalRenderer.asset";
+            AssetDatabase.CreateAsset(rendererData, rendererPath);
+
+            // Assign renderer to URP asset
+            var rendererDataListField = urpAsset.GetType().GetField("m_RendererDataList", BindingFlags.NonPublic | BindingFlags.Instance);
+            if (rendererDataListField != null)
+            {
+                rendererDataListField.SetValue(urpAsset, new ScriptableRendererData[] { rendererData });
+            }
+
+            // Set default renderer index (optional, usually 0)
+            var defaultRendererIndexField = urpAsset.GetType().GetField("m_DefaultRendererIndex", BindingFlags.NonPublic | BindingFlags.Instance);
+            if (defaultRendererIndexField != null)
+            {
+                defaultRendererIndexField.SetValue(urpAsset, 0);
+            }
+            GraphicsSettings.defaultRenderPipeline = urpAsset;
+            EditorUtility.SetDirty(GraphicsSettings.GetGraphicsSettings());
+            AssetDatabase.SaveAssets();
+
+            return rendererData;
+        }
+        private static void FindNonBackgroundRendererData(Dictionary<string, ScriptableRendererData> nonBackgroundRendererDataList, string[] guids)
+        {
+            // Find all URP assets
+            foreach (var guid in guids)
+            {
+                var path = AssetDatabase.GUIDToAssetPath(guid);
+                var asset = AssetDatabase.LoadAssetAtPath<UniversalRenderPipelineAsset>(path);
+                if (asset != null)
+                {
+                    var rendererDataListField = typeof(UniversalRenderPipelineAsset).GetField("m_RendererDataList",
+                        BindingFlags.NonPublic | BindingFlags.Instance);
+                    if (rendererDataListField == null)
+                    {
+                        return;
+                    }
+
+                    var rendererDataList = rendererDataListField.GetValue(asset) as ScriptableRendererData[];
+                    if (rendererDataList == null || rendererDataList.Length == 0)
+                    {
+                        return;
+                    }
+
+                    // Check all rendererData for those that don't have the ARBackgroundRendererFeature in them
+                    foreach (var rendererData in rendererDataList)
+                    {
+                        if (rendererData == null ||
+                        !rendererData.rendererFeatures.Any(feature => feature is ARBackgroundRendererFeature))
+                        {
+                            nonBackgroundRendererDataList[guid] = rendererData;
+                        }
+                    }
+                }
+            }
+        }
+#endif
+
     }
 }

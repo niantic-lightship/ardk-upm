@@ -73,7 +73,7 @@ namespace Niantic.Lightship.AR.PAM
     }
 
     // IMPORTANT – This struct has explicit matching C# and pure-C alignment/padding requirements
-    // C# to C struct. Must match gps_position.h
+    // C# to C struct. Must match ardk_gps_data.h
     [StructLayout(LayoutKind.Sequential)]
     internal struct GpsLocationCStruct
     {
@@ -82,11 +82,11 @@ namespace Niantic.Lightship.AR.PAM
         public ulong TimestampMs;
 
         // GPS location latitude
-        public float Latitude;
+        public double Latitude;
         // GPS location longitude
-        public float Longitude;
+        public double Longitude;
         // GPS location altitude
-        public float Altitude;
+        public double Altitude;
 
         // GPS vertical accuracy
         public float VerticalAccuracy;

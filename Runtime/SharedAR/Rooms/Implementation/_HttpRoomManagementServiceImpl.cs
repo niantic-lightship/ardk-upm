@@ -7,7 +7,7 @@ using Niantic.Lightship.SharedAR.Rooms.MarshMessages;
 using UnityEngine;
 using UnityEngine.Networking;
 using System.Threading.Tasks;
-using Niantic.Lightship.AR.VpsCoverage;
+using Niantic.Lightship.AR.Utilities.Http;
 
 namespace Niantic.Lightship.SharedAR.Rooms.Implementation
 {

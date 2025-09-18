@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
+using Niantic.Lightship.AR.API;
 using Niantic.Lightship.AR.Core;
 using Niantic.Lightship.AR.Utilities.Logging;
 using UnityEngine;
@@ -12,34 +13,11 @@ using Object = UnityEngine.Object;
 
 namespace Niantic.Lightship.AR.Subsystems
 {
-    public class MeshDownloadClient
+    internal class MeshDownloadClient
     {
-        public enum ARDK_MeshDownloader_RequestStatus // Using int as the underlying type
+        internal enum Error
         {
-            MeshDownloader_RequestStatus_Success = 0,
-            MeshDownloader_RequestStatus_NotStarted,
-            MeshDownloader_RequestStatus_InProgress,
-            MeshDownloader_RequestStatus_HttpSessionError,
-            MeshDownloader_RequestStatus_HttpResponseError,
-            MeshDownloader_RequestStatus_ParseError,
-            MeshDownloader_RequestStatus_DecompressionError
-        }
-
-        public enum ARDK_Status
-        {
-            ARDK_Status_OK = 0,
-            ARDK_Status_NullArgument,
-            ARDK_Status_InvalidArgument,
-            ARDK_Status_InvalidOperation,
-            ARDK_Status_NullArdkHandle,
-            ARDK_Status_FeatureDoesNotExist,
-            ARDK_Status_FeatureAlreadyExists,
-            ARDK_Status_NoData
-        }
-
-        public enum Error
-        {
-            None,
+            None = 0,
             NotStarted,
             NullArgument,
             InvalidArgument,
@@ -64,16 +42,16 @@ namespace Niantic.Lightship.AR.Subsystems
 
         public MeshDownloadClient(IntPtr ardkHandle)
         {
-            if (ardkHandle == IntPtr.Zero)
+            if (!ardkHandle.IsValidHandle())
             {
-                throw new ArgumentNullException(nameof(ardkHandle), "ardkHandle cannot be null");
+                throw new ArgumentNullException(nameof(ardkHandle));
             }
 
             _api = new MeshDownloaderApi();
 
             _ardkHandle = ardkHandle;
             var status = _api.ARDK_MeshDownloader_Create(_ardkHandle);
-            if (status != ARDK_Status.ARDK_Status_OK && status != ARDK_Status.ARDK_Status_FeatureAlreadyExists)
+            if (status != ArdkStatus.Ok && status != ArdkStatus.FeatureAlreadyExists)
             {
                 throw new Exception("Failed to create ARDK Mesh Downloader");
             }
@@ -93,46 +71,46 @@ namespace Niantic.Lightship.AR.Subsystems
             _api = mockApi;
         }
 
-        private Error ARDKStatus_To_Error(ARDK_Status status)
+        private Error ArdkStatusToError(ArdkStatus ardkStatus)
         {
-            switch (status)
+            switch (ardkStatus)
             {
-                case ARDK_Status.ARDK_Status_OK:
+                case ArdkStatus.Ok:
                     return Error.None;
-                case ARDK_Status.ARDK_Status_NullArgument:
+                case ArdkStatus.NullArgument:
                     return Error.NullArgument;
-                case ARDK_Status.ARDK_Status_InvalidArgument:
+                case ArdkStatus.InvalidArgument:
                     return Error.InvalidArgument;
-                case ARDK_Status.ARDK_Status_InvalidOperation:
+                case ArdkStatus.InvalidOperation:
                     return Error.InvalidOperation;
-                case ARDK_Status.ARDK_Status_NullArdkHandle:
+                case ArdkStatus.NullArdkHandle:
                     return Error.NullArdkHandle;
-                case ARDK_Status.ARDK_Status_FeatureDoesNotExist:
+                case ArdkStatus.FeatureDoesNotExist:
                     return Error.FeatureDoesNotExist;
-                case ARDK_Status.ARDK_Status_FeatureAlreadyExists:
+                case ArdkStatus.FeatureAlreadyExists:
                     return Error.FeatureAlreadyExists;
-                case ARDK_Status.ARDK_Status_NoData:
+                case ArdkStatus.NoData:
                     return Error.NoData;
                 default:
                     return Error.UnknownError;
             }
         }
 
-        private Error ARDK_MeshDownloader_RequestStatus_To_Error(ARDK_MeshDownloader_RequestStatus status)
+        private Error ArdkMeshDownloaderRequestStatusToError(ArdkRequestStatus status)
         {
             switch (status)
             {
-                case ARDK_MeshDownloader_RequestStatus.MeshDownloader_RequestStatus_Success:
+                case ArdkRequestStatus.Success:
                     return Error.None;
-                case ARDK_MeshDownloader_RequestStatus.MeshDownloader_RequestStatus_NotStarted:
+                case ArdkRequestStatus.NotStarted:
                     return Error.NotStarted;
-                case ARDK_MeshDownloader_RequestStatus.MeshDownloader_RequestStatus_HttpSessionError:
+                case ArdkRequestStatus.HttpSessionError:
                     return Error.HttpSessionError;
-                case ARDK_MeshDownloader_RequestStatus.MeshDownloader_RequestStatus_HttpResponseError:
+                case ArdkRequestStatus.HttpResponseError:
                     return Error.HttpResponseError;
-                case ARDK_MeshDownloader_RequestStatus.MeshDownloader_RequestStatus_ParseError:
+                case ArdkRequestStatus.ParseError:
                     return Error.ParseError;
-                case ARDK_MeshDownloader_RequestStatus.MeshDownloader_RequestStatus_DecompressionError:
+                case ArdkRequestStatus.DecompressionError:
                     return Error.DecompressionError;
                 default:
                     return Error.UnknownError;
@@ -176,7 +154,7 @@ namespace Niantic.Lightship.AR.Subsystems
         }
 
         private GameObject BuildMeshFromArdkMeshDataResult(
-            ARDK_MeshDownloader_Results meshDownloaderResults,
+            ArkdMeshDownloaderResults meshDownloaderResults,
             string payload,
             bool addCollider = false,
             Material texturelessMaterial = null,
@@ -193,20 +171,20 @@ namespace Niantic.Lightship.AR.Subsystems
             var materials = new List<Material>();
 
             // Get the size of our struct for pointer arithmetic
-            int structSize = Marshal.SizeOf<ARDK_MeshDownloader_Data>();
+            int structSize = Marshal.SizeOf<ArdkMeshDownloaderData>();
             for (var i = 0; i < meshDownloaderResults.num_results; i++)
             {
                 // Calculate the pointer to the current struct
                 var currentMeshDownloaderDataPtr = IntPtr.Add(meshDownloaderResults.results, i * structSize);
 
                 // Marshal the data at the current pointer into our struct
-                ARDK_MeshDownloader_Data currentMeshDownloaderData =
-                    Marshal.PtrToStructure<ARDK_MeshDownloader_Data>(currentMeshDownloaderDataPtr);
+                ArdkMeshDownloaderData currentMeshDownloaderData =
+                    Marshal.PtrToStructure<ArdkMeshDownloaderData>(currentMeshDownloaderDataPtr);
 
                 // Now work on the data
-                ARDK_MeshData meshData = currentMeshDownloaderData.mesh_data;
-                ARDK_Buffer imageData = currentMeshDownloaderData.image_data;
-                ARDK_Matrix4f transform = currentMeshDownloaderData.transform;
+                ArdkMeshData meshData = currentMeshDownloaderData.mesh_data;
+                ArdkBuffer imageData = currentMeshDownloaderData.image_data;
+                ArdkMatrix4F transform = currentMeshDownloaderData.transform;
 
                 // Starting with meshData
                 // Check if the meshData values are valid
@@ -304,7 +282,7 @@ namespace Niantic.Lightship.AR.Subsystems
                     }
                     else
                     {
-                        Log.Warning("texturedMaterial provided is null, using standard material");
+                        Log.Info("texturedMaterial provided is null, using standard material");
                         material = _defaultMaterial;
                     }
                 }
@@ -317,7 +295,7 @@ namespace Niantic.Lightship.AR.Subsystems
                     }
                     else
                     {
-                        Log.Warning("texturedMaterial provided is null, using standard material");
+                        Log.Info("texturedMaterial provided is null, using standard material");
                         material = _defaultMaterial;
                     }
                 }
@@ -329,7 +307,7 @@ namespace Niantic.Lightship.AR.Subsystems
                 // Create an array to hold the 16 float values
                 if (transform.Values == IntPtr.Zero)
                 {
-                    Log.Error("Transform values are null");
+                    Log.Error("Mesh generation failed, transform values are null");
                     Object.Destroy(newMeshGo);
                     CleanupResources(meshes, textures, materials);
                     return null;
@@ -409,32 +387,34 @@ namespace Niantic.Lightship.AR.Subsystems
             return newMeshGo;
         }
 
-        public async Task<Result> DownloadArdkLocationMeshDataFromPayload(string payload, bool getTexture,
+        private async Task<Result> DownloadLocationMeshDataFromPayload(string payload, bool getTexture,
             uint maxSizeKb, CancellationToken cancellationToken = default)
         {
-            ulong request = 0;
-            ARDK_String ardk_payload = ARDK_StringExtensions.ToARDKString(payload);
             if (_api == null)
             {
-                throw new Exception("Meshdownloader api is null");
+                throw new InvalidOperationException("Meshdownloader api is null");
             }
-
-            if (_ardkHandle == IntPtr.Zero)
+            if (!_ardkHandle.IsValidHandle())
             {
-                throw new Exception("Handle to ARDK's native library is null");
+                throw new InvalidOperationException("Handle to ARDK's native library is null");
             }
 
-            ARDK_Status ardkStatus = _api.ARDK_MeshDownloader_RequestLocationMesh(
-                _ardkHandle,
-                ardk_payload,
-                getTexture, out request, maxSizeKb);
-            ARDK_StringExtensions.Free(ardk_payload);
-            if (ardkStatus != ARDK_Status.ARDK_Status_OK)
+            ulong request = 0;
+            ArdkStatus ardkStatus;
+            using (ManagedArdkString ardkPayload = new ManagedArdkString(payload))
             {
-                return Result.Failure(ARDKStatus_To_Error(ardkStatus));
+                 ardkStatus = _api.ARDK_MeshDownloader_RequestLocationMesh(
+                    _ardkHandle,
+                    ardkPayload.ToArdkString(),
+                    getTexture, out request, maxSizeKb);
             }
 
-            ARDK_MeshDownloader_Results results;
+            if (ardkStatus != ArdkStatus.Ok)
+            {
+                return Result.Failure(ArdkStatusToError(ardkStatus));
+            }
+
+            ArkdMeshDownloaderResults results;
             DateTime timeout = DateTime.Now.AddSeconds(TIMEOUT_SECONDS);
 
             while (DateTime.Now < timeout)
@@ -444,36 +424,26 @@ namespace Niantic.Lightship.AR.Subsystems
                     return Result.Failure(Error.Cancelation);
                 }
 
-                if (_api == null)
-                {
-                    throw new Exception("Meshdownloader api is null");
-                }
-
-                if (_ardkHandle == IntPtr.Zero)
-                {
-                    throw new Exception("Handle to ARDK's native library is null");
-                }
-
                 ardkStatus = _api.ARDK_MeshDownloader_GetLocationMeshResults(_ardkHandle, request, out results);
 
                 switch (ardkStatus)
                 {
-                    case ARDK_Status.ARDK_Status_NoData:
+                    case ArdkStatus.NoData:
                         // Still waiting for the download
-                        if (results.status == ARDK_MeshDownloader_RequestStatus.MeshDownloader_RequestStatus_InProgress)
+                        if (results.status == ArdkRequestStatus.InProgress)
                         {
                             break;
                         }
 
                         // No data due to an error
-                        return Result.Failure(ARDK_MeshDownloader_RequestStatus_To_Error(results.status));
-                    case ARDK_Status.ARDK_Status_OK:
+                        return Result.Failure(ArdkMeshDownloaderRequestStatusToError(results.status));
+                    case ArdkStatus.Ok:
                         // Successfully downloaded mesh
                         return Result.Success(results);
                     default:
                         // Some other error, all caused by us calling the api wrong, native dying, or the feature being
                         // destroyed.
-                        return Result.Failure(ARDKStatus_To_Error(ardkStatus));
+                        return Result.Failure(ArdkStatusToError(ardkStatus));
                 }
 
                 await Task.Delay(100, cancellationToken);
@@ -493,10 +463,10 @@ namespace Niantic.Lightship.AR.Subsystems
             CancellationToken cancellationToken = default)
         {
             Result result =
-                await DownloadArdkLocationMeshDataFromPayload(payload, getTexture, maxSizeKb, cancellationToken);
+                await DownloadLocationMeshDataFromPayload(payload, getTexture, maxSizeKb, cancellationToken);
             if (result.IsSuccess())
             {
-                GameObject meshGo = BuildMeshFromArdkMeshDataResult(result.results, payload, addCollider,
+                GameObject meshGo = BuildMeshFromArdkMeshDataResult(result.Results, payload, addCollider,
                     texturelessMaterial,
                     texturedMaterial);
 
@@ -505,15 +475,15 @@ namespace Niantic.Lightship.AR.Subsystems
                     throw new Exception("Meshdownloader api is null");
                 }
 
-                _api.ARDK_Release_Resource(result.results.handle);
+                _api.ARDK_Release_Resource(result.Results.handle);
                 return meshGo;
             }
 
-            Log.Error($"Failed to download location mesh: {result.error}");
+            Log.Error($"Failed to download location mesh: {result.Error}");
             return null;
         }
 
-        public static bool IsMeshDataValid(ARDK_MeshData meshData)
+        private static bool IsMeshDataValid(ArdkMeshData meshData)
         {
             // Check if vertices pointer and size are valid
             if (meshData.vertices == IntPtr.Zero || meshData.vertices_size == 0)
@@ -579,42 +549,27 @@ namespace Niantic.Lightship.AR.Subsystems
 
         // If we opt to migrate the rest of unity apps over to the new capi, we could make this generic
         // and share it for the other result classes
-        public class Result
+        internal class Result
         {
-            private Result(ARDK_MeshDownloader_Results results)
+            private Result(ArkdMeshDownloaderResults results)
             {
-                this.results = results;
-                error = Error.None;
+                this.Results = results;
+                Error = Error.None;
             }
 
-            private Result(Error error) => this.error = error;
+            private Result(Error error) => this.Error = error;
 
-            public ARDK_MeshDownloader_Results results { get; }
-            public Error error { get; }
+            public ArkdMeshDownloaderResults Results { get; }
+            public Error Error { get; }
 
-            public bool IsSuccess() => error == Error.None;
+            public bool IsSuccess() => Error == Error.None;
 
-            public static Result Success(ARDK_MeshDownloader_Results results) => new(results);
+            public static Result Success(ArkdMeshDownloaderResults results) => new(results);
             public static Result Failure(Error error) => new(error);
         }
 
-
         [StructLayout(LayoutKind.Sequential)]
-        internal struct ARDK_Buffer
-        {
-            public IntPtr data; // const uint8_t*
-            public UInt32 data_size;
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        public struct ARDK_Matrix4f
-        {
-            // In C#, we'll represent this as a pointer that can be marshaled
-            public IntPtr Values;
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        public struct ARDK_MeshData
+        internal struct ArdkMeshData
         {
             public IntPtr vertices; // const float*
             public IntPtr uvs; // const float*
@@ -628,43 +583,54 @@ namespace Niantic.Lightship.AR.Subsystems
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        internal struct ARDK_MeshDownloader_Data
+        internal struct ArdkMeshDownloaderData
         {
-            public ARDK_MeshData mesh_data;
-            public ARDK_Buffer image_data;
-            public ARDK_Matrix4f transform;
+            public ArdkMeshData mesh_data;
+            public ArdkBuffer image_data;
+            public ArdkMatrix4F transform;
+        }
+
+        internal enum ArdkRequestStatus // Using int as the underlying type
+        {
+            Success = 0,
+            NotStarted,
+            InProgress,
+            HttpSessionError,
+            HttpResponseError,
+            ParseError,
+            DecompressionError
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        public struct ARDK_MeshDownloader_Results
+        internal struct ArkdMeshDownloaderResults
         {
             public IntPtr handle;
-            public ARDK_MeshDownloader_RequestStatus status;
+            public ArdkRequestStatus status;
             public IntPtr results; // Pointer to ARDK_MeshDownloader_Data array
             public int num_results;
         }
 
-        internal class MeshDownloaderApi : IMeshDownloaderApi
+        private class MeshDownloaderApi : IMeshDownloaderApi
         {
-            public ARDK_Status ARDK_MeshDownloader_Create(IntPtr ardkHandle) =>
+            public ArdkStatus ARDK_MeshDownloader_Create(IntPtr ardkHandle) =>
                 NativeApi.ARDK_MeshDownloader_Create(ardkHandle);
 
-            public ARDK_Status ARDK_MeshDownloader_Destroy(IntPtr ardkHandle) =>
+            public ArdkStatus ARDK_MeshDownloader_Destroy(IntPtr ardkHandle) =>
                 NativeApi.ARDK_MeshDownloader_Destroy(ardkHandle);
 
-            public ARDK_Status ARDK_MeshDownloader_RequestLocationMesh(
+            public ArdkStatus ARDK_MeshDownloader_RequestLocationMesh(
                 IntPtr ardkHandle,
-                ARDK_String payload,
+                ArdkString payload,
                 bool getTexture,
                 out ulong requestIdOut,
                 uint maxSizeKb) =>
                 NativeApi.ARDK_MeshDownloader_RequestLocationMesh(ardkHandle, payload, getTexture,
                     out requestIdOut, maxSizeKb);
 
-            public ARDK_Status ARDK_MeshDownloader_GetLocationMeshResults(
+            public ArdkStatus ARDK_MeshDownloader_GetLocationMeshResults(
                 IntPtr ardkHandle,
                 ulong requestId,
-                out ARDK_MeshDownloader_Results resultsOut) =>
+                out ArkdMeshDownloaderResults resultsOut) =>
                 NativeApi.ARDK_MeshDownloader_GetLocationMeshResults(ardkHandle, requestId, out resultsOut);
 
             public void ARDK_Release_Resource(IntPtr resource)
@@ -676,24 +642,24 @@ namespace Niantic.Lightship.AR.Subsystems
         private static class NativeApi
         {
             [DllImport(LightshipPlugin.Name)]
-            public static extern ARDK_Status ARDK_MeshDownloader_Create(IntPtr ardkHandle);
+            public static extern ArdkStatus ARDK_MeshDownloader_Create(IntPtr ardkHandle);
 
             [DllImport(LightshipPlugin.Name)]
-            public static extern ARDK_Status ARDK_MeshDownloader_Destroy(IntPtr ardkHandle);
+            public static extern ArdkStatus ARDK_MeshDownloader_Destroy(IntPtr ardkHandle);
 
             [DllImport(LightshipPlugin.Name)]
-            public static extern ARDK_Status ARDK_MeshDownloader_RequestLocationMesh(
+            public static extern ArdkStatus ARDK_MeshDownloader_RequestLocationMesh(
                 IntPtr ardkHandle,
-                ARDK_String payload,
+                ArdkString payload,
                 bool getTexture,
                 out ulong requestIdOut,
                 uint maxSizeKb);
 
             [DllImport(LightshipPlugin.Name)]
-            public static extern ARDK_Status ARDK_MeshDownloader_GetLocationMeshResults(
+            public static extern ArdkStatus ARDK_MeshDownloader_GetLocationMeshResults(
                 IntPtr ardkHandle,
                 ulong requestId,
-                out ARDK_MeshDownloader_Results resultsOut);
+                out ArkdMeshDownloaderResults resultsOut);
 
             [DllImport(LightshipPlugin.Name)]
             public static extern void ARDK_Release_Resource(IntPtr resource);

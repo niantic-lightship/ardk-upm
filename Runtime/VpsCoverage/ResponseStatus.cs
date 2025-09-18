@@ -1,8 +1,13 @@
 // Copyright 2022-2025 Niantic.
 
+using System;
+
 namespace Niantic.Lightship.AR.VpsCoverage
 {
     /// Status of a response from the VPS Coverage server.
+    /// ResponseStatus is a clone (potentially a subset) of Http.ResponseStatus, and any changes here must be reflected
+    /// there. This public copy is maintained to serve where ResponseStatus is exposed in the VPS Coverage API
+    /// (see AreaTargetsResult and CoverageAreasResult).
     public enum ResponseStatus
     {
         // From UnityWebRequest.Result
@@ -29,5 +34,27 @@ namespace Niantic.Lightship.AR.VpsCoverage
 
         /// Over 100 localization targets requested in single request
         TooManyEntitiesRequested
+    }
+
+    internal static class ResponseStatusExtensions
+    {
+        /// <summary>
+        /// Convert from Http.ResponseStatus to VpsCoverage.ResponseStatus.
+        /// </summary>
+        internal static ResponseStatus Convert(Niantic.Lightship.AR.Utilities.Http.ResponseStatus status) =>
+            status switch
+            {
+                Utilities.Http.ResponseStatus.ConnectionError => ResponseStatus.ConnectionError,
+                Utilities.Http.ResponseStatus.ProtocolError => ResponseStatus.ProtocolError,
+                Utilities.Http.ResponseStatus.ApiKeyMissing => ResponseStatus.ApiKeyMissing,
+                Utilities.Http.ResponseStatus.Forbidden => ResponseStatus.Forbidden,
+                Utilities.Http.ResponseStatus.TooManyRequests => ResponseStatus.TooManyRequests,
+                Utilities.Http.ResponseStatus.InternalGatewayError => ResponseStatus.InternalGatewayError,
+                Utilities.Http.ResponseStatus.Success => ResponseStatus.Success,
+                Utilities.Http.ResponseStatus.InvalidRequest => ResponseStatus.InvalidRequest,
+                Utilities.Http.ResponseStatus.InternalError => ResponseStatus.InternalError,
+                Utilities.Http.ResponseStatus.TooManyEntitiesRequested => ResponseStatus.TooManyEntitiesRequested,
+                _ => throw new Exception($"Unknown ResponseStatus: {status}"),
+            };
     }
 }

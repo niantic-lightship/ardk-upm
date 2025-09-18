@@ -1,5 +1,6 @@
 // Copyright 2022-2025 Niantic.
 using System;
+using Niantic.Lightship.AR.API;
 using Niantic.Lightship.AR.Subsystems;
 using Niantic.Lightship.AR.XRSubsystems;
 using UnityEngine;
@@ -176,5 +177,9 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
         {
             throw new NotImplementedException();
         }
+
+        public VpsGraphStatus GetDevicePoseAsGps(IntPtr anchorProviderHandle, Matrix4x4 poseMatrix, out double latitude, out double longitude,
+            out double altitude, out double verticalAccuracy, out double horizontalAccuracy, out double heading) =>
+            throw new NotImplementedException();
     }
 }

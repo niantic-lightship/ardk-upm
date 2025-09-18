@@ -4,6 +4,7 @@ Shader "Lightship/ZBufferOcclusion"
     {
         // Retrievable properties
         _Depth ("DepthTexture", 2D) = "black" {}
+        _ColorMask ("Color Mask", Float) = 0
     }
     SubShader
     {
@@ -19,6 +20,7 @@ Shader "Lightship/ZBufferOcclusion"
             Cull Off
             ZTest Always
             ZWrite On
+            ColorMask [_ColorMask]
             Lighting Off
             LOD 100
             Tags

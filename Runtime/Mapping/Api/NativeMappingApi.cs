@@ -19,6 +19,10 @@ namespace Niantic.Lightship.AR.Mapping
 
         public IntPtr Create(IntPtr unityContext)
         {
+            if (!LightshipUnityContext.CheckUnityContext(unityContext))
+            {
+                return IntPtr.Zero;
+            }
             _nativeProviderHandle = Lightship_ARDK_Unity_Mapping_Create(unityContext);
             return _nativeProviderHandle;
         }

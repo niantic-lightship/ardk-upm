@@ -205,8 +205,9 @@ namespace Niantic.Lightship.AR.Occlusion
                     return true;
                 }
 
-                case DebugView:
+                case DebugView debugView:
                     // Debug visualization is always allowed
+                    debugView.Configure(_occlusionTechnique);
                     return true;
 
                 default:

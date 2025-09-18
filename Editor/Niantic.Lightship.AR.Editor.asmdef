@@ -14,7 +14,8 @@
         "Unity.XR.OpenXR",
         "Unity.XR.ARSubsystems.Editor",
         "Unity.XR.ARFoundation",
-        "Unity.XR.Simulation"
+        "Unity.XR.Simulation",
+        "Unity.RenderPipelines.Universal.Runtime"
     ],
     "includePlatforms": [
         "Editor"
@@ -50,6 +51,11 @@
             "name": "Unity",
             "expression": "2022.3.13",
             "define": "FIX_INTEGRATED_SUBSYSTEM_2022"
+        },
+        {
+            "name": "com.unity.render-pipelines.universal",
+            "expression": "",
+            "define": "UNITY_RENDERPIPELINE_URP"
         }
     ],
     "noEngineReferences": false

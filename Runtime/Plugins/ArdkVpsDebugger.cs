@@ -81,7 +81,7 @@ namespace Niantic.Lightship.AR.Protobuf {
             "bEFjY3VyYWN5Eh4KCmludHJpbnNpY3MYCiADKAJSCmludHJpbnNpY3MSFAoF",
             "d2lkdGgYCyABKAJSBXdpZHRoEhYKBmhlaWdodBgMIAEoAlIGaGVpZ2h0EiwK",
             "EmZyYW1lX3RpbWVzdGFtcF9tcxgNIAEoBFIQZnJhbWVUaW1lc3RhbXBNcyIn",
-            "CgpNYXBQb2ludDJEEhkKCHBvaW50XzJkGAEgAygCUgdwb2ludDJkIscFChFM",
+            "CgpNYXBQb2ludDJEEhkKCHBvaW50XzJkGAEgAygCUgdwb2ludDJkIoAHChFM",
             "b2NhbGl6YXRpb25TdGF0cxIhCgx0aW1lc3RhbXBfbXMYASABKARSC3RpbWVz",
             "dGFtcE1zEi0KE3RpbWVfdG9fbG9jYWxpemVfbXMYAiABKARSEHRpbWVUb0xv",
             "Y2FsaXplTXMSFgoGcmVjYWxsGAMgASgCUgZyZWNhbGwSIwoNc3VjY2Vzc19j",
@@ -97,42 +97,46 @@ namespace Niantic.Lightship.AR.Protobuf {
             "YW5zbGF0aW9uRXJyb3ISNAoWbWVhbl90cmFuc2xhdGlvbl9lcnJvchgNIAEo",
             "AlIUbWVhblRyYW5zbGF0aW9uRXJyb3ISMgoVbWVkaWFuX3JvdGF0aW9uX2Vy",
             "cm9yGA4gASgCUhNtZWRpYW5Sb3RhdGlvbkVycm9yEi4KE21lYW5fcm90YXRp",
-            "b25fZXJyb3IYDyABKAJSEW1lYW5Sb3RhdGlvbkVycm9yIrgEChRWcHNEZWJ1",
-            "Z2dlckRhdGFFdmVudBInCgVzdGFydBgBIAEoCzIPLmFyZGsudnBzLlN0YXJ0",
-            "SABSBXN0YXJ0EioKBmFuY2hvchgCIAEoCzIQLmFyZGsudnBzLkFuY2hvckgA",
-            "UgZhbmNob3ISUwoVbmV0d29ya19yZXF1ZXN0X3N0YXRlGAMgASgLMh0uYXJk",
-            "ay52cHMuTmV0d29ya1JlcXVlc3RTdGF0ZUgAUhNuZXR3b3JrUmVxdWVzdFN0",
-            "YXRlEk8KE2xvY2FsaXphdGlvbl91cGRhdGUYBCABKAsyHC5hcmRrLnZwcy5M",
-            "b2NhbGl6YXRpb25VcGRhdGVIAFISbG9jYWxpemF0aW9uVXBkYXRlEicKBWZy",
-            "YW1lGAUgASgLMg8uYXJkay52cHMuRnJhbWVIAFIFZnJhbWUSOAoMbWFwX3Bv",
-            "aW50XzJkGAYgASgLMhQuYXJkay52cHMuTWFwUG9pbnQyREgAUgptYXBQb2lu",
-            "dDJkElMKFnZwc19sb2NhbGl6YXRpb25fc3RhdHMYByABKAsyGy5hcmRrLnZw",
-            "cy5Mb2NhbGl6YXRpb25TdGF0c0gAUhR2cHNMb2NhbGl6YXRpb25TdGF0cxJX",
-            "ChhzbGlja19sb2NhbGl6YXRpb25fc3RhdHMYCCABKAsyGy5hcmRrLnZwcy5M",
-            "b2NhbGl6YXRpb25TdGF0c0gAUhZzbGlja0xvY2FsaXphdGlvblN0YXRzQhQK",
-            "EnZwc19kZWJ1Z2dlcl9ldmVudCo/ChNBbmNob3JUcmFja2luZ1N0YXRlEg4K",
-            "Ck5vdFRyYWNrZWQQABILCgdMaW1pdGVkEAESCwoHVHJhY2tlZBACKoQBChlB",
-            "bmNob3JUcmFja2luZ1N0YXRlUmVhc29uEggKBE5vbmUQABIQCgxJbml0aWFs",
-            "aXppbmcQARILCgdSZW1vdmVkEAISEQoNSW50ZXJuYWxFcnJvchADEhQKEFBl",
-            "cm1pc3Npb25EZW5pZWQQBBIVChFGYXRhbE5ldHdvcmtFcnJvchAFKmQKD0Fu",
-            "Y2hvckV2ZW50VHlwZRIaChZVbmtub3duQW5jaG9yRXZlbnRUeXBlEAASDwoL",
-            "QW5jaG9yQWRkZWQQARIRCg1BbmNob3JVcGRhdGVkEAISEQoNQW5jaG9yUmVt",
-            "b3ZlZBADKmAKFE5ldHdvcmtSZXF1ZXN0U3RhdHVzEh8KG1Vua25vd25OZXR3",
-            "b3JrUmVxdWVzdFN0YXR1cxAAEgsKB1BlbmRpbmcQARIOCgpTdWNjZXNzZnVs",
-            "EAISCgoGRmFpbGVkEAMqWAoSTmV0d29ya1JlcXVlc3RUeXBlEgwKCExvY2Fs",
-            "aXplEAASDAoIR2V0R3JhcGgQARIUChBHZXRSZXBsYWNlZE5vZGVzEAISEAoM",
-            "UmVnaXN0ZXJOb2RlEAMqtAEKDE5ldHdvcmtFcnJvchIQCgxVbmtub3duRXJy",
-            "b3IQABILCgdOb0Vycm9yEAESGAoUQmFkTmV0d29ya0Nvbm5lY3Rpb24QAhIN",
-            "CglCYWRBcGlLZXkQAxIZChVQZXJtaXNzaW9uRGVuaWVkRXJyb3IQBBIZChVS",
-            "ZXF1ZXN0c0xpbWl0RXhjZWVkZWQQBRISCg5JbnRlcm5hbFNlcnZlchAGEhIK",
-            "DkludGVybmFsQ2xpZW50EAcqZgoSTG9jYWxpemF0aW9uU3RhdHVzEh0KGVVu",
-            "a25vd25Mb2NhbGl6YXRpb25TdGF0dXMQABILCgdGYWlsdXJlEAESFwoTTGlt",
-            "aXRlZExvY2FsaXphdGlvbhACEgsKB1N1Y2Nlc3MQAypHChJMb2NhbGl6YXRp",
-            "b25NZXRob2QSHQoZVW5rbm93bkxvY2FsaXphdGlvbk1ldGhvZBAAEgcKA1Zw",
-            "cxABEgkKBVNsaWNrEAIqXgoNVHJhY2tpbmdTdGF0ZRITCg9UcmFja2luZ1Vu",
-            "a25vd24QABISCg5UcmFja2luZ0ZhaWxlZBABEhAKDFRyYWNraW5nUG9vchAC",
-            "EhIKDlRyYWNraW5nTm9ybWFsEANCIKoCHU5pYW50aWMuTGlnaHRzaGlwLkFS",
-            "LlByb3RvYnVmYgZwcm90bzM="));
+            "b25fZXJyb3IYDyABKAJSEW1lYW5Sb3RhdGlvbkVycm9yEk0KE2xvY2FsaXph",
+            "dGlvbl9tZXRob2QYECABKA4yHC5hcmRrLnZwcy5Mb2NhbGl6YXRpb25NZXRo",
+            "b2RSEmxvY2FsaXphdGlvbk1ldGhvZBIxChVtZWFuX2JlbmNobWFya190dGxf",
+            "bXMYESABKARSEm1lYW5CZW5jaG1hcmtUdGxNcxI1ChdtZWRpYW5fYmVuY2ht",
+            "YXJrX3R0bF9tcxgSIAEoBFIUbWVkaWFuQmVuY2htYXJrVHRsTXMiuAQKFFZw",
+            "c0RlYnVnZ2VyRGF0YUV2ZW50EicKBXN0YXJ0GAEgASgLMg8uYXJkay52cHMu",
+            "U3RhcnRIAFIFc3RhcnQSKgoGYW5jaG9yGAIgASgLMhAuYXJkay52cHMuQW5j",
+            "aG9ySABSBmFuY2hvchJTChVuZXR3b3JrX3JlcXVlc3Rfc3RhdGUYAyABKAsy",
+            "HS5hcmRrLnZwcy5OZXR3b3JrUmVxdWVzdFN0YXRlSABSE25ldHdvcmtSZXF1",
+            "ZXN0U3RhdGUSTwoTbG9jYWxpemF0aW9uX3VwZGF0ZRgEIAEoCzIcLmFyZGsu",
+            "dnBzLkxvY2FsaXphdGlvblVwZGF0ZUgAUhJsb2NhbGl6YXRpb25VcGRhdGUS",
+            "JwoFZnJhbWUYBSABKAsyDy5hcmRrLnZwcy5GcmFtZUgAUgVmcmFtZRI4Cgxt",
+            "YXBfcG9pbnRfMmQYBiABKAsyFC5hcmRrLnZwcy5NYXBQb2ludDJESABSCm1h",
+            "cFBvaW50MmQSUwoWdnBzX2xvY2FsaXphdGlvbl9zdGF0cxgHIAEoCzIbLmFy",
+            "ZGsudnBzLkxvY2FsaXphdGlvblN0YXRzSABSFHZwc0xvY2FsaXphdGlvblN0",
+            "YXRzElcKGHNsaWNrX2xvY2FsaXphdGlvbl9zdGF0cxgIIAEoCzIbLmFyZGsu",
+            "dnBzLkxvY2FsaXphdGlvblN0YXRzSABSFnNsaWNrTG9jYWxpemF0aW9uU3Rh",
+            "dHNCFAoSdnBzX2RlYnVnZ2VyX2V2ZW50Kj8KE0FuY2hvclRyYWNraW5nU3Rh",
+            "dGUSDgoKTm90VHJhY2tlZBAAEgsKB0xpbWl0ZWQQARILCgdUcmFja2VkEAIq",
+            "hAEKGUFuY2hvclRyYWNraW5nU3RhdGVSZWFzb24SCAoETm9uZRAAEhAKDElu",
+            "aXRpYWxpemluZxABEgsKB1JlbW92ZWQQAhIRCg1JbnRlcm5hbEVycm9yEAMS",
+            "FAoQUGVybWlzc2lvbkRlbmllZBAEEhUKEUZhdGFsTmV0d29ya0Vycm9yEAUq",
+            "ZAoPQW5jaG9yRXZlbnRUeXBlEhoKFlVua25vd25BbmNob3JFdmVudFR5cGUQ",
+            "ABIPCgtBbmNob3JBZGRlZBABEhEKDUFuY2hvclVwZGF0ZWQQAhIRCg1BbmNo",
+            "b3JSZW1vdmVkEAMqYAoUTmV0d29ya1JlcXVlc3RTdGF0dXMSHwobVW5rbm93",
+            "bk5ldHdvcmtSZXF1ZXN0U3RhdHVzEAASCwoHUGVuZGluZxABEg4KClN1Y2Nl",
+            "c3NmdWwQAhIKCgZGYWlsZWQQAypYChJOZXR3b3JrUmVxdWVzdFR5cGUSDAoI",
+            "TG9jYWxpemUQABIMCghHZXRHcmFwaBABEhQKEEdldFJlcGxhY2VkTm9kZXMQ",
+            "AhIQCgxSZWdpc3Rlck5vZGUQAyq0AQoMTmV0d29ya0Vycm9yEhAKDFVua25v",
+            "d25FcnJvchAAEgsKB05vRXJyb3IQARIYChRCYWROZXR3b3JrQ29ubmVjdGlv",
+            "bhACEg0KCUJhZEFwaUtleRADEhkKFVBlcm1pc3Npb25EZW5pZWRFcnJvchAE",
+            "EhkKFVJlcXVlc3RzTGltaXRFeGNlZWRlZBAFEhIKDkludGVybmFsU2VydmVy",
+            "EAYSEgoOSW50ZXJuYWxDbGllbnQQBypmChJMb2NhbGl6YXRpb25TdGF0dXMS",
+            "HQoZVW5rbm93bkxvY2FsaXphdGlvblN0YXR1cxAAEgsKB0ZhaWx1cmUQARIX",
+            "ChNMaW1pdGVkTG9jYWxpemF0aW9uEAISCwoHU3VjY2VzcxADKkcKEkxvY2Fs",
+            "aXphdGlvbk1ldGhvZBIdChlVbmtub3duTG9jYWxpemF0aW9uTWV0aG9kEAAS",
+            "BwoDVnBzEAESCQoFU2xpY2sQAipeCg1UcmFja2luZ1N0YXRlEhMKD1RyYWNr",
+            "aW5nVW5rbm93bhAAEhIKDlRyYWNraW5nRmFpbGVkEAESEAoMVHJhY2tpbmdQ",
+            "b29yEAISEgoOVHJhY2tpbmdOb3JtYWwQA0IgqgIdTmlhbnRpYy5MaWdodHNo",
+            "aXAuQVIuUHJvdG9idWZiBnByb3RvMw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(new[] {typeof(global::Niantic.Lightship.AR.Protobuf.AnchorTrackingState), typeof(global::Niantic.Lightship.AR.Protobuf.AnchorTrackingStateReason), typeof(global::Niantic.Lightship.AR.Protobuf.AnchorEventType), typeof(global::Niantic.Lightship.AR.Protobuf.NetworkRequestStatus), typeof(global::Niantic.Lightship.AR.Protobuf.NetworkRequestType), typeof(global::Niantic.Lightship.AR.Protobuf.NetworkError), typeof(global::Niantic.Lightship.AR.Protobuf.LocalizationStatus), typeof(global::Niantic.Lightship.AR.Protobuf.LocalizationMethod), typeof(global::Niantic.Lightship.AR.Protobuf.TrackingState), }, null, new pbr::GeneratedClrTypeInfo[] {
@@ -143,7 +147,7 @@ namespace Niantic.Lightship.AR.Protobuf {
             new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.Lightship.AR.Protobuf.LocalizationUpdate), global::Niantic.Lightship.AR.Protobuf.LocalizationUpdate.Parser, new[]{ "LocalizationMethod", "NodeIdentifier", "Status", "Confidence", "FrameId", "TimestampMs", "TrackingToNodePose" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.Lightship.AR.Protobuf.Frame), global::Niantic.Lightship.AR.Protobuf.Frame.Parser, new[]{ "TimestampMs", "Pose", "FrameId", "TrackingState", "GpsLatitude", "GpsLongitude", "GpsAltitude", "GpsVerticalAccuracy", "GpsHorizontalAccuracy", "Intrinsics", "Width", "Height", "FrameTimestampMs" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.Lightship.AR.Protobuf.MapPoint2D), global::Niantic.Lightship.AR.Protobuf.MapPoint2D.Parser, new[]{ "Point2D" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.Lightship.AR.Protobuf.LocalizationStats), global::Niantic.Lightship.AR.Protobuf.LocalizationStats.Parser, new[]{ "TimestampMs", "TimeToLocalizeMs", "Recall", "SuccessCount", "AttemptCount", "MedianConfidence", "MeanConfidence", "MedianResponseTimeMs", "MeanResponseTimeMs", "MedianProjectionError", "MeanProjectionError", "MedianTranslationError", "MeanTranslationError", "MedianRotationError", "MeanRotationError" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.Lightship.AR.Protobuf.LocalizationStats), global::Niantic.Lightship.AR.Protobuf.LocalizationStats.Parser, new[]{ "TimestampMs", "TimeToLocalizeMs", "Recall", "SuccessCount", "AttemptCount", "MedianConfidence", "MeanConfidence", "MedianResponseTimeMs", "MeanResponseTimeMs", "MedianProjectionError", "MeanProjectionError", "MedianTranslationError", "MeanTranslationError", "MedianRotationError", "MeanRotationError", "LocalizationMethod", "MeanBenchmarkTtlMs", "MedianBenchmarkTtlMs" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.Lightship.AR.Protobuf.VpsDebuggerDataEvent), global::Niantic.Lightship.AR.Protobuf.VpsDebuggerDataEvent.Parser, new[]{ "Start", "Anchor", "NetworkRequestState", "LocalizationUpdate", "Frame", "MapPoint2D", "VpsLocalizationStats", "SlickLocalizationStats" }, new[]{ "VpsDebuggerEvent" }, null, null, null)
           }));
     }
@@ -3193,6 +3197,9 @@ namespace Niantic.Lightship.AR.Protobuf {
       meanTranslationError_ = other.meanTranslationError_;
       medianRotationError_ = other.medianRotationError_;
       meanRotationError_ = other.meanRotationError_;
+      localizationMethod_ = other.localizationMethod_;
+      meanBenchmarkTtlMs_ = other.meanBenchmarkTtlMs_;
+      medianBenchmarkTtlMs_ = other.medianBenchmarkTtlMs_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -3382,6 +3389,42 @@ namespace Niantic.Lightship.AR.Protobuf {
       }
     }
 
+    /// <summary>Field number for the "localization_method" field.</summary>
+    public const int LocalizationMethodFieldNumber = 16;
+    private global::Niantic.Lightship.AR.Protobuf.LocalizationMethod localizationMethod_ = global::Niantic.Lightship.AR.Protobuf.LocalizationMethod.UnknownLocalizationMethod;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::Niantic.Lightship.AR.Protobuf.LocalizationMethod LocalizationMethod {
+      get { return localizationMethod_; }
+      set {
+        localizationMethod_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "mean_benchmark_ttl_ms" field.</summary>
+    public const int MeanBenchmarkTtlMsFieldNumber = 17;
+    private ulong meanBenchmarkTtlMs_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public ulong MeanBenchmarkTtlMs {
+      get { return meanBenchmarkTtlMs_; }
+      set {
+        meanBenchmarkTtlMs_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "median_benchmark_ttl_ms" field.</summary>
+    public const int MedianBenchmarkTtlMsFieldNumber = 18;
+    private ulong medianBenchmarkTtlMs_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public ulong MedianBenchmarkTtlMs {
+      get { return medianBenchmarkTtlMs_; }
+      set {
+        medianBenchmarkTtlMs_ = value;
+      }
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -3412,6 +3455,9 @@ namespace Niantic.Lightship.AR.Protobuf {
       if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(MeanTranslationError, other.MeanTranslationError)) return false;
       if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(MedianRotationError, other.MedianRotationError)) return false;
       if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(MeanRotationError, other.MeanRotationError)) return false;
+      if (LocalizationMethod != other.LocalizationMethod) return false;
+      if (MeanBenchmarkTtlMs != other.MeanBenchmarkTtlMs) return false;
+      if (MedianBenchmarkTtlMs != other.MedianBenchmarkTtlMs) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -3434,6 +3480,9 @@ namespace Niantic.Lightship.AR.Protobuf {
       if (MeanTranslationError != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(MeanTranslationError);
       if (MedianRotationError != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(MedianRotationError);
       if (MeanRotationError != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(MeanRotationError);
+      if (LocalizationMethod != global::Niantic.Lightship.AR.Protobuf.LocalizationMethod.UnknownLocalizationMethod) hash ^= LocalizationMethod.GetHashCode();
+      if (MeanBenchmarkTtlMs != 0UL) hash ^= MeanBenchmarkTtlMs.GetHashCode();
+      if (MedianBenchmarkTtlMs != 0UL) hash ^= MedianBenchmarkTtlMs.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -3512,6 +3561,18 @@ namespace Niantic.Lightship.AR.Protobuf {
         output.WriteRawTag(125);
         output.WriteFloat(MeanRotationError);
       }
+      if (LocalizationMethod != global::Niantic.Lightship.AR.Protobuf.LocalizationMethod.UnknownLocalizationMethod) {
+        output.WriteRawTag(128, 1);
+        output.WriteEnum((int) LocalizationMethod);
+      }
+      if (MeanBenchmarkTtlMs != 0UL) {
+        output.WriteRawTag(136, 1);
+        output.WriteUInt64(MeanBenchmarkTtlMs);
+      }
+      if (MedianBenchmarkTtlMs != 0UL) {
+        output.WriteRawTag(144, 1);
+        output.WriteUInt64(MedianBenchmarkTtlMs);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -3582,6 +3643,18 @@ namespace Niantic.Lightship.AR.Protobuf {
         output.WriteRawTag(125);
         output.WriteFloat(MeanRotationError);
       }
+      if (LocalizationMethod != global::Niantic.Lightship.AR.Protobuf.LocalizationMethod.UnknownLocalizationMethod) {
+        output.WriteRawTag(128, 1);
+        output.WriteEnum((int) LocalizationMethod);
+      }
+      if (MeanBenchmarkTtlMs != 0UL) {
+        output.WriteRawTag(136, 1);
+        output.WriteUInt64(MeanBenchmarkTtlMs);
+      }
+      if (MedianBenchmarkTtlMs != 0UL) {
+        output.WriteRawTag(144, 1);
+        output.WriteUInt64(MedianBenchmarkTtlMs);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -3636,6 +3709,15 @@ namespace Niantic.Lightship.AR.Protobuf {
       }
       if (MeanRotationError != 0F) {
         size += 1 + 4;
+      }
+      if (LocalizationMethod != global::Niantic.Lightship.AR.Protobuf.LocalizationMethod.UnknownLocalizationMethod) {
+        size += 2 + pb::CodedOutputStream.ComputeEnumSize((int) LocalizationMethod);
+      }
+      if (MeanBenchmarkTtlMs != 0UL) {
+        size += 2 + pb::CodedOutputStream.ComputeUInt64Size(MeanBenchmarkTtlMs);
+      }
+      if (MedianBenchmarkTtlMs != 0UL) {
+        size += 2 + pb::CodedOutputStream.ComputeUInt64Size(MedianBenchmarkTtlMs);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -3693,6 +3775,15 @@ namespace Niantic.Lightship.AR.Protobuf {
       }
       if (other.MeanRotationError != 0F) {
         MeanRotationError = other.MeanRotationError;
+      }
+      if (other.LocalizationMethod != global::Niantic.Lightship.AR.Protobuf.LocalizationMethod.UnknownLocalizationMethod) {
+        LocalizationMethod = other.LocalizationMethod;
+      }
+      if (other.MeanBenchmarkTtlMs != 0UL) {
+        MeanBenchmarkTtlMs = other.MeanBenchmarkTtlMs;
+      }
+      if (other.MedianBenchmarkTtlMs != 0UL) {
+        MedianBenchmarkTtlMs = other.MedianBenchmarkTtlMs;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -3769,6 +3860,18 @@ namespace Niantic.Lightship.AR.Protobuf {
             MeanRotationError = input.ReadFloat();
             break;
           }
+          case 128: {
+            LocalizationMethod = (global::Niantic.Lightship.AR.Protobuf.LocalizationMethod) input.ReadEnum();
+            break;
+          }
+          case 136: {
+            MeanBenchmarkTtlMs = input.ReadUInt64();
+            break;
+          }
+          case 144: {
+            MedianBenchmarkTtlMs = input.ReadUInt64();
+            break;
+          }
         }
       }
     #endif
@@ -3842,6 +3945,18 @@ namespace Niantic.Lightship.AR.Protobuf {
           }
           case 125: {
             MeanRotationError = input.ReadFloat();
+            break;
+          }
+          case 128: {
+            LocalizationMethod = (global::Niantic.Lightship.AR.Protobuf.LocalizationMethod) input.ReadEnum();
+            break;
+          }
+          case 136: {
+            MeanBenchmarkTtlMs = input.ReadUInt64();
+            break;
+          }
+          case 144: {
+            MedianBenchmarkTtlMs = input.ReadUInt64();
             break;
           }
         }

@@ -191,6 +191,11 @@ namespace Niantic.Lightship.AR.Core
                 s_telemetryService?.Dispose();
                 s_telemetryService = null;
 
+                if (!CheckUnityContext(UnityContextHandle))
+                {
+                    return;
+                }
+
                 NativeApi.Lightship_ARDK_Unity_Context_Shutdown(UnityContextHandle);
                 UnityContextHandle = IntPtr.Zero;
 
@@ -249,16 +254,28 @@ namespace Niantic.Lightship.AR.Core
 
         public static IntPtr GetCoreContext(IntPtr unityContext)
         {
+            if (!CheckUnityContext(unityContext))
+            {
+                return IntPtr.Zero;
+            }
             return NativeApi.Lightship_ARDK_Unity_Context_GetCoreContext(unityContext);
         }
 
         public static IntPtr GetCommonContext(IntPtr unityContext)
         {
+            if (!CheckUnityContext(unityContext))
+            {
+                return IntPtr.Zero;
+            }
             return NativeApi.Lightship_ARDK_Unity_Context_GetCommonContext(unityContext);
         }
 
         public static IntPtr GetARDKHandle(IntPtr unityContext)
         {
+            if (!CheckUnityContext(unityContext))
+            {
+                return IntPtr.Zero;
+            }
             return NativeApi.Lightship_ARDK_Unity_Context_GetARDKHandle(unityContext);
         }
 
@@ -266,6 +283,17 @@ namespace Niantic.Lightship.AR.Core
         internal static void ReleaseNativeResource(IntPtr handle)
         {
             NativeApi.ARDK_Release_Resource(handle);
+        }
+
+        public static bool CheckUnityContext(IntPtr unityContext)
+        {
+            if (unityContext == IntPtr.Zero)
+            {
+                Log.Error("Lightship Unity Context is null.");
+                return false;
+            }
+
+            return true;
         }
 
         /// <summary>

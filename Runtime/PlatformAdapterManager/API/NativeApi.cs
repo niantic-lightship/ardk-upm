@@ -2,6 +2,8 @@
 using System;
 using System.Runtime.InteropServices;
 using Niantic.Lightship.AR.Core;
+using Niantic.Lightship.AR.Utilities.Logging;
+using UnityEngine;
 
 namespace Niantic.Lightship.AR.PAM
 {
@@ -9,6 +11,10 @@ namespace Niantic.Lightship.AR.PAM
     {
         public IntPtr ARDK_SAH_Create(IntPtr unityContext, bool isLidarDepthEnabled)
         {
+            if (!LightshipUnityContext.CheckUnityContext(unityContext))
+            {
+                return IntPtr.Zero;
+            }
             return Native.Lightship_ARDK_Unity_SAH_Create(unityContext, isLidarDepthEnabled);
         }
 

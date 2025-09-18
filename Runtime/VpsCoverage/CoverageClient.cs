@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Niantic.Lightship.AR.Loader;
 using Niantic.Lightship.AR.Settings;
 using Niantic.Lightship.AR.Utilities;
+using Niantic.Lightship.AR.Utilities.Http;
 using UnityEngine;
 
 namespace Niantic.Lightship.AR.VpsCoverage
@@ -74,7 +75,7 @@ namespace Niantic.Lightship.AR.VpsCoverage
                     requestHeaders
                 );
 
-            if (response.Status == ResponseStatus.Success)
+            if (response.Status == Utilities.Http.ResponseStatus.Success)
             {
                 response.Status = ResponseStatusTranslator.FromString(response.Data.status);
             }
@@ -100,7 +101,7 @@ namespace Niantic.Lightship.AR.VpsCoverage
                     requestHeaders
                 );
 
-            if (response.Status == ResponseStatus.Success)
+            if (response.Status == Utilities.Http.ResponseStatus.Success)
             {
                 response.Status = ResponseStatusTranslator.FromString(response.Data.status);
             }

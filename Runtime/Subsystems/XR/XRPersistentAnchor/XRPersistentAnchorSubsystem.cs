@@ -1,6 +1,7 @@
 // Copyright 2022-2025 Niantic.
 using System;
 using System.Collections.Generic;
+using Niantic.Lightship.AR.API;
 using Niantic.Lightship.AR.Core;
 using Niantic.Lightship.AR.Protobuf;
 using Niantic.Lightship.AR.Utilities;
@@ -238,6 +239,31 @@ namespace Niantic.Lightship.AR.XRSubsystems
             return success;
         }
 
+        /// <summary>
+        /// Convert a Unity <see cref="Pose"/> to GPS using the provider with double precision.
+        /// </summary>
+        public VpsGraphStatus TryGetDevicePoseAsGps
+        (
+            Pose pose,
+            out double latitude,
+            out double longitude,
+            out double altitude,
+            out double verticalAccuracy,
+            out double horizontalAccuracy,
+            out double heading
+        )
+        {
+            return provider.TryGetDevicePoseAsGps(
+                pose,
+                out latitude,
+                out longitude,
+                out altitude,
+                out verticalAccuracy,
+                out horizontalAccuracy,
+                out heading
+            );
+        }
+
         // Invoked when the subsystem is stopped
         internal event Action OnSubsystemStop;
 
@@ -312,6 +338,30 @@ namespace Niantic.Lightship.AR.XRSubsystems
             }
 
             public abstract bool GetVpsDebuggerLog(out string vpsDebuggerLog);
+
+            /// <summary>
+            /// Provider converts a Unity pose to GPS with double precision. Implementations should flatten the TRS
+            /// into a float[16] in column-major, ARDK coordinate space before invoking native.
+            /// </summary>
+            public virtual VpsGraphStatus TryGetDevicePoseAsGps
+            (
+                Pose pose,
+                out double latitude,
+                out double longitude,
+                out double altitude,
+                out double verticalAccuracy,
+                out double horizontalAccuracy,
+                out double heading
+            )
+            {
+                latitude = default;
+                longitude = default;
+                altitude = default;
+                verticalAccuracy = default;
+                horizontalAccuracy = default;
+                heading = default;
+                return VpsGraphStatus.FeatureUnavailable;
+            }
 
             /// <summary>
             /// Should create a new anchor with the provided <paramref name="pose"/>.

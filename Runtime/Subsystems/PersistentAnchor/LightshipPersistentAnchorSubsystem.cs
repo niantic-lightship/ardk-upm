@@ -2,10 +2,12 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using Niantic.Lightship.AR.API;
 using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.Core;
 using Niantic.Lightship.AR.Mapping;
 using Niantic.Lightship.AR.Subsystems;
+using Niantic.Lightship.AR.Utilities;
 using Niantic.Lightship.AR.XRSubsystems;
 using Unity.Collections;
 using UnityEngine;
@@ -94,6 +96,44 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
 
                 _api.Destruct(_nativeProviderHandle);
                 _nativeProviderHandle = IntPtr.Zero; ;
+            }
+
+            [Experimental]
+            public override VpsGraphStatus TryGetDevicePoseAsGps
+            (
+                Pose pose,
+                out double latitude,
+                out double longitude,
+                out double altitude,
+                out double verticalAccuracy,
+                out double horizontalAccuracy,
+                out double heading
+            )
+            {
+                latitude = default;
+                longitude = default;
+                altitude = default;
+                verticalAccuracy = default;
+                horizontalAccuracy = default;
+                heading = default;
+
+                if (!_nativeProviderHandle.IsValidHandle())
+                {
+                    return VpsGraphStatus.FeatureUnavailable;
+                }
+
+                var poseMatrix = Matrix4x4.TRS(pose.position, pose.rotation, Vector3.one);
+
+                return _api.GetDevicePoseAsGps(
+                    _nativeProviderHandle,
+                    poseMatrix,
+                    out latitude,
+                    out longitude,
+                    out altitude,
+                    out verticalAccuracy,
+                    out horizontalAccuracy,
+                    out heading
+                );
             }
 
             [Obsolete]

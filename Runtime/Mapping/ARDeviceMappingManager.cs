@@ -377,6 +377,16 @@ namespace Niantic.Lightship.AR.Mapping
                         out var center,
                         out var mapType
                     );
+
+                    // Additional validation before creating anchor transform
+                    if (float.IsNaN(center.x) || float.IsNaN(center.y) || float.IsNaN(center.z) ||
+                        float.IsInfinity(center.x) || float.IsInfinity(center.y) || float.IsInfinity(center.z))
+                    {
+                        Log.Error($"ARDeviceMappingManager: Center contains NaN or infinity values after ExtractMapMetaData: {center}. " +
+                            "Skipping anchor creation for this map node.");
+                        continue;
+                    }
+
                     DeviceMapAccessController.CreateAnchorFromMapNode(
                         maps[i], Matrix4x4.Translate(center) , out var anchorPayload);
 

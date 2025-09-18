@@ -7,6 +7,7 @@ using Niantic.Lightship.AR.PAM;
 using Niantic.Lightship.AR.Subsystems.Playback;
 using Niantic.Lightship.AR.Utilities;
 using Niantic.Lightship.AR.Utilities.Logging;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.Serialization;
 using UnityEngine.XR.ARSubsystems;
@@ -30,6 +31,21 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
         {
             DatasetPath = datasetPath;
             JsonUtility.FromJsonOverwrite(content, this);
+            if (depthSource == "lidar")
+            {
+                if (!Frames[0].HasDepth)
+                {
+#if UNITY_EDITOR
+                    if (EditorApplication.isPlayingOrWillChangePlaymode)
+                    {
+                        EditorApplication.isPlaying = false;
+                    }
+#endif
+
+                    Log.Error("Depth Source is Lidar, but no depth frames found!");
+                }
+            }
+
 
             foreach (var frame in Frames)
             {

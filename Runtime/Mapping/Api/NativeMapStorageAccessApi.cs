@@ -20,6 +20,10 @@ namespace Niantic.Lightship.AR.MapStorageAccess
 
         public IntPtr Create(IntPtr unityContext)
         {
+            if (!LightshipUnityContext.CheckUnityContext(unityContext))
+            {
+                return IntPtr.Zero;
+            }
             _nativeHandle = Lightship_ARDK_Unity_MapStorageAccess_Create(unityContext);
             return _nativeHandle;
         }
@@ -586,6 +590,13 @@ namespace Niantic.Lightship.AR.MapStorageAccess
                         points[i].x = pointsArray[i * 3] - centerX;
                         points[i].y = -(pointsArray[i * 3 + 1] - centerY); // convert to unity coords
                         points[i].z = pointsArray[i * 3 + 2] - centerZ;
+                    }
+
+                    // Log invalid center values but surface them anyway for caller to decide
+                    if (float.IsNaN(centerX) || float.IsNaN(centerY) || float.IsNaN(centerZ) ||
+                        float.IsInfinity(centerX) || float.IsInfinity(centerY) || float.IsInfinity(centerZ))
+                    {
+                        Log.Error($"NativeMapStorageAccessApi: Invalid center values from native ExtractMapMetadata - X:{centerX}, Y:{centerY}, Z:{centerZ}. Surfacing to calling code for handling.");
                     }
 
                     center = new Vector3(centerX, -centerY, centerZ);  // convert to unity coords

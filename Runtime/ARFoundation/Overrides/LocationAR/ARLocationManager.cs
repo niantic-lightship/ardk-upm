@@ -241,15 +241,9 @@ namespace Niantic.Lightship.AR.LocationAR
         /// </summary>
         private void DestroySurplusAnchors()
         {
-            if (_anchorToARLocationMap.Count <= _maxLocationTrackingCount)
+            if (_trackedARLocations.Count < _maxLocationTrackingCount)
             {
-                // There can not be any surplus anchor.
-                return;
-            }
-
-            if (_trackedARLocations.Count >= _maxLocationTrackingCount)
-            {
-                // There are no surplus anchors yet
+                // We haven't reached max tracked locations yet, so no surplus anchors to destroy
                 return;
             }
 

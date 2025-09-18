@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 using Niantic.Lightship.AR.Loader;
 using Niantic.Lightship.AR.PersistentAnchors.Spaces;
 using Niantic.Lightship.AR.Utilities;
-using Niantic.Lightship.AR.VpsCoverage;
+using Niantic.Lightship.AR.Utilities.Http;
 
 using UnityEngine;
 using UnityEngine.Networking;

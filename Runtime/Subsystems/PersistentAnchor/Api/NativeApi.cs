@@ -2,9 +2,12 @@
 using System;
 using System.Text;
 using System.Runtime.InteropServices;
+using Niantic.Lightship.AR.API;
 using Niantic.Lightship.AR.Core;
+using Niantic.Lightship.AR.PAM;
 using Niantic.Lightship.AR.Subsystems;
 using Niantic.Lightship.AR.Utilities;
+using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.XRSubsystems;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
@@ -17,6 +20,10 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
     {
         public IntPtr Construct(IntPtr unityContext)
         {
+            if (!LightshipUnityContext.CheckUnityContext(unityContext))
+            {
+                return IntPtr.Zero;
+            }
             return Native.Construct(unityContext);
         }
 
@@ -370,6 +377,58 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
             return false;
         }
 
+        public VpsGraphStatus GetDevicePoseAsGps
+        (
+            IntPtr anchorProviderHandle,
+            Matrix4x4 poseMatrix,
+            out double latitude,
+            out double longitude,
+            out double altitude,
+            out double verticalAccuracy,
+            out double horizontalAccuracy,
+            out double heading
+        )
+        {
+            // Convert Unity pose to ARDK coordinate space and decompose into TransformCStruct
+            var ardkMatrix = poseMatrix.FromUnityToArdk();
+            var transformStruct = new TransformCStruct();
+            transformStruct.SetTransform(ardkMatrix);
+
+            var status = Native.GetDevicePoseAsGps(
+                anchorProviderHandle,
+                ref transformStruct,
+                out latitude,
+                out longitude,
+                out altitude,
+                out verticalAccuracy,
+                out horizontalAccuracy,
+                out heading
+            );
+
+            return ConvertToVpsGraphStatus((ArdkStatus)status);
+        }
+
+        private static VpsGraphStatus ConvertToVpsGraphStatus(ArdkStatus ardkStatus)
+        {
+            switch (ardkStatus)
+            {
+                case ArdkStatus.Ok:
+                    return VpsGraphStatus.Success;
+                case ArdkStatus.NullArgument:
+                case ArdkStatus.InvalidArgument:
+                    return VpsGraphStatus.InvalidArgument;
+                case ArdkStatus.InvalidOperation:
+                    return VpsGraphStatus.InvalidOperation;
+                case ArdkStatus.FeatureDoesNotExist:
+                case ArdkStatus.NullArdkHandle:
+                    return VpsGraphStatus.FeatureUnavailable;
+                case ArdkStatus.NoData:
+                    return VpsGraphStatus.NoData;
+                default:
+                    return VpsGraphStatus.Unknown;
+            }
+        }
+
         private static class Native
         {
             [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_AnchorProvider_Construct")]
@@ -551,6 +610,24 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
                 IntPtr anchorApiHandle,
                 out IntPtr log_buffer,
                 out UInt32 log_buffer_size
+            );
+
+            [DllImport
+            (
+                LightshipPlugin.Name,
+                EntryPoint = "Lightship_ARDK_Unity_AnchorProvider_GetDevicePoseAsGps",
+                CallingConvention = CallingConvention.Cdecl
+            )]
+            public static extern int GetDevicePoseAsGps
+            (
+                IntPtr anchorApiHandle,
+                ref TransformCStruct pose,
+                out double latitude,
+                out double longitude,
+                out double altitude,
+                out double verticalAccuracy,
+                out double horizontalAccuracy,
+                out double heading
             );
         }
     }

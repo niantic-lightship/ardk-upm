@@ -2,6 +2,7 @@
 
 using System.Collections.Generic;
 using Niantic.Lightship.AR.Utilities;
+using Niantic.Lightship.AR.Utilities.Http;
 
 namespace Niantic.Lightship.AR.VpsCoverage
 {
@@ -11,7 +12,7 @@ namespace Niantic.Lightship.AR.VpsCoverage
     {
         internal LocalizationTargetsResult(HttpResponse<LocalizationTargetsResponse> response)
         {
-            Status = response.Status;
+            Status = ResponseStatusExtensions.Convert(response.Status);
 
             if (Status == ResponseStatus.Success)
             {
