@@ -18,11 +18,18 @@ namespace Niantic.Lightship.AR.Occlusion.Features
         private const int UVView = 11;     // RGBA: 1011
         private const int AllView = 15;    // RGBA: 1111
 
+        // Default to depth view
+        private int _debugColorMask = DepthView;
+
+        public void Configure(LightshipOcclusionExtension.OcclusionTechnique technique)
+        {
+            _debugColorMask = technique == LightshipOcclusionExtension.OcclusionTechnique.ZBuffer ? AllView : DepthView;
+        }
 
         protected override void OnMaterialAttach(Material mat)
         {
             base.OnMaterialAttach(mat);
-            mat.SetFloat(ShaderProperties.ColorMaskId, DepthView);
+            mat.SetFloat(ShaderProperties.ColorMaskId, _debugColorMask);
         }
 
         protected override void OnMaterialDetach(Material mat)
