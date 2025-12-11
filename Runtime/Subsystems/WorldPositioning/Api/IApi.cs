@@ -14,7 +14,7 @@ namespace Niantic.Lightship.AR.Subsystems.WorldPositioning
 
         public void Stop(IntPtr providerHandle);
 
-        public void Configure(IntPtr providerHandle);
+        public void Configure(IntPtr providerHandle, int framerate, bool smoothing_enabled, bool bev_enabled, int bev_framerate);
 
         public void Destruct(IntPtr providerHandle);
 

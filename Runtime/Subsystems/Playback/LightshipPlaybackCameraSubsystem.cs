@@ -318,8 +318,8 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
 
 #if NIANTIC_LIGHTSHIP_YUV_PLAYBACK
                 // Convert RGB to YUV
-                if (!ImageConversionUtils.Convert(rgbData, _currentFrame.Frame.width, _currentFrame.Frame.height,
-                        ImageFormatCEnum.RGB24, ImageFormatCEnum.Yuv420_888, out var yuvData))
+                if (!ImageConversionUtils.TryConvertOnCpu(rgbData, _currentFrame.Frame.width, _currentFrame.Frame.height,
+                        XRCpuImage.Format.RGB24, XRCpuImage.Format.AndroidYuv420_888, out var yuvData))
                 {
                     cinfo = default;
                     return false;

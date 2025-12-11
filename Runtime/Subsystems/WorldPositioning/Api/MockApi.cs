@@ -23,7 +23,7 @@ namespace Niantic.Lightship.AR.Subsystems.WorldPositioning
             throw new NotImplementedException();
         }
 
-        public void Configure(IntPtr providerHandle)
+        public void Configure(IntPtr providerHandle, int framerate, bool smoothing_enabled, bool bev_enabled, int bev_framerate)
         {
             throw new NotImplementedException();
         }

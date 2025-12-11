@@ -206,10 +206,10 @@ namespace Niantic.ARDK.Editor
         bool changed = false;
 
         // Ignore adding the ARCore package on MagicLeap
-#if MAGICLEAP
+#if MAGICLEAP || METAQUEST
         if (packageName == ArdkPostGenerateAndroidManifest.ARCoreNameString)
         {
-          Log.Info("ArdkPostGenerateAndroidManifest.AddQuery skipped adding ARCore on MagicLeap");
+          Log.Info("ArdkPostGenerateAndroidManifest.AddQuery skipped adding ARCore on OpenXR platforms");
           return changed;
         }
 #endif
@@ -297,8 +297,8 @@ namespace Niantic.ARDK.Editor
         bool changed = false;
 
         // Ignore the ARCore checks for MagicLeap, since that uses OpenXR
-#if MAGICLEAP
-            Log.Info("ArdkPostGenerateAndroidManifest.AddARCoreInstallActivity skipped on MagicLeap");
+#if MAGICLEAP || METAQUEST
+            Log.Info("ArdkPostGenerateAndroidManifest.AddARCoreInstallActivity skipped on OpenXR platforms");
             return changed;
 #endif
 

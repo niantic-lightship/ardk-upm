@@ -1,10 +1,10 @@
 // Copyright 2022-2025 Niantic.
 
 using System;
-using System.IO;
+using Niantic.Lightship.AR.Auth;
+using Niantic.Lightship.AR.Utilities;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.Serialization;
 using Niantic.Lightship.AR.Utilities.Logging;
 using UnityEngine.XR.Management;
 
@@ -18,10 +18,8 @@ namespace Niantic.Lightship.AR.Loader
     [XRConfigurationData("Niantic Lightship SDK", SettingsKey)]
     public partial class LightshipSettings : ScriptableObject
     {
-        private const string AssetsPath = "Assets";
-        private const string AssetsRelativeSettingsPath = "XR/Settings";
-
         public const string SettingsKey = "Niantic.Lightship.AR.LightshipSettings";
+        public const string BuildSettingsKey = "Niantic.Lightship.AR.AuthBuildSettings";
 
         [SerializeField, Tooltip("This should match an API Key found in your Niantic Lightship developer account")]
         private string _apiKey = string.Empty;
@@ -95,6 +93,9 @@ namespace Niantic.Lightship.AR.Loader
         [SerializeField]
         private DevicePlaybackSettings _devicePlaybackSettings;
 
+        [SerializeField]
+        private AuthBuildSettings _authBuildSettings;
+
         private EditorPlaybackSettings _editorPlaybackSettings;
         private EndpointSettings _endpointSettings;
         private TestSettings _testSettings;
@@ -112,7 +113,50 @@ namespace Niantic.Lightship.AR.Loader
                     return _apiKey;
                 }
 
-                return EndpointSettings.ApiKey;
+                return EndpointSettings.ApiKey ?? string.Empty;
+            }
+        }
+
+        /// <summary>
+        /// The current runtime refresh token
+        /// </summary>
+        public string RefreshToken => _authBuildSettings?.RefreshToken;
+
+        /// <summary>
+        /// Time when the current runtime refresh token expires
+        /// </summary>
+        public int RefreshExpiresAt => _authBuildSettings?.RefreshExpiresAt ?? 0;
+
+        /// <summary>
+        /// The current runtime access token
+        /// </summary>
+        public string AccessToken => _authBuildSettings?.AccessToken;
+
+        /// <summary>
+        /// Time when the current runtime access token expires
+        /// </summary>
+        public int AccessExpiresAt => _authBuildSettings?.AccessExpiresAt ?? 0;
+
+        public void UpdateAccess(string accessToken, int accessExpiresAt, string refreshToken, int refreshExpiresAt)
+        {
+            _authBuildSettings?.UpdateAccess(accessToken, accessExpiresAt, refreshToken, refreshExpiresAt);
+
+            // Changes to auth tokens need to be saved immediately (any prior tokens on disk are now invalid)
+            SettingsUtils.SaveImmediatelyInEditor(_authBuildSettings);
+        }
+
+        public bool UseDeveloperAuthentication => _authBuildSettings?.UseDeveloperAuthentication ?? true;
+
+        public AuthEnvironmentType AuthEnvironment
+        {
+            get => _authBuildSettings?.AuthEnvironment ?? AuthEnvironmentType.Production;
+            set
+            {
+                if (_authBuildSettings != null && _authBuildSettings.AuthEnvironment != value)
+                {
+                    _endpointSettings = EndpointSettings.GetFromFileOrDefault(value);
+                    _authBuildSettings.AuthEnvironment = value;
+                }
             }
         }
 
@@ -257,6 +301,8 @@ namespace Niantic.Lightship.AR.Loader
         public bool RunManually => PlaybackSettings.RunManually;
         public bool LoopInfinitely => PlaybackSettings.LoopInfinitely;
 
+        internal AuthBuildSettings AuthBuildSettings => _authBuildSettings;
+
         public ILightshipPlaybackSettings DevicePlaybackSettings
         {
             get
@@ -285,7 +331,7 @@ namespace Niantic.Lightship.AR.Loader
             {
                 if (_endpointSettings == null)
                 {
-                    _endpointSettings = EndpointSettings.GetFromFileOrDefault();
+                    _endpointSettings = EndpointSettings.GetFromFileOrDefault(AuthEnvironment);
                 }
 
                 return _endpointSettings;
@@ -339,9 +385,19 @@ namespace Niantic.Lightship.AR.Loader
             LightshipSettings settings = null;
 
 #if UNITY_EDITOR
-            if (!EditorBuildSettings.TryGetConfigObject(SettingsKey, out settings))
+            settings = SettingsUtils.GetOrCreateSettingsAsset<LightshipSettings>(SettingsKey, "Lightship Settings");
+            var prevEnvironment = settings.AuthEnvironment;
+            if (settings._authBuildSettings == null)
             {
-                settings = CreateInstanceAsset();
+                settings._authBuildSettings =
+                    SettingsUtils.GetOrCreateSettingsAsset<AuthBuildSettings>(BuildSettingsKey, "AuthBuildSettings");
+                EditorUtility.SetDirty(settings);
+            }
+
+            // Regenerate endpointSettings if AuthEnvironment has changed
+            if (settings._endpointSettings == null || prevEnvironment != settings.AuthEnvironment)
+            {
+                settings._endpointSettings = EndpointSettings.GetFromFileOrDefault(settings.AuthEnvironment);
             }
 #else
             settings = s_RuntimeInstance;
@@ -371,35 +427,6 @@ namespace Niantic.Lightship.AR.Loader
         private static void OpenProjectValidation()
         {
             SettingsService.OpenProjectSettings("Project/XR Plug-in Management/Project Validation");
-        }
-
-        private static LightshipSettings CreateInstanceAsset()
-        {
-            // ensure all parent directories of settings asset exists
-            var settingsPath = Path.Combine(AssetsPath, AssetsRelativeSettingsPath, "LightshipSettings.asset");
-            var pathSplits = settingsPath.Split("/");
-            var runningPath = pathSplits[0];
-            for (var i = 1; i < pathSplits.Length - 1; i++)
-            {
-                var pathSplit = pathSplits[i];
-                var nextPath = Path.Combine(runningPath, pathSplit);
-                if (!AssetDatabase.IsValidFolder(nextPath))
-                {
-                    AssetDatabase.CreateFolder(runningPath, pathSplit);
-                }
-
-                runningPath = nextPath;
-            }
-
-            // create settings asset at specified path
-            var settings = CreateInstance<LightshipSettings>();
-            AssetDatabase.CreateAsset(settings, settingsPath);
-
-            settings._endpointSettings = EndpointSettings.GetFromFileOrDefault();
-
-            EditorBuildSettings.AddConfigObject(SettingsKey, settings, true);
-
-            return settings;
         }
 #endif
 
@@ -468,6 +495,7 @@ namespace Niantic.Lightship.AR.Loader
 
             simulationParams ??= new LightshipSimulationParams();
             settings._lightshipSimulationParams = simulationParams;
+            settings._authBuildSettings = CreateInstance<AuthBuildSettings>();
 
             return settings;
         }

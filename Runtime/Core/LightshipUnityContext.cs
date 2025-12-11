@@ -62,6 +62,8 @@ namespace Niantic.Lightship.AR.Core
                 SharedArEndpoint = settings.EndpointSettings.SharedArEndpoint,
                 VpsEndpoint = settings.EndpointSettings.VpsEndpoint,
                 VpsCoverageEndpoint = settings.EndpointSettings.VpsCoverageEndpoint,
+                IdentityEndpoint = settings.EndpointSettings.IdentityEndpoint,
+                PortalEndpoint = settings.EndpointSettings.PortalEndpoint,
                 FastDepthEndpoint = settings.EndpointSettings.FastDepthSemanticsEndpoint,
                 MediumDepthEndpoint = settings.EndpointSettings.DefaultDepthSemanticsEndpoint,
                 SmoothDepthEndpoint = settings.EndpointSettings.SmoothDepthSemanticsEndpoint,
@@ -71,11 +73,15 @@ namespace Niantic.Lightship.AR.Core
                 ObjectDetectionEndpoint = settings.EndpointSettings.ObjectDetectionEndpoint,
                 TelemetryEndpoint = "",
                 TelemetryKey = "",
+                BevEndpoint = settings.EndpointSettings.BevEndpoint,
             };
 
             s_userConfig = new UserConfig
             {
                 ApiKey = settings.ApiKey,
+                // Note: ARDK native can also receive the refresh token, but we don't want to set it here
+                // (in Unity, we run the refresh loop in C#).
+                AccessToken = settings.AccessToken,
                 FeatureFlagFilePath = string.IsNullOrEmpty(featureFlagFilePath) ? GetFeatureFlagPath() : featureFlagFilePath,
             };
 
@@ -331,6 +337,8 @@ namespace Niantic.Lightship.AR.Core
         {
             public string VpsEndpoint;
             public string VpsCoverageEndpoint;
+            public string IdentityEndpoint;
+            public string PortalEndpoint;
             public string SharedArEndpoint;
             public string FastDepthEndpoint;
             public string MediumDepthEndpoint;
@@ -343,6 +351,7 @@ namespace Niantic.Lightship.AR.Core
             public string ObjectDetectionEndpoint;
             public string TelemetryEndpoint;
             public string TelemetryKey;
+            public string BevEndpoint;
         }
 
         // PLEASE NOTE: Do NOT add feature flags in this struct.
@@ -350,6 +359,8 @@ namespace Niantic.Lightship.AR.Core
         private struct UserConfig
         {
             public string ApiKey;
+            public string AccessToken;
+            public string RefreshToken;
             public string FeatureFlagFilePath;
         }
 

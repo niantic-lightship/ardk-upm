@@ -93,7 +93,7 @@ namespace Niantic.Lightship.AR.Occlusion
 
                     if (occlusionExtension.Material != null)
                     {
-                        _zBufferPass.SetMaterial(occlusionExtension.Material);
+                        _zBufferPass.Material = occlusionExtension.Material;
                         renderer.EnqueuePass(_zBufferPass);
                     }
 
@@ -106,8 +106,8 @@ namespace Niantic.Lightship.AR.Occlusion
                     if (occlusionExtension.Material != null &&
                         occlusionExtension.OccluderMesh != null)
                     {
-                        _occlusionMeshPass.SetMaterial(occlusionExtension.Material);
-                        _occlusionMeshPass.SetMesh(occlusionExtension.OccluderMesh);
+                        _occlusionMeshPass.Material = occlusionExtension.Material;
+                        _occlusionMeshPass.Mesh = occlusionExtension.OccluderMesh;
                         renderer.EnqueuePass(_occlusionMeshPass);
                     }
 

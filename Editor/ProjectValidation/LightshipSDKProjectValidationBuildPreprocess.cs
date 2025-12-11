@@ -6,6 +6,8 @@ using UnityEditor;
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
 using UnityEditor.Callbacks;
+using UnityEngine.Rendering;
+using UnityEngine;
 
 namespace Niantic.Lightship.AR.Editor
 {
@@ -92,6 +94,13 @@ namespace Niantic.Lightship.AR.Editor
 
         private static void GoToProjectValidation()
         {
+            // we're in headless mode, no need to show the editor window.
+            // let the build error fail the build instead
+            if (SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null)
+            {
+                return;
+            }
+
             EditorApplication.delayCall += () =>
             {
                 SettingsService.OpenProjectSettings("Project/XR Plug-in Management/Project Validation");

@@ -15,13 +15,17 @@ namespace Niantic.Lightship.AR.Editor
     {
         private SerializedProperty _scanPath;
         private SerializedProperty _fullResolutionEnabled;
+        private SerializedProperty _fullResolutionFramerate;
         private SerializedProperty _scanTargetId;
         private SerializedProperty _scanRecordingFramerate;
         private SerializedProperty _enableRaycastVisualization;
         private SerializedProperty _enableVoxelVisualization;
         private SerializedProperty _useEstimatedDepth;
+        private SerializedProperty _minimumVoxelSize;
+        private SerializedProperty _nearDepth;
+        private SerializedProperty _farDepth;
 
-        // Fields get reset whenever the object hierarchy changes, in addition to when this Editor loses focus,
+        // Fields get reset whenever the object hierarchy changes, in addition to when this Editor loses focus
         private bool _triedLookingForOcclusionManager;
         private AROcclusionManager _occlusionManagerRef;
 
@@ -44,14 +48,23 @@ namespace Niantic.Lightship.AR.Editor
             public const string MissingOcclusionManagerError =
                 "No AROcclusionManager was found in the scene. An enabled AROcclusionManager is required to record or " +
                 "visualize with lidar data.";
+            public const string DepthLimitedFpsWarning =
+                "Recording depth when lidar is not available will limit the recording framerate to the update " +
+                "rate of the NSDK depth feature, regardless of the Recording Framerate setting.\n\nTo increase the update " +
+                "rate of the depth feature from its default of 10 FPS, add a Lightship Occlusion Extension component " +
+                "and set the Target Frame Rate";
 
             public static readonly GUIContent ScanPathLabel = new GUIContent("Scan Path");
             public static readonly GUIContent ScanTargetLabel = new GUIContent("POI Target ID");
             public static readonly GUIContent FullResolutionLabel = new GUIContent("Full Resolution Enabled");
-            public static readonly GUIContent RecordingFramerateLabel = new GUIContent("Recording Framerate");
+            public static readonly GUIContent RecordingFramerateLabel = new GUIContent("Recording Framerate", "The base framerate for recording small resolution frames and depth data.");
+            public static readonly GUIContent FullResolutionFramerateLabel = new GUIContent("Full Resolution Framerate", "The framerate for recording full resolution frames. This can be lower than Recording Framerate to save on file size or compute.");
             public static readonly GUIContent UseEstimatedDepthLabel = new GUIContent("Record Estimated Depth");
             public static readonly GUIContent VoxelVisualizationLabel = new GUIContent("Enable Voxel Visualization");
             public static readonly GUIContent RaycastVisualizationLabel = new GUIContent("Enable Raycast Visualization");
+            public static readonly GUIContent VoxelSizeLabel = new GUIContent("Min Voxel Size (m)", "The minimum size of voxels for voxel visualization, in meters. Smaller values result in higher resolution but require more memory and computation. The size will increase as more voxels are allocated.");
+            public static readonly GUIContent NearDepthLabel = new GUIContent("Near Depth (m)", "Closest distance for depth integration, in meters. Objects closer than this distance will not be visualized or reconstructed.");
+            public static readonly GUIContent FarDepthLabel = new GUIContent("Far Depth (m)", "Farthest distance for depth integration, in meters. Objects farther than this distance will not be visualized or reconstructed.");
         }
 
         public override void OnInspectorGUI()
@@ -76,8 +89,15 @@ namespace Niantic.Lightship.AR.Editor
             EditorGUILayout.LabelField("Recording Settings", EditorStyles.boldLabel);
             using (new EditorGUI.IndentLevelScope(1))
             {
-                EditorGUILayout.PropertyField(_fullResolutionEnabled, Contents.FullResolutionLabel);
                 EditorGUILayout.IntSlider(_scanRecordingFramerate, 0, 30, Contents.RecordingFramerateLabel);
+                EditorGUILayout.PropertyField(_fullResolutionEnabled, Contents.FullResolutionLabel);
+                if (_fullResolutionEnabled.boolValue)
+                {
+                    using (new EditorGUI.IndentLevelScope(1))
+                    {
+                        EditorGUILayout.IntSlider(_fullResolutionFramerate, 0, 30, Contents.FullResolutionFramerateLabel);
+                    }
+                }
                 EditorGUILayout.PropertyField(_useEstimatedDepth, Contents.UseEstimatedDepthLabel);
             }
 
@@ -85,11 +105,29 @@ namespace Niantic.Lightship.AR.Editor
             using (new EditorGUI.IndentLevelScope(1))
             {
                 EditorGUILayout.PropertyField(_enableVoxelVisualization, Contents.VoxelVisualizationLabel);
+
+                // Voxel size control
+                if (_enableVoxelVisualization.boolValue)
+                {
+                    using (new EditorGUI.IndentLevelScope(1))
+                    {
+                        EditorGUILayout.Slider(_minimumVoxelSize, 0.005f, 0.1f, Contents.VoxelSizeLabel);
+                    }
+                }
+
                 EditorGUILayout.PropertyField(_enableRaycastVisualization, Contents.RaycastVisualizationLabel);
 
-                // Error if there is no depth source, warn if lidar is the only source
                 if (_enableVoxelVisualization.boolValue || _enableRaycastVisualization.boolValue)
                 {
+                    // Depth range controls
+                    EditorGUILayout.Slider(_nearDepth, 0.0f, 5.0f, Contents.NearDepthLabel);
+                    EditorGUILayout.Slider(_farDepth, 0.5f, 10.0f, Contents.FarDepthLabel);
+
+                    if (_nearDepth.floatValue >= _farDepth.floatValue)
+                    {
+                        EditorGUILayout.HelpBox("Near Depth must be less than Far Depth.", MessageType.Error);
+                    }
+
                     var depthEnabled = LightshipSettings.Instance.UseLightshipDepth;
 
                     // Error if there is no depth source.  Warn if lidar is the only source.
@@ -129,6 +167,13 @@ namespace Niantic.Lightship.AR.Editor
                 }
             }
 
+            // Warn about capped FPS if multidepth recording is enabled (this will apply for non-lidar devices)
+            // 10 FPS is the default multidepth update rate
+            if (estimatedDepthRecordingEnabled && _scanRecordingFramerate.intValue > 10)
+            {
+                EditorGUILayout.HelpBox(Contents.DepthLimitedFpsWarning, MessageType.Warning);
+            }
+
             serializedObject.ApplyModifiedProperties();
         }
 
@@ -137,10 +182,14 @@ namespace Niantic.Lightship.AR.Editor
             _scanPath = serializedObject.FindProperty("_scanPath");
             _scanTargetId = serializedObject.FindProperty("_scanTargetId");
             _fullResolutionEnabled = serializedObject.FindProperty("_fullResolutionEnabled");
+            _fullResolutionFramerate = serializedObject.FindProperty("_fullResolutionFramerate");
             _scanRecordingFramerate = serializedObject.FindProperty("_scanRecordingFramerate");
             _enableRaycastVisualization = serializedObject.FindProperty("_enableRaycastVisualization");
             _enableVoxelVisualization = serializedObject.FindProperty("_enableVoxelVisualization");
             _useEstimatedDepth = serializedObject.FindProperty("_useEstimatedDepth");
+            _minimumVoxelSize = serializedObject.FindProperty("_minimumVoxelSize");
+            _nearDepth = serializedObject.FindProperty("_nearDepth");
+            _farDepth = serializedObject.FindProperty("_farDepth");
         }
     }
 }

@@ -32,9 +32,19 @@ namespace Niantic.Lightship.AR.XRSubsystems
 
         private NativeArray<Color32> _colors;
 
+        /// <summary>
+        /// Contains the normal vector of each point in the voxel cloud.
+        /// </summary>
+        public readonly NativeArray<Vector3> Normals
+        {
+            get => _normals;
+        }
+
+        private NativeArray<Vector3> _normals;
+
         internal IntPtr nativeHandle { get; private set; }
 
-        public XRScanningVoxelData(IntPtr positionPtr, IntPtr colorsPtr, int pointCount, IntPtr nativeHandle)
+        public XRScanningVoxelData(IntPtr positionPtr, IntPtr colorsPtr, IntPtr normalPtr, int pointCount, IntPtr nativeHandle)
         {
             unsafe
             {
@@ -42,11 +52,14 @@ namespace Niantic.Lightship.AR.XRSubsystems
                     pointCount, Allocator.None);
                 _colors = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<Color32>(colorsPtr.ToPointer(),
                     pointCount, Allocator.None);
+                _normals = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<Vector3>(normalPtr.ToPointer(),
+                    pointCount, Allocator.None);
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
 // See https://forum.unity.com/threads/convertexistingdatatonativearray-and-atomicsafetyhandle.878575/#post-7975632
                 NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref _positions, AtomicSafetyHandle.GetTempUnsafePtrSliceHandle());
                 NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref _colors, AtomicSafetyHandle.GetTempUnsafePtrSliceHandle());
+                NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref _normals, AtomicSafetyHandle.GetTempUnsafePtrSliceHandle());
 #endif
             }
 
@@ -56,7 +69,7 @@ namespace Niantic.Lightship.AR.XRSubsystems
         public readonly bool Equals(XRScanningVoxelData other)
         {
             return Positions.Equals(other.Positions) && Colors.Equals(other.Colors)
-                && nativeHandle.Equals(other.nativeHandle);
+                && Normals.Equals(other.Normals) && nativeHandle.Equals(other.nativeHandle);
         }
 
         public override readonly bool Equals(object obj)
@@ -66,7 +79,7 @@ namespace Niantic.Lightship.AR.XRSubsystems
 
         public override readonly int GetHashCode()
         {
-            return HashCode.Combine(Positions, Colors, nativeHandle);
+            return HashCode.Combine(Positions, Colors, Normals, nativeHandle);
         }
     }
 }

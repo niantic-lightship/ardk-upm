@@ -3,8 +3,8 @@
 using Niantic.Lightship.AR.Common;
 using Niantic.Lightship.AR.Utilities;
 using Niantic.Lightship.AR.Utilities.Logging;
-using Unity.XR.CoreUtils;
 using UnityEngine;
+using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
 using UnityEngine.XR.ARFoundation;
 
@@ -34,10 +34,7 @@ namespace Niantic.Lightship.AR.Occlusion.Features
         /// <summary>
         /// Shader keyword for occlusion stabilization.
         /// </summary>
-        protected override string Keyword
-        {
-            get => "FEATURE_STABILIZATION";
-        }
+        protected override string Keyword => "FEATURE_STABILIZATION";
 
         /// <summary>
         /// The shader used by the mesh observer camera to copy the z-buffer into a texture.
@@ -56,10 +53,7 @@ namespace Niantic.Lightship.AR.Occlusion.Features
         // URP render pass
 #if MODULE_URP_ENABLED
         private OffScreenBlitPass _renderPass;
-
         private RTHandle _meshDepthTextureHandle;
-
-        private RTHandleSystem _rtHandleSystem;
 #endif
 
         /// <summary>
@@ -83,7 +77,16 @@ namespace Niantic.Lightship.AR.Occlusion.Features
         // Constants
         private const int KFusedDepthWidth = 1024;
         private const int KFusedDepthHeight = 1024;
-        private const int KFusedDepthDepthBits = 16;
+        private RenderTextureDescriptor _meshDepthTextureDescriptor =
+            new RenderTextureDescriptor(KFusedDepthWidth, KFusedDepthHeight)
+            {
+                graphicsFormat = GraphicsFormat.R32_SFloat,
+                depthBufferBits = 0,
+                msaaSamples = 1,
+                sRGB = false,
+                useMipMap = false,
+                autoGenerateMips = false
+            };
 
         public bool Configure(
             LightshipOcclusionExtension.OcclusionTechnique technique,
@@ -121,20 +124,17 @@ namespace Niantic.Lightship.AR.Occlusion.Features
                 return false;
             }
 
-
-            // Allocate the GPU texture
-            MeshDepthTexture =
-                new RenderTexture(KFusedDepthWidth, KFusedDepthHeight, KFusedDepthDepthBits, RenderTextureFormat.RFloat)
-                {
-                    filterMode = FilterMode.Bilinear, wrapMode = TextureWrapMode.Clamp
-                };
-
-            MeshDepthTexture.Create();
-
             // Create and configure the camera
             _meshObserverCamera = CreateMeshObserverCamera(renderingCamera, meshManager.meshPrefab.gameObject.layer);
 
 #if !MODULE_URP_ENABLED
+            MeshDepthTexture = new RenderTexture(_meshDepthTextureDescriptor)
+            {
+                filterMode = FilterMode.Bilinear, wrapMode = TextureWrapMode.Clamp
+            };
+
+            MeshDepthTexture.Create();
+
             // Create the command buffer
             _meshObserverCommandBuffer = new CommandBuffer {name = "Occlusion Stabilization"};
             _meshObserverCommandBuffer.Blit(null, MeshDepthTexture, Material);
@@ -147,10 +147,6 @@ namespace Niantic.Lightship.AR.Occlusion.Features
             _renderPass = new OffScreenBlitPass(
                 name: "Lightship Occlusion Extension (Stabilization)",
                 renderPassEvent: RenderPassEvent.AfterRendering);
-
-            _rtHandleSystem = new RTHandleSystem();
-            _rtHandleSystem.Initialize(KFusedDepthWidth, KFusedDepthHeight);
-            _meshDepthTextureHandle = _rtHandleSystem.Alloc(MeshDepthTexture);
 #endif
             return true;
         }
@@ -269,19 +265,16 @@ namespace Niantic.Lightship.AR.Occlusion.Features
                 Object.Destroy(_defaultMeshDepthTexture);
             }
 
+            _meshObserverCommandBuffer?.Dispose();
+
+#if !MODULE_URP_ENABLED
             if (MeshDepthTexture != null)
             {
                 Object.Destroy(MeshDepthTexture);
             }
-
-#if MODULE_URP_ENABLED
-            if( _meshDepthTextureHandle != null )
-            {
-                _meshDepthTextureHandle.Release();
-            }
+#else
+            _meshDepthTextureHandle?.Release();
 #endif
-
-            _meshObserverCommandBuffer?.Dispose();
         }
 
         /// <summary>
@@ -333,8 +326,18 @@ namespace Niantic.Lightship.AR.Occlusion.Features
 #if MODULE_URP_ENABLED
             if (cam == _meshObserverCamera)
             {
+                // Allocate resources, if needed
+
+#if MODULE_URP_17_OR_NEWER
+                RenderingUtils.ReAllocateHandleIfNeeded(ref _meshDepthTextureHandle, in _meshDepthTextureDescriptor);
+#else
+                RenderingUtils.ReAllocateIfNeeded(ref _meshDepthTextureHandle, in _meshDepthTextureDescriptor);
+#endif
+                MeshDepthTexture = _meshDepthTextureHandle.rt;
+
                 // Configure the render pass
-                _renderPass.Setup(Material, MeshDepthTexture, _meshDepthTextureHandle);
+                _renderPass.Material = Material;
+                _renderPass.Target = _meshDepthTextureHandle;
 
                 // Enqueue the render pass
                 cam.GetUniversalAdditionalCameraData().scriptableRenderer.EnqueuePass(_renderPass);

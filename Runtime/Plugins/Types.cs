@@ -267,67 +267,95 @@ namespace Protogen {
             "ZURhdGESOwoNbG9jYXRpb25fZGF0YRgBIAEoCzIWLnByb3RvZ2VuLkxvY2F0",
             "aW9uRGF0YVIMbG9jYXRpb25EYXRhEjQKC2NhbWVyYV9wb3NlGAIgASgLMhMu",
             "cHJvdG9nZW4uVHJhbnNmb3JtUgpjYW1lcmFQb3NlEhsKCWltYWdlX3VybBgD",
-            "IAEoCVIIaW1hZ2VVcmwqOQoOTm9kZVZpc2liaWxpdHkSDgoKVU5BU1NJR05F",
-            "RBAAEgoKBlBVQkxJQxABEgsKB1BSSVZBVEUQAipHChFOb2RlVGh1bWJuYWls",
-            "VHlwZRIZChVVTktOT1dOX1JFU09VUkNFX1RZUEUQABIXChNUSFVNQk5BSUxf",
-            "VFlQRV9KUEVHEAEqdAoVTG9jYWxpemF0aW9uQWxnb3JpdGhtEhAKDEFMR09f",
-            "VU5LTk9XThAAEg0KCUFMR09fMkQzRBABEg0KCUFMR09fM0QzRBACEg0KCUFM",
-            "R09fRFNBQxADEg4KCkFMR09fU0xJQ0sQBBIMCghBTEdPX1hSOBAFKlsKDlNw",
-            "bGF0QWxnb3JpdGhtEhsKF1VOS05PV05fU1BMQVRfQUxHT1JJVEhNEAASEgoO",
-            "R0FVU1NJQU5fU1BMQVQQARIYChRHQVVTU0lBTl9TUExBVF9TTUFMTBACKtcB",
-            "Cg1NZXNoQWxnb3JpdGhtEg8KC1VOU1BFQ0lGSUVEEAASDwoLSElHSFJFU19S",
-            "R0IQARIUChBISUdIUkVTX1NFTUFOVElDEAISEQoNREVDSU1BVEVEX1JHQhAD",
-            "EhYKEkRFQ0lNQVRFRF9TRU1BTlRJQxAEEgwKCFRFWFRVUkVEEAUSFAoQSElH",
-            "SFJFU19DT1ZFUkFHRRAGEhYKEkRFQ0lNQVRFRF9DT1ZFUkFHRRAHEhAKDE1F",
-            "R0FNT0RFX1JHQhAIEhUKEU1FR0FNT0RFX1RFWFRVUkVEEAkqsQEKFU1hbmFn",
-            "ZWRQb3NlU3RhdHVzQ29kZRIbChdTVEFUVVNfQ09ERV9VTlNQRUNJRklFRBAA",
-            "EhcKE1NUQVRVU19DT0RFX1NVQ0NFU1MQARIXChNTVEFUVVNfQ09ERV9GQUlM",
-            "VVJFEAISFwoTU1RBVFVTX0NPREVfSU5WQUxJRBADEhcKE1NUQVRVU19DT0RF",
-            "X0xJTUlURUQQBBIXChNTVEFUVVNfQ09ERV9QRU5ESU5HEAUqVwoQTWVzaEV4",
-            "cG9ydEZvcm1hdBISCg5GT1JNQVRfVU5LTk9XThAAEg4KCkZPUk1BVF9HTEIQ",
-            "ARIPCgtGT1JNQVRfR0xURhACEg4KCkZPUk1BVF9GQlgQAyqbBgoNRGF0YUxh",
-            "eWVyTmFtZRIbChdEQVRBX0xBWUVSX05BTUVfVU5LTk9XThAAEjkKNURBVEFf",
-            "TEFZRVJfTkFNRV9ERU5TRV9SRUNPTlNUUlVDVElPTl9ISUdIUkVTX1JHQl9N",
-            "RVNIEAESPgo6REFUQV9MQVlFUl9OQU1FX0RFTlNFX1JFQ09OU1RSVUNUSU9O",
-            "X0hJR0hSRVNfU0VNQU5USUNfTUVTSBACEjsKN0RBVEFfTEFZRVJfTkFNRV9E",
-            "RU5TRV9SRUNPTlNUUlVDVElPTl9ERUNJTUFURURfUkdCX01FU0gQAxJBCj1E",
-            "QVRBX0xBWUVSX05BTUVfREVOU0VfUkVDT05TVFJVQ1RJT05fREVDSU1BTlRF",
-            "RF9TRU1BTlRJQ19NRVNIEAQSNgoyREFUQV9MQVlFUl9OQU1FX0RFTlNFX1JF",
-            "Q09OU1RSVUNUSU9OX1RFWFRVUkVEX01FU0gQBRI+CjpEQVRBX0xBWUVSX05B",
-            "TUVfREVOU0VfUkVDT05TVFJVQ1RJT05fSElHSFJFU19DT1ZFUkFHRV9NRVNI",
-            "EAYSQQo9REFUQV9MQVlFUl9OQU1FX0RFTlNFX1JFQ09OU1RSVUNUSU9OX0RF",
-            "Q0lNQU5URURfQ09WRVJBR0VfTUVTSBAHEiUKIURBVEFfTEFZRVJfTkFNRV9N",
-            "RUdBTU9ERV9SR0JfTUVTSBAIEioKJkRBVEFfTEFZRVJfTkFNRV9NRUdBTU9E",
-            "RV9URVhUVVJFRF9NRVNIEAkSIgoeREFUQV9MQVlFUl9OQU1FX0dBVVNTSUFO",
-            "X1NQTEFUEAoSKAokREFUQV9MQVlFUl9OQU1FX0dBVVNTSUFOX1NQTEFUX1NN",
-            "QUxMEAsSLAooREFUQV9MQVlFUl9OQU1FX0dBVVNTSUFOX1NQTEFUX0tFWUZS",
-            "QU1FUxAMEiwKKERBVEFfTEFZRVJfTkFNRV9HQVVTU0lBTl9TUExBVF9USFVN",
-            "Qk5BSUwQDRIfChtEQVRBX0xBWUVSX05BTUVfR0xPQkFMX1BPU0UQDhIZChVE",
-            "QVRBX0xBWUVSX05BTUVfU0xJQ0sQDyp3Cg5Ob2RlT3JpZ2luVHlwZRIXChNP",
-            "UklHSU5fVFlQRV9VTktOT1dOEAASFAoQTUFQUElOR19QSVBFTElORRABEg4K",
-            "ClNDQU5JVkVSU0UQAhIUChBERVZJQ0VfRlJBTUVXT1JLEAMSEAoMRkFTVF9N",
-            "QVBQSU5HEAQqUwoITm9kZVR5cGUSFQoRVU5LTk9XTl9OT0RFX1RZUEUQABIZ",
-            "ChVNQVBQSU5HX1BJUEVMSU5FX05PREUQARIVChFGQVNUX01BUFBJTkdfTk9E",
-            "RRACKvsCChNTZXF1ZW5jZVNwbGl0UmVhc29uEhgKFFNQTElUX1JFQVNPTl9V",
-            "TktOT1dOEAASEwoPRU5EX09GX1NFUVVFTkNFEAESGQoVTUFYX0RJU1RBTkNF",
-            "X0VYQ0VFREVEEAISIwofVFJBQ0tJTkdfU1RBVFVTX0NIQU5HRURfVE9fR09P",
-            "RBADEiYKIlRSQUNLSU5HX1NUQVRVU19DSEFOR0VEX1RPX0xJTUlURUQQBBIm",
-            "CiJUUkFDS0lOR19TVEFUVVNfQ0hBTkdFRF9UT19GQUlMVVJFEAUSGgoWVFJB",
-            "Q0tJTkdfUE9TSVRJT05fSlVNUBAGEhoKFlRSQUNLSU5HX1JPVEFUSU9OX0pV",
-            "TVAQBxIRCg1OT1RfU1BMSVRfWUVUEAgSFgoSVFJBQ0tJTkdfVE9PX1NIT1JU",
-            "EAkSGQoVTUFYX0RVUkFUSU9OX0VYQ0VFREVEEAoSJwojVFJBQ0tJTkdfUE9T",
-            "SVRJT05fQUNDRUxFUkFUSU9OX0pVTVAQCyqKAQoIRWRnZVR5cGUSCwoHVU5L",
-            "Tk9XThAAEhUKEUNMVVNURVJfQUxJR05NRU5UEAESDAoIVFJBQ0tJTkcQAhIL",
-            "CgdOT19FREdFEAMSEwoPU1BBQ0VfU1BMSVRUSU5HEAQSDgoKVVNFUl9CQVNF",
-            "RBAFEhoKFk9OX0RFVklDRV9MT0NBTElaQVRJT04QBiprCgpVcGxvYWRUeXBl",
-            "EhcKE1VQTE9BRF9UWVBFX1VOS05PV04QABIeChpVUExPQURfVFlQRV9HQVVT",
-            "U0lBTl9TUExBVBABEiQKIFVQTE9BRF9UWVBFX0dBVVNTSUFOX1NQTEFUX1NN",
-            "QUxMEAIqVgoRU2NhblVwbG9hZENvbnRleHQSFwoTQ09OVEVYVF9VTlNQRUNJ",
-            "RklFRBAAEhAKDENPTlRFWFRfQVJESxABEhYKEkNPTlRFWFRfU0NBTklWRVJT",
-            "RRACKksKEVNjYW5VcGxvYWRVcmxUeXBlEhMKD1VSTF9VTlNQRUNJRklFRBAA",
-            "Eg4KClVSTF9TSUdORUQQARIRCg1VUkxfUkVTVU1BQkxFEAJCU1pRZ2l0bGFi",
-            "Lm5pYW50aWNsYWJzLmNvbS9yZXBvL25pYW50aWMvYXJnZW8vbG9jYWxpemF0",
-            "aW9uLXNlcnZpY2UvY29tbW9uL3Byb3RvL3R5cGVzYgZwcm90bzM="));
+            "IAEoCVIIaW1hZ2VVcmwiowEKF09TTUxvY2FsaXphdGlvbkVzdGltYXRlEhIK",
+            "BHR5cGUYASABKAlSBHR5cGUSGgoIbGF0aXR1ZGUYAiABKAFSCGxhdGl0dWRl",
+            "EhwKCWxvbmdpdHVkZRgDIAEoAVIJbG9uZ2l0dWRlEhgKB2hlYWRpbmcYBCAB",
+            "KAFSB2hlYWRpbmcSIAoLdW5jZXJ0YWludHkYBSABKAFSC3VuY2VydGFpbnR5",
+            "KjkKDk5vZGVWaXNpYmlsaXR5Eg4KClVOQVNTSUdORUQQABIKCgZQVUJMSUMQ",
+            "ARILCgdQUklWQVRFEAIqRwoRTm9kZVRodW1ibmFpbFR5cGUSGQoVVU5LTk9X",
+            "Tl9SRVNPVVJDRV9UWVBFEAASFwoTVEhVTUJOQUlMX1RZUEVfSlBFRxABKnQK",
+            "FUxvY2FsaXphdGlvbkFsZ29yaXRobRIQCgxBTEdPX1VOS05PV04QABINCglB",
+            "TEdPXzJEM0QQARINCglBTEdPXzNEM0QQAhINCglBTEdPX0RTQUMQAxIOCgpB",
+            "TEdPX1NMSUNLEAQSDAoIQUxHT19YUjgQBSqWAQoOU3BsYXRBbGdvcml0aG0S",
+            "GwoXVU5LTk9XTl9TUExBVF9BTEdPUklUSE0QABISCg5HQVVTU0lBTl9TUExB",
+            "VBABEhgKFEdBVVNTSUFOX1NQTEFUX1NNQUxMEAISFgoSR0FVU1NJQU5fUlNG",
+            "X1NQTEFUEAMSIQodR0FVU1NJQU5fUlNGX1NQTEFUX0NPTVBSRVNTRUQQBCqS",
+            "BAoNTWVzaEFsZ29yaXRobRIPCgtVTlNQRUNJRklFRBAAEg8KC0hJR0hSRVNf",
+            "UkdCEAESFAoQSElHSFJFU19TRU1BTlRJQxACEhEKDURFQ0lNQVRFRF9SR0IQ",
+            "AxIWChJERUNJTUFURURfU0VNQU5USUMQBBIMCghURVhUVVJFRBAFEhQKEEhJ",
+            "R0hSRVNfQ09WRVJBR0UQBhIWChJERUNJTUFURURfQ09WRVJBR0UQBxIQCgxN",
+            "RUdBTU9ERV9SR0IQCBIVChFNRUdBTU9ERV9URVhUVVJFRBAJEh4KGkdBVVNT",
+            "SUFOX1NQTEFUX0hJR0hSRVNfUkdCEAoSIwofR0FVU1NJQU5fU1BMQVRfSElH",
+            "SFJFU19TRU1BTlRJQxALEiEKHUdBVVNTSUFOX1NQTEFUX0hJR0hSRVNfTEFC",
+            "RUxTEAwSIQodR0FVU1NJQU5fU1BMQVRfSElHSFJFU19TQ09SRVMQDRIgChxH",
+            "QVVTU0lBTl9TUExBVF9ERUNJTUFURURfUkdCEA4SJQohR0FVU1NJQU5fU1BM",
+            "QVRfREVDSU1BVEVEX1NFTUFOVElDEA8SIwofR0FVU1NJQU5fU1BMQVRfREVD",
+            "SU1BVEVEX0xBQkVMUxAQEiMKH0dBVVNTSUFOX1NQTEFUX0RFQ0lNQVRFRF9T",
+            "Q09SRVMQERIbChdHQVVTU0lBTl9TUExBVF9URVhUVVJFRBASKrEBChVNYW5h",
+            "Z2VkUG9zZVN0YXR1c0NvZGUSGwoXU1RBVFVTX0NPREVfVU5TUEVDSUZJRUQQ",
+            "ABIXChNTVEFUVVNfQ09ERV9TVUNDRVNTEAESFwoTU1RBVFVTX0NPREVfRkFJ",
+            "TFVSRRACEhcKE1NUQVRVU19DT0RFX0lOVkFMSUQQAxIXChNTVEFUVVNfQ09E",
+            "RV9MSU1JVEVEEAQSFwoTU1RBVFVTX0NPREVfUEVORElORxAFKlcKEE1lc2hF",
+            "eHBvcnRGb3JtYXQSEgoORk9STUFUX1VOS05PV04QABIOCgpGT1JNQVRfR0xC",
+            "EAESDwoLRk9STUFUX0dMVEYQAhIOCgpGT1JNQVRfRkJYEAMq3QsKDURhdGFM",
+            "YXllck5hbWUSGwoXREFUQV9MQVlFUl9OQU1FX1VOS05PV04QABI5CjVEQVRB",
+            "X0xBWUVSX05BTUVfREVOU0VfUkVDT05TVFJVQ1RJT05fSElHSFJFU19SR0Jf",
+            "TUVTSBABEj4KOkRBVEFfTEFZRVJfTkFNRV9ERU5TRV9SRUNPTlNUUlVDVElP",
+            "Tl9ISUdIUkVTX1NFTUFOVElDX01FU0gQAhI7CjdEQVRBX0xBWUVSX05BTUVf",
+            "REVOU0VfUkVDT05TVFJVQ1RJT05fREVDSU1BVEVEX1JHQl9NRVNIEAMSQQo9",
+            "REFUQV9MQVlFUl9OQU1FX0RFTlNFX1JFQ09OU1RSVUNUSU9OX0RFQ0lNQU5U",
+            "RURfU0VNQU5USUNfTUVTSBAEEjYKMkRBVEFfTEFZRVJfTkFNRV9ERU5TRV9S",
+            "RUNPTlNUUlVDVElPTl9URVhUVVJFRF9NRVNIEAUSPgo6REFUQV9MQVlFUl9O",
+            "QU1FX0RFTlNFX1JFQ09OU1RSVUNUSU9OX0hJR0hSRVNfQ09WRVJBR0VfTUVT",
+            "SBAGEkEKPURBVEFfTEFZRVJfTkFNRV9ERU5TRV9SRUNPTlNUUlVDVElPTl9E",
+            "RUNJTUFOVEVEX0NPVkVSQUdFX01FU0gQBxIlCiFEQVRBX0xBWUVSX05BTUVf",
+            "TUVHQU1PREVfUkdCX01FU0gQCBIqCiZEQVRBX0xBWUVSX05BTUVfTUVHQU1P",
+            "REVfVEVYVFVSRURfTUVTSBAJEiIKHkRBVEFfTEFZRVJfTkFNRV9HQVVTU0lB",
+            "Tl9TUExBVBAKEigKJERBVEFfTEFZRVJfTkFNRV9HQVVTU0lBTl9TUExBVF9T",
+            "TUFMTBALEiwKKERBVEFfTEFZRVJfTkFNRV9HQVVTU0lBTl9TUExBVF9LRVlG",
+            "UkFNRVMQDBIsCihEQVRBX0xBWUVSX05BTUVfR0FVU1NJQU5fU1BMQVRfVEhV",
+            "TUJOQUlMEA0SJgoiREFUQV9MQVlFUl9OQU1FX0dBVVNTSUFOX1JTRl9TUExB",
+            "VBAOEjAKLERBVEFfTEFZRVJfTkFNRV9HQVVTU0lBTl9SU0ZfU1BMQVRfS0VZ",
+            "RlJBTUVTEA8SMQotREFUQV9MQVlFUl9OQU1FX0dBVVNTSUFOX1JTRl9TUExB",
+            "VF9DT01QUkVTU0VEEBASOwo3REFUQV9MQVlFUl9OQU1FX0dBVVNTSUFOX1JT",
+            "Rl9TUExBVF9DT01QUkVTU0VEX0tFWUZSQU1FUxAREjMKL0RBVEFfTEFZRVJf",
+            "TkFNRV9HQVVTU0lBTl9TUExBVF9ISUdIUkVTX1JHQl9NRVNIEBISOAo0REFU",
+            "QV9MQVlFUl9OQU1FX0dBVVNTSUFOX1NQTEFUX0hJR0hSRVNfU0VNQU5USUNf",
+            "TUVTSBATEjYKMkRBVEFfTEFZRVJfTkFNRV9HQVVTU0lBTl9TUExBVF9ISUdI",
+            "UkVTX0xBQkVMU19NRVNIEBQSNgoyREFUQV9MQVlFUl9OQU1FX0dBVVNTSUFO",
+            "X1NQTEFUX0hJR0hSRVNfU0NPUkVTX01FU0gQFRI1CjFEQVRBX0xBWUVSX05B",
+            "TUVfR0FVU1NJQU5fU1BMQVRfREVDSU1BVEVEX1JHQl9NRVNIEBYSOgo2REFU",
+            "QV9MQVlFUl9OQU1FX0dBVVNTSUFOX1NQTEFUX0RFQ0lNQVRFRF9TRU1BTlRJ",
+            "Q19NRVNIEBcSOAo0REFUQV9MQVlFUl9OQU1FX0dBVVNTSUFOX1NQTEFUX0RF",
+            "Q0lNQVRFRF9MQUJFTFNfTUVTSBAYEjgKNERBVEFfTEFZRVJfTkFNRV9HQVVT",
+            "U0lBTl9TUExBVF9ERUNJTUFURURfU0NPUkVTX01FU0gQGRIwCixEQVRBX0xB",
+            "WUVSX05BTUVfR0FVU1NJQU5fU1BMQVRfVEVYVFVSRURfTUVTSBAaEh8KG0RB",
+            "VEFfTEFZRVJfTkFNRV9HTE9CQUxfUE9TRRAbEhkKFURBVEFfTEFZRVJfTkFN",
+            "RV9TTElDSxAcKncKDk5vZGVPcmlnaW5UeXBlEhcKE09SSUdJTl9UWVBFX1VO",
+            "S05PV04QABIUChBNQVBQSU5HX1BJUEVMSU5FEAESDgoKU0NBTklWRVJTRRAC",
+            "EhQKEERFVklDRV9GUkFNRVdPUksQAxIQCgxGQVNUX01BUFBJTkcQBCpTCghO",
+            "b2RlVHlwZRIVChFVTktOT1dOX05PREVfVFlQRRAAEhkKFU1BUFBJTkdfUElQ",
+            "RUxJTkVfTk9ERRABEhUKEUZBU1RfTUFQUElOR19OT0RFEAIq+wIKE1NlcXVl",
+            "bmNlU3BsaXRSZWFzb24SGAoUU1BMSVRfUkVBU09OX1VOS05PV04QABITCg9F",
+            "TkRfT0ZfU0VRVUVOQ0UQARIZChVNQVhfRElTVEFOQ0VfRVhDRUVERUQQAhIj",
+            "Ch9UUkFDS0lOR19TVEFUVVNfQ0hBTkdFRF9UT19HT09EEAMSJgoiVFJBQ0tJ",
+            "TkdfU1RBVFVTX0NIQU5HRURfVE9fTElNSVRFRBAEEiYKIlRSQUNLSU5HX1NU",
+            "QVRVU19DSEFOR0VEX1RPX0ZBSUxVUkUQBRIaChZUUkFDS0lOR19QT1NJVElP",
+            "Tl9KVU1QEAYSGgoWVFJBQ0tJTkdfUk9UQVRJT05fSlVNUBAHEhEKDU5PVF9T",
+            "UExJVF9ZRVQQCBIWChJUUkFDS0lOR19UT09fU0hPUlQQCRIZChVNQVhfRFVS",
+            "QVRJT05fRVhDRUVERUQQChInCiNUUkFDS0lOR19QT1NJVElPTl9BQ0NFTEVS",
+            "QVRJT05fSlVNUBALKooBCghFZGdlVHlwZRILCgdVTktOT1dOEAASFQoRQ0xV",
+            "U1RFUl9BTElHTk1FTlQQARIMCghUUkFDS0lORxACEgsKB05PX0VER0UQAxIT",
+            "Cg9TUEFDRV9TUExJVFRJTkcQBBIOCgpVU0VSX0JBU0VEEAUSGgoWT05fREVW",
+            "SUNFX0xPQ0FMSVpBVElPThAGKmsKClVwbG9hZFR5cGUSFwoTVVBMT0FEX1RZ",
+            "UEVfVU5LTk9XThAAEh4KGlVQTE9BRF9UWVBFX0dBVVNTSUFOX1NQTEFUEAES",
+            "JAogVVBMT0FEX1RZUEVfR0FVU1NJQU5fU1BMQVRfU01BTEwQAipWChFTY2Fu",
+            "VXBsb2FkQ29udGV4dBIXChNDT05URVhUX1VOU1BFQ0lGSUVEEAASEAoMQ09O",
+            "VEVYVF9BUkRLEAESFgoSQ09OVEVYVF9TQ0FOSVZFUlNFEAIqSwoRU2NhblVw",
+            "bG9hZFVybFR5cGUSEwoPVVJMX1VOU1BFQ0lGSUVEEAASDgoKVVJMX1NJR05F",
+            "RBABEhEKDVVSTF9SRVNVTUFCTEUQAkJTWlFnaXRsYWIubmlhbnRpY2xhYnMu",
+            "Y29tL3JlcG8vbmlhbnRpYy9hcmdlby9sb2NhbGl6YXRpb24tc2VydmljZS9j",
+            "b21tb24vcHJvdG8vdHlwZXNiBnByb3RvMw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(new[] {typeof(global::Protogen.NodeVisibility), typeof(global::Protogen.NodeThumbnailType), typeof(global::Protogen.LocalizationAlgorithm), typeof(global::Protogen.SplatAlgorithm), typeof(global::Protogen.MeshAlgorithm), typeof(global::Protogen.ManagedPoseStatusCode), typeof(global::Protogen.MeshExportFormat), typeof(global::Protogen.DataLayerName), typeof(global::Protogen.NodeOriginType), typeof(global::Protogen.NodeType), typeof(global::Protogen.SequenceSplitReason), typeof(global::Protogen.EdgeType), typeof(global::Protogen.UploadType), typeof(global::Protogen.ScanUploadContext), typeof(global::Protogen.ScanUploadUrlType), }, null, new pbr::GeneratedClrTypeInfo[] {
@@ -381,7 +409,8 @@ namespace Protogen {
             new pbr::GeneratedClrTypeInfo(typeof(global::Protogen.FastNode), global::Protogen.FastNode.Parser, new[]{ "NodeId", "CenterToLocalTransform", "FirstFrame", "LastFrame", "Source", "GlobalPose", "DataLayers", "NodeOriginType", "SplitReason" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Protogen.LocalizationMetadata), global::Protogen.LocalizationMetadata.Parser, new[]{ "Name", "Version" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Protogen.FastEdge), global::Protogen.FastEdge.Parser, new[]{ "EdgeId", "SourceNodeId", "DestinationNodeId", "SourceToDestination", "Source", "LocalizationMetadata", "EdgeType", "Confidence", "SourceDataLayerName", "DestinationDataLayerName" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Protogen.HintImageData), global::Protogen.HintImageData.Parser, new[]{ "LocationData", "CameraPose", "ImageUrl" }, null, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::Protogen.HintImageData), global::Protogen.HintImageData.Parser, new[]{ "LocationData", "CameraPose", "ImageUrl" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Protogen.OSMLocalizationEstimate), global::Protogen.OSMLocalizationEstimate.Parser, new[]{ "Type", "Latitude", "Longitude", "Heading", "Uncertainty" }, null, null, null, null)
           }));
     }
     #endregion
@@ -412,6 +441,8 @@ namespace Protogen {
     [pbr::OriginalName("UNKNOWN_SPLAT_ALGORITHM")] UnknownSplatAlgorithm = 0,
     [pbr::OriginalName("GAUSSIAN_SPLAT")] GaussianSplat = 1,
     [pbr::OriginalName("GAUSSIAN_SPLAT_SMALL")] GaussianSplatSmall = 2,
+    [pbr::OriginalName("GAUSSIAN_RSF_SPLAT")] GaussianRsfSplat = 3,
+    [pbr::OriginalName("GAUSSIAN_RSF_SPLAT_COMPRESSED")] GaussianRsfSplatCompressed = 4,
   }
 
   public enum MeshAlgorithm {
@@ -425,6 +456,15 @@ namespace Protogen {
     [pbr::OriginalName("DECIMATED_COVERAGE")] DecimatedCoverage = 7,
     [pbr::OriginalName("MEGAMODE_RGB")] MegamodeRgb = 8,
     [pbr::OriginalName("MEGAMODE_TEXTURED")] MegamodeTextured = 9,
+    [pbr::OriginalName("GAUSSIAN_SPLAT_HIGHRES_RGB")] GaussianSplatHighresRgb = 10,
+    [pbr::OriginalName("GAUSSIAN_SPLAT_HIGHRES_SEMANTIC")] GaussianSplatHighresSemantic = 11,
+    [pbr::OriginalName("GAUSSIAN_SPLAT_HIGHRES_LABELS")] GaussianSplatHighresLabels = 12,
+    [pbr::OriginalName("GAUSSIAN_SPLAT_HIGHRES_SCORES")] GaussianSplatHighresScores = 13,
+    [pbr::OriginalName("GAUSSIAN_SPLAT_DECIMATED_RGB")] GaussianSplatDecimatedRgb = 14,
+    [pbr::OriginalName("GAUSSIAN_SPLAT_DECIMATED_SEMANTIC")] GaussianSplatDecimatedSemantic = 15,
+    [pbr::OriginalName("GAUSSIAN_SPLAT_DECIMATED_LABELS")] GaussianSplatDecimatedLabels = 16,
+    [pbr::OriginalName("GAUSSIAN_SPLAT_DECIMATED_SCORES")] GaussianSplatDecimatedScores = 17,
+    [pbr::OriginalName("GAUSSIAN_SPLAT_TEXTURED")] GaussianSplatTextured = 18,
   }
 
   public enum ManagedPoseStatusCode {
@@ -458,8 +498,21 @@ namespace Protogen {
     [pbr::OriginalName("DATA_LAYER_NAME_GAUSSIAN_SPLAT_SMALL")] GaussianSplatSmall = 11,
     [pbr::OriginalName("DATA_LAYER_NAME_GAUSSIAN_SPLAT_KEYFRAMES")] GaussianSplatKeyframes = 12,
     [pbr::OriginalName("DATA_LAYER_NAME_GAUSSIAN_SPLAT_THUMBNAIL")] GaussianSplatThumbnail = 13,
-    [pbr::OriginalName("DATA_LAYER_NAME_GLOBAL_POSE")] GlobalPose = 14,
-    [pbr::OriginalName("DATA_LAYER_NAME_SLICK")] Slick = 15,
+    [pbr::OriginalName("DATA_LAYER_NAME_GAUSSIAN_RSF_SPLAT")] GaussianRsfSplat = 14,
+    [pbr::OriginalName("DATA_LAYER_NAME_GAUSSIAN_RSF_SPLAT_KEYFRAMES")] GaussianRsfSplatKeyframes = 15,
+    [pbr::OriginalName("DATA_LAYER_NAME_GAUSSIAN_RSF_SPLAT_COMPRESSED")] GaussianRsfSplatCompressed = 16,
+    [pbr::OriginalName("DATA_LAYER_NAME_GAUSSIAN_RSF_SPLAT_COMPRESSED_KEYFRAMES")] GaussianRsfSplatCompressedKeyframes = 17,
+    [pbr::OriginalName("DATA_LAYER_NAME_GAUSSIAN_SPLAT_HIGHRES_RGB_MESH")] GaussianSplatHighresRgbMesh = 18,
+    [pbr::OriginalName("DATA_LAYER_NAME_GAUSSIAN_SPLAT_HIGHRES_SEMANTIC_MESH")] GaussianSplatHighresSemanticMesh = 19,
+    [pbr::OriginalName("DATA_LAYER_NAME_GAUSSIAN_SPLAT_HIGHRES_LABELS_MESH")] GaussianSplatHighresLabelsMesh = 20,
+    [pbr::OriginalName("DATA_LAYER_NAME_GAUSSIAN_SPLAT_HIGHRES_SCORES_MESH")] GaussianSplatHighresScoresMesh = 21,
+    [pbr::OriginalName("DATA_LAYER_NAME_GAUSSIAN_SPLAT_DECIMATED_RGB_MESH")] GaussianSplatDecimatedRgbMesh = 22,
+    [pbr::OriginalName("DATA_LAYER_NAME_GAUSSIAN_SPLAT_DECIMATED_SEMANTIC_MESH")] GaussianSplatDecimatedSemanticMesh = 23,
+    [pbr::OriginalName("DATA_LAYER_NAME_GAUSSIAN_SPLAT_DECIMATED_LABELS_MESH")] GaussianSplatDecimatedLabelsMesh = 24,
+    [pbr::OriginalName("DATA_LAYER_NAME_GAUSSIAN_SPLAT_DECIMATED_SCORES_MESH")] GaussianSplatDecimatedScoresMesh = 25,
+    [pbr::OriginalName("DATA_LAYER_NAME_GAUSSIAN_SPLAT_TEXTURED_MESH")] GaussianSplatTexturedMesh = 26,
+    [pbr::OriginalName("DATA_LAYER_NAME_GLOBAL_POSE")] GlobalPose = 27,
+    [pbr::OriginalName("DATA_LAYER_NAME_SLICK")] Slick = 28,
   }
 
   public enum NodeOriginType {
@@ -16746,6 +16799,344 @@ namespace Protogen {
           }
           case 26: {
             ImageUrl = input.ReadString();
+            break;
+          }
+        }
+      }
+    }
+    #endif
+
+  }
+
+  [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
+  public sealed partial class OSMLocalizationEstimate : pb::IMessage<OSMLocalizationEstimate>
+  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      , pb::IBufferMessage
+  #endif
+  {
+    private static readonly pb::MessageParser<OSMLocalizationEstimate> _parser = new pb::MessageParser<OSMLocalizationEstimate>(() => new OSMLocalizationEstimate());
+    private pb::UnknownFieldSet _unknownFields;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pb::MessageParser<OSMLocalizationEstimate> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Protogen.TypesReflection.Descriptor.MessageTypes[51]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public OSMLocalizationEstimate() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public OSMLocalizationEstimate(OSMLocalizationEstimate other) : this() {
+      type_ = other.type_;
+      latitude_ = other.latitude_;
+      longitude_ = other.longitude_;
+      heading_ = other.heading_;
+      uncertainty_ = other.uncertainty_;
+      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public OSMLocalizationEstimate Clone() {
+      return new OSMLocalizationEstimate(this);
+    }
+
+    /// <summary>Field number for the "type" field.</summary>
+    public const int TypeFieldNumber = 1;
+    private string type_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string Type {
+      get { return type_; }
+      set {
+        type_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
+    /// <summary>Field number for the "latitude" field.</summary>
+    public const int LatitudeFieldNumber = 2;
+    private double latitude_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public double Latitude {
+      get { return latitude_; }
+      set {
+        latitude_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "longitude" field.</summary>
+    public const int LongitudeFieldNumber = 3;
+    private double longitude_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public double Longitude {
+      get { return longitude_; }
+      set {
+        longitude_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "heading" field.</summary>
+    public const int HeadingFieldNumber = 4;
+    private double heading_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public double Heading {
+      get { return heading_; }
+      set {
+        heading_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "uncertainty" field.</summary>
+    public const int UncertaintyFieldNumber = 5;
+    private double uncertainty_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public double Uncertainty {
+      get { return uncertainty_; }
+      set {
+        uncertainty_ = value;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override bool Equals(object other) {
+      return Equals(other as OSMLocalizationEstimate);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Equals(OSMLocalizationEstimate other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (Type != other.Type) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.Equals(Latitude, other.Latitude)) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.Equals(Longitude, other.Longitude)) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.Equals(Heading, other.Heading)) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.Equals(Uncertainty, other.Uncertainty)) return false;
+      return Equals(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (Type.Length != 0) hash ^= Type.GetHashCode();
+      if (Latitude != 0D) hash ^= pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.GetHashCode(Latitude);
+      if (Longitude != 0D) hash ^= pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.GetHashCode(Longitude);
+      if (Heading != 0D) hash ^= pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.GetHashCode(Heading);
+      if (Uncertainty != 0D) hash ^= pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.GetHashCode(Uncertainty);
+      if (_unknownFields != null) {
+        hash ^= _unknownFields.GetHashCode();
+      }
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void WriteTo(pb::CodedOutputStream output) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      output.WriteRawMessage(this);
+    #else
+      if (Type.Length != 0) {
+        output.WriteRawTag(10);
+        output.WriteString(Type);
+      }
+      if (Latitude != 0D) {
+        output.WriteRawTag(17);
+        output.WriteDouble(Latitude);
+      }
+      if (Longitude != 0D) {
+        output.WriteRawTag(25);
+        output.WriteDouble(Longitude);
+      }
+      if (Heading != 0D) {
+        output.WriteRawTag(33);
+        output.WriteDouble(Heading);
+      }
+      if (Uncertainty != 0D) {
+        output.WriteRawTag(41);
+        output.WriteDouble(Uncertainty);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(output);
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+      if (Type.Length != 0) {
+        output.WriteRawTag(10);
+        output.WriteString(Type);
+      }
+      if (Latitude != 0D) {
+        output.WriteRawTag(17);
+        output.WriteDouble(Latitude);
+      }
+      if (Longitude != 0D) {
+        output.WriteRawTag(25);
+        output.WriteDouble(Longitude);
+      }
+      if (Heading != 0D) {
+        output.WriteRawTag(33);
+        output.WriteDouble(Heading);
+      }
+      if (Uncertainty != 0D) {
+        output.WriteRawTag(41);
+        output.WriteDouble(Uncertainty);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(ref output);
+      }
+    }
+    #endif
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int CalculateSize() {
+      int size = 0;
+      if (Type.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(Type);
+      }
+      if (Latitude != 0D) {
+        size += 1 + 8;
+      }
+      if (Longitude != 0D) {
+        size += 1 + 8;
+      }
+      if (Heading != 0D) {
+        size += 1 + 8;
+      }
+      if (Uncertainty != 0D) {
+        size += 1 + 8;
+      }
+      if (_unknownFields != null) {
+        size += _unknownFields.CalculateSize();
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(OSMLocalizationEstimate other) {
+      if (other == null) {
+        return;
+      }
+      if (other.Type.Length != 0) {
+        Type = other.Type;
+      }
+      if (other.Latitude != 0D) {
+        Latitude = other.Latitude;
+      }
+      if (other.Longitude != 0D) {
+        Longitude = other.Longitude;
+      }
+      if (other.Heading != 0D) {
+        Heading = other.Heading;
+      }
+      if (other.Uncertainty != 0D) {
+        Uncertainty = other.Uncertainty;
+      }
+      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(pb::CodedInputStream input) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      input.ReadRawMessage(this);
+    #else
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            break;
+          case 10: {
+            Type = input.ReadString();
+            break;
+          }
+          case 17: {
+            Latitude = input.ReadDouble();
+            break;
+          }
+          case 25: {
+            Longitude = input.ReadDouble();
+            break;
+          }
+          case 33: {
+            Heading = input.ReadDouble();
+            break;
+          }
+          case 41: {
+            Uncertainty = input.ReadDouble();
+            break;
+          }
+        }
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+            break;
+          case 10: {
+            Type = input.ReadString();
+            break;
+          }
+          case 17: {
+            Latitude = input.ReadDouble();
+            break;
+          }
+          case 25: {
+            Longitude = input.ReadDouble();
+            break;
+          }
+          case 33: {
+            Heading = input.ReadDouble();
+            break;
+          }
+          case 41: {
+            Uncertainty = input.ReadDouble();
             break;
           }
         }

@@ -8,6 +8,7 @@ using Niantic.Lightship.AR.Subsystems.Playback;
 using Unity.EditorCoroutines.Editor;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Video;
 
 namespace Niantic.Lightship.AR.Editor
 {
@@ -48,6 +49,14 @@ namespace Niantic.Lightship.AR.Editor
 
         protected abstract ILightshipPlaybackSettings PlaybackSettings { get; }
 
+        /// <summary>
+        /// Marks the underlying ScriptableObject as dirty to ensure changes are saved
+        /// </summary>
+        protected virtual void MarkSettingsDirty()
+        {
+            EditorUtility.SetDirty(LightshipSettings.Instance);
+        }
+
         private PlaybackDataset _dataset;
         private Texture2D[] _frameTextures;
         private bool _previewTexturesLoaded;
@@ -74,6 +83,12 @@ namespace Niantic.Lightship.AR.Editor
 
         private EditorCoroutine _loadFrameTexturesCoroutine;
 
+        private VideoPlayer _videoPlayer;
+        private RenderTexture _videoRenderTexture;
+        private GameObject _videoPlayerObject;
+        private bool _isExtractingVideo = false;
+        private bool _frameReady = false;
+
         private Texture2D _backgroundTexture;
 
         private Texture2D _overlayTexture;
@@ -85,6 +100,7 @@ namespace Niantic.Lightship.AR.Editor
             if (newUsePlayback != currUsedPlayback)
             {
                 PlaybackSettings.UsePlayback = newUsePlayback;
+                MarkSettingsDirty();
             }
 
             EditorGUI.BeginDisabledGroup(!newUsePlayback);
@@ -98,6 +114,10 @@ namespace Niantic.Lightship.AR.Editor
                     _allTexturesLoaded = false;
                     _onlyLoadPreviews = false;
                     _frameTextures = null;
+
+                    // Clean up video extraction if in progress
+                    CleanupVideoPlayer();
+                    _isExtractingVideo = false;
                 }
                 else if(_dataset == null || wasPathUpdated)
                 {
@@ -110,6 +130,11 @@ namespace Niantic.Lightship.AR.Editor
                     {
                         EditorCoroutineUtility.StopCoroutine(_loadFrameTexturesCoroutine);
                     }
+
+                    // Clean up video extraction if in progress
+                    CleanupVideoPlayer();
+                    _isExtractingVideo = false;
+
                     _loadFrameTexturesCoroutine = EditorCoroutineUtility.StartCoroutine(LoadFrameTextures(), this);
                 }
 
@@ -130,6 +155,7 @@ namespace Niantic.Lightship.AR.Editor
                 if (changedRunManually != currRunManually)
                 {
                     PlaybackSettings.RunManually = changedRunManually;
+                    MarkSettingsDirty();
                 }
 
                 var currLoopInfinitely = PlaybackSettings.LoopInfinitely;
@@ -137,6 +163,7 @@ namespace Niantic.Lightship.AR.Editor
                 if (changedLoopInfinitely != currLoopInfinitely)
                 {
                     PlaybackSettings.LoopInfinitely = changedLoopInfinitely;
+                    MarkSettingsDirty();
                 }
             }
             EditorGUI.EndDisabledGroup();
@@ -153,6 +180,7 @@ namespace Niantic.Lightship.AR.Editor
             if (changedPath != currPath)
             {
                 PlaybackSettings.PlaybackDatasetPath = changedPath;
+                MarkSettingsDirty();
                 wasPathUpdated = true;
             }
 
@@ -175,6 +203,7 @@ namespace Niantic.Lightship.AR.Editor
                     if (browsedPath.Length > 0)
                     {
                         PlaybackSettings.PlaybackDatasetPath = browsedPath;
+                        MarkSettingsDirty();
                     }
 
                     wasPathUpdated = true;
@@ -264,7 +293,11 @@ namespace Niantic.Lightship.AR.Editor
                         // Overlays
                         DrawOverlays(timeline, startOverlayWidth, overlayStyle, endOverlayWidth);
 
-                        if(!_allTexturesLoaded)
+                        if(_isExtractingVideo)
+                        {
+                            EditorGUILayout.HelpBox($"Extracting frames from video... ({_loadProgress:F2}%)", MessageType.Info);
+                        }
+                        else if(!_allTexturesLoaded)
                         {
                             EditorGUILayout.HelpBox($"Loading playback dataset... ({_loadProgress:F2}%)", MessageType.Info);
                         }
@@ -289,6 +322,7 @@ namespace Niantic.Lightship.AR.Editor
             {
                 PlaybackSettings.StartFrame = (int)startFrame;
                 PlaybackSettings.EndFrame = (int)endFrame;
+                MarkSettingsDirty();
             }
         }
 
@@ -548,6 +582,8 @@ namespace Niantic.Lightship.AR.Editor
                 yield break;
             }
 
+            yield return ExtractVideoFramesIfNeeded();
+
             // If the dataset is too long, only load the previews
             int frameCount = _dataset.FrameCount;
             if (_dataset.FrameCount > PreviewLengthThreshold)
@@ -579,6 +615,160 @@ namespace Niantic.Lightship.AR.Editor
 
             // If dataset.FrameCount doesn't evenly divide by PreviewFrameCount, ensure the remainder corresponds to the final preview frame
             return Math.Clamp((datasetFrame / framesToSkip), 0, PreviewFrameCount - 1);
+        }
+
+        private IEnumerator ExtractVideoFramesIfNeeded()
+        {
+            if (_dataset == null || _dataset.FrameCount == 0)
+                yield break;
+
+            bool anyFramesMissing = false;
+            foreach (var frame in _dataset.Frames)
+            {
+                var imagePath = Path.Combine(PlaybackSettings.PlaybackDatasetPath, frame.ImagePath);
+                if (!File.Exists(imagePath))
+                {
+                    anyFramesMissing = true;
+                    break;
+                }
+            }
+
+            if (!anyFramesMissing)
+            {
+                yield break;
+            }
+
+            var videoPath = Path.Combine(PlaybackSettings.PlaybackDatasetPath, "video.mp4");
+            if (!File.Exists(videoPath))
+            {
+                yield break;
+            }
+
+            yield return ExtractAllVideoFrames(videoPath);
+        }
+
+        private IEnumerator ExtractAllVideoFrames(string videoPath)
+        {
+            _isExtractingVideo = true;
+
+            SetupVideoPlayer(videoPath);
+            _videoPlayer.Prepare();
+            while (!_videoPlayer.isPrepared)
+            {
+                yield return null;
+            }
+
+            int videoWidth = (int)_videoPlayer.width;
+            int videoHeight = (int)_videoPlayer.height;
+
+            if (_videoRenderTexture != null)
+                _videoRenderTexture.Release();
+
+            _videoRenderTexture = new RenderTexture(videoWidth, videoHeight, 0);
+            _videoPlayer.targetTexture = _videoRenderTexture;
+
+            for (int frameIndex = 0; frameIndex < _dataset.FrameCount; frameIndex++)
+            {
+                yield return ExtractSingleVideoFrame(frameIndex);
+
+                _loadProgress = (float)frameIndex / _dataset.FrameCount * 100.0f;
+
+                // Yield periodically for UI updates
+                if (frameIndex % 5 == 0)
+                {
+                    yield return null;
+                }
+            }
+
+            // Cleanup
+            CleanupVideoPlayer();
+            _isExtractingVideo = false;
+        }
+
+        private void SetupVideoPlayer(string videoPath)
+        {
+            _videoPlayerObject = new GameObject("VideoFrameExtractor");
+            _videoPlayerObject.hideFlags = HideFlags.HideAndDontSave;
+            _videoPlayer = _videoPlayerObject.AddComponent<VideoPlayer>();
+            _videoPlayer.source = VideoSource.Url;
+            _videoPlayer.url = videoPath;
+            _videoPlayer.renderMode = VideoRenderMode.RenderTexture;
+            _videoPlayer.isLooping = false;
+            _videoPlayer.playOnAwake = false;
+            _videoPlayer.skipOnDrop = false;
+            _videoPlayer.sendFrameReadyEvents = true;
+            _videoPlayer.frameReady += OnFrameReady;
+        }
+
+        private void OnFrameReady(VideoPlayer player, long frameIdx)
+        {
+            _frameReady = true;
+        }
+
+        private IEnumerator ExtractSingleVideoFrame(int frameIndex)
+        {
+            _frameReady = false;
+            if (frameIndex == 0)
+            {
+                _videoPlayer.Play();
+                _videoPlayer.Pause();
+            }
+            _videoPlayer.frame = frameIndex;
+            while (!_frameReady)
+            {
+                yield return null;
+            }
+            RenderTexture.active = _videoRenderTexture;
+            Texture2D frameTexture = new Texture2D(_videoRenderTexture.width, _videoRenderTexture.height, TextureFormat.RGB24, false);
+            frameTexture.ReadPixels(new Rect(0, 0, _videoRenderTexture.width, _videoRenderTexture.height), 0, 0);
+            frameTexture.Apply();
+            RenderTexture.active = null;
+
+            byte[] jpgData = frameTexture.EncodeToJPG(95);
+
+            var frame = _dataset.Frames[frameIndex];
+            var imagePath = Path.Combine(PlaybackSettings.PlaybackDatasetPath, frame.ImagePath);
+
+            var directory = Path.GetDirectoryName(imagePath);
+            if (!Directory.Exists(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
+            File.WriteAllBytes(imagePath, jpgData);
+            if (Application.isEditor) {
+                UnityEngine.Object.DestroyImmediate(frameTexture);
+            } else {
+                UnityEngine.Object.Destroy(frameTexture);
+            }
+        }
+
+        private void CleanupVideoPlayer()
+        {
+            if (_videoPlayer != null)
+            {
+                _videoPlayer.frameReady -= OnFrameReady;
+            }
+
+            if (_videoRenderTexture != null)
+            {
+                _videoRenderTexture.Release();
+                _videoRenderTexture = null;
+            }
+
+            if (_videoPlayerObject != null)
+            {
+                if (Application.isEditor) {
+                    UnityEngine.Object.DestroyImmediate(_videoPlayerObject);
+                } else {
+                    UnityEngine.Object.Destroy(_videoPlayerObject);
+                }
+
+                _videoPlayerObject = null;
+                _videoPlayer = null;
+            }
+
+            _frameReady = false;
         }
     }
 }

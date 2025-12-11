@@ -140,10 +140,7 @@ namespace Niantic.Lightship.AR.Occlusion
             }
 
 #if MODULE_URP_ENABLED
-            if( GpuTextureHandle != null)
-            {
-                GpuTextureHandle.Release();
-            }
+            GpuTextureHandle?.Release();
 #endif
         }
 
@@ -178,7 +175,8 @@ namespace Niantic.Lightship.AR.Occlusion
             if (cam == _camera)
             {
                 // Configure the render pass
-                _renderPass.Setup(Material, GpuTexture, GpuTextureHandle);
+                _renderPass.Material = Material;
+                _renderPass.Target = GpuTextureHandle;
 
                 // Enqueue the render pass
                 cam.GetUniversalAdditionalCameraData().scriptableRenderer.EnqueuePass(_renderPass);

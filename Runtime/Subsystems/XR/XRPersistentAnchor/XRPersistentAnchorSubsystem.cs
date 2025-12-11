@@ -242,7 +242,7 @@ namespace Niantic.Lightship.AR.XRSubsystems
         /// <summary>
         /// Convert a Unity <see cref="Pose"/> to GPS using the provider with double precision.
         /// </summary>
-        public VpsGraphStatus TryGetDevicePoseAsGps
+        public VpsGraphOperationError TryGetDevicePoseAsGeolocation
         (
             Pose pose,
             out double latitude,
@@ -253,7 +253,7 @@ namespace Niantic.Lightship.AR.XRSubsystems
             out double heading
         )
         {
-            return provider.TryGetDevicePoseAsGps(
+            return provider.TryGetDevicePoseAsGeolocation(
                 pose,
                 out latitude,
                 out longitude,
@@ -343,7 +343,7 @@ namespace Niantic.Lightship.AR.XRSubsystems
             /// Provider converts a Unity pose to GPS with double precision. Implementations should flatten the TRS
             /// into a float[16] in column-major, ARDK coordinate space before invoking native.
             /// </summary>
-            public virtual VpsGraphStatus TryGetDevicePoseAsGps
+            public virtual VpsGraphOperationError TryGetDevicePoseAsGeolocation
             (
                 Pose pose,
                 out double latitude,
@@ -360,7 +360,7 @@ namespace Niantic.Lightship.AR.XRSubsystems
                 verticalAccuracy = default;
                 horizontalAccuracy = default;
                 heading = default;
-                return VpsGraphStatus.FeatureUnavailable;
+                return VpsGraphOperationError.NotInitialized;
             }
 
             /// <summary>

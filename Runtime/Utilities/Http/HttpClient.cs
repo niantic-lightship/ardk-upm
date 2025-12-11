@@ -9,7 +9,6 @@ using UnityEngine;
 using Niantic.Lightship.AR.Utilities.Logging;
 using UnityEngine.Networking;
 using Niantic.Protobuf;
-using Niantic.Protobuf.Reflection;
 
 namespace Niantic.Lightship.AR.Utilities.Http
 {
@@ -21,6 +20,9 @@ namespace Niantic.Lightship.AR.Utilities.Http
     /// </summary>
     internal static class HttpClient
     {
+        internal const string ContentTypeJson = "application/json";
+        private const string ContentTypeOctetStream = "application/octet-stream";
+
         /// <summary>
         /// Send an async POST request with the specified Request/Response types
         /// A JsonUtility deserializer will be used to parse the output
@@ -28,6 +30,7 @@ namespace Niantic.Lightship.AR.Utilities.Http
         /// <param name="uri">URI to address the request to</param>
         /// <param name="request">Serializable request object</param>
         /// <param name="headers">Headers to send</param>
+        /// <param name="saveResponseHeaders">Array of response headers to save</param>
         /// <typeparam name="TRequest">Type of request for serialization</typeparam>
         /// <typeparam name="TResponse">Type of response for deserialization</typeparam>
         /// <returns></returns>
@@ -37,18 +40,13 @@ namespace Niantic.Lightship.AR.Utilities.Http
         (
             string uri,
             TRequest request,
-            Dictionary<string, string> headers = null
+            Dictionary<string, string> headers = null,
+            string[] saveResponseHeaders = null
         )
             where TRequest : class
             where TResponse : class
         {
             string jsonRequest;
-
-            // If the response type is a proto, use SendRequestAsyncProto instead
-            if (IsProtobufMessageType<TResponse>())
-            {
-                throw new InvalidOperationException("Protobuf response type is not supported, use SendRequestAsyncProto instead");
-            }
 
             // Check if TRequest is a protobuf message (implements IMessage)
             if (request is IMessage protoRequest)
@@ -68,7 +66,29 @@ namespace Niantic.Lightship.AR.Utilities.Http
 
             byte[] data = Encoding.UTF8.GetBytes(jsonRequest);
 
-            return await SendRequestAsync<TResponse>(uri, data, "POST", "application/json", headers);
+            return await SendRequestAsync<TResponse>(uri, data, "POST", ContentTypeJson, headers, saveResponseHeaders);
+        }
+
+        /// <summary>
+        /// Send an async POST request with the specified Response types (no request body)
+        /// A JsonUtility deserializer will be used to parse the output
+        /// </summary>
+        /// <param name="uri">URI to address the request to</param>
+        /// <param name="headers">Headers to send</param>
+        /// <param name="saveResponseHeaders">Array of response headers to save</param>
+        /// <typeparam name="TResponse">Type of response for deserialization</typeparam>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException">TResponse is a Protobuf</exception>
+        internal static async Task<HttpResponse<TResponse>> SendPostAsync<TResponse>
+        (
+            string uri,
+            Dictionary<string, string> headers = null,
+            string[] saveResponseHeaders = null
+        )
+            where TResponse : class
+        {
+            return await SendRequestAsync<TResponse>(
+                uri, Array.Empty<byte>(), "POST", ContentTypeJson, headers, saveResponseHeaders);
         }
 
         /// <summary>
@@ -88,7 +108,7 @@ namespace Niantic.Lightship.AR.Utilities.Http
             string uri,
             TRequest request,
             Dictionary<string, string> headers = null,
-            string contentType = "application/json"
+            string contentType = ContentTypeJson
         )
             where TRequest : class
             where TResponse : class, IMessage<TResponse>, new()
@@ -155,11 +175,18 @@ namespace Niantic.Lightship.AR.Utilities.Http
             string uri,
             byte[] requestBody,
             string method,
-            string contentType = "application/json",
-            Dictionary<string, string> headers = null
+            string contentType = ContentTypeJson,
+            Dictionary<string, string> headers = null,
+            string[] saveResponseHeaders = null
         )
         where TResponse : class
         {
+            // If the response type is a proto, use SendRequestAsyncProto instead
+            if (HttpUtility.IsProtobufMessageType<TResponse>())
+            {
+                throw new InvalidOperationException("Protobuf response type is not supported, use SendRequestAsyncProto instead");
+            }
+
             using UnityWebRequest webRequest = new UnityWebRequest(uri, method);
             webRequest.uploadHandler = new UploadHandlerRaw(requestBody);
             webRequest.uploadHandler.contentType = contentType;
@@ -183,39 +210,40 @@ namespace Niantic.Lightship.AR.Utilities.Http
             // Only attempt to parse response content when request was successful
             if (webRequest.result == UnityWebRequest.Result.Success && !string.IsNullOrEmpty(responseText))
             {
-                // Check if TResponse is a protobuf message type. This method isn't made to handle protobufs
-                //   cleanly, but if we end up here, use reflection as a last resort.
-                if (IsProtobufMessageType<TResponse>())
+                response = HttpUtility.ParseResponse<TResponse>(responseText);
+                if (response != null)
                 {
-                    try
-                    {
-                        var parser = new JsonParser(JsonParser.Settings.Default);
-                        response = (TResponse)parser.Parse(responseText, GetProtobufMessageDescriptor<TResponse>());
-                        responseText = String.Empty;
-                    }
-                    catch (Exception ex)
-                    {
-                        response = null;
-                    }
-                }
-                else
-                {
-                    try
-                    {
-                        // Use Unity's JsonUtility for regular serializable types
-                        response = JsonUtility.FromJson<TResponse>(responseText);
-                        responseText = String.Empty;
-                    }
-                    catch (Exception ex)
-                    {
-                        // If JSON parsing fails, leave response as null
-                        response = null;
-                    }
+                    // Only save the raw text if we were unable to parse the response
+                    responseText = String.Empty;
                 }
             }
 
             var status = ResponseStatusTranslator.FromHttpStatus(webRequest.result, webRequest.responseCode);
-            return new HttpResponse<TResponse>(status, response, webRequest.responseCode, responseText);
+            var responseHeaders = SaveResponseHeaders(webRequest, saveResponseHeaders);
+            return new HttpResponse<TResponse>(status, response, webRequest.responseCode, responseText, responseHeaders);
+        }
+
+        private static Dictionary<string, string> SaveResponseHeaders(
+            UnityWebRequest webRequest, string[] saveResponseHeaders)
+        {
+            // Build a dictionary of the requested response headers. If the header is not found, it is skipped.
+            // If the request failed or did not yet complete, the dictionary will be empty.
+            var responseHeaders = new Dictionary<string, string>();
+            if (saveResponseHeaders != null)
+            {
+                foreach (var headerName in saveResponseHeaders)
+                {
+                    var header = webRequest.GetResponseHeader(headerName);
+                    // GetResponseHeader returns null if the header is not found. The header might exist but be empty
+                    // (hence we don't use IsNullOrEmpty to check)
+                    if (header != null)
+                    {
+                        responseHeaders.Add(headerName, header);
+                    }
+                }
+            }
+
+            return responseHeaders;
         }
 
         // Helper to process request/response for proto responses
@@ -224,7 +252,7 @@ namespace Niantic.Lightship.AR.Utilities.Http
             string uri,
             byte[] requestBody,
             string method,
-            string contentType = "application/json",
+            string contentType = ContentTypeJson,
             Dictionary<string, string> headers = null
         )
             where TResponse : class, IMessage<TResponse>, new()
@@ -257,12 +285,12 @@ namespace Niantic.Lightship.AR.Utilities.Http
                 try
                 {
                     var parser = new MessageParser<TResponse>(() => new TResponse());
-                    if (contentType.Equals("application/json"))
+                    if (contentType.Equals(ContentTypeJson))
                     {
                         response = parser.ParseJson(responseText);
                         responseText = String.Empty;
                     }
-                    else if (contentType.Equals("application/octet-stream"))
+                    else if (contentType.Equals(ContentTypeOctetStream))
                     {
                         response = parser.ParseFrom(webRequest.downloadHandler.data);
                         responseText = String.Empty;
@@ -283,38 +311,11 @@ namespace Niantic.Lightship.AR.Utilities.Http
             var status = ResponseStatusTranslator.FromHttpStatus(webRequest.result, webRequest.responseCode);
             return new HttpResponse<TResponse>(status, response, webRequest.responseCode, responseText);
         }
-
-        // Checks if a type is a protobuf. Useful when working with generics with no object access.
-        private static bool IsProtobufMessageType<T>()
-        {
-            return typeof(IMessage).IsAssignableFrom(typeof(T));
-        }
-
-        // Use reflection to try to grab the proto descriptor from a type.
-        private static MessageDescriptor GetProtobufMessageDescriptor<T>()
-        {
-            var type = typeof(T);
-            var descriptorProperty = type.GetProperty("Descriptor",
-                System.Reflection.BindingFlags.Public |
-                System.Reflection.BindingFlags.Static);
-
-            if (descriptorProperty != null)
-            {
-                var prop = descriptorProperty.GetValue(null);
-                if (prop is MessageDescriptor descriptor)
-                {
-                    return descriptor;
-                }
-            }
-
-            throw new InvalidOperationException($"Unable to get protobuf descriptor for type {type.Name}");
-        }
     }
 
-    internal class HttpResponse<TResponse>
+    internal class HttpResponseBase
     {
         public ResponseStatus Status { get; set; }
-        public TResponse Data { get; }
 
         /// <summary>
         /// Raw response text from the server, available when Data parsing fails
@@ -324,12 +325,28 @@ namespace Niantic.Lightship.AR.Utilities.Http
 
         public long HttpStatusCode { get; }
 
-        public HttpResponse(ResponseStatus status, TResponse data, long httpStatusCode, string rawText = null)
+        public Dictionary<string, string> Headers { get; }
+
+        protected HttpResponseBase(
+            ResponseStatus status, long httpStatusCode, string rawText, Dictionary<string, string> headers)
         {
             Status = status;
-            Data = data;
             HttpStatusCode = httpStatusCode;
             RawText = rawText;
+            Headers = headers;
+        }
+    }
+
+    internal class HttpResponse<TResponse> : HttpResponseBase
+    {
+        public TResponse Data { get; }
+
+        public HttpResponse(
+            ResponseStatus status, TResponse data, long httpStatusCode,
+            string rawText = null, Dictionary<string, string> headers = null)
+            : base(status, httpStatusCode, rawText, headers)
+        {
+            Data = data;
         }
     }
 

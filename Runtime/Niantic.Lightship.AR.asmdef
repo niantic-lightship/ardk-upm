@@ -12,7 +12,8 @@
         "Unity.RenderPipelines.Universal.Runtime",
         "Unity.RenderPipelines.Core.Runtime",
         "Unity.XR.OpenXR",
-        "Unity.XR.Simulation"
+        "Unity.XR.Simulation",
+        "Unity.Burst"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
@@ -32,6 +33,11 @@
             "define": "MODULE_URP_ENABLED"
         },
         {
+            "name": "com.unity.render-pipelines.universal",
+            "expression": "",
+            "define": "UNITY_RENDERPIPELINE_URP"
+        },
+        {
             "name": "com.unity.xr.arfoundation",
             "expression": "6.0.0",
             "define": "ARF_6_0_OR_NEWER"
@@ -42,9 +48,14 @@
             "define": "ARF_6_1_OR_NEWER"
         },
         {
+            "name": "com.unity.xr.arfoundation",
+            "expression": "6.2.0",
+            "define": "ARF_6_2_OR_NEWER"
+        },
+        {
             "name": "com.unity.render-pipelines.universal",
-            "expression": "",
-            "define": "UNITY_RENDERPIPELINE_URP"
+            "expression": "17.0.0",
+            "define": "MODULE_URP_17_OR_NEWER"
         }
     ],
     "noEngineReferences": false

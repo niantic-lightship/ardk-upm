@@ -10,10 +10,11 @@ using Niantic.Lightship.AR.Loader;
 using Niantic.Lightship.AR.PersistentAnchors.Spaces;
 using Niantic.Lightship.AR.Utilities;
 using Niantic.Lightship.AR.Utilities.Http;
-
+using Protogen;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.XR.ARSubsystems;
+using Vector3 = UnityEngine.Vector3;
 
 namespace Niantic.Lightship.AR.Subsystems
 {
@@ -137,12 +138,16 @@ namespace Niantic.Lightship.AR.Subsystems
             // Check the total download size of the meshes
             // If maxDownloadSizeKb is set, the total download size will be checked before downloading any meshes,
             //  and no download will be started if the total download size exceeds maxDownloadSizeKb
-            var totalDownloadSize = await GetTotalDownloadSize(listOfNodesWithMeshes);
-            if (maxDownloadSizeKb != 0 && totalDownloadSize > maxDownloadSizeKb * KB)
+
+            if (maxDownloadSizeKb != 0)
             {
-                // This class uses Debug instead of ARLog to support editor logging without Lightship Native loaded
-                Debug.LogError("Total download size exceeds max download size");
-                return null;
+                var totalDownloadSize = await GetTotalDownloadSize(listOfNodesWithMeshes);
+                if (totalDownloadSize > maxDownloadSizeKb * KB)
+                {
+                    // This class uses Debug instead of ARLog to support editor logging without Lightship Native loaded
+                    Debug.LogError("Total download size exceeds max download size");
+                    return null;
+                }
             }
 
             return listOfNodesWithMeshes;
@@ -296,7 +301,9 @@ namespace Niantic.Lightship.AR.Subsystems
                 new MeshDownloadRequestResponse.GetGraphRequest
                 {
                     requestIdentifier = GenerateRequestIdentifier(),
-                    targetGraphNode = targetGraphNode
+                    targetGraphNode = targetGraphNode,
+                    radius = 550,
+                    maxNodes = 700
                 };
 
             var endpoint = GetUrlForMethod(graphMethod);
@@ -336,14 +343,20 @@ namespace Niantic.Lightship.AR.Subsystems
 
                 // Get the space of the target node
                 String space = "";
+                double lat = 0;
+                double lon = 0;
 
                 // Populate a temporary list of nodes in the space of the target node
                 var nodesInSpaceList = new List<string>();
+                var nodeGpsDict = new Dictionary<string, (double, double)>();
                 foreach (var node in response.nodes)
                 {
+                    nodeGpsDict[node.identifier] = (node.gps.latitude, node.gps.longitude);
                     if (node.identifier.Equals(nodeId))
                     {
                         space = node.spaceIdentifier;
+                        lat = node.gps.latitude;
+                        lon = node.gps.longitude;
                     }
                 }
 
@@ -358,6 +371,8 @@ namespace Niantic.Lightship.AR.Subsystems
                             space,
                             Vector3.zero,
                             new Vector4(0, 0, 0, 1),
+                            lat,
+                            lon,
                             true
                         )
                     );
@@ -395,7 +410,9 @@ namespace Niantic.Lightship.AR.Subsystems
                             edge.source,
                             space,
                             edge.sourceToDestination.translation,
-                            edge.sourceToDestination.rotation
+                            edge.sourceToDestination.rotation,
+                            nodeGpsDict[edge.source].Item1,
+                            nodeGpsDict[edge.source].Item2
                         )
                     );
 
@@ -406,14 +423,17 @@ namespace Niantic.Lightship.AR.Subsystems
                 // Add the last remaining node (origin of the space)
                 if (nodesInSpaceList.Count == 1)
                 {
+                    var id = nodesInSpaceList.First();
                     nodesToLoad.Add
                     (
                         new NodeToLoad
                         (
-                            nodesInSpaceList.First(),
+                            id,
                             space,
                             Vector3.zero,
                             new Vector4(0, 0, 0, 1),
+                            nodeGpsDict[id].Item1,
+                            nodeGpsDict[id].Item2,
                             true
                         )
                     );
@@ -476,7 +496,9 @@ namespace Niantic.Lightship.AR.Subsystems
                                 nodeId,
                                 nodesInNewSpace.First().spaceId,
                                 transform.translation,
-                                transform.rotation
+                                transform.rotation,
+                                0, // TODO: Replace with actual GPS
+                                0 // TODO: Replace with actual GPS
                             )
                         );
 

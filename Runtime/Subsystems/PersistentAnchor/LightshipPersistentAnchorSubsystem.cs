@@ -99,7 +99,7 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
             }
 
             [Experimental]
-            public override VpsGraphStatus TryGetDevicePoseAsGps
+            public override VpsGraphOperationError TryGetDevicePoseAsGeolocation
             (
                 Pose pose,
                 out double latitude,
@@ -119,12 +119,15 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
 
                 if (!_nativeProviderHandle.IsValidHandle())
                 {
-                    return VpsGraphStatus.FeatureUnavailable;
+                    // Keeping this pattern for now because the rest of the subsystem simply no-ops and returns
+                    // defaults in this situation, but to match other new C-API wrappers this should be
+                    // throwing an exception.
+                    return VpsGraphOperationError.NotInitialized;
                 }
 
                 var poseMatrix = Matrix4x4.TRS(pose.position, pose.rotation, Vector3.one);
 
-                return _api.GetDevicePoseAsGps(
+                return _api.GetDevicePoseAsGeolocation(
                     _nativeProviderHandle,
                     poseMatrix,
                     out latitude,

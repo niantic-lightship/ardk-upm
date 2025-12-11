@@ -27,9 +27,32 @@ namespace Niantic.Lightship.AR.Subsystems.WorldPositioning
             Native.Stop(providerHandle);
         }
 
-        public void Configure(IntPtr providerHandle)
+        /// <summary>
+        /// Defined in ardk_wps_configuration.h file.
+        /// Note: We need this because passing configurations as arguments breaks down
+        /// </summary>
+        [StructLayout(LayoutKind.Sequential)]
+        public struct WpsConfigurationCStruct
         {
-            Native.Configure(providerHandle);
+            [MarshalAs(UnmanagedType.U1)]
+            public bool smoothingEnabled;
+
+            public int framerate;
+
+            [MarshalAs(UnmanagedType.U1)]
+            public bool bevEnabled;
+
+            public int bevFramerate;
+        }
+
+        public void Configure(IntPtr providerHandle, int framerate, bool smoothing_enabled, bool bev_enabled, int bev_framerate)
+        {
+            var wpsConfiguration = new WpsConfigurationCStruct();
+            wpsConfiguration.smoothingEnabled = smoothing_enabled;
+            wpsConfiguration.framerate = framerate;
+            wpsConfiguration.bevEnabled = bev_enabled;
+            wpsConfiguration.bevFramerate = bev_framerate;
+            Native.Configure(providerHandle, wpsConfiguration);
         }
 
         public void Destruct(IntPtr providerHandle)
@@ -96,7 +119,7 @@ namespace Niantic.Lightship.AR.Subsystems.WorldPositioning
 
             // Configure WPS
             [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_WPS_Configure")]
-            public static extern void Configure(IntPtr handle);
+            public static extern void Configure(IntPtr handle, WpsConfigurationCStruct config);
 
             [DllImport
                 (LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_WPS_GetLatestTransform")]

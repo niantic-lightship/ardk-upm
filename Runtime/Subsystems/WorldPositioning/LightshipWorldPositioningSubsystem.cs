@@ -3,6 +3,7 @@
 using System;
 
 using Niantic.Lightship.AR.Core;
+using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.XRSubsystems;
 
 using UnityEngine;
@@ -28,12 +29,58 @@ namespace Niantic.Lightship.AR.Subsystems.WorldPositioning
             /// </summary>
             private IntPtr _nativeProviderHandle;
 
+            private int _framerate = 120;
+            private bool _smoothingEnabled = true;
+            private bool _bevEnabled = false;
+            private int _bevFramerate = 0;
+
             /// <summary>
             /// Construct the implementation provider.
             /// </summary>
             public LightshipProvider()
                 : this(new NativeApi())
             {
+            }
+
+            /// <summary>
+            /// Property to get or set the target frame rate for world positioning updates.
+            /// </summary>
+            /// <value>
+            /// The requested target frame rate in frames per second.
+            /// </value>
+            public override int Framerate
+            {
+                get => _framerate;
+                set
+                {
+                    if (value <= 0)
+                    {
+                        Log.Error("Target frame rate value must be greater than zero.");
+                        return;
+                    }
+
+                    if (_framerate != value)
+                    {
+                        _framerate = value;
+                        ConfigureProvider();
+                    }
+                }
+            }
+
+            /// <summary>
+            /// Property to get or set whether smoothing is enabled for world positioning.
+            /// </summary>
+            public override bool Smoothing
+            {
+                get => _smoothingEnabled;
+                set
+                {
+                    if (_smoothingEnabled != value)
+                    {
+                        _smoothingEnabled = value;
+                        ConfigureProvider();
+                    }
+                }
             }
 
             public LightshipProvider(IApi api)
@@ -90,16 +137,6 @@ namespace Niantic.Lightship.AR.Subsystems.WorldPositioning
                 ;
             }
 
-            public void Configure(IntPtr wpsApiHandle)
-            {
-                if (!_nativeProviderHandle.IsValidHandle())
-                {
-                    return;
-                }
-
-                _api.Configure(wpsApiHandle);
-            }
-
             public override WorldPositioningStatus TryGetXRToWorld
             (
                 ref Matrix4x4 arToWorld,
@@ -130,6 +167,15 @@ namespace Niantic.Lightship.AR.Subsystems.WorldPositioning
                     out originLongitude,
                     out originAltitude
                 );
+            }
+
+            private void ConfigureProvider()
+            {
+                if (!_nativeProviderHandle.IsValidHandle())
+                {
+                    return;
+                }
+                _api.Configure(_nativeProviderHandle, _framerate, _smoothingEnabled, _bevEnabled, _bevFramerate);
             }
         }
 

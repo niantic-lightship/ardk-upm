@@ -2,6 +2,7 @@
 
 using System;
 using System.Runtime.InteropServices;
+using Niantic.Lightship.AR.Common;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 using UnityEngine.XR.ARSubsystems;
@@ -101,70 +102,35 @@ namespace Niantic.Lightship.AR.PAM
             return true;
         }
 
-        // Unity to ARDK Cpu Image Format
+        /// <summary>
+        /// Determines the corresponding native <see cref="ImageFormatCEnum"/> for a given
+        /// <see cref="XRCpuImage"/> by inspecting its format and memory layout.
+        /// Returns <see cref="ImageFormatCEnum.Unknown"/> if the format cannot be determined.
+        /// </summary>
         private static ImageFormatCEnum GetFormatCEnum(XRCpuImage image)
         {
-            switch (image.format)
+            // Inspect the image planes to determine the correct format for Android
+            if (image.format == XRCpuImage.Format.AndroidYuv420_888)
             {
-                case XRCpuImage.Format.AndroidYuv420_888:
+                // Extract the U and V planes
+                IntPtr plane1Ptr;
+                IntPtr plane2Ptr;
+                unsafe
                 {
-                    switch (image.planeCount)
-                    {
-                        case 2:
-                            // TODO(ahegedus): Make a case for interleaved NV12
-                            return ImageFormatCEnum.Yuv420_NV21;
-
-                        case 3:
-                        {
-                            // Make a case for non-interleaved NV12 and NV21 formats
-                            long distance;
-                            unsafe
-                            {
-                                var plane1Ptr = (IntPtr)image.GetPlane(1).data.GetUnsafeReadOnlyPtr();
-                                var plane2Ptr = (IntPtr)image.GetPlane(2).data.GetUnsafeReadOnlyPtr();
-                                distance = (long) plane1Ptr - (long) plane2Ptr;
-                            }
-                            return distance switch
-                            {
-                                // VU, U plane is larger than V by 1 byte
-                                1 => ImageFormatCEnum.Yuv420_NV21,
-                                // UV, V plane is larger than U by 1 byte
-                                -1 => ImageFormatCEnum.Yuv420_NV12,
-                                // I420
-                                _ => ImageFormatCEnum.Yuv420_888
-                            };
-                        }
-
-                        default:
-                            return ImageFormatCEnum.Unknown;
-                    }
+                    plane1Ptr = image.planeCount > 1
+                        ? (IntPtr)image.GetPlane(1).data.GetUnsafeReadOnlyPtr()
+                        : IntPtr.Zero;
+                    plane2Ptr = image.planeCount > 2
+                        ? (IntPtr)image.GetPlane(2).data.GetUnsafeReadOnlyPtr()
+                        : IntPtr.Zero;
                 }
 
-                // Simple format conversions
-                case XRCpuImage.Format.IosYpCbCr420_8BiPlanarFullRange:
-                    return ImageFormatCEnum.Yuv420_NV12;
-                case XRCpuImage.Format.OneComponent8:
-                    return ImageFormatCEnum.OneComponent8;
-                case XRCpuImage.Format.DepthFloat32:
-                    return ImageFormatCEnum.DepthFloat32;
-                case XRCpuImage.Format.DepthUint16:
-                    return ImageFormatCEnum.DepthUint16;
-                case XRCpuImage.Format.OneComponent32:
-                    return ImageFormatCEnum.OneComponent32;
-                case XRCpuImage.Format.ARGB32:
-                    return ImageFormatCEnum.ARGB32;
-                case XRCpuImage.Format.RGBA32:
-                    return ImageFormatCEnum.RGBA32;
-                case XRCpuImage.Format.BGRA32:
-                    return ImageFormatCEnum.BGRA32;
-                case XRCpuImage.Format.RGB24:
-                    return ImageFormatCEnum.RGB24;
-                case XRCpuImage.Format.Unknown:
-                    return ImageFormatCEnum.Unknown;
-                default:
-                    Debug.Assert(false, "Did XRCpuImage got updated? Unhandled value: " + image.format);
-                    return ImageFormatCEnum.Unknown;
+                // Infer the exact layout (NV12, NV21, I420_888) by inspecting the image planes
+                return ImageConversionUtils.ToNativeImageFormat(image.format, image.planeCount, plane1Ptr, plane2Ptr);
             }
+
+            // Simple format conversions
+            return ImageConversionUtils.ToNativeImageFormat(image.format);
         }
 
         public static LightshipCpuImage Create()

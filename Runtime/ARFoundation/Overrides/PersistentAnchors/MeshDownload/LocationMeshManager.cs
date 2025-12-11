@@ -33,7 +33,15 @@ namespace Niantic.Lightship.AR.Subsystems
         {
             if (_texturedMeshMaterial == null)
             {
-                _texturedMeshMaterial = new Material(Shader.Find("Standard"));
+                // If we are using URP, use the default material from the render pipeline.
+                if( UnityEngine.Rendering.GraphicsSettings.currentRenderPipeline != null)
+                {
+                    _texturedMeshMaterial = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+                }
+                else
+                {
+                    _texturedMeshMaterial = new Material(Shader.Find("Standard"));
+                }
 
                 // If the material is not found, log an error
                 if (_texturedMeshMaterial == null)

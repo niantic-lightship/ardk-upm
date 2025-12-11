@@ -118,7 +118,7 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
 
         public bool GetVpsDebuggerLog(IntPtr anchorProviderHandle, out string vpsDebuggerLog);
 
-        public VpsGraphStatus GetDevicePoseAsGps
+        public VpsGraphOperationError GetDevicePoseAsGeolocation
         (
             IntPtr anchorProviderHandle,
             Matrix4x4 poseMatrix,

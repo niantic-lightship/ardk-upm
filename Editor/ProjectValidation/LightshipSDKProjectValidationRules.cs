@@ -136,7 +136,7 @@ namespace Niantic.Lightship.AR.Editor
                 new BuildValidationRule
                 {
                     Category = Category,
-                    Message = "Ensure Universal Render Pipeline is present and all Render Pipeline Assets have the 'AR Background Renderer Feature'.",
+                    Message = "Ensure Universal Render Pipeline is present and Render Pipeline Assets for AR have the 'AR Background Renderer Feature'.",
                     CheckPredicate = () =>
                     {
                         nonBackgroundRendererDataList.Clear();
@@ -178,9 +178,10 @@ namespace Niantic.Lightship.AR.Editor
                         nonBackgroundRendererDataList.Values.ToList().ForEach(ConfigureRendererFeatures);
                         AssetDatabase.SaveAssets();
                     },
-                    FixItMessage = "Ensure all URP assets have the 'AR Background Renderer Feature'. If none exist, a default asset will be created.",
-                    FixItAutomatic = true,
-                    Error = true
+                    FixItMessage = "Ensure URP assets for AR have the 'AR Background Renderer Feature'. If none exist, a default asset will be created. No action is required if " +
+                        "URP assets for non-AR rendering are missing the 'AR Background Renderer Feature'.",
+                    FixItAutomatic = false,
+                    Error = false
                 }
             };
 #else
@@ -202,8 +203,13 @@ namespace Niantic.Lightship.AR.Editor
                 new BuildValidationRule
                 {
                     Category = Category,
+#if NIANTIC_ARDK_AUTH_LOGIN
+                    Message = "If using Lightship ARDK, please either login, disable developer authentication, or set the Lightship API Key provided in your project at https://lightship.dev/account/projects",
+                    CheckPredicate = () => !string.IsNullOrWhiteSpace(lightshipSettings.ApiKey) || !string.IsNullOrEmpty(lightshipSettings.RefreshToken) || !lightshipSettings.UseDeveloperAuthentication,
+#else
                     Message = "If using Lightship ARDK, please set the Lightship API Key provided in your project at https://lightship.dev/account/projects",
                     CheckPredicate = () => !string.IsNullOrWhiteSpace(lightshipSettings.ApiKey),
+#endif
                     IsRuleEnabled = getIsLightshipPluginEnabled.Invoke,
                     FixIt = () => SettingsService.OpenProjectSettings(NianticLightshipSDKPath),
                     FixItMessage = "Open `Project Settings` > `XR Plug-in Management` > `Niantic Lightship SDK` and set the Lightship API Key provided by the Lightship Portal.",

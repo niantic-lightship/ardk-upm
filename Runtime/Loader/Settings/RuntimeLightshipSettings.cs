@@ -2,14 +2,23 @@
 
 using System;
 using System.IO;
+using Niantic.Lightship.AR.Auth;
+using Niantic.Lightship.AR.Core;
 using Niantic.Lightship.AR.Utilities.Logging;
 using UnityEngine;
+using Niantic.Lightship.AR.Settings;
+using Niantic.Lightship.AR.Utilities.Auth;
 
 namespace Niantic.Lightship.AR.Loader
 {
-    public class RuntimeLightshipSettings
+    public class RuntimeLightshipSettings : IAuthSettings
     {
         private string _apiKey;
+        private AuthEnvironmentType _authEnvironment;
+        private string _accessToken;
+        private int _accessExpiresAt;
+        private string _refreshToken;
+        private int _refreshExpiresAt;
         private bool _useLightshipDepth;
         private bool _preferLidarIfAvailable;
         private bool _useLightshipMeshing;
@@ -44,11 +53,29 @@ namespace Niantic.Lightship.AR.Loader
                     return _apiKey;
                 }
 
-                return EndpointSettings.ApiKey;
+                return EndpointSettings.ApiKey ?? string.Empty;
             }
 
             internal set => _apiKey = value;
         }
+
+        public AuthEnvironmentType AuthEnvironment => _authEnvironment;
+
+        public string AccessToken
+        {
+            get => _accessToken;
+            set => SetAccess(value);
+        }
+
+        public int AccessExpiresAt => _accessExpiresAt;
+
+        public string RefreshToken
+        {
+            get => _refreshToken;
+            set => SetRefresh(value);
+        }
+
+        public int RefreshExpiresAt => _refreshExpiresAt;
 
         /// <summary>
         /// When enabled, Lightship's depth and occlusion features can be used via ARFoundation. Additional occlusion
@@ -278,6 +305,18 @@ namespace Niantic.Lightship.AR.Loader
             _spoofLocationInfo = new SpoofLocationInfo(source.SpoofLocationInfo);
             _spoofCompassInfo = new SpoofCompassInfo(source.SpoofCompassInfo);
 
+            _authEnvironment = source.AuthEnvironment;
+
+            // Only copy the developer authentication settings if the user has left developer authentication enabled
+            // and is not using an API key
+            if (source.UseDeveloperAuthentication && string.IsNullOrEmpty(source.ApiKey))
+            {
+                _accessToken = source.AccessToken;
+                _accessExpiresAt = source.AccessExpiresAt;
+                _refreshToken = source.RefreshToken;
+                _refreshExpiresAt = source.RefreshExpiresAt;
+            }
+
             UnityLightshipLogLevel = source.UnityLightshipLogLevel;
             FileLightshipLogLevel = source.FileLightshipLogLevel;
             StdOutLightshipLogLevel = source.StdOutLightshipLogLevel;
@@ -365,6 +404,24 @@ namespace Niantic.Lightship.AR.Loader
             return settings;
         }
 
+        public void UpdateAccess(string accessToken, int accessExpiresAt, string refreshToken, int refreshExpiresAt)
+        {
+            _refreshToken = refreshToken;
+            _accessToken = accessToken;
+            _accessExpiresAt = accessExpiresAt;
+            _refreshExpiresAt = refreshExpiresAt;
+
+            AuthGatewayUtils.Instance.LogSettings(this, "Updated runtime");
+
+            if (LightshipUnityContext.UnityContextHandle != IntPtr.Zero)
+            {
+                // Pass the access token to native ARDK code.
+                // Note: ARDK native can also receive the refresh token, but we don't want to set it here
+                // (in Unity, we run the refresh loop in C#).
+                Metadata.SetAccessToken(_accessToken);
+            }
+        }
+
         public override string ToString()
         {
             return
@@ -379,6 +436,35 @@ namespace Niantic.Lightship.AR.Loader
                 "\t UseLightshipObjectDetection: " + UseLightshipObjectDetection + "\n" +
                 "\t UseLightshipWorldPositioning: " + UseLightshipWorldPositioning + "\n" +
                 "\t UnityLogLevel: " + UnityLightshipLogLevel;
+        }
+
+        private void SetAccess(string accessToken)
+        {
+            if (_accessToken != accessToken)
+            {
+                _accessToken = accessToken;
+                _accessExpiresAt = AuthGatewayUtils.Instance.DecodeJwtTokenBody(accessToken)?.exp ?? 0;
+                AuthGatewayUtils.Instance.LogToken("Updated runtime access", _accessToken);
+
+                if (LightshipUnityContext.UnityContextHandle != IntPtr.Zero)
+                {
+                    // Pass the access token to native ARDK code.
+                    // Note: ARDK native can also receive the refresh token, but we don't want to set it here
+                    // (in Unity, we run the refresh loop in C#).
+                    Metadata.SetAccessToken(_accessToken);
+                }
+            }
+        }
+
+        private void SetRefresh(string refreshToken)
+        {
+            if (_refreshToken != refreshToken)
+            {
+                _refreshToken = refreshToken;
+                _refreshExpiresAt = AuthGatewayUtils.Instance.DecodeJwtTokenBody(refreshToken)?.exp ?? 0;
+                AuthGatewayUtils.Instance.LogToken("Updated runtime refresh", _refreshToken);
+                AuthRuntimeRefreshManager.RestartRefreshLoop();
+            }
         }
     }
 }

@@ -27,4 +27,5 @@ using UnityEngine.Scripting;
 [assembly: InternalsVisibleTo("Niantic.Lightship.GeoUploader")]
 [assembly: InternalsVisibleTo("Niantic.Lightship.AR.PersistentAR.PreProd")]
 [assembly: InternalsVisibleTo("Niantic.Lightship.GeoUploader.Tests")]
+[assembly: InternalsVisibleTo("Niantic.Lightship.Argus")]
 

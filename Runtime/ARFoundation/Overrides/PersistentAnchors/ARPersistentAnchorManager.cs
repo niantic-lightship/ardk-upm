@@ -345,7 +345,8 @@ namespace Niantic.Lightship.AR.PersistentAnchors
         /// This requires having VPS localized to a location with GPS reference data, otherwise it
         ///   will return an appropriate error status.
         /// </summary>
-        public VpsGraphStatus TryGetDevicePoseAsGps
+        [Experimental]
+        public VpsGraphOperationError TryGetDevicePoseAsGeolocation
         (
             Pose pose,
             out double latitude,
@@ -364,11 +365,11 @@ namespace Niantic.Lightship.AR.PersistentAnchors
                 verticalAccuracy = default;
                 horizontalAccuracy = default;
                 heading = default;
-                Log.Error("TryGetDevicePoseAsGps failed: no XRPersistentAnchorSubsystem loaded.");
-                return VpsGraphStatus.FeatureUnavailable;
+                Log.Error("TryGetDevicePoseAsGeolocation failed: no XRPersistentAnchorSubsystem loaded.");
+                return VpsGraphOperationError.NotInitialized;
             }
 
-            return subsystem.TryGetDevicePoseAsGps(
+            return subsystem.TryGetDevicePoseAsGeolocation(
                 pose,
                 out latitude,
                 out longitude,

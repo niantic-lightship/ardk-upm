@@ -5,5 +5,6 @@ using UnityEngine.Scripting;
 
 [assembly: AlwaysLinkAssembly]
 
+[assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")] // For NSubstitute
 [assembly: InternalsVisibleTo("Niantic.Lightship.AR.Tests.EditMode")]
 

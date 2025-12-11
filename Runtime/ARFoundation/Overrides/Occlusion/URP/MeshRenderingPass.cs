@@ -1,7 +1,5 @@
 // Copyright 2022-2025 Niantic.
 #if MODULE_URP_ENABLED
-
-
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
@@ -19,31 +17,36 @@ namespace Niantic.Lightship.AR.Occlusion
         /// <summary>
         /// The mesh resource to render.
         /// </summary>
-        private Mesh _mesh;
+        public Mesh Mesh { get; set; }
 
-        internal MeshRenderingPass(string name, RenderPassEvent renderPassEvent) : base(name, renderPassEvent)
-        {
-        }
+        internal MeshRenderingPass(string name, RenderPassEvent renderPassEvent)
+            : base(name, renderPassEvent) { }
 
-        public void SetMesh(Mesh mesh)
-        {
-            _mesh = mesh;
-        }
-
-        protected override void OnExecute(CommandBuffer cmd, ref RenderingData renderingData)
-        {
-            // Draw
-            cmd.DrawMesh(_mesh, Matrix4x4.identity, Material);
-        }
+        /// <summary>
+        /// Invoked when the render pass is executed.
+        /// </summary>
+        /// <param name="cmd">The temporary command buffer used to issue draw commands.</param>
+        /// <param name="renderingData">Current rendering state information</param>
+        /// <remarks>When built using Unity 6, this only gets called in compatibility mode.</remarks>
+        protected override void OnExecuteCompatibilityMode(CommandBuffer cmd, ref RenderingData renderingData) =>
+            cmd.DrawMesh(Mesh, Matrix4x4.identity, Material);
 
 #if UNITY_6000_0_OR_NEWER
         /// <summary>
-        /// Invoked when the render pass is executed when using Render Graph.
+        /// Contains the rendering context.
         /// </summary>
-        protected override void OnExecute(RasterGraphContext context, PassData renderingData)
+        private class PassData { }
+
+        public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
         {
-            var cmd = context.cmd;
-            cmd.DrawMesh(_mesh, Matrix4x4.identity, Material);
+            using var builder = renderGraph.AddRasterRenderPass(Name, out PassData _, profilingSampler);
+
+            var resourceData = frameData.Get<UniversalResourceData>();
+            builder.SetRenderAttachment(resourceData.activeColorTexture, 0);
+            builder.SetRenderAttachmentDepth(resourceData.activeDepthTexture);
+
+            builder.SetRenderFunc((PassData _, RasterGraphContext context) =>
+                context.cmd.DrawMesh(Mesh, Matrix4x4.identity, Material));
         }
 #endif
     }

@@ -333,8 +333,8 @@ namespace Niantic.Lightship.AR.Semantics
             if (cam == Camera)
             {
                 // Configure the render pass
-                _renderPass.SetMaterial(Material);
-                _renderPass.SetMesh(_mesh);
+                _renderPass.Material = Material;
+                _renderPass.Mesh = _mesh;
 
                 // Enqueue the render pass
                 cam.GetUniversalAdditionalCameraData().scriptableRenderer.EnqueuePass(_renderPass);

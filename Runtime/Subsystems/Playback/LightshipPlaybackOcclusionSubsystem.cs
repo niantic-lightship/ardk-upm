@@ -9,6 +9,7 @@ using Niantic.Lightship.AR.Utilities;
 using Niantic.Lightship.Utilities.UnityAssets;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
+using Unity.XR.CoreUtils.Collections;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Scripting;
@@ -193,9 +194,7 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
 
             private PlaybackDatasetReader _datasetReader;
 
-            // This value will strongly affect memory usage.  It can also be set by the user in configuration.
-            // The value represents the number of frames in memory before the user must make a copy of the data
-            private const int FramesInMemoryCount = 2;
+            // Depth texture cache
             private int _textureWidth;
             private int _textureHeight;
             private (int Id, Texture2D Frame) _currentDepthTexture;
@@ -353,7 +352,11 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
                         _currentDepthTexture.Frame.format,
                         propertyNameId: s_textureEnvironmentDepthPropertyId,
                         depth: 0,
-                        TextureDimension.Tex2D
+#if ARF_6_1_OR_NEWER
+                        textureType: XRTextureType.Texture2D
+#else
+                        dimension: TextureDimension.Tex2D
+#endif
                     );
 
                 return true;
@@ -487,7 +490,11 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
                         _currentConfidenceTexture.Frame.format,
                         propertyNameId: s_textureEnvironmentDepthConfidencePropertyId,
                         depth: 0,
-                        TextureDimension.Tex2D
+#if ARF_6_1_OR_NEWER
+                        textureType: XRTextureType.Texture2D
+#else
+                        dimension: TextureDimension.Tex2D
+#endif
                     );
 
                 return true;
@@ -516,7 +523,6 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
                 }
             }
 
-
             private void UpdateCacheWithCurrentConfidenceImage(PlaybackDataset.FrameMetadata frame)
             {
                 if (_currentConfidenceTexture.Id != frame.Sequence)
@@ -539,7 +545,6 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
                     _currentConfidenceTexture = (frame.Sequence, tex);
                 }
             }
-
 
             /// <summary>
             /// Gets the occlusion texture descriptors associated with the current AR frame.
@@ -564,15 +569,55 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
                 return new NativeArray<XRTextureDescriptor>(0, allocator);
             }
 
-            /// <summary>
-            /// Get the enabled and disabled shader keywords for the material.
-            /// </summary>
-            /// <param name="enabledKeywords">The keywords to enable for the material.</param>
-            /// <param name="disabledKeywords">The keywords to disable for the material.</param>
+#if ARF_6_1_OR_NEWER
+            /// <inheritdoc />
+            public override XRResultStatus TryGetFrame(Allocator allocator, out XROcclusionFrame frame)
+            {
+                var currentFrame = _datasetReader?.CurrFrame;
+                if (currentFrame == null)
+                {
+                    frame = default;
+                    return new XRResultStatus(false);
+                }
+
+                // Specify what sort of information do we provide
+                const XROcclusionFrameProperties properties = XROcclusionFrameProperties.Timestamp |
+                    XROcclusionFrameProperties.Fovs | XROcclusionFrameProperties.Poses;
+
+                // Extract the camera intrinsics
+                var fieldOfViews = new[] { CameraMath.CalculateFov(currentFrame.Intrinsics) };
+
+                // Extract the latest pose
+                var position = MatrixUtils.ToPosition(currentFrame.Pose);
+                var rotation = MatrixUtils.ToRotation(currentFrame.Pose);
+                var poses = new Pose[] { new(position, rotation) };
+
+                frame = new XROcclusionFrame(
+                    properties: properties,
+                    timestamp: (long)currentFrame.TimestampInSeconds * 1_000_000_000, // Convert seconds to nanoseconds
+                    nearFarPlanes: default, // The values in the texture are already linear eye depth
+                    poses: new NativeArray<Pose>(poses, Allocator.Temp),
+                    fovs: new NativeArray<XRFov>(fieldOfViews, Allocator.Temp));
+
+                return new XRResultStatus(true);
+            }
+#endif
+
+#if ARF_6_1_OR_NEWER
+            public override XRShaderKeywords GetShaderKeywords2() =>
+                _occlusionPreferenceMode == OcclusionPreferenceMode.NoOcclusion
+                    ? new XRShaderKeywords( null, new ReadOnlyList<string>(s_environmentDepthEnabledMaterialKeywords))
+                    : new XRShaderKeywords( new ReadOnlyList<string>(s_environmentDepthEnabledMaterialKeywords), null);
+#elif ARF_6_0_OR_NEWER
+            public override ShaderKeywords GetShaderKeywords() =>
+                _occlusionPreferenceMode == OcclusionPreferenceMode.NoOcclusion ?
+                    new ShaderKeywords(disabledKeywords: s_environmentDepthEnabledMaterialKeywords.AsReadOnly()) :
+                    new ShaderKeywords(enabledKeywords: s_environmentDepthEnabledMaterialKeywords.AsReadOnly());
+#else   // ARF version < 6.0
             public override void GetMaterialKeywords(out List<string> enabledKeywords,
                 out List<string> disabledKeywords)
             {
-                if ((_occlusionPreferenceMode == OcclusionPreferenceMode.NoOcclusion))
+                if (_occlusionPreferenceMode == OcclusionPreferenceMode.NoOcclusion)
                 {
                     enabledKeywords = null;
                     disabledKeywords = s_environmentDepthEnabledMaterialKeywords;
@@ -583,12 +628,6 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
                     disabledKeywords = null;
                 }
             }
-
-#if UNITY_6000_0_OR_NEWER
-            public override ShaderKeywords GetShaderKeywords() =>
-                _occlusionPreferenceMode == OcclusionPreferenceMode.NoOcclusion
-                    ? new ShaderKeywords(disabledKeywords: s_environmentDepthEnabledMaterialKeywords.AsReadOnly())
-                    : new ShaderKeywords(enabledKeywords: s_environmentDepthEnabledMaterialKeywords.AsReadOnly());
 #endif
         }
     }

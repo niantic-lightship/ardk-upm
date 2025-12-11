@@ -162,7 +162,7 @@ namespace Niantic.Lightship.AR.LocationAR
         /// This will create digital content in the physical world.
         ///
         /// If no locations were specified in SetARLocations(), requests will be made to attempt to track nearby
-        /// locations. In this case, up to 5 nearby locations will be targeted and the first one to successfully
+        /// locations. In this case, multiple nearby locations may be targeted and the first one to successfully
         /// track will be used.
         /// </summary>
         public void StartTracking()
@@ -392,13 +392,7 @@ namespace Niantic.Lightship.AR.LocationAR
                 return;
             }
 
-            // We currently only support up to 5 locations.
-            if (arLocations.Length > 5)
-            {
-                Log.Error("More than 5 ARLocations were passed into StartTrackingOneOfMany. We only support up to 5." +
-                    gameObject);
-                return;
-            }
+            // Removed previous limit of 5 ARLocations. All provided locations will be considered.
 
             foreach (var arLocation in arLocations)
             {
@@ -531,11 +525,7 @@ namespace Niantic.Lightship.AR.LocationAR
                 _coverageARLocationHolders.Add(arLocationHolder);
                 arLocations.Add(arLocation);
 
-                // Only choose the closest 5 locations.
-                if (arLocations.Count >= 5)
-                {
-                    break;
-                }
+                // Previously limited to the closest 5 locations. This restriction has been removed.
             }
 
             TryTrackLocations(arLocations.ToArray());

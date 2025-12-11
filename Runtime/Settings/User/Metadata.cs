@@ -10,6 +10,7 @@ using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.ARDK.AR.Protobuf;
 using Niantic.Lightship.AR.Core;
 using Niantic.Lightship.AR.Loader;
+using Niantic.Lightship.AR.Utilities.Auth;
 using Niantic.Lightship.AR.Utilities.Device;
 using UnityEngine;
 
@@ -21,7 +22,7 @@ namespace Niantic.Lightship.AR.Settings
     [PublicAPI]
     public static class Metadata
     {
-        private const string ArdkVersion = "3.16.0-2509150829";
+        private const string ArdkVersion = "3.17.0-2512092207";
 
         private const string AuthorizationHeaderKey = "Authorization";
         private const string ApplicationIdHeaderKey = "x-ardk-application-id";
@@ -80,16 +81,18 @@ namespace Niantic.Lightship.AR.Settings
         internal static string DeviceModel { get; }
         internal static string AppInstanceId { get; }
         internal static string UserId { get; private set; }
+        internal static string AccessToken { get; private set; }
         internal static ARClientEnvelope.Types.AgeLevel AgeLevel { get; private set; }
 
         internal static Dictionary<string, string> GetApiGatewayHeaders(string requestId = null)
         {
             requestId ??= string.Empty;
+            var settings = LightshipSettingsHelper.ActiveSettings;
             var gatewayHeaders = new Dictionary<string, string>();
             gatewayHeaders.Add(ArClientEnvelopeHeaderKey, ConvertToBase64(GetArClientEnvelopeAsJson(requestId)));
             gatewayHeaders.Add(ClientIdHeaderKey, ClientId);
             gatewayHeaders.Add(ApplicationIdHeaderKey, ApplicationId);
-            gatewayHeaders.Add(AuthorizationHeaderKey, LightshipSettingsHelper.ActiveSettings.ApiKey);
+            gatewayHeaders.Add(AuthorizationHeaderKey, AuthGatewayUtils.Instance.BuildAuthorizationHeader(settings));
 
             if (!string.IsNullOrWhiteSpace(UserId))
             {
@@ -145,6 +148,39 @@ namespace Niantic.Lightship.AR.Settings
         internal static void ClearUserId()
         {
             SetUserId(string.Empty);
+        }
+
+        /// <summary>
+        /// Sets the access token for authentication with Lightship services.
+        /// This token will be used for API Gateway requests instead of the API key.
+        /// </summary>
+        /// <param name="accessToken">The access token string for authentication</param>
+        [PublicAPI]
+        public static void SetAccessToken(string accessToken)
+        {
+#if NIANTIC_LIGHTSHIP_AR_LOADER_ENABLED
+            RunUnityContextCheck();
+
+            accessToken = GetSanitizedToken(accessToken);
+            Lightship_ARDK_Unity_CoreContext_SetAccessToken(LightshipUnityContext.UnityContextHandle, accessToken);
+
+            AccessToken = accessToken;
+#endif
+        }
+
+        /// <summary>
+        /// Sets the refresh token so native can refresh access tokens as needed.
+        /// </summary>
+        /// <param name="refreshToken">The refresh token string</param>
+        [PublicAPI]
+        public static void SetRefreshToken(string refreshToken)
+        {
+#if NIANTIC_LIGHTSHIP_AR_LOADER_ENABLED
+            RunUnityContextCheck();
+
+            refreshToken = GetSanitizedToken(refreshToken);
+            Lightship_ARDK_Unity_CoreContext_SetRefreshToken(LightshipUnityContext.UnityContextHandle, refreshToken);
+#endif
         }
 
 
@@ -334,6 +370,18 @@ namespace Niantic.Lightship.AR.Settings
             return userId;
         }
 
+        private static string GetSanitizedToken(string token)
+        {
+            if (token == null)
+            {
+                throw new ArgumentNullException(nameof(token));
+            }
+
+            // We allow for string.Empty to be set as the accessToken
+            token = token.Trim();
+            return token;
+        }
+
         private static void RunUnityContextCheck()
         {
             if (!s_isUnityContextInitialized)
@@ -344,6 +392,12 @@ namespace Niantic.Lightship.AR.Settings
 
         [DllImport(LightshipPlugin.Name)]
         private static extern void Lightship_ARDK_Unity_CoreContext_SetUserId(IntPtr unityContext, string userId);
+
+        [DllImport(LightshipPlugin.Name)]
+        private static extern void Lightship_ARDK_Unity_CoreContext_SetAccessToken(IntPtr unityContext, string accessToken);
+
+        [DllImport(LightshipPlugin.Name)]
+        private static extern void Lightship_ARDK_Unity_CoreContext_SetRefreshToken(IntPtr unityContext, string refreshToken);
 
         [DllImport(LightshipPlugin.Name)]
         internal static extern void Lightship_ARDK_Unity_CoreContext_GetOrGenerateClientId(IntPtr unityContext, StringBuilder clientIdOut, int clientIdOutSize);

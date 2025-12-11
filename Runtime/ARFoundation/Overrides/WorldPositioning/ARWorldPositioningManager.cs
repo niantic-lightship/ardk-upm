@@ -4,7 +4,7 @@ using Niantic.Lightship.AR.Utilities;
 using UnityEngine;
 using UnityEngine.XR.ARFoundation;
 using System;
-
+using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.XRSubsystems;
 
 using Unity.XR.CoreUtils;
@@ -37,6 +37,52 @@ namespace Niantic.Lightship.AR.WorldPositioning
         /// property is <c>Available</c>, otherwise it is undefined.
         /// </summary>
         public ARWorldPositioningTangentialTransform WorldTransform { get; internal set; } = new ARWorldPositioningTangentialTransform();
+
+        [SerializeField]
+        [Tooltip("Framerate for measurement updates")]
+        private int _framerate = 120;
+
+        /// <summary>
+        /// Framerate for measurement updates
+        /// </summary>
+        public int Framerate
+        {
+            get => subsystem?.Framerate ?? _framerate;
+            set
+            {
+                if (value <= 0)
+                {
+                    Log.Error("Framerate value must be greater than zero.");
+                    return;
+                }
+
+                _framerate = value;
+                if (subsystem != null)
+                {
+                    subsystem.Framerate = value;
+                }
+            }
+        }
+
+        [SerializeField]
+        [Tooltip("Enable smoothing")]
+        private bool _smoothing = true;
+
+        /// <summary>
+        /// Enable smoothing for World Positioning
+        /// </summary>
+        public bool Smoothing
+        {
+            get => subsystem?.Smoothing ?? _smoothing;
+            set
+            {
+                _smoothing = value;
+                if (subsystem != null)
+                {
+                    subsystem.Smoothing = value;
+                }
+            }
+        }
 
         private WorldPositioningStatus _status = WorldPositioningStatus.NoGnss;
 
@@ -79,6 +125,13 @@ namespace Niantic.Lightship.AR.WorldPositioning
             DefaultCameraHelper = gameObject.GetComponent<XROrigin>().Camera.gameObject.AddComponent<ARWorldPositioningCameraHelper>();
             DefaultCameraHelper.SetWorldPositioningManager(this);
         }
+
+        private void Start()
+        {
+            Framerate = _framerate;
+            Smoothing = _smoothing;
+        }
+
         protected override void OnDisable()
         {
             base.OnDisable();

@@ -2,6 +2,7 @@
 
 using System.IO;
 using Newtonsoft.Json;
+using Niantic.Lightship.AR.Auth;
 using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.Utilities.UnityAssets;
 using UnityEngine;
@@ -22,8 +23,12 @@ namespace Niantic.Lightship.AR.Loader
         public string ObjectDetectionEndpoint { get; set; }
         public string TelemetryEndpoint { get; set; }
         public string TelemetryApiKey { get; set; }
+        public string IdentityEndpoint { get; set; }
+        public string BevEndpoint { get; set; }
+        public string PortalEndpoint { get; set; }
 
-        public static EndpointSettings GetDefaultEnvironmentConfig()
+        public static EndpointSettings GetDefaultEnvironmentConfig(
+            AuthEnvironmentType defaultAuthEnvironment = AuthEnvironmentType.Production)
         {
             EndpointSettings defaultSettings = new EndpointSettings()
             {
@@ -46,6 +51,11 @@ namespace Niantic.Lightship.AR.Loader
 
                 TelemetryEndpoint = "https://analytics.nianticspatial.com",
                 TelemetryApiKey = "b7d03117-f80f-4039-8488-3466633f8639",
+                IdentityEndpoint = AuthEnvironment.Instance.GetIdentityEndpoint(defaultAuthEnvironment),
+
+                PortalEndpoint = "https://portal-backend-api.nianticspatial.com/api/v1/",
+
+                BevEndpoint = "",
             };
 
             return defaultSettings;
@@ -54,6 +64,7 @@ namespace Niantic.Lightship.AR.Loader
         public static bool TryGetConfigurationFromJson(string fileWithPath, out EndpointSettings parsedConfig)
         {
             parsedConfig = null;
+
             bool hasData = FileUtilities.TryReadAllText(fileWithPath, out string result);
 
             if (hasData && !string.IsNullOrWhiteSpace(result))
@@ -61,7 +72,6 @@ namespace Niantic.Lightship.AR.Loader
                 try
                 {
                     parsedConfig = JsonConvert.DeserializeObject<EndpointSettings>(result);
-
                     Log.Warning($"Targeting the following endpoints: {result}");
                     return true;
                 }
@@ -74,7 +84,8 @@ namespace Niantic.Lightship.AR.Loader
             return false;
         }
 
-        public static EndpointSettings GetFromFileOrDefault()
+        public static EndpointSettings GetFromFileOrDefault(
+            AuthEnvironmentType defaultAuthEnvironment = AuthEnvironmentType.Production)
         {
             const string ConfigFileName = "ardkConfig.json";
 
@@ -86,7 +97,7 @@ namespace Niantic.Lightship.AR.Loader
                 );
 
             return
-                gotConfigurationFromJson ? parsedConfig : GetDefaultEnvironmentConfig();
+                gotConfigurationFromJson ? parsedConfig : GetDefaultEnvironmentConfig(defaultAuthEnvironment);
         }
 
         public EndpointSettings() { }
@@ -110,6 +121,9 @@ namespace Niantic.Lightship.AR.Loader
             ObjectDetectionEndpoint = source.ObjectDetectionEndpoint;
             TelemetryEndpoint = source.TelemetryEndpoint;
             TelemetryApiKey = source.TelemetryApiKey;
+            IdentityEndpoint = source.IdentityEndpoint;
+            BevEndpoint = source.BevEndpoint;
+            PortalEndpoint = source.PortalEndpoint;
         }
     }
 }

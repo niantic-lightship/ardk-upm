@@ -108,15 +108,21 @@ namespace Niantic.Lightship.AR.Subsystems.Scanning
             IntPtr handle,
             out IntPtr positionBuffer,
             out IntPtr colorBuffer,
+            out IntPtr normalBuffer,
             out int pointCount
         )
         {
-            return Native.TryGetVoxelBuffer(handle, out positionBuffer, out colorBuffer, out pointCount);
+            return Native.TryGetVoxelBuffer(handle, out positionBuffer, out colorBuffer, out normalBuffer, out pointCount);
         }
 
         public void ComputeVoxels(IntPtr handle)
         {
             Native.ComputeVoxels(handle);
+        }
+
+        public float GetVoxelSize(IntPtr handle)
+        {
+            return Native.GetVoxelSize(handle);
         }
 
         public void ReleaseResource(IntPtr handle, IntPtr resourceHandle)
@@ -170,7 +176,10 @@ namespace Niantic.Lightship.AR.Subsystems.Scanning
 
             [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_Scanner_Get_Voxel_Buffer")]
             public static extern IntPtr TryGetVoxelBuffer
-                (IntPtr handle, out IntPtr positionBuffer, out IntPtr colorBuffer, out int pointCount);
+                (IntPtr handle, out IntPtr positionBuffer, out IntPtr colorBuffer, out IntPtr normalBuffer, out int pointCount);
+
+            [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_Scanner_Get_Voxel_Size")]
+            public static extern float GetVoxelSize(IntPtr handle);
 
             [DllImport(LightshipPlugin.Name, EntryPoint = "Lightship_ARDK_Unity_Scanner_Configure")]
             public static extern void Configure(IntPtr handle, ScannerConfigurationCStruct config);

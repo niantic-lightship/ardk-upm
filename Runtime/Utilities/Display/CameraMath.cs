@@ -266,5 +266,47 @@ namespace Niantic.Lightship.AR.Utilities
                 resolution: new Vector2Int(imageWidth, imageHeight));
         }
 
+#if ARF_6_1_OR_NEWER
+        /// <summary>
+        /// Calculates the field of view from the image intrinsics.
+        /// </summary>
+        /// <param name="intrinsics">The image intrinsics.</param>
+        /// <param name="resolutionWidth">The width of the image resolution.</param>
+        /// <param name="resolutionHeight">The height of the image resolution.</param>
+        /// <returns>The field of view.</returns>
+        internal static XRFov CalculateFov(Matrix4x4 intrinsics, int resolutionWidth, int resolutionHeight)
+        {
+            var focalLengthX = intrinsics[0, 0];
+            var focalLengthY = intrinsics[1, 1];
+            var principalX = intrinsics[0, 2];
+            var principalY = intrinsics[1, 2];
+
+            // Calculate the field of view from the intrinsics
+            float angleLeft = Mathf.Atan2(principalX, focalLengthX);
+            float angleRight = Mathf.Atan2(resolutionWidth - principalX, focalLengthX);
+            float angleUp = Mathf.Atan2(principalY, focalLengthY);
+            float angleDown = Mathf.Atan2(resolutionHeight - principalY, focalLengthY);
+
+            return new XRFov(angleLeft, angleRight, angleUp, angleDown);
+        }
+
+        /// <summary>
+        /// Calculates the field of view from the image intrinsics.
+        /// </summary>
+        /// <param name="intrinsics">The image intrinsics.</param>
+        /// <returns>The field of view.</returns>
+        internal static XRFov CalculateFov(XRCameraIntrinsics intrinsics)
+        {
+            // Calculate the field of view from the intrinsics
+            float angleLeft = Mathf.Atan2(intrinsics.principalPoint.x, intrinsics.focalLength.x);
+            float angleRight = Mathf.Atan2(intrinsics.resolution.x - intrinsics.principalPoint.x,
+                intrinsics.focalLength.x);
+            float angleUp = Mathf.Atan2(intrinsics.principalPoint.y, intrinsics.focalLength.y);
+            float angleDown = Mathf.Atan2(intrinsics.resolution.y - intrinsics.principalPoint.y,
+                intrinsics.focalLength.y);
+
+            return new XRFov(angleLeft, angleRight, angleUp, angleDown);
+        }
+#endif
     }
 }

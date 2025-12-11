@@ -19,30 +19,34 @@ namespace Niantic.Lightship.AR.XRSubsystems
     public class XRScanningConfiguration
     {
         private const int DEFAULT_FRAMERATE = 15;
-        private const bool DEFAULT_RAYCASTER_VIS_ENABLED = true;
+        private const bool DEFAULT_RAYCASTER_VIS_ENABLED = false;
         private const int DEFAULT_RAYCASTER_VIS_WIDTH = 256;
         private const int DEFAULT_RAYCASTER_VIS_HEIGHT = 144;
-        private const bool DEFAULT_VOXEL_VIS_ENABLED = true;
+        private const bool DEFAULT_VOXEL_VIS_ENABLED = false;
         private const bool DEFAULT_FULL_RESOLUTION_ENABLED = false;
-        private const float DEFAULT_MAX_SCANNING_DISTANCE = 5.0f;
+        private const int DEFAULT_FULL_RESOLUTION_FRAMERATE = 2;
         private const int MIN_FRAMERATE = 1;
         private const int MAX_FRAMERATE = 30;
         private const int MIN_RAYCASTER_VIS_RESOLUTION = 10;
         private const int MAX_RAYCASTER_VIS_RESOLUTION = 1024;
-        private const float MIN_MAX_SCANNING_DISTANCE = 0.1f;
-        private const float MAX_MAX_SCANNING_DISTANCE = 5.0f;
         private const bool DEFAULT_USE_ESTIMATED_DEPTH = true;
+        private const float DEFAULT_VOXEL_SIZE = 0.04f;
+        private const float DEFAULT_NEAR_DEPTH = 0.02f;
+        private const float DEFAULT_FAR_DEPTH = 5.0f;
 
         private int _framerate;
         private bool _raycasterVisualizationEnabled;
         private Vector2 _raycasterVisualizationResolution;
         private bool _voxelVisualizationEnabled;
-        private float _maxScanningDistance;
         private string _scanBasePath;
         private string _scanTargetId;
         private bool _useEstimatedDepth;
         internal string RawScanTargetId { get; private set; }
         private bool _fullResolutionEnabled;
+        private int _fullResolutionFramerate;
+        private float _voxelSize;
+        private float _nearDepth;
+        private float _farDepth;
 
         public int Framerate
         {
@@ -62,18 +66,6 @@ namespace Niantic.Lightship.AR.XRSubsystems
         {
             get => _raycasterVisualizationEnabled;
             set => _raycasterVisualizationEnabled = value;
-        }
-
-        public bool VoxelVisualizationEnabled
-        {
-            get => _voxelVisualizationEnabled;
-            set => _voxelVisualizationEnabled = value;
-        }
-
-        public bool UseEstimatedDepth
-        {
-            get => _useEstimatedDepth;
-            set => _useEstimatedDepth = value;
         }
 
         /// The resolution of the raycast visualization's output images. The output quality is bound by both this resolution
@@ -100,25 +92,46 @@ namespace Niantic.Lightship.AR.XRSubsystems
             }
         }
 
+        public float NearDepth
+        {
+            get => _nearDepth;
+            set => _nearDepth = value;
+        }
+
+        public float FarDepth
+        {
+            get => _farDepth;
+            set => _farDepth = value;
+        }
+
+        public bool VoxelVisualizationEnabled
+        {
+            get => _voxelVisualizationEnabled;
+            set => _voxelVisualizationEnabled = value;
+        }
+
+        public float VoxelSize
+        {
+            get => _voxelSize;
+            set => _voxelSize = value;
+        }
+
+        public bool UseEstimatedDepth
+        {
+            get => _useEstimatedDepth;
+            set => _useEstimatedDepth = value;
+        }
+
         public bool FullResolutionEnabled
         {
             get => _fullResolutionEnabled;
             set => _fullResolutionEnabled = value;
         }
 
-        public float MaxScanningDistance
+        public int FullResolutionFramerate
         {
-            get => _maxScanningDistance;
-            set
-            {
-                if (value > MAX_MAX_SCANNING_DISTANCE || value < MIN_MAX_SCANNING_DISTANCE)
-                {
-                    Log.Warning($"Scan max distance must be between 0.1f and 5.0f, but got: {value}");
-                }
-
-                _maxScanningDistance = Mathf.Clamp(
-                    value, MIN_MAX_SCANNING_DISTANCE, MAX_MAX_SCANNING_DISTANCE);
-            }
+            get => _fullResolutionFramerate;
+            set => _fullResolutionFramerate = value;
         }
 
         public string ScanBasePath
@@ -181,12 +194,15 @@ namespace Niantic.Lightship.AR.XRSubsystems
             _raycasterVisualizationEnabled = DEFAULT_RAYCASTER_VIS_ENABLED;
             _raycasterVisualizationResolution = new Vector2(DEFAULT_RAYCASTER_VIS_WIDTH, DEFAULT_RAYCASTER_VIS_HEIGHT);
             _voxelVisualizationEnabled = DEFAULT_VOXEL_VIS_ENABLED;
-            _maxScanningDistance = DEFAULT_MAX_SCANNING_DISTANCE;
             _scanBasePath = Application.persistentDataPath;
             _scanTargetId = "";
             _useEstimatedDepth = DEFAULT_USE_ESTIMATED_DEPTH;
             RawScanTargetId = "";
             _fullResolutionEnabled = DEFAULT_FULL_RESOLUTION_ENABLED;
+            _fullResolutionFramerate = DEFAULT_FULL_RESOLUTION_FRAMERATE;
+            _voxelSize = DEFAULT_VOXEL_SIZE;
+            _nearDepth = DEFAULT_NEAR_DEPTH;
+            _farDepth = DEFAULT_FAR_DEPTH;
         }
 
         /// <summary>
@@ -201,11 +217,14 @@ namespace Niantic.Lightship.AR.XRSubsystems
                 _raycasterVisualizationEnabled.Equals(other.RaycasterVisualizationEnabled) &&
                 _raycasterVisualizationResolution == other.RaycasterVisualizationResolution &&
                 _voxelVisualizationEnabled == other.VoxelVisualizationEnabled &&
-                _maxScanningDistance.Equals(other.MaxScanningDistance) &&
                 string.Equals(_scanBasePath, other._scanBasePath) &&
                 string.Equals(_scanTargetId, other._scanTargetId) &&
                 _fullResolutionEnabled == other._fullResolutionEnabled &&
-                _useEstimatedDepth == other._useEstimatedDepth;
+                _fullResolutionFramerate.Equals(other.FullResolutionFramerate) &&
+                _useEstimatedDepth == other._useEstimatedDepth &&
+                Mathf.Approximately(_voxelSize, other.VoxelSize) &&
+                Mathf.Approximately(_nearDepth, other.NearDepth) &&
+                Mathf.Approximately(_farDepth, other.FarDepth);
         }
     }
 }

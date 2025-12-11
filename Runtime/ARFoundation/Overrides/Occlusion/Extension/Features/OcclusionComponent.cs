@@ -1,11 +1,9 @@
 // Copyright 2022-2025 Niantic.
 
-using Niantic.Lightship.AR.ARFoundation.Unity;
 using Niantic.Lightship.AR.Common;
 using Niantic.Lightship.AR.Subsystems.Occlusion;
 using Niantic.Lightship.AR.Utilities;
 using UnityEngine;
-using UnityEngine.Rendering;
 using UnityEngine.XR.ARSubsystems;
 
 namespace Niantic.Lightship.AR.Occlusion.Features
@@ -40,7 +38,7 @@ namespace Niantic.Lightship.AR.Occlusion.Features
 
         // Resources
         private Texture2D _tempTexture;
-        private ARTextureInfo _platformDepthTextureInfo;
+        private LightshipExternalTexture _platformDepthTextureInfo;
 
         /// <summary>
         /// Assigns the occlusion subsystem to the occlusion feature.
@@ -176,16 +174,13 @@ namespace Niantic.Lightship.AR.Occlusion.Features
                 return null;
             }
 
-            if (OcclusionSubsystem.TryGetEnvironmentDepth(out var environmentDepthDescriptor))
+            if (OcclusionSubsystem.subsystemDescriptor?.environmentDepthImageSupported == Supported.Supported &&
+                OcclusionSubsystem.TryGetEnvironmentDepth(out var environmentDepthDescriptor))
             {
-                _platformDepthTextureInfo = ARTextureInfo.GetUpdatedTextureInfo(_platformDepthTextureInfo,
-                    environmentDepthDescriptor);
-                Debug.Assert(
-                    _platformDepthTextureInfo.Descriptor.dimension is TextureDimension.Tex2D
-                        or TextureDimension.None,
-                    "Environment depth texture needs to be a Texture 2D, but instead is "
-                    + $"{_platformDepthTextureInfo.Descriptor.dimension.ToString()}.");
-                return _platformDepthTextureInfo.Texture as Texture2D;
+                return LightshipExternalTexture.CreateOrUpdate(ref _platformDepthTextureInfo,
+                    environmentDepthDescriptor)
+                    ? null
+                    : _platformDepthTextureInfo.Texture as Texture2D;
             }
 
             return null;
@@ -205,7 +200,7 @@ namespace Niantic.Lightship.AR.Occlusion.Features
                 CPUDepth.Dispose();
             }
 
-            _platformDepthTextureInfo.Dispose();
+            _platformDepthTextureInfo?.Dispose();
         }
     }
 }

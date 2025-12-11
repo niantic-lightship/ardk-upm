@@ -192,6 +192,17 @@ namespace Niantic.Lightship.AR.Subsystems
             public UInt32 version;
             public string spaceIdentifier;
             public bool inDefaultSpace;
+            public GpsCoordinates gps;
+        }
+
+        [Serializable]
+        internal class GpsCoordinates
+        {
+            public float latitude;
+            public float longitude;
+            public float altitude;
+            public float positionAccuracy;
+            public float altitudeAccuracy;
         }
 
         [Serializable]

@@ -237,13 +237,17 @@ namespace Niantic.Lightship.AR.Subsystems.Scanning
                     configurationCStruct.EnableRaycastVisualization = _currentConfiguration.RaycasterVisualizationEnabled;
                     configurationCStruct.RaycastWidth = (int)_currentConfiguration.RaycasterVisualizationResolution.x;
                     configurationCStruct.RaycastHeight = (int)_currentConfiguration.RaycasterVisualizationResolution.y;
+                    configurationCStruct.NearDepth = _currentConfiguration.NearDepth;
+                    configurationCStruct.FarDepth = _currentConfiguration.FarDepth;
                     configurationCStruct.EnableVoxelVisualization = _currentConfiguration.VoxelVisualizationEnabled;
+                    configurationCStruct.VoxelSize = _currentConfiguration.VoxelSize;
                     configurationCStruct.BasePath = _currentConfiguration.ScanBasePath;
                     configurationCStruct.BasePathLen = _currentConfiguration.ScanBasePath.Length;
                     configurationCStruct.ScanTargetId = _currentConfiguration.RawScanTargetId;
                     configurationCStruct.ScanTargetIdLen = _currentConfiguration.RawScanTargetId.Length;
                     configurationCStruct.UseMultidepth = _currentConfiguration.UseEstimatedDepth;
                     configurationCStruct.EnableFullResolution = _currentConfiguration.FullResolutionEnabled;
+                    configurationCStruct.FullResolutionFramerate = _currentConfiguration.FullResolutionFramerate;
                     _api.Configure(_nativeProviderHandle, configurationCStruct);
                 }
             }
@@ -393,13 +397,13 @@ namespace Niantic.Lightship.AR.Subsystems.Scanning
                     return false;
                 }
 
-                IntPtr handlePtr = _api.TryGetVoxelBuffer(_nativeProviderHandle, out var positionBuffer, out var colorBuffer, out int pointCount);
+                IntPtr handlePtr = _api.TryGetVoxelBuffer(_nativeProviderHandle, out var positionBuffer, out var colorBuffer, out var normalBuffer, out int pointCount);
                 if (handlePtr == IntPtr.Zero)
                 {
                     return false;
                 }
 
-                voxelData = new XRScanningVoxelData(positionBuffer, colorBuffer, pointCount, handlePtr);
+                voxelData = new XRScanningVoxelData(positionBuffer, colorBuffer, normalBuffer, pointCount, handlePtr);
                 return true;
             }
 
@@ -421,6 +425,16 @@ namespace Niantic.Lightship.AR.Subsystems.Scanning
                 }
 
                 _api.ReleaseResource(_nativeProviderHandle, voxelData.nativeHandle);
+            }
+
+            public override float GetVoxelSize()
+            {
+                if (!_nativeProviderHandle.IsValidHandle())
+                {
+                    return 0.0f;
+                }
+
+                return _api.GetVoxelSize(_nativeProviderHandle);
             }
         }
 

@@ -178,7 +178,7 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
             throw new NotImplementedException();
         }
 
-        public VpsGraphStatus GetDevicePoseAsGps(IntPtr anchorProviderHandle, Matrix4x4 poseMatrix, out double latitude, out double longitude,
+        public VpsGraphOperationError GetDevicePoseAsGeolocation(IntPtr anchorProviderHandle, Matrix4x4 poseMatrix, out double latitude, out double longitude,
             out double altitude, out double verticalAccuracy, out double horizontalAccuracy, out double heading) =>
             throw new NotImplementedException();
     }

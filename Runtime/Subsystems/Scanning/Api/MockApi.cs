@@ -45,11 +45,15 @@ namespace Niantic.Lightship.AR.Subsystems.Scanning
             _currentConfiguration.RaycasterVisualizationEnabled = config.EnableRaycastVisualization;
             _currentConfiguration.RaycasterVisualizationResolution =
                 new Vector2(config.RaycastWidth, config.RaycastHeight);
+            _currentConfiguration.NearDepth = config.NearDepth;
+            _currentConfiguration.FarDepth = config.FarDepth;
             _currentConfiguration.VoxelVisualizationEnabled = config.EnableVoxelVisualization;
+            _currentConfiguration.VoxelSize = config.VoxelSize;
             _currentConfiguration.ScanBasePath = config.BasePath;
             _currentConfiguration.ScanTargetId = config.ScanTargetId;
             _currentConfiguration.UseEstimatedDepth = config.UseMultidepth;
             _currentConfiguration.FullResolutionEnabled = config.EnableFullResolution;
+            _currentConfiguration.FullResolutionFramerate = config.FullResolutionFramerate;
         }
 
         public IntPtr TryGetRaycastBuffer
@@ -88,6 +92,7 @@ namespace Niantic.Lightship.AR.Subsystems.Scanning
             IntPtr handle,
             out IntPtr positionBuffer,
             out IntPtr colorBuffer,
+            out IntPtr normalBuffer,
             out int pointCount
         )
         {
@@ -95,6 +100,11 @@ namespace Niantic.Lightship.AR.Subsystems.Scanning
         }
 
         public void ComputeVoxels(IntPtr handle)
+        {
+            throw new NotImplementedException();
+        }
+
+        public float GetVoxelSize(IntPtr handle)
         {
             throw new NotImplementedException();
         }

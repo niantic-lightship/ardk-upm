@@ -58,5 +58,20 @@ namespace Niantic.Lightship.AR.Loader
         {
             get => EndpointSettings.TelemetryEndpoint;
         }
+
+        internal string IdentityEndpoint
+        {
+            get => EndpointSettings.IdentityEndpoint;
+        }
+
+        internal string PortalEndpoint
+        {
+            get => EndpointSettings.PortalEndpoint;
+        }
+
+        internal string BevEndpoint
+        {
+            get => EndpointSettings.BevEndpoint;
+        }
     }
 }

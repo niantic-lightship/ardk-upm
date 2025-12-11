@@ -74,10 +74,46 @@ namespace Niantic.Lightship.AR.XRSubsystems
                 (ref arToWorld, ref originLatitude, ref originLongitude, ref originAltitude);
 
         /// <summary>
+        /// Frame rate that world positioning updates will aim to run at.
+        /// </summary>
+        public int Framerate
+        {
+            get => provider.Framerate;
+            set => provider.Framerate = value;
+        }
+
+        /// <summary>
+        /// Enable smoothing for World Positioning
+        /// </summary>
+        public bool Smoothing
+        {
+            get => provider.Smoothing;
+            set => provider.Smoothing = value;
+        }
+
+        /// <summary>
         /// The provider which will service the <see cref="XRWorldPositioningSubsystem"/>.
         /// </summary>
         public abstract class Provider : SubsystemProvider<XRWorldPositioningSubsystem>
         {
+            /// <summary>
+            /// Property to get or set the target frame rate for world positioning updates.
+            /// </summary>
+            public virtual int Framerate
+            {
+                get => throw new NotSupportedException("Framerate is not supported by this implementation");
+                set => throw new NotSupportedException("Framerate is not supported by this implementation");
+            }
+
+            /// <summary>
+            /// Property to get or set whether smoothing is enabled for world positioning.
+            /// </summary>
+            public virtual bool Smoothing
+            {
+                get => throw new NotSupportedException("Smoothing is not supported by this implementation");
+                set => throw new NotSupportedException("Smoothing is not supported by this implementation");
+            }
+
             /// <summary>
             /// Gets the latest transform between XROrigin coordinates and World Space coordinates.
             /// </summary>

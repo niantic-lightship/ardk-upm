@@ -4,6 +4,7 @@ using Niantic.Lightship.AR.Loader;
 using Niantic.Lightship.AR.Utilities.Logging;
 using Niantic.Lightship.AR.Subsystems.Playback;
 using UnityEngine;
+using UnityEngine.InputSystem.Interactions;
 using UnityEngine.XR.Management;
 
 namespace Niantic.Lightship.AR
@@ -166,7 +167,7 @@ namespace Niantic.Lightship.AR
             {
                 get
                 {
-                    return CheckForValidData() ? Vector3.one : Vector3.zero;
+                    return CheckForValidData() && _lastData.MagnetometerCalibrated != null && _lastData.MagnetometerCalibrated.Length == 3 ? new Vector3((float)_lastData.MagnetometerCalibrated[0], (float)_lastData.MagnetometerCalibrated[1], (float)_lastData.MagnetometerCalibrated[2]) : Vector3.zero;
                 }
             }
 

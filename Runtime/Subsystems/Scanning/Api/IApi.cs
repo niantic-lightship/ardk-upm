@@ -45,10 +45,13 @@ namespace Niantic.Lightship.AR.Subsystems.Scanning
             IntPtr handle,
             out IntPtr positionBuffer,
             out IntPtr colorBuffer,
+            out IntPtr normalBuffer,
             out int pointCount
         );
 
         public void ComputeVoxels(IntPtr handle);
+
+        public float GetVoxelSize(IntPtr handle);
 
         public void ReleaseResource(IntPtr handle, IntPtr resourceHandle);
     }
@@ -56,7 +59,7 @@ namespace Niantic.Lightship.AR.Subsystems.Scanning
     /// <summary>
     /// C struct for C# to send frame data to C++. Defined in ardk_scanner_configuration.h file.
     /// Note: It is not that great as we have both XRScanningConfiguration and this ScannerConfigurationCStruct.
-    /// The reason why we don't move ScannerConfigurationCStruct into XRScanningConfiguratiis for the benefits
+    /// The reason why we don't move ScannerConfigurationCStruct into XRScanningConfiguration is for the benefits
     /// of decoupling internal and public code, and avoid easily breaking existing public contracts.
     /// </summary>
     [StructLayout(LayoutKind.Sequential)]
@@ -75,9 +78,18 @@ namespace Niantic.Lightship.AR.Subsystems.Scanning
         // Height of the resolution used by the raycast visualization.
         public int RaycastHeight;
 
+        // Near depth plane for depth integration, in meters.
+        public float NearDepth;
+
+        // Far depth plane for depth integration, in meters.
+        public float FarDepth;
+
         // Flag to indicate if voxel visualization should be enabled during scanning.
         [MarshalAs(UnmanagedType.U1)]
         public bool EnableVoxelVisualization;
+
+        // Size of voxels for the voxel visualization, in meters.
+        public float VoxelSize;
 
         // Base path string.
         public string BasePath;
@@ -98,5 +110,8 @@ namespace Niantic.Lightship.AR.Subsystems.Scanning
         // Flag to indicate if full resolution JPEG image will be used during scanning.
         [MarshalAs(UnmanagedType.U1)]
         public bool EnableFullResolution;
+
+        // FPS for full resolution frame recording.
+        public int FullResolutionFramerate;
     }
 }

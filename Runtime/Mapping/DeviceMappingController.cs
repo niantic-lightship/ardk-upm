@@ -16,7 +16,7 @@ namespace Niantic.Lightship.AR.Mapping
     public class DeviceMappingController
     {
         internal const uint DefaultTargetFrameRate = 10;
-        internal const float DefaultSplitterMaxDistanceMeters = 30.0f;
+        internal const float DefaultSplitterMaxDistanceMeters = 10.0f;
         internal const float DefaultSplitterMaxDurationSeconds = 30.0f;
 
         /// <summary>
@@ -209,7 +209,7 @@ namespace Niantic.Lightship.AR.Mapping
             {
                 return;
             }
-            
+
             _mapper.StopMapping();
             _isMapping = false;
         }

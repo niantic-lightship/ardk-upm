@@ -1,5 +1,6 @@
 // Copyright 2022-2025 Niantic.
 
+using System;
 using UnityEngine;
 
 namespace Niantic.Lightship.AR.Loader
@@ -27,7 +28,10 @@ namespace Niantic.Lightship.AR.Loader
         {
             var asset = LightshipSettings.Instance;
             _activeSettings = new RuntimeLightshipSettings(asset);
+            OnRuntimeSettingsCreated?.Invoke();
         }
+
+        public static event Action OnRuntimeSettingsCreated;
 
         public static void CreateDefaultRuntimeSettings()
         {

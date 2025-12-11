@@ -1,7 +1,5 @@
 // Copyright 2022-2025 Niantic.
 #if MODULE_URP_ENABLED
-
-
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
@@ -16,22 +14,66 @@ namespace Niantic.Lightship.AR.Occlusion
     /// </summary>
     internal class FullScreenBlitPass : ExternalMaterialPass
     {
-        protected FullScreenBlitPass(string name, RenderPassEvent renderPassEvent) : base(name, renderPassEvent)
+        protected FullScreenBlitPass(string name, RenderPassEvent renderPassEvent)
+            : base(name, renderPassEvent) { }
+
+#if UNITY_6000_0_OR_NEWER
+
+        /// <summary>
+        /// Contains the rendering context data.
+        /// </summary>
+        private class PassData
         {
+            public UniversalCameraData CameraData;
+            public UniversalResourceData ResourceData;
         }
 
-        public override void Configure(CommandBuffer cmd, RenderTextureDescriptor cameraTextureDescriptor)
+        /// <inheritdoc />
+        public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
         {
-            base.Configure(cmd, cameraTextureDescriptor);
-            ConfigureClear(ClearFlag.None, Color.clear);
+            using var builder =
+                renderGraph.AddRasterRenderPass<PassData>(Name, out var passData, profilingSampler);
+
+            // Populate pass data
+            passData.CameraData = frameData.Get<UniversalCameraData>();
+            passData.ResourceData = frameData.Get<UniversalResourceData>();
+
+            builder.SetRenderAttachment(passData.ResourceData.activeColorTexture, 0);
+            builder.SetRenderAttachmentDepth(passData.ResourceData.activeDepthTexture);
+            builder.SetRenderFunc((PassData data, RasterGraphContext context) =>
+            {
+                var cmd = context.cmd;
+
+                // Set culling
+                cmd.SetInvertCulling(InvertCulling);
+
+                // Push matrix
+                cmd.SetViewProjectionMatrices(Matrix4x4.identity,
+                    renderPassEvent == RenderPassEvent.BeforeRenderingOpaques
+                        ? BeforeOpaquesProjection
+                        : AfterOpaquesProjection);
+
+                // Draw
+                cmd.DrawMesh(
+                    renderPassEvent == RenderPassEvent.BeforeRenderingOpaques
+                        ? FullScreenNearClipMesh
+                        : FullScreenFarClipMesh,
+                    Matrix4x4.identity, Material);
+
+                // Pop matrix
+                cmd.SetViewProjectionMatrices(data.CameraData.camera.worldToCameraMatrix,
+                    data.CameraData.camera.projectionMatrix);
+            });
         }
+#endif
 
         /// <summary>
         /// Invoked when the render pass is executed.
         /// </summary>
         /// <param name="cmd">The temporary command buffer used to issue draw commands.</param>
         /// <param name="renderingData">Current rendering state information</param>
-        protected override void OnExecute(CommandBuffer cmd, ref RenderingData renderingData)
+        /// <remarks>When built using Unity 6, this only gets called in compatibility mode.</remarks>
+        protected override void OnExecuteCompatibilityMode(CommandBuffer cmd, ref RenderingData renderingData)
         {
             // Push matrix
             cmd.SetViewProjectionMatrices(Matrix4x4.identity,
@@ -51,49 +93,22 @@ namespace Niantic.Lightship.AR.Occlusion
                 renderingData.cameraData.camera.projectionMatrix);
         }
 
-#if UNITY_6000_0_OR_NEWER
-        /// <summary>
-        /// Invoked when the render pass is executed when using Render Graph.
-        /// </summary>
-        protected override void OnExecute(RasterGraphContext context, PassData renderingData)
-        {
-            var cmd = context.cmd;
-
-            // Push matrix
-            cmd.SetViewProjectionMatrices(Matrix4x4.identity,
-                renderPassEvent == RenderPassEvent.BeforeRenderingOpaques
-                    ? BeforeOpaquesProjection
-                    : AfterOpaquesProjection);
-
-            // Draw
-            cmd.DrawMesh(
-                renderPassEvent == RenderPassEvent.BeforeRenderingOpaques
-                    ? FullScreenNearClipMesh
-                    : FullScreenFarClipMesh,
-                Matrix4x4.identity, Material);
-
-            // Pop matrix
-            cmd.SetViewProjectionMatrices(renderingData.CameraData.camera.worldToCameraMatrix,
-                renderingData.CameraData.camera.projectionMatrix);
-        }
-#endif
-
         #region Utils
 
         /// <summary>
         /// The orthogonal projection matrix for the before opaque background rendering.
         /// </summary>
-        private static Matrix4x4 BeforeOpaquesProjection { get; } = Matrix4x4.Ortho(0f, 1f, 0f, 1f, -0.1f, 9.9f);
+        protected static Matrix4x4 BeforeOpaquesProjection { get; } = Matrix4x4.Ortho(0f, 1f, 0f, 1f, -0.1f, 9.9f);
 
         /// <summary>
         /// The orthogonal projection matrix for the after opaque background rendering.
         /// </summary>
-        private static Matrix4x4 AfterOpaquesProjection { get; } = Matrix4x4.Ortho(0, 1, 0, 1, 0, 1);
+        protected static Matrix4x4 AfterOpaquesProjection { get; } = Matrix4x4.Ortho(0, 1, 0, 1, 0, 1);
 
         /// <summary>
         /// A mesh that is placed near the near-clip plane
         /// </summary>
-        private static Mesh FullScreenNearClipMesh
+        protected static Mesh FullScreenNearClipMesh
         {
             get
             {
@@ -110,7 +125,7 @@ namespace Niantic.Lightship.AR.Occlusion
         /// <summary>
         /// A mesh that is placed near the far-clip plane
         /// </summary>
-        private static Mesh FullScreenFarClipMesh
+        protected static Mesh FullScreenFarClipMesh
         {
             get
             {

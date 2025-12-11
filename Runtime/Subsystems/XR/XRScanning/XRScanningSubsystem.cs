@@ -72,6 +72,15 @@ namespace Niantic.Lightship.AR.XRSubsystems
         }
 
         /// <summary>
+        /// Get the current voxel size in meters.
+        /// </summary>
+        /// <returns>The current voxel size in meters, or 0 if voxel visualization is not enabled.</returns>
+        public float GetVoxelSize()
+        {
+            return provider.GetVoxelSize();
+        }
+
+        /// <summary>
         /// Get the current scan's ID.
         /// </summary>
         public string GetScanId()
@@ -159,6 +168,11 @@ namespace Niantic.Lightship.AR.XRSubsystems
             }
 
             public virtual void DisposeVoxelBuffer(XRScanningVoxelData voxelData)
+            {
+                throw new NotImplementedException();
+            }
+
+            public virtual float GetVoxelSize()
             {
                 throw new NotImplementedException();
             }

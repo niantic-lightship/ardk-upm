@@ -45,7 +45,7 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
                     Log.Error("Depth Source is Lidar, but no depth frames found!");
                 }
             }
-
+            
 
             foreach (var frame in Frames)
             {
@@ -336,6 +336,11 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
 
             public double HeadingTimestamp => headingTimestamp;
 
+            public double[] MagnetometerCalibrated => magnetometerCalibrated;
+
+            [SerializeField]
+            private double[] magnetometerCalibrated;
+
             public LocationInfo(LocationInfo original, double timestampOffset)
             {
                 latitude = original.latitude;
@@ -346,6 +351,7 @@ namespace Niantic.Lightship.AR.Subsystems.Playback
                 altitudeAccuracy = original.altitudeAccuracy;
                 heading = original.heading;
                 headingAccuracy = original.headingAccuracy;
+                magnetometerCalibrated = original.magnetometerCalibrated;
                 headingTimestamp = original.headingTimestamp + timestampOffset;
             }
         }

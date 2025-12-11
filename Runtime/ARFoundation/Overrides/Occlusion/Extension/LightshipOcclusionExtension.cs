@@ -27,9 +27,6 @@ namespace Niantic.Lightship.AR.Occlusion
     [PublicAPI("apiref/Niantic/Lightship/AR/Occlusion/LightshipOcclusionExtension/")]
     [RequireComponent(typeof(AROcclusionManager))]
     [DefaultExecutionOrder(ARUpdateOrder.k_OcclusionManager - 1)]
-#if ARF_6_0_OR_NEWER
-    [Obsolete("This component is not yet supported in combination with AR Foundation version 6.0 or later.")]
-#endif
     public partial class LightshipOcclusionExtension : CompositeRenderer
     {
         [SerializeField]
@@ -70,6 +67,10 @@ namespace Niantic.Lightship.AR.Occlusion
         private Material _customMaterial;
 
         [FormerlySerializedAs("_bypassOcclusionManagerUpdates")]
+        [Tooltip("Whether to disable automatically updating the depth texture of the occlusion manager. "
+            + "This feature can be used to avoid redundant texture operations since depth is ultimately "
+            + "going to be overriden by the Lightship Occlusion Extension anyway. Not using this setting "
+            + "may result in undesired synchronization with the rendering thread that impacts performance.")]
         [SerializeField]
         private bool _requestBypassOcclusionManagerUpdates;
         private bool _currentBypassOcclusionManagerUpdates;
@@ -239,7 +240,7 @@ namespace Niantic.Lightship.AR.Occlusion
                 // Using platform depth (aspect ratio matches camera image)
                 if (_cameraSubsystem != null)
                 {
-                    var texture = _occlusionManager.environmentDepthTexture;
+                    var texture = DepthTexture;
                     if (texture != null && _cameraSubsystem.TryGetIntrinsics(out var intrinsicsData))
                     {
                         var res = new Vector2Int(texture.width, texture.height);
@@ -255,7 +256,7 @@ namespace Niantic.Lightship.AR.Occlusion
                     }
                 }
 
-                return default;
+                return null;
             }
         }
 
@@ -371,25 +372,19 @@ namespace Niantic.Lightship.AR.Occlusion
         public bool OverrideOcclusionManagerSettings
         {
             get => _overrideOcclusionManagerSettings;
-            set { _overrideOcclusionManagerSettings = value; }
+            set => _overrideOcclusionManagerSettings = value;
         }
 
         /// <summary>
         /// Returns the raw depth texture used in rendering.
         /// </summary>
-        public Texture2D DepthTexture
-        {
-            get => _occlusionComponent?.GPUDepth;
-        }
+        public Texture2D DepthTexture => _occlusionComponent?.GPUDepth;
 
         /// <summary>
         /// Returns a transform for converting between normalized image coordinates and a coordinate space
         /// appropriate for rendering <see cref="DepthTexture"/> on the viewport.
         /// </summary>
-        public Matrix4x4 DepthTransform
-        {
-            get { return _occlusionComponent?.DepthTransform ?? Matrix4x4.identity; }
-        }
+        public Matrix4x4 DepthTransform => _occlusionComponent?.DepthTransform ?? Matrix4x4.identity;
 
         /// <summary>
         /// Get or set the custom material used for processing the AR background depth buffer.

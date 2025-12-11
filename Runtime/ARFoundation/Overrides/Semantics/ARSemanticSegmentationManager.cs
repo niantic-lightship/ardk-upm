@@ -3,12 +3,11 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using Niantic.Lightship.AR.ARFoundation.Unity;
 using Niantic.Lightship.AR.Common;
-using Niantic.Lightship.AR.Subsystems.Common;
 using Niantic.Lightship.AR.Subsystems.Semantics;
 using Niantic.Lightship.AR.Utilities;
 using Niantic.Lightship.AR.Utilities.Logging;
+using Niantic.Lightship.AR.Utilities.Textures;
 using Niantic.Lightship.AR.XRSubsystems;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -108,13 +107,43 @@ namespace Niantic.Lightship.AR.Semantics
         public event Action<ARSemanticSegmentationFrameEventArgs> FrameReceived;
 
         /// <summary>
+        /// A type that holds a semantic segmentation texture along with its associated metadata for warping.
+        /// </summary>
+        private struct SemanticsTexture
+        {
+            // The external texture
+            public LightshipExternalTexture ExternalTexture;
+
+            // Metadata for warping the texture to viewport space
+            public Matrix4x4 SamplerMatrix;
+            public XRCameraParams CameraParams;
+
+            /// <summary>
+            /// True if the texture has not been updated this frame.
+            /// </summary>
+            public readonly bool IsOutOfDate => LastUpdatedFrameId != Time.frameCount;
+            public int LastUpdatedFrameId;
+
+            /// <summary>
+            /// Disposes of the external texture and resets metadata.
+            /// </summary>
+            public void Reset()
+            {
+                ExternalTexture?.Dispose();
+                SamplerMatrix = default;
+                CameraParams = default;
+                LastUpdatedFrameId = -1;
+            }
+        }
+
+        /// <summary>
         /// A dictionary mapping semantic confidence textures (<c>ARTextureInfo</c>s) to their respective semantic
         /// segmentation channel names.
         /// </summary>
         /// <value>
         /// The semantic segmentation confidence texture infos.
         /// </value>
-        private Dictionary<string, ARTextureInfo> _semanticChannelTextureInfos = new();
+        private readonly Dictionary<string, SemanticsTexture> _semanticChannelTextureInfos = new();
 
         /// <summary>
         /// The semantic segmentation packed thresholded bitmask.
@@ -122,7 +151,7 @@ namespace Niantic.Lightship.AR.Semantics
         /// <value>
         /// The semantic segmentation packed thresholded bitmask.
         /// </value>
-        private ARTextureInfo _packedBitmaskTextureInfo;
+        private SemanticsTexture _packedBitmaskTextureInfo;
 
         /// <summary>
         /// The suppression mask texture info.
@@ -130,7 +159,7 @@ namespace Niantic.Lightship.AR.Semantics
         /// <value>
         ///The suppression mask texture info.
         /// </value>
-        private ARTextureInfo _suppressionMaskTextureInfo;
+        private SemanticsTexture _suppressionMaskTextureInfo;
 
         /// <summary>
         /// Frequently updated information about the viewport.
@@ -218,12 +247,14 @@ namespace Niantic.Lightship.AR.Semantics
         /// </summary>
         private void ResetTextureInfos()
         {
-            _packedBitmaskTextureInfo.Reset();
-
-            foreach (KeyValuePair<string, ARTextureInfo> pair in _semanticChannelTextureInfos)
-                pair.Value.Dispose();
+            foreach (KeyValuePair<string, SemanticsTexture> pair in _semanticChannelTextureInfos)
+            {
+                pair.Value.Reset();
+            }
 
             _semanticChannelTextureInfos.Clear();
+            _packedBitmaskTextureInfo.Reset();
+            _suppressionMaskTextureInfo.Reset();
         }
 
         private void ResetModelMetadata()
@@ -256,8 +287,10 @@ namespace Niantic.Lightship.AR.Semantics
         /// <param name="samplerMatrix">A matrix that converts from viewport to image coordinates according to the latest pose.</param>
         /// <param name="cameraParams">Params of the viewport to sample with. Defaults to current screen dimensions if null.</param>
         /// <returns>The texture for the specified semantic channel, if any. Otherwise, <c>null</c>.</returns>
-        public Texture2D GetSemanticChannelTexture(string channelName, out Matrix4x4 samplerMatrix, XRCameraParams? cameraParams = null)
+        public Texture2D GetSemanticChannelTexture(string channelName, out Matrix4x4 samplerMatrix,
+            XRCameraParams? cameraParams = null)
         {
+            // Default to current viewport
             cameraParams ??= _viewport;
 
             // If semantic segmentation is unavailable
@@ -268,30 +301,28 @@ namespace Niantic.Lightship.AR.Semantics
             }
 
             // If we already have an up-to-date texture
-            if (_semanticChannelTextureInfos.TryGetValue(channelName, out ARTextureInfo info))
+            if (_semanticChannelTextureInfos.TryGetValue(channelName, out var info))
             {
-                if (!info.IsDirty && info.CameraParams == cameraParams)
+                if (!info.IsOutOfDate && info.CameraParams == cameraParams)
                 {
                     samplerMatrix = info.SamplerMatrix;
-                    return info.Texture as Texture2D;
+                    return info.ExternalTexture.Texture as Texture2D;
                 }
             }
 
             // Acquire the new texture descriptor
-            if (!subsystem.TryGetSemanticChannel(channelName, out var textureDescriptor, out samplerMatrix, cameraParams))
+            if (!subsystem.TryGetSemanticChannel(channelName, out var textureDescriptor, out samplerMatrix,
+                    cameraParams))
             {
                 samplerMatrix = default;
                 return null;
             }
 
             // Format mismatch
-            if (textureDescriptor.dimension != TextureDimension.Tex2D)
+            if (LightshipExternalTexture.GetTextureDimension(textureDescriptor) != TextureDimension.Tex2D)
             {
-                Log.Error
-                (
-                    "Semantic confidence texture needs to be a Texture2D, but is " + textureDescriptor.dimension + "."
-                );
-
+                Log.Error("Semantic confidence texture needs to be a Texture2D, but is " +
+                    LightshipExternalTexture.GetTextureDimension(textureDescriptor) + ".");
                 samplerMatrix = default;
                 return null;
             }
@@ -299,25 +330,42 @@ namespace Niantic.Lightship.AR.Semantics
             // Cache the texture
             if (!_semanticChannelTextureInfos.ContainsKey(channelName))
             {
+                var texture = LightshipExternalTexture.Create(textureDescriptor);
+                if (texture == null)
+                {
+                    Log.Error("Failed to create semantic confidence texture for channel " + channelName + ".");
+                    return null;
+                }
+
                 _semanticChannelTextureInfos.Add
                 (
                     channelName,
-                    new ARTextureInfo(textureDescriptor, samplerMatrix, cameraParams.Value)
+                    new SemanticsTexture
+                    {
+                        ExternalTexture = texture,
+                        SamplerMatrix = samplerMatrix,
+                        CameraParams = cameraParams.Value,
+                        LastUpdatedFrameId = Time.frameCount
+                    }
                 );
             }
             else
             {
-                _semanticChannelTextureInfos[channelName] =
-                    ARTextureInfo.GetUpdatedTextureInfo
-                    (
-                        _semanticChannelTextureInfos[channelName],
-                        textureDescriptor,
-                        samplerMatrix,
-                        cameraParams.Value
-                    );
+                var texture = _semanticChannelTextureInfos[channelName].ExternalTexture;
+                if (texture.Update(textureDescriptor))
+                {
+                    _semanticChannelTextureInfos[channelName] =
+                        new SemanticsTexture
+                        {
+                            ExternalTexture = texture,
+                            SamplerMatrix = samplerMatrix,
+                            CameraParams = cameraParams.Value,
+                            LastUpdatedFrameId = Time.frameCount
+                        };
+                }
             }
 
-            return _semanticChannelTextureInfos[channelName].Texture as Texture2D;
+            return _semanticChannelTextureInfos[channelName].ExternalTexture.Texture as Texture2D;
         }
 
         /// <summary>
@@ -329,15 +377,25 @@ namespace Niantic.Lightship.AR.Semantics
         /// <returns>The packed semantics texture, owned by the manager, if any. Otherwise, <c>null</c>.</returns>
         public Texture2D GetPackedSemanticsChannelsTexture(out Matrix4x4 samplerMatrix, XRCameraParams? cameraParams = null)
         {
+            // Default to current viewport
             cameraParams ??= _viewport;
 
-            // Update the packed semantics texture. This will only update the external texture if
-            // the subsystem returns a different textureDescriptor.
+            // This will only update the external texture if  the subsystem returns a different textureDescriptor.
             if (subsystem.TryGetPackedSemanticChannels(out var textureDescriptor, out samplerMatrix, cameraParams))
             {
-                _packedBitmaskTextureInfo = ARTextureInfo.GetUpdatedTextureInfo(_packedBitmaskTextureInfo,
-                    textureDescriptor, samplerMatrix, cameraParams.Value);
-                return _packedBitmaskTextureInfo.Texture as Texture2D;
+                var texture = _packedBitmaskTextureInfo.ExternalTexture;
+                if (LightshipExternalTexture.CreateOrUpdate(ref texture, textureDescriptor))
+                {
+                    _packedBitmaskTextureInfo = new SemanticsTexture
+                    {
+                        ExternalTexture = texture,
+                        SamplerMatrix = samplerMatrix,
+                        CameraParams = cameraParams.Value,
+                        LastUpdatedFrameId = Time.frameCount
+                    };
+                }
+
+                return _packedBitmaskTextureInfo.ExternalTexture.Texture as Texture2D;
             }
 
             samplerMatrix = default;
@@ -353,13 +411,25 @@ namespace Niantic.Lightship.AR.Semantics
         /// <returns>The suppression mask texture, owned by the manager, if any. Otherwise, <c>null</c>.</returns>
         public Texture2D GetSuppressionMaskTexture(out Matrix4x4 samplerMatrix, XRCameraParams? cameraParams = null)
         {
+            // Default to current viewport
             cameraParams ??= _viewport;
 
+            // This will only update the external texture if  the subsystem returns a different textureDescriptor.
             if (subsystem.TryGetSuppressionMaskTexture(out var textureDescriptor, out samplerMatrix, cameraParams))
             {
-                _suppressionMaskTextureInfo = ARTextureInfo.GetUpdatedTextureInfo(_suppressionMaskTextureInfo,
-                    textureDescriptor, samplerMatrix, cameraParams.Value);
-                return _suppressionMaskTextureInfo.Texture as Texture2D;
+                var texture = _suppressionMaskTextureInfo.ExternalTexture;
+                if (LightshipExternalTexture.CreateOrUpdate(ref texture, textureDescriptor))
+                {
+                    _suppressionMaskTextureInfo = new SemanticsTexture
+                    {
+                        ExternalTexture = texture,
+                        SamplerMatrix = samplerMatrix,
+                        CameraParams = cameraParams.Value,
+                        LastUpdatedFrameId = Time.frameCount
+                    };
+                }
+
+                return _suppressionMaskTextureInfo.ExternalTexture.Texture as Texture2D;
             }
 
             samplerMatrix = default;

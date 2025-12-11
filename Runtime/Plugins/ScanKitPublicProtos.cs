@@ -56,7 +56,7 @@ namespace Niantic.ARDK.AR.Protobuf {
             "eBIOCgJmeRgHIAEoAlICZnkSDgoCcHgYBCABKAJSAnB4Eg4KAnB5GAUgASgC",
             "UgJweRIMCgFrGAYgASgCUgFrIlQKFEFmZmluZVRyYW5zZm9ybVByb3RvEhoK",
             "CHJvdGF0aW9uGAEgAygCUghyb3RhdGlvbhIgCgt0cmFuc2xhdGlvbhgCIAMo",
-            "AlILdHJhbnNsYXRpb24ijQMKDUxvY2F0aW9uUHJvdG8SHAoJdGltZXN0YW1w",
+            "AlILdHJhbnNsYXRpb24ilAQKDUxvY2F0aW9uUHJvdG8SHAoJdGltZXN0YW1w",
             "GAEgASgBUgl0aW1lc3RhbXASGgoIbGF0aXR1ZGUYAiABKAFSCGxhdGl0dWRl",
             "EhwKCWxvbmdpdHVkZRgDIAEoAVIJbG9uZ2l0dWRlEhoKCGFjY3VyYWN5GAQg",
             "ASgCUghhY2N1cmFjeRIpChBlbGV2YXRpb25fbWV0ZXJzGAUgASgCUg9lbGV2",
@@ -65,15 +65,23 @@ namespace Niantic.ARDK.AR.Protobuf {
             "bmdEZWdyZWVzEikKEGhlYWRpbmdfYWNjdXJhY3kYCCABKAJSD2hlYWRpbmdB",
             "Y2N1cmFjeRIrChFoZWFkaW5nX3RpbWVzdGFtcBgJIAEoAVIQaGVhZGluZ1Rp",
             "bWVzdGFtcBItChJwb3NpdGlvbl90aW1lc3RhbXAYCiABKAFSEXBvc2l0aW9u",
-            "VGltZXN0YW1wIkUKEUV4cG9zdXJlSW5mb1Byb3RvEhgKB3NodXR0ZXIYASAB",
-            "KAJSB3NodXR0ZXISFgoGb2Zmc2V0GAIgASgCUgZvZmZzZXQiNwoPRGVwdGhS",
-            "YW5nZVByb3RvEhIKBG5lYXIYASABKAJSBG5lYXISEAoDZmFyGAIgASgCUgNm",
-            "YXIiPwoPUmFzdGVyU2l6ZVByb3RvEhQKBXdpZHRoGAEgASgFUgV3aWR0aBIW",
-            "CgZoZWlnaHQYAiABKAVSBmhlaWdodCKEAQoQQm91bmRpbmdCb3hQcm90bxIR",
-            "CgRsb194GAEgASgCUgNsb1gSEQoEbG9feRgCIAEoAlIDbG9ZEhEKBGxvX3oY",
-            "AyABKAJSA2xvWhIRCgRoaV94GAQgASgCUgNoaVgSEQoEaGlfeRgFIAEoAlID",
-            "aGlZEhEKBGhpX3oYBiABKAJSA2hpWkIbqgIYTmlhbnRpYy5BUkRLLkFSLlBy",
-            "b3RvYnVmYgZwcm90bzM="));
+            "VGltZXN0YW1wEisKEmhlYWRpbmdfcmF3X2RhdGFfeBgLIAEoAlIPaGVhZGlu",
+            "Z1Jhd0RhdGFYEisKEmhlYWRpbmdfcmF3X2RhdGFfeRgMIAEoAlIPaGVhZGlu",
+            "Z1Jhd0RhdGFZEisKEmhlYWRpbmdfcmF3X2RhdGFfehgNIAEoAlIPaGVhZGlu",
+            "Z1Jhd0RhdGFaIp8BChZTaWduYWxBY2Nlc3NQb2ludFByb3RvEhQKBWJzc2lk",
+            "GAEgASgJUgVic3NpZBISCgRyc3NpGAIgASgFUgRyc3NpEjYKBHR5cGUYAyAB",
+            "KA4yIi5TaWduYWxBY2Nlc3NQb2ludFByb3RvLlNpZ25hbFR5cGVSBHR5cGUi",
+            "IwoKU2lnbmFsVHlwZRILCgdVTktOT1dOEAASCAoEV0lGSRABIksKC1NpZ25h",
+            "bFByb3RvEjwKDWFjY2Vzc19wb2ludHMYASADKAsyFy5TaWduYWxBY2Nlc3NQ",
+            "b2ludFByb3RvUgxhY2Nlc3NQb2ludHMiRQoRRXhwb3N1cmVJbmZvUHJvdG8S",
+            "GAoHc2h1dHRlchgBIAEoAlIHc2h1dHRlchIWCgZvZmZzZXQYAiABKAJSBm9m",
+            "ZnNldCI3Cg9EZXB0aFJhbmdlUHJvdG8SEgoEbmVhchgBIAEoAlIEbmVhchIQ",
+            "CgNmYXIYAiABKAJSA2ZhciI/Cg9SYXN0ZXJTaXplUHJvdG8SFAoFd2lkdGgY",
+            "ASABKAVSBXdpZHRoEhYKBmhlaWdodBgCIAEoBVIGaGVpZ2h0IoQBChBCb3Vu",
+            "ZGluZ0JveFByb3RvEhEKBGxvX3gYASABKAJSA2xvWBIRCgRsb195GAIgASgC",
+            "UgNsb1kSEQoEbG9fehgDIAEoAlIDbG9aEhEKBGhpX3gYBCABKAJSA2hpWBIR",
+            "CgRoaV95GAUgASgCUgNoaVkSEQoEaGlfehgGIAEoAlIDaGlaQhuqAhhOaWFu",
+            "dGljLkFSREsuQVIuUHJvdG9idWZiBnByb3RvMw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
@@ -82,7 +90,9 @@ namespace Niantic.ARDK.AR.Protobuf {
             new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.ARDK.AR.Protobuf.ScanMetadataProto), global::Niantic.ARDK.AR.Protobuf.ScanMetadataProto.Parser, new[]{ "Id", "ImageSize", "DepthSize", "StartTimestamp", "TimezoneOffset", "AppName", "PlatformName", "ModelName", "ManufacturerName", "Poi", "Recorder", "UserJson", "NativeDepth", "Origin", "GlobalRotation", "RecorderVersion" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.ARDK.AR.Protobuf.CameraParamsProto), global::Niantic.ARDK.AR.Protobuf.CameraParamsProto.Parser, new[]{ "Width", "Height", "Fx", "Fy", "Px", "Py", "K" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.ARDK.AR.Protobuf.AffineTransformProto), global::Niantic.ARDK.AR.Protobuf.AffineTransformProto.Parser, new[]{ "Rotation", "Translation" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.ARDK.AR.Protobuf.LocationProto), global::Niantic.ARDK.AR.Protobuf.LocationProto.Parser, new[]{ "Timestamp", "Latitude", "Longitude", "Accuracy", "ElevationMeters", "ElevationAccuracy", "HeadingDegrees", "HeadingAccuracy", "HeadingTimestamp", "PositionTimestamp" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.ARDK.AR.Protobuf.LocationProto), global::Niantic.ARDK.AR.Protobuf.LocationProto.Parser, new[]{ "Timestamp", "Latitude", "Longitude", "Accuracy", "ElevationMeters", "ElevationAccuracy", "HeadingDegrees", "HeadingAccuracy", "HeadingTimestamp", "PositionTimestamp", "HeadingRawDataX", "HeadingRawDataY", "HeadingRawDataZ" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.ARDK.AR.Protobuf.SignalAccessPointProto), global::Niantic.ARDK.AR.Protobuf.SignalAccessPointProto.Parser, new[]{ "Bssid", "Rssi", "Type" }, null, new[]{ typeof(global::Niantic.ARDK.AR.Protobuf.SignalAccessPointProto.Types.SignalType) }, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.ARDK.AR.Protobuf.SignalProto), global::Niantic.ARDK.AR.Protobuf.SignalProto.Parser, new[]{ "AccessPoints" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.ARDK.AR.Protobuf.ExposureInfoProto), global::Niantic.ARDK.AR.Protobuf.ExposureInfoProto.Parser, new[]{ "Shutter", "Offset" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.ARDK.AR.Protobuf.DepthRangeProto), global::Niantic.ARDK.AR.Protobuf.DepthRangeProto.Parser, new[]{ "Near", "Far" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Niantic.ARDK.AR.Protobuf.RasterSizeProto), global::Niantic.ARDK.AR.Protobuf.RasterSizeProto.Parser, new[]{ "Width", "Height" }, null, null, null, null),
@@ -2357,6 +2367,9 @@ namespace Niantic.ARDK.AR.Protobuf {
       headingAccuracy_ = other.headingAccuracy_;
       headingTimestamp_ = other.headingTimestamp_;
       positionTimestamp_ = other.positionTimestamp_;
+      headingRawDataX_ = other.headingRawDataX_;
+      headingRawDataY_ = other.headingRawDataY_;
+      headingRawDataZ_ = other.headingRawDataZ_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -2486,6 +2499,42 @@ namespace Niantic.ARDK.AR.Protobuf {
       }
     }
 
+    /// <summary>Field number for the "heading_raw_data_x" field.</summary>
+    public const int HeadingRawDataXFieldNumber = 11;
+    private float headingRawDataX_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public float HeadingRawDataX {
+      get { return headingRawDataX_; }
+      set {
+        headingRawDataX_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "heading_raw_data_y" field.</summary>
+    public const int HeadingRawDataYFieldNumber = 12;
+    private float headingRawDataY_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public float HeadingRawDataY {
+      get { return headingRawDataY_; }
+      set {
+        headingRawDataY_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "heading_raw_data_z" field.</summary>
+    public const int HeadingRawDataZFieldNumber = 13;
+    private float headingRawDataZ_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public float HeadingRawDataZ {
+      get { return headingRawDataZ_; }
+      set {
+        headingRawDataZ_ = value;
+      }
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -2511,6 +2560,9 @@ namespace Niantic.ARDK.AR.Protobuf {
       if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(HeadingAccuracy, other.HeadingAccuracy)) return false;
       if (!pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.Equals(HeadingTimestamp, other.HeadingTimestamp)) return false;
       if (!pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.Equals(PositionTimestamp, other.PositionTimestamp)) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(HeadingRawDataX, other.HeadingRawDataX)) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(HeadingRawDataY, other.HeadingRawDataY)) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(HeadingRawDataZ, other.HeadingRawDataZ)) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -2528,6 +2580,9 @@ namespace Niantic.ARDK.AR.Protobuf {
       if (HeadingAccuracy != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(HeadingAccuracy);
       if (HeadingTimestamp != 0D) hash ^= pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.GetHashCode(HeadingTimestamp);
       if (PositionTimestamp != 0D) hash ^= pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.GetHashCode(PositionTimestamp);
+      if (HeadingRawDataX != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(HeadingRawDataX);
+      if (HeadingRawDataY != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(HeadingRawDataY);
+      if (HeadingRawDataZ != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(HeadingRawDataZ);
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -2586,6 +2641,18 @@ namespace Niantic.ARDK.AR.Protobuf {
         output.WriteRawTag(81);
         output.WriteDouble(PositionTimestamp);
       }
+      if (HeadingRawDataX != 0F) {
+        output.WriteRawTag(93);
+        output.WriteFloat(HeadingRawDataX);
+      }
+      if (HeadingRawDataY != 0F) {
+        output.WriteRawTag(101);
+        output.WriteFloat(HeadingRawDataY);
+      }
+      if (HeadingRawDataZ != 0F) {
+        output.WriteRawTag(109);
+        output.WriteFloat(HeadingRawDataZ);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -2636,6 +2703,18 @@ namespace Niantic.ARDK.AR.Protobuf {
         output.WriteRawTag(81);
         output.WriteDouble(PositionTimestamp);
       }
+      if (HeadingRawDataX != 0F) {
+        output.WriteRawTag(93);
+        output.WriteFloat(HeadingRawDataX);
+      }
+      if (HeadingRawDataY != 0F) {
+        output.WriteRawTag(101);
+        output.WriteFloat(HeadingRawDataY);
+      }
+      if (HeadingRawDataZ != 0F) {
+        output.WriteRawTag(109);
+        output.WriteFloat(HeadingRawDataZ);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -2675,6 +2754,15 @@ namespace Niantic.ARDK.AR.Protobuf {
       }
       if (PositionTimestamp != 0D) {
         size += 1 + 8;
+      }
+      if (HeadingRawDataX != 0F) {
+        size += 1 + 4;
+      }
+      if (HeadingRawDataY != 0F) {
+        size += 1 + 4;
+      }
+      if (HeadingRawDataZ != 0F) {
+        size += 1 + 4;
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -2717,6 +2805,15 @@ namespace Niantic.ARDK.AR.Protobuf {
       }
       if (other.PositionTimestamp != 0D) {
         PositionTimestamp = other.PositionTimestamp;
+      }
+      if (other.HeadingRawDataX != 0F) {
+        HeadingRawDataX = other.HeadingRawDataX;
+      }
+      if (other.HeadingRawDataY != 0F) {
+        HeadingRawDataY = other.HeadingRawDataY;
+      }
+      if (other.HeadingRawDataZ != 0F) {
+        HeadingRawDataZ = other.HeadingRawDataZ;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -2771,6 +2868,18 @@ namespace Niantic.ARDK.AR.Protobuf {
           }
           case 81: {
             PositionTimestamp = input.ReadDouble();
+            break;
+          }
+          case 93: {
+            HeadingRawDataX = input.ReadFloat();
+            break;
+          }
+          case 101: {
+            HeadingRawDataY = input.ReadFloat();
+            break;
+          }
+          case 109: {
+            HeadingRawDataZ = input.ReadFloat();
             break;
           }
         }
@@ -2828,6 +2937,474 @@ namespace Niantic.ARDK.AR.Protobuf {
             PositionTimestamp = input.ReadDouble();
             break;
           }
+          case 93: {
+            HeadingRawDataX = input.ReadFloat();
+            break;
+          }
+          case 101: {
+            HeadingRawDataY = input.ReadFloat();
+            break;
+          }
+          case 109: {
+            HeadingRawDataZ = input.ReadFloat();
+            break;
+          }
+        }
+      }
+    }
+    #endif
+
+  }
+
+  [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
+  public sealed partial class SignalAccessPointProto : pb::IMessage<SignalAccessPointProto>
+  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      , pb::IBufferMessage
+  #endif
+  {
+    private static readonly pb::MessageParser<SignalAccessPointProto> _parser = new pb::MessageParser<SignalAccessPointProto>(() => new SignalAccessPointProto());
+    private pb::UnknownFieldSet _unknownFields;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pb::MessageParser<SignalAccessPointProto> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Niantic.ARDK.AR.Protobuf.ScanKitPublicProtosReflection.Descriptor.MessageTypes[6]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public SignalAccessPointProto() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public SignalAccessPointProto(SignalAccessPointProto other) : this() {
+      bssid_ = other.bssid_;
+      rssi_ = other.rssi_;
+      type_ = other.type_;
+      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public SignalAccessPointProto Clone() {
+      return new SignalAccessPointProto(this);
+    }
+
+    /// <summary>Field number for the "bssid" field.</summary>
+    public const int BssidFieldNumber = 1;
+    private string bssid_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string Bssid {
+      get { return bssid_; }
+      set {
+        bssid_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
+    /// <summary>Field number for the "rssi" field.</summary>
+    public const int RssiFieldNumber = 2;
+    private int rssi_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int Rssi {
+      get { return rssi_; }
+      set {
+        rssi_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "type" field.</summary>
+    public const int TypeFieldNumber = 3;
+    private global::Niantic.ARDK.AR.Protobuf.SignalAccessPointProto.Types.SignalType type_ = global::Niantic.ARDK.AR.Protobuf.SignalAccessPointProto.Types.SignalType.Unknown;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::Niantic.ARDK.AR.Protobuf.SignalAccessPointProto.Types.SignalType Type {
+      get { return type_; }
+      set {
+        type_ = value;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override bool Equals(object other) {
+      return Equals(other as SignalAccessPointProto);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Equals(SignalAccessPointProto other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (Bssid != other.Bssid) return false;
+      if (Rssi != other.Rssi) return false;
+      if (Type != other.Type) return false;
+      return Equals(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (Bssid.Length != 0) hash ^= Bssid.GetHashCode();
+      if (Rssi != 0) hash ^= Rssi.GetHashCode();
+      if (Type != global::Niantic.ARDK.AR.Protobuf.SignalAccessPointProto.Types.SignalType.Unknown) hash ^= Type.GetHashCode();
+      if (_unknownFields != null) {
+        hash ^= _unknownFields.GetHashCode();
+      }
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void WriteTo(pb::CodedOutputStream output) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      output.WriteRawMessage(this);
+    #else
+      if (Bssid.Length != 0) {
+        output.WriteRawTag(10);
+        output.WriteString(Bssid);
+      }
+      if (Rssi != 0) {
+        output.WriteRawTag(16);
+        output.WriteInt32(Rssi);
+      }
+      if (Type != global::Niantic.ARDK.AR.Protobuf.SignalAccessPointProto.Types.SignalType.Unknown) {
+        output.WriteRawTag(24);
+        output.WriteEnum((int) Type);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(output);
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+      if (Bssid.Length != 0) {
+        output.WriteRawTag(10);
+        output.WriteString(Bssid);
+      }
+      if (Rssi != 0) {
+        output.WriteRawTag(16);
+        output.WriteInt32(Rssi);
+      }
+      if (Type != global::Niantic.ARDK.AR.Protobuf.SignalAccessPointProto.Types.SignalType.Unknown) {
+        output.WriteRawTag(24);
+        output.WriteEnum((int) Type);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(ref output);
+      }
+    }
+    #endif
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int CalculateSize() {
+      int size = 0;
+      if (Bssid.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(Bssid);
+      }
+      if (Rssi != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeInt32Size(Rssi);
+      }
+      if (Type != global::Niantic.ARDK.AR.Protobuf.SignalAccessPointProto.Types.SignalType.Unknown) {
+        size += 1 + pb::CodedOutputStream.ComputeEnumSize((int) Type);
+      }
+      if (_unknownFields != null) {
+        size += _unknownFields.CalculateSize();
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(SignalAccessPointProto other) {
+      if (other == null) {
+        return;
+      }
+      if (other.Bssid.Length != 0) {
+        Bssid = other.Bssid;
+      }
+      if (other.Rssi != 0) {
+        Rssi = other.Rssi;
+      }
+      if (other.Type != global::Niantic.ARDK.AR.Protobuf.SignalAccessPointProto.Types.SignalType.Unknown) {
+        Type = other.Type;
+      }
+      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(pb::CodedInputStream input) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      input.ReadRawMessage(this);
+    #else
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            break;
+          case 10: {
+            Bssid = input.ReadString();
+            break;
+          }
+          case 16: {
+            Rssi = input.ReadInt32();
+            break;
+          }
+          case 24: {
+            Type = (global::Niantic.ARDK.AR.Protobuf.SignalAccessPointProto.Types.SignalType) input.ReadEnum();
+            break;
+          }
+        }
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+            break;
+          case 10: {
+            Bssid = input.ReadString();
+            break;
+          }
+          case 16: {
+            Rssi = input.ReadInt32();
+            break;
+          }
+          case 24: {
+            Type = (global::Niantic.ARDK.AR.Protobuf.SignalAccessPointProto.Types.SignalType) input.ReadEnum();
+            break;
+          }
+        }
+      }
+    }
+    #endif
+
+    #region Nested types
+    /// <summary>Container for nested types declared in the SignalAccessPointProto message type.</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static partial class Types {
+      public enum SignalType {
+        [pbr::OriginalName("UNKNOWN")] Unknown = 0,
+        [pbr::OriginalName("WIFI")] Wifi = 1,
+      }
+
+    }
+    #endregion
+
+  }
+
+  [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
+  public sealed partial class SignalProto : pb::IMessage<SignalProto>
+  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      , pb::IBufferMessage
+  #endif
+  {
+    private static readonly pb::MessageParser<SignalProto> _parser = new pb::MessageParser<SignalProto>(() => new SignalProto());
+    private pb::UnknownFieldSet _unknownFields;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pb::MessageParser<SignalProto> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Niantic.ARDK.AR.Protobuf.ScanKitPublicProtosReflection.Descriptor.MessageTypes[7]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public SignalProto() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public SignalProto(SignalProto other) : this() {
+      accessPoints_ = other.accessPoints_.Clone();
+      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public SignalProto Clone() {
+      return new SignalProto(this);
+    }
+
+    /// <summary>Field number for the "access_points" field.</summary>
+    public const int AccessPointsFieldNumber = 1;
+    private static readonly pb::FieldCodec<global::Niantic.ARDK.AR.Protobuf.SignalAccessPointProto> _repeated_accessPoints_codec
+        = pb::FieldCodec.ForMessage(10, global::Niantic.ARDK.AR.Protobuf.SignalAccessPointProto.Parser);
+    private readonly pbc::RepeatedField<global::Niantic.ARDK.AR.Protobuf.SignalAccessPointProto> accessPoints_ = new pbc::RepeatedField<global::Niantic.ARDK.AR.Protobuf.SignalAccessPointProto>();
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public pbc::RepeatedField<global::Niantic.ARDK.AR.Protobuf.SignalAccessPointProto> AccessPoints {
+      get { return accessPoints_; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override bool Equals(object other) {
+      return Equals(other as SignalProto);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Equals(SignalProto other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if(!accessPoints_.Equals(other.accessPoints_)) return false;
+      return Equals(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override int GetHashCode() {
+      int hash = 1;
+      hash ^= accessPoints_.GetHashCode();
+      if (_unknownFields != null) {
+        hash ^= _unknownFields.GetHashCode();
+      }
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void WriteTo(pb::CodedOutputStream output) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      output.WriteRawMessage(this);
+    #else
+      accessPoints_.WriteTo(output, _repeated_accessPoints_codec);
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(output);
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+      accessPoints_.WriteTo(ref output, _repeated_accessPoints_codec);
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(ref output);
+      }
+    }
+    #endif
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int CalculateSize() {
+      int size = 0;
+      size += accessPoints_.CalculateSize(_repeated_accessPoints_codec);
+      if (_unknownFields != null) {
+        size += _unknownFields.CalculateSize();
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(SignalProto other) {
+      if (other == null) {
+        return;
+      }
+      accessPoints_.Add(other.accessPoints_);
+      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(pb::CodedInputStream input) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      input.ReadRawMessage(this);
+    #else
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            break;
+          case 10: {
+            accessPoints_.AddEntriesFrom(input, _repeated_accessPoints_codec);
+            break;
+          }
+        }
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+            break;
+          case 10: {
+            accessPoints_.AddEntriesFrom(ref input, _repeated_accessPoints_codec);
+            break;
+          }
         }
       }
     }
@@ -2850,7 +3427,7 @@ namespace Niantic.ARDK.AR.Protobuf {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Niantic.ARDK.AR.Protobuf.ScanKitPublicProtosReflection.Descriptor.MessageTypes[6]; }
+      get { return global::Niantic.ARDK.AR.Protobuf.ScanKitPublicProtosReflection.Descriptor.MessageTypes[8]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -3077,7 +3654,7 @@ namespace Niantic.ARDK.AR.Protobuf {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Niantic.ARDK.AR.Protobuf.ScanKitPublicProtosReflection.Descriptor.MessageTypes[7]; }
+      get { return global::Niantic.ARDK.AR.Protobuf.ScanKitPublicProtosReflection.Descriptor.MessageTypes[9]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -3304,7 +3881,7 @@ namespace Niantic.ARDK.AR.Protobuf {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Niantic.ARDK.AR.Protobuf.ScanKitPublicProtosReflection.Descriptor.MessageTypes[8]; }
+      get { return global::Niantic.ARDK.AR.Protobuf.ScanKitPublicProtosReflection.Descriptor.MessageTypes[10]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -3531,7 +4108,7 @@ namespace Niantic.ARDK.AR.Protobuf {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Niantic.ARDK.AR.Protobuf.ScanKitPublicProtosReflection.Descriptor.MessageTypes[9]; }
+      get { return global::Niantic.ARDK.AR.Protobuf.ScanKitPublicProtosReflection.Descriptor.MessageTypes[11]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]

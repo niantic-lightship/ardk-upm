@@ -493,9 +493,7 @@ namespace Niantic.Lightship.AR.Subsystems.Occlusion
                 }
             }
 
-#if ARF_6_1_OR_NEWER && UNITY_EDITOR
-            // TODO(ahegedus): This is only used in the editor for now, but will need to be supported when Lightship
-            // transitions to ARF 6.0+ in the future.
+#if ARF_6_1_OR_NEWER
             /// <inheritdoc />
             public override XRResultStatus TryGetFrame(Allocator allocator, out XROcclusionFrame frame)
             {
@@ -527,12 +525,12 @@ namespace Niantic.Lightship.AR.Subsystems.Occlusion
                 // Adjust the principal point to correct for image padding
                 var padY = (height - latestEnvironmentDepthResolution.Value.y) / 2.0f;
                 intrinsics[1,2] += padY;
-                var fieldOfViews = new[] { CalculateFov(intrinsics, width, height) };
+                var fieldOfViews = new[] { CameraMath.CalculateFov(intrinsics, width, height) };
 
                 // Extract the latest pose
                 var extrinsics = latestExtrinsicsMatrix.Value;
-                var position = extrinsics.ToPosition();
-                var rotation = extrinsics.ToRotation();
+                var position = MatrixUtils.ToPosition(extrinsics);
+                var rotation = MatrixUtils.ToRotation(extrinsics);
                 var poses = new Pose[] { new(position, rotation) };
 
                 frame = new XROcclusionFrame(
@@ -597,20 +595,25 @@ namespace Niantic.Lightship.AR.Subsystems.Occlusion
                 }
 
                 if (texture == null)
+                {
                     return false;
+                }
 
-                xrTextureDescriptor =
-                    new XRTextureDescriptor
-                    (
-                        texture.GetNativeTexturePtr(),
-                        texture.width,
-                        texture.height,
-                        0,
-                        texture.format,
-                        _TextureEnvironmentDepthPropertyId,
-                        0,
-                        TextureDimension.Tex2D
-                    );
+                xrTextureDescriptor = new XRTextureDescriptor
+                (
+                    texture.GetNativeTexturePtr(),
+                    texture.width,
+                    texture.height,
+                    0,
+                    texture.format,
+                    _TextureEnvironmentDepthPropertyId,
+                    0,
+#if ARF_6_1_OR_NEWER
+                    textureType: XRTextureType.Texture2D
+#else
+                    dimension: TextureDimension.Tex2D
+#endif
+                );
 
                 return true;
             }
@@ -873,7 +876,7 @@ namespace Niantic.Lightship.AR.Subsystems.Occlusion
             /// <param name="defaultDescriptor">The default descriptor value.</param>
             /// <param name="allocator">The allocator to use when creating the returned <c>NativeArray</c>.</param>
             /// <returns>The occlusion texture descriptors.</returns>
-            public override unsafe NativeArray<XRTextureDescriptor> GetTextureDescriptors
+            public override NativeArray<XRTextureDescriptor> GetTextureDescriptors
             (
                 XRTextureDescriptor defaultDescriptor,
                 Allocator allocator
@@ -893,47 +896,20 @@ namespace Niantic.Lightship.AR.Subsystems.Occlusion
             }
 
 #if ARF_6_1_OR_NEWER
-            /// <summary>
-            /// Calculates the field of view from the image intrinsics.
-            /// </summary>
-            /// <param name="intrinsics">The image intrinsics.</param>
-            /// <param name="resolutionWidth">The width of the image resolution.</param>
-            /// <param name="resolutionHeight">The height of the image resolution.</param>
-            /// <returns>The field of view.</returns>
-            private static XRFov CalculateFov(Matrix4x4 intrinsics, int resolutionWidth, int resolutionHeight)
-            {
-                var focalLengthX = intrinsics[0, 0];
-                var focalLengthY = intrinsics[1, 1];
-                var principalX = intrinsics[0, 2];
-                var principalY = intrinsics[1, 2];
-
-                // Calculate the field of view from the intrinsics
-                float angleLeft = Mathf.Atan2(principalX, focalLengthX);
-                float angleRight = Mathf.Atan2(resolutionWidth - principalX, focalLengthX);
-                float angleUp = Mathf.Atan2(principalY, focalLengthY);
-                float angleDown = Mathf.Atan2(resolutionHeight - principalY, focalLengthY);
-
-                return new XRFov(angleLeft, angleRight, angleUp, angleDown);
-            }
-
             public override XRShaderKeywords GetShaderKeywords2() =>
                 _occlusionPreferenceMode == OcclusionPreferenceMode.NoOcclusion
                     ? new XRShaderKeywords( null, new ReadOnlyList<string>(_environmentDepthEnabledMaterialKeywords))
                     : new XRShaderKeywords( new ReadOnlyList<string>(_environmentDepthEnabledMaterialKeywords), null);
-
 #elif ARF_6_0_OR_NEWER
             public override ShaderKeywords GetShaderKeywords() =>
                 _occlusionPreferenceMode == OcclusionPreferenceMode.NoOcclusion ?
                     new ShaderKeywords(disabledKeywords: _environmentDepthEnabledMaterialKeywords.AsReadOnly()) :
                     new ShaderKeywords(enabledKeywords: _environmentDepthEnabledMaterialKeywords.AsReadOnly());
-#else
-            public override void GetMaterialKeywords
-            (
-                out List<string> enabledKeywords,
-                out List<string> disabledKeywords
-            )
+#else   // ARF version < 6.0
+            public override void GetMaterialKeywords(out List<string> enabledKeywords,
+                out List<string> disabledKeywords)
             {
-                if ((_occlusionPreferenceMode == OcclusionPreferenceMode.NoOcclusion))
+                if (_occlusionPreferenceMode == OcclusionPreferenceMode.NoOcclusion)
                 {
                     enabledKeywords = null;
                     disabledKeywords = _environmentDepthEnabledMaterialKeywords;

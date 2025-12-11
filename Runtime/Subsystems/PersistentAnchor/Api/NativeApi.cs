@@ -377,7 +377,7 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
             return false;
         }
 
-        public VpsGraphStatus GetDevicePoseAsGps
+        public VpsGraphOperationError GetDevicePoseAsGeolocation
         (
             IntPtr anchorProviderHandle,
             Matrix4x4 poseMatrix,
@@ -394,9 +394,10 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
             var transformStruct = new TransformCStruct();
             transformStruct.SetTransform(ardkMatrix);
 
-            var status = Native.GetDevicePoseAsGps(
+            var status = Native.GetDevicePoseAsGeolocation(
                 anchorProviderHandle,
                 ref transformStruct,
+                out var error,
                 out latitude,
                 out longitude,
                 out altitude,
@@ -405,28 +406,7 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
                 out heading
             );
 
-            return ConvertToVpsGraphStatus((ArdkStatus)status);
-        }
-
-        private static VpsGraphStatus ConvertToVpsGraphStatus(ArdkStatus ardkStatus)
-        {
-            switch (ardkStatus)
-            {
-                case ArdkStatus.Ok:
-                    return VpsGraphStatus.Success;
-                case ArdkStatus.NullArgument:
-                case ArdkStatus.InvalidArgument:
-                    return VpsGraphStatus.InvalidArgument;
-                case ArdkStatus.InvalidOperation:
-                    return VpsGraphStatus.InvalidOperation;
-                case ArdkStatus.FeatureDoesNotExist:
-                case ArdkStatus.NullArdkHandle:
-                    return VpsGraphStatus.FeatureUnavailable;
-                case ArdkStatus.NoData:
-                    return VpsGraphStatus.NoData;
-                default:
-                    return VpsGraphStatus.Unknown;
-            }
+            return error;
         }
 
         private static class Native
@@ -615,13 +595,14 @@ namespace Niantic.Lightship.AR.Subsystems.PersistentAnchor
             [DllImport
             (
                 LightshipPlugin.Name,
-                EntryPoint = "Lightship_ARDK_Unity_AnchorProvider_GetDevicePoseAsGps",
+                EntryPoint = "Lightship_ARDK_Unity_AnchorProvider_GetDevicePoseAsGeolocation",
                 CallingConvention = CallingConvention.Cdecl
             )]
-            public static extern int GetDevicePoseAsGps
+            public static extern int GetDevicePoseAsGeolocation
             (
                 IntPtr anchorApiHandle,
                 ref TransformCStruct pose,
+                out VpsGraphOperationError operationError,
                 out double latitude,
                 out double longitude,
                 out double altitude,

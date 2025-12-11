@@ -1,9 +1,13 @@
 // Copyright 2022-2025 Niantic.
 using System;
-using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using Niantic.Lightship.AR.Editor.Auth;
+#if NIANTIC_ARDK_AUTH_DEBUG
+using Niantic.Lightship.AR.Auth;
+#endif
 using Niantic.Lightship.AR.Loader;
-using Niantic.Lightship.AR.Utilities.Logging;
+using Niantic.Lightship.AR.Utilities.Auth;
 using UnityEditor;
 using UnityEditor.XR.Management;
 using UnityEngine;
@@ -126,6 +130,7 @@ namespace Niantic.Lightship.AR.Editor
         private int _platformSelected = 0;
 
         private SerializedObject _lightshipSettings;
+        private SerializedObject _authBuildSettings;
 
         private SerializedProperty _apiKeyProperty;
         private SerializedProperty _useLightshipDepthProperty;
@@ -145,6 +150,7 @@ namespace Niantic.Lightship.AR.Editor
         private SerializedProperty _useZBufferDepthInSimulationProperty;
         private SerializedProperty _useSimulationPersistentAnchorInSimulationProperty;
         private SerializedProperty _lightshipPersistentAnchorParamsProperty;
+        private SerializedProperty _useDeveloperAuthenticationProperty;
         private IPlaybackSettingsEditor[] _playbackSettingsEditors;
         private Texture _enabledIcon;
         private Texture _disabledIcon;
@@ -152,6 +158,7 @@ namespace Niantic.Lightship.AR.Editor
         private void OnEnable()
         {
             _lightshipSettings = new SerializedObject(LightshipSettings.Instance);
+            _authBuildSettings = new SerializedObject(LightshipSettings.Instance.AuthBuildSettings);
 
             _apiKeyProperty = _lightshipSettings.FindProperty("_apiKey");
             _useLightshipDepthProperty = _lightshipSettings.FindProperty("_useLightshipDepth");
@@ -183,11 +190,13 @@ namespace Niantic.Lightship.AR.Editor
 
             _enabledIcon = EditorGUIUtility.IconContent("TestPassed").image;
             _disabledIcon = EditorGUIUtility.IconContent("Warning").image;
+            _useDeveloperAuthenticationProperty = _authBuildSettings.FindProperty("_useDeveloperAuthentication");
         }
 
         public override void OnInspectorGUI()
         {
             _lightshipSettings.Update();
+            _authBuildSettings.Update();
 
             using (var change = new EditorGUI.ChangeCheckScope())
             {
@@ -213,9 +222,12 @@ namespace Niantic.Lightship.AR.Editor
                 if (change.changed)
                 {
                     _lightshipSettings.ApplyModifiedProperties();
+                    _authBuildSettings.ApplyModifiedProperties();
                 }
             }
         }
+
+        private CancellationTokenSource _loginCts = new();
 
         private void DrawLightshipSettings()
         {
@@ -247,6 +259,104 @@ namespace Niantic.Lightship.AR.Editor
             {
                 Application.OpenURL("https://lightship.dev/account/projects");
             }
+
+            var editorSettings = AuthEditorSettings.Instance;
+#if NIANTIC_ARDK_AUTH_LOGIN
+            if (string.IsNullOrEmpty(editorSettings.EditorRefreshToken) ||
+                AuthGatewayUtils.Instance.IsAccessExpired(editorSettings.EditorRefreshExpiresAt, DateTime.UtcNow))
+            {
+                EditorGUILayout.BeginHorizontal();
+                GUI.enabled = !AuthEditorLoginCommand.Instance.InProgress;
+                var buttonText = !AuthEditorLoginCommand.Instance.InProgress ? "Login" : "Logging in ...";
+                var loginToLightship = GUILayout.Button(buttonText, GUILayout.Width(125));
+                GUI.enabled = true;
+                if (AuthEditorLoginCommand.Instance.InProgress)
+                {
+                    var cancelLogin = GUILayout.Button("Cancel", GUILayout.Width(125));
+                    if (cancelLogin)
+                    {
+                        _loginCts.Cancel();
+                        _loginCts = new();
+                    }
+                }
+
+                EditorGUILayout.EndHorizontal();
+
+                if (loginToLightship)
+                {
+                    _ = AuthEditorLoginCommand.Instance.ExecuteAsync(_loginCts.Token);
+                }
+            }
+            else
+            {
+                var logoutFromLightship = GUILayout.Button("Logout", GUILayout.Width(125));
+                if (logoutFromLightship)
+                {
+                    AuthEditorLogoutCommand.Instance.Execute();
+                }
+            }
+
+            EditorGUILayout.PropertyField(_useDeveloperAuthenticationProperty);
+#endif
+#if NIANTIC_ARDK_AUTH_DEBUG
+            var settings = AuthEditorBuildSettings.Instance;
+            var authEnvironmentNames = Enum.GetNames(typeof(AuthEnvironmentType));
+            var environment = editorSettings.AuthEnvironment;
+            editorSettings.AuthEnvironment = (AuthEnvironmentType)GUILayout.Toolbar(
+                (int)editorSettings.AuthEnvironment, authEnvironmentNames, EditorStyles.toolbarButton);
+
+            // When the environment changes, we need to clear all access tokens (effectively "log out")
+            if (environment != settings.AuthEnvironment)
+            {
+                editorSettings.UpdateEditorAccess(string.Empty, 0, string.Empty, 0);
+                settings.UpdateAccess(string.Empty, 0, string.Empty, 0);
+            }
+
+            DrawToken("Editor Refresh", editorSettings.EditorRefreshToken, editorSettings.EditorRefreshExpiresAt);
+            DrawToken("Editor Access", editorSettings.EditorAccessToken, editorSettings.EditorAccessExpiresAt);
+
+            var refresh = GUILayout.Button("Refresh", GUILayout.Width(125));
+            if (refresh)
+            {
+                _ = AuthEditorSettingsUpdater.Instance.RefreshAccessAsync(editorSettings);
+            }
+
+            if (!string.IsNullOrEmpty(editorSettings.EditorRefreshToken))
+            {
+                var requestRuntime = GUILayout.Button("Request Runtime", GUILayout.Width(125));
+                if (requestRuntime)
+                {
+                    _ = AuthEditorSettingsUpdater.Instance.RequestRuntimeRefreshTokenAsync(editorSettings, settings);
+                }
+            }
+
+            DrawToken("Refresh", settings.RefreshToken, settings.RefreshExpiresAt);
+            DrawToken("Access", settings.AccessToken, settings.AccessExpiresAt);
+
+            if (!string.IsNullOrEmpty(settings.RefreshToken))
+            {
+                var refreshRuntime = GUILayout.Button("Refresh Runtime", GUILayout.Width(125));
+                if (refreshRuntime)
+                {
+                    _ = AuthRuntimeSettingsUpdater.Instance.RefreshRuntimeAccessAsync(settings);
+                }
+            }
+
+            if (AuthRuntimeSettingsStore.Instance.Exists)
+            {
+                var readPlaymode = GUILayout.Button("Read Play-Mode", GUILayout.Width(125));
+                if (readPlaymode)
+                {
+                    _ = AuthRuntimeSettingsStore.Instance.LoadAsync(settings, CancellationToken.None);
+                }
+
+                var clearPlaymode = GUILayout.Button("Clear Play-Mode", GUILayout.Width(125));
+                if (clearPlaymode)
+                {
+                    AuthRuntimeSettingsStore.Instance.Clear();
+                }
+            }
+#endif
 
             // Depth settings
 
@@ -320,6 +430,19 @@ namespace Niantic.Lightship.AR.Editor
 
             EditorGUILayout.Space(10);
             DrawLoggingSettings();
+        }
+
+        private void DrawToken(string context, string token, int expiresAt)
+        {
+#if NIANTIC_ARDK_AUTH_DEBUG
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.LabelField($"{context} Token:", GUILayout.Width(150));
+            EditorGUILayout.LabelField(AuthGatewayUtils.GetTokenShortName(token), GUILayout.Width(50));
+            var localExpiryTime = DateTimeOffset.FromUnixTimeSeconds(expiresAt).ToLocalTime();
+            EditorGUILayout.LabelField(localExpiryTime.ToString("yyyy-MM-dd HH:mm:ss"), GUILayout.Width(150));
+            EditorGUILayout.TextField(token);
+            EditorGUILayout.EndHorizontal();
+#endif
         }
 
         private void DrawLoggingSettings()
